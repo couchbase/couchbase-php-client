@@ -1,0 +1,36 @@
+{
+    "name": "couchbase/couchbase",
+    "description": "Couchbase client library",
+    "type": "library",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Sergey Avseyev",
+            "email": "sergey@couchbase.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "ext-couchbase": ">=3.0.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "@stable",
+        "squizlabs/php_codesniffer": "@stable"
+    },
+    "autoload": {
+        "psr-4": {
+            "Couchbase\\": "./src/Couchbase/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Couchbase\\Tests\\": "./tests/Couchbase"
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit tests",
+        "cs": "./vendor/bin/phpcs -s --standard=phpcs.xml ./",
+        "cs-fix": "./vendor/bin/phpcbf --standard=phpcs.xml ./"
+    }
+}
