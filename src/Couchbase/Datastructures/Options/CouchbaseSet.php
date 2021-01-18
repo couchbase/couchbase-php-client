@@ -26,9 +26,9 @@ use Couchbase\MutateInOptions;
 use Couchbase\RemoveOptions;
 
 /**
- * Aggregate of the options for {@link \Couchbase\Datastructures\CouchbaseList}
+ * Aggregate of the options for {@link \Couchbase\Datastructures\CouchbaseSet}
  */
-class CouchbaseList
+class CouchbaseSet
 {
     private GetOptions $getOptions;
     private RemoveOptions $removeOptions;
@@ -36,7 +36,7 @@ class CouchbaseList
     private MutateInOptions $mutateInOptions;
 
     /**
-     * CouchbaseList constructor.
+     * CouchbaseSet constructor.
      * @param GetOptions|null $get options for get operations
      * @param RemoveOptions|null $remove options for get remove operations
      * @param LookupInOptions|null $lookupIn options for lookupIn operations

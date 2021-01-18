@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- *   Copyright 2020 Couchbase, Inc.
+ *   Copyright 2020-2021 Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,5 +115,23 @@ class CouchbaseMapTest extends CouchbaseTestCase
 
         $res = $this->collection->get($id);
         $this->assertEquals(["foo" => "bar"], $res->content());
+    }
+
+
+    /**
+     * @covers CouchbaseMap::clear
+     * @return void
+     */
+    public function testClearRemovesDocument()
+    {
+        $id = $this->uniqueId('clear');
+        $set = new CouchbaseMap($id, $this->collection);
+        $set->set("foo", "bar");
+        $set->clear();
+
+        $this->assertFalse($this->collection->exists($id)->exists());
+
+        $this->expectException(DocumentNotFoundException::class);
+        $this->collection->get($id);
     }
 }
