@@ -20,54 +20,48 @@ declare(strict_types=1);
 
 namespace Couchbase\Datastructures;
 
-use ArrayAccess;
 use ArrayIterator;
 use Couchbase\Collection;
 use Couchbase\DocumentNotFoundException;
 use Couchbase\LookupCountSpec;
-use Couchbase\LookupExistsSpec;
 use Couchbase\LookupGetSpec;
-use Couchbase\MutateArrayAddUniqueSpec;
 use Couchbase\MutateArrayAppendSpec;
-use Couchbase\MutateArrayInsertSpec;
 use Couchbase\MutateArrayPrependSpec;
 use Couchbase\MutateRemoveSpec;
-use Couchbase\MutateReplaceSpec;
 use Couchbase\StoreSemantics;
 use Countable;
 use EmptyIterator;
 use IteratorAggregate;
-use OutOfBoundsException;
 use Traversable;
 
 /**
- * Implementation of the Set backed by JSON document in Couchbase collection
+ * Implementation of the Queue backed by JSON document in Couchbase collection
  */
-class CouchbaseSet implements Countable, IteratorAggregate
+class CouchbaseQueue implements Countable, IteratorAggregate
 {
     private string $id;
     private Collection $collection;
-    private Options\CouchbaseSet $options;
+    private Options\CouchbaseQueue $options;
 
     /**
-     * CouchbaseSet constructor.
+     * CouchbaseQueue constructor.
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
-     * @param Options\CouchbaseSet|null $options
+     * @param Options\CouchbaseQueue|null $options
      */
-    public function __construct(string $id, Collection $collection, ?Options\CouchbaseSet $options = null)
+    public function __construct(string $id, Collection $collection, ?Options\CouchbaseQueue $options = null)
     {
         $this->id = $id;
         $this->collection = $collection;
         if ($options) {
             $this->options = $options;
         } else {
-            $this->options = new Options\CouchbaseSet(null, null, null, null);
+            $this->options = new Options\CouchbaseQueue(null, null, null, null);
         }
     }
 
     /**
-     * @return int number of elements in the set
+     * @return int number of elements in the list
      */
     public function count(): int
     {
@@ -84,7 +78,7 @@ class CouchbaseSet implements Countable, IteratorAggregate
     }
 
     /**
-     * @return bool true if the set is empty
+     * @return bool true if the list is empty
      */
     public function empty(): bool
     {
@@ -92,69 +86,48 @@ class CouchbaseSet implements Countable, IteratorAggregate
     }
 
     /**
-     * Remove entry from the set
-     * @param mixed $value the value to remove (if exists in the Set)
-     * @return bool true if the value has been removed
+     * Pop entry from the FIFO queue
+     * @return mixed return the oldest value in the queue or null
      */
-    public function remove($value): bool
+    public function pop()
     {
         try {
-            $result = $this->collection->get($this->id, $this->options->getOptions());
-            foreach ($result->content() as $offset => $entry) {
-                if ($entry == $value) {
-                    $options = clone $this->options->mutateInOptions();
-                    $options->cas($result->cas());
-                    $this->collection->mutateIn(
-                        $this->id,
-                        [new MutateRemoveSpec(sprintf("[%d]", (int)$offset), false)],
-                        $options
-                    );
-                    return true;
-                }
-            }
-            return false;
+            $result = $this->collection->lookupIn(
+                $this->id,
+                [new LookupGetSpec("[-1]", false)],
+                $this->options->lookupInOptions()
+            );
+            $value = $result->content(0);
+            $options = clone $this->options->mutateInOptions();
+            $options->cas($result->cas());
+            $this->collection->mutateIn(
+                $this->id,
+                [new MutateRemoveSpec("[-1]", false)],
+                $options
+            );
+            return $value;
         } catch (DocumentNotFoundException $ex) {
-            return false;
+            return null;
         }
     }
 
     /**
-     * Adds new value to the set
+     * Enqueue new value to the FIFO queue
      * @param mixed $value the value to insert
      */
-    public function add($value): void
+    public function push($value): void
     {
         $options = clone $this->options->mutateInOptions();
         $options->storeSemantics(StoreSemantics::UPSERT);
         $this->collection->mutateIn(
             $this->id,
-            [new MutateArrayAddUniqueSpec("", $value, false, false, false)],
+            [new MutateArrayPrependSpec("", [$value], false, false, false)],
             $options
         );
     }
 
     /**
-     * Checks whether an offset exists.
-     * @param mixed $value the value to check for existence
-     * @return bool true if there is an entry associated with the offset
-     */
-    public function contains($value): bool
-    {
-        try {
-            $result = $this->collection->get($this->id, $this->options->getOptions());
-            foreach ($result->content() as $entry) {
-                if ($entry == $value) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (DocumentNotFoundException $ex) {
-            return false;
-        }
-    }
-
-    /**
-     * Clears the set. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * Clears the queue. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
      */
     public function clear(): void
     {
@@ -166,9 +139,9 @@ class CouchbaseSet implements Countable, IteratorAggregate
     }
 
     /**
-     * Create new iterator to walk through the set.
+     * Create new iterator to walk through the list.
      * Implementation of {@link IteratorAggregate}
-     * @return Traversable iterator to enumerate elements of the set
+     * @return Traversable iterator to enumerate elements of the list
      */
     public function getIterator(): Traversable
     {
