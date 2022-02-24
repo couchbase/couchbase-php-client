@@ -1,0 +1,2022 @@
+<?xml version="1.0"?>
+<!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
+<package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.4.11" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+    <name>couchbase</name>
+    <channel>pecl.php.net</channel>
+    <summary>Couchbase Server PHP extension</summary>
+    <description>
+        The PHP client library provides fast access to documents stored in a Couchbase Server.
+    </description>
+    <lead>
+        <name>Sergey Avseyev</name>
+        <user>avsej</user>
+        <email>sergey@couchbase.com</email>
+        <active>yes</active>
+    </lead>
+    <date>2022-03-09</date>
+    <version>
+        <release>4.0.0</release>
+        <api>4.0.0</api>
+    </version>
+    <stability>
+        <release>stable</release>
+        <api>stable</api>
+    </stability>
+    <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+    <notes>
+        Migrate core to C++ SDK
+    </notes>
+    <contents>
+        <dir name="/">
+            <dir name="cmake">
+                <file role="src" name="ext_build_version.hxx.in"/>
+                <file role="src" name="revisions.cmake"/>
+            </dir>
+            <dir name="lib">
+                <dir name="Couchbase">
+                    <file role="php" name="Cluster.php"/>
+                </dir>
+            </dir>
+            <dir name="src">
+                <dir name="core">
+                    <file role="src" name="version.cxx"/>
+                    <file role="src" name="version.hxx"/>
+                </dir>
+                <file role="src" name="php_couchbase.cxx"/>
+                <file role="src" name="php_couchbase.hxx"/>
+            </dir>
+            <dir name="deps">
+                <dir name="couchbase-cxx-client">
+                    <dir name="cmake">
+                        <file role="src" name="Backtrace.cmake"/>
+                        <file role="src" name="BuildTracing.cmake"/>
+                        <file role="src" name="Cache.cmake"/>
+                        <file role="src" name="CompilerWarnings.cmake"/>
+                        <file role="src" name="DetectStandardFilesystem.cmake"/>
+                        <file role="src" name="OpenSSL.cmake"/>
+                        <file role="src" name="PreventInSourceBuilds.cmake"/>
+                        <file role="src" name="Sanitizers.cmake"/>
+                        <file role="src" name="StandardProjectSettings.cmake"/>
+                        <file role="src" name="StaticAnalyzers.cmake"/>
+                        <file role="src" name="Testing.cmake"/>
+                        <file role="src" name="ThirdPartyDependencies.cmake"/>
+                        <file role="src" name="VersionInfo.cmake"/>
+                        <file role="src" name="build_config.hxx.in"/>
+                        <file role="src" name="build_version.hxx.in"/>
+                        <file role="src" name="test_filesystem.cpp.in"/>
+                    </dir>
+                    <dir name="couchbase">
+                        <dir name="crypto">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="cbcrypto.cc"/>
+                            <file role="src" name="cbcrypto.h"/>
+                        </dir>
+                        <dir name="error_context">
+                            <file role="src" name="analytics.hxx"/>
+                            <file role="src" name="http.hxx"/>
+                            <file role="src" name="key_value.hxx"/>
+                            <file role="src" name="query.hxx"/>
+                            <file role="src" name="search.hxx"/>
+                            <file role="src" name="view.hxx"/>
+                        </dir>
+                        <dir name="io">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="dns_client.hxx"/>
+                            <file role="src" name="dns_codec.hxx"/>
+                            <file role="src" name="dns_config.hxx"/>
+                            <file role="src" name="dns_message.hxx"/>
+                            <file role="src" name="http_command.hxx"/>
+                            <file role="src" name="http_context.hxx"/>
+                            <file role="src" name="http_message.hxx"/>
+                            <file role="src" name="http_parser.cxx"/>
+                            <file role="src" name="http_parser.hxx"/>
+                            <file role="src" name="http_session.hxx"/>
+                            <file role="src" name="http_session_manager.hxx"/>
+                            <file role="src" name="http_traits.hxx"/>
+                            <file role="src" name="mcbp_command.hxx"/>
+                            <file role="src" name="mcbp_context.hxx"/>
+                            <file role="src" name="mcbp_message.cxx"/>
+                            <file role="src" name="mcbp_message.hxx"/>
+                            <file role="src" name="mcbp_parser.cxx"/>
+                            <file role="src" name="mcbp_parser.hxx"/>
+                            <file role="src" name="mcbp_session.hxx"/>
+                            <file role="src" name="query_cache.hxx"/>
+                            <file role="src" name="retry_action.hxx"/>
+                            <file role="src" name="retry_context.hxx"/>
+                            <file role="src" name="retry_orchestrator.hxx"/>
+                            <file role="src" name="retry_reason.hxx"/>
+                            <file role="src" name="retry_reason_fmt.hxx"/>
+                            <file role="src" name="retry_strategy.hxx"/>
+                            <file role="src" name="streams.hxx"/>
+                        </dir>
+                        <dir name="logger">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="configuration.hxx"/>
+                            <file role="src" name="custom_rotating_file_sink.cxx"/>
+                            <file role="src" name="custom_rotating_file_sink.hxx"/>
+                            <file role="src" name="logger.cxx"/>
+                            <file role="src" name="logger.hxx"/>
+                        </dir>
+                        <dir name="meta">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="version.cxx"/>
+                            <file role="src" name="version.hxx"/>
+                        </dir>
+                        <dir name="metrics">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="logging_meter.cxx"/>
+                            <file role="src" name="logging_meter.hxx"/>
+                            <file role="src" name="logging_meter_options.hxx"/>
+                            <file role="src" name="meter.hxx"/>
+                            <file role="src" name="noop_meter.hxx"/>
+                        </dir>
+                        <dir name="operations">
+                            <dir name="management">
+                                <file role="src" name="CMakeLists.txt"/>
+                                <file role="src" name="analytics.hxx"/>
+                                <file role="src" name="analytics_dataset_create.cxx"/>
+                                <file role="src" name="analytics_dataset_create.hxx"/>
+                                <file role="src" name="analytics_dataset_drop.cxx"/>
+                                <file role="src" name="analytics_dataset_drop.hxx"/>
+                                <file role="src" name="analytics_dataset_get_all.cxx"/>
+                                <file role="src" name="analytics_dataset_get_all.hxx"/>
+                                <file role="src" name="analytics_dataverse_create.cxx"/>
+                                <file role="src" name="analytics_dataverse_create.hxx"/>
+                                <file role="src" name="analytics_dataverse_drop.cxx"/>
+                                <file role="src" name="analytics_dataverse_drop.hxx"/>
+                                <file role="src" name="analytics_get_pending_mutations.cxx"/>
+                                <file role="src" name="analytics_get_pending_mutations.hxx"/>
+                                <file role="src" name="analytics_index_create.cxx"/>
+                                <file role="src" name="analytics_index_create.hxx"/>
+                                <file role="src" name="analytics_index_drop.cxx"/>
+                                <file role="src" name="analytics_index_drop.hxx"/>
+                                <file role="src" name="analytics_index_get_all.cxx"/>
+                                <file role="src" name="analytics_index_get_all.hxx"/>
+                                <file role="src" name="analytics_link.hxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external.cxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external.hxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external_json.hxx"/>
+                                <file role="src" name="analytics_link_connect.cxx"/>
+                                <file role="src" name="analytics_link_connect.hxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote.cxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote.hxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote_json.hxx"/>
+                                <file role="src" name="analytics_link_create.cxx"/>
+                                <file role="src" name="analytics_link_create.hxx"/>
+                                <file role="src" name="analytics_link_disconnect.cxx"/>
+                                <file role="src" name="analytics_link_disconnect.hxx"/>
+                                <file role="src" name="analytics_link_drop.cxx"/>
+                                <file role="src" name="analytics_link_drop.hxx"/>
+                                <file role="src" name="analytics_link_get_all.cxx"/>
+                                <file role="src" name="analytics_link_get_all.hxx"/>
+                                <file role="src" name="analytics_link_replace.cxx"/>
+                                <file role="src" name="analytics_link_replace.hxx"/>
+                                <file role="src" name="analytics_link_s3_external.cxx"/>
+                                <file role="src" name="analytics_link_s3_external.hxx"/>
+                                <file role="src" name="analytics_link_s3_external_json.hxx"/>
+                                <file role="src" name="bucket.hxx"/>
+                                <file role="src" name="bucket_create.cxx"/>
+                                <file role="src" name="bucket_create.hxx"/>
+                                <file role="src" name="bucket_describe.cxx"/>
+                                <file role="src" name="bucket_describe.hxx"/>
+                                <file role="src" name="bucket_drop.cxx"/>
+                                <file role="src" name="bucket_drop.hxx"/>
+                                <file role="src" name="bucket_flush.cxx"/>
+                                <file role="src" name="bucket_flush.hxx"/>
+                                <file role="src" name="bucket_get.cxx"/>
+                                <file role="src" name="bucket_get.hxx"/>
+                                <file role="src" name="bucket_get_all.cxx"/>
+                                <file role="src" name="bucket_get_all.hxx"/>
+                                <file role="src" name="bucket_settings.hxx"/>
+                                <file role="src" name="bucket_settings_json.hxx"/>
+                                <file role="src" name="bucket_update.cxx"/>
+                                <file role="src" name="bucket_update.hxx"/>
+                                <file role="src" name="cluster_describe.cxx"/>
+                                <file role="src" name="cluster_describe.hxx"/>
+                                <file role="src" name="cluster_developer_preview_enable.cxx"/>
+                                <file role="src" name="cluster_developer_preview_enable.hxx"/>
+                                <file role="src" name="collection_create.cxx"/>
+                                <file role="src" name="collection_create.hxx"/>
+                                <file role="src" name="collection_drop.cxx"/>
+                                <file role="src" name="collection_drop.hxx"/>
+                                <file role="src" name="collections.hxx"/>
+                                <file role="src" name="collections_manifest_get.cxx"/>
+                                <file role="src" name="collections_manifest_get.hxx"/>
+                                <file role="src" name="design_document.hxx"/>
+                                <file role="src" name="design_document_fmt.hxx"/>
+                                <file role="src" name="error_utils.cxx"/>
+                                <file role="src" name="error_utils.hxx"/>
+                                <file role="src" name="eventing.hxx"/>
+                                <file role="src" name="eventing_deploy_function.cxx"/>
+                                <file role="src" name="eventing_deploy_function.hxx"/>
+                                <file role="src" name="eventing_drop_function.cxx"/>
+                                <file role="src" name="eventing_drop_function.hxx"/>
+                                <file role="src" name="eventing_function.hxx"/>
+                                <file role="src" name="eventing_function_json.hxx"/>
+                                <file role="src" name="eventing_get_all_functions.cxx"/>
+                                <file role="src" name="eventing_get_all_functions.hxx"/>
+                                <file role="src" name="eventing_get_function.cxx"/>
+                                <file role="src" name="eventing_get_function.hxx"/>
+                                <file role="src" name="eventing_get_status.cxx"/>
+                                <file role="src" name="eventing_get_status.hxx"/>
+                                <file role="src" name="eventing_pause_function.cxx"/>
+                                <file role="src" name="eventing_pause_function.hxx"/>
+                                <file role="src" name="eventing_problem.hxx"/>
+                                <file role="src" name="eventing_resume_function.cxx"/>
+                                <file role="src" name="eventing_resume_function.hxx"/>
+                                <file role="src" name="eventing_status.hxx"/>
+                                <file role="src" name="eventing_status_json.hxx"/>
+                                <file role="src" name="eventing_undeploy_function.cxx"/>
+                                <file role="src" name="eventing_undeploy_function.hxx"/>
+                                <file role="src" name="eventing_upsert_function.cxx"/>
+                                <file role="src" name="eventing_upsert_function.hxx"/>
+                                <file role="src" name="freeform.cxx"/>
+                                <file role="src" name="freeform.hxx"/>
+                                <file role="src" name="group_drop.cxx"/>
+                                <file role="src" name="group_drop.hxx"/>
+                                <file role="src" name="group_get.cxx"/>
+                                <file role="src" name="group_get.hxx"/>
+                                <file role="src" name="group_get_all.cxx"/>
+                                <file role="src" name="group_get_all.hxx"/>
+                                <file role="src" name="group_upsert.cxx"/>
+                                <file role="src" name="group_upsert.hxx"/>
+                                <file role="src" name="query.hxx"/>
+                                <file role="src" name="query_index_build_deferred.cxx"/>
+                                <file role="src" name="query_index_build_deferred.hxx"/>
+                                <file role="src" name="query_index_create.cxx"/>
+                                <file role="src" name="query_index_create.hxx"/>
+                                <file role="src" name="query_index_drop.cxx"/>
+                                <file role="src" name="query_index_drop.hxx"/>
+                                <file role="src" name="query_index_get_all.cxx"/>
+                                <file role="src" name="query_index_get_all.hxx"/>
+                                <file role="src" name="rbac.hxx"/>
+                                <file role="src" name="rbac_fmt.hxx"/>
+                                <file role="src" name="rbac_json.hxx"/>
+                                <file role="src" name="role_get_all.cxx"/>
+                                <file role="src" name="role_get_all.hxx"/>
+                                <file role="src" name="scope_create.cxx"/>
+                                <file role="src" name="scope_create.hxx"/>
+                                <file role="src" name="scope_drop.cxx"/>
+                                <file role="src" name="scope_drop.hxx"/>
+                                <file role="src" name="scope_get_all.cxx"/>
+                                <file role="src" name="scope_get_all.hxx"/>
+                                <file role="src" name="search.hxx"/>
+                                <file role="src" name="search_get_stats.cxx"/>
+                                <file role="src" name="search_get_stats.hxx"/>
+                                <file role="src" name="search_index.hxx"/>
+                                <file role="src" name="search_index_analyze_document.cxx"/>
+                                <file role="src" name="search_index_analyze_document.hxx"/>
+                                <file role="src" name="search_index_control_ingest.cxx"/>
+                                <file role="src" name="search_index_control_ingest.hxx"/>
+                                <file role="src" name="search_index_control_plan_freeze.cxx"/>
+                                <file role="src" name="search_index_control_plan_freeze.hxx"/>
+                                <file role="src" name="search_index_control_query.cxx"/>
+                                <file role="src" name="search_index_control_query.hxx"/>
+                                <file role="src" name="search_index_drop.cxx"/>
+                                <file role="src" name="search_index_drop.hxx"/>
+                                <file role="src" name="search_index_get.cxx"/>
+                                <file role="src" name="search_index_get.hxx"/>
+                                <file role="src" name="search_index_get_all.cxx"/>
+                                <file role="src" name="search_index_get_all.hxx"/>
+                                <file role="src" name="search_index_get_documents_count.cxx"/>
+                                <file role="src" name="search_index_get_documents_count.hxx"/>
+                                <file role="src" name="search_index_get_stats.cxx"/>
+                                <file role="src" name="search_index_get_stats.hxx"/>
+                                <file role="src" name="search_index_json.hxx"/>
+                                <file role="src" name="search_index_upsert.cxx"/>
+                                <file role="src" name="search_index_upsert.hxx"/>
+                                <file role="src" name="user.hxx"/>
+                                <file role="src" name="user_drop.cxx"/>
+                                <file role="src" name="user_drop.hxx"/>
+                                <file role="src" name="user_get.cxx"/>
+                                <file role="src" name="user_get.hxx"/>
+                                <file role="src" name="user_get_all.cxx"/>
+                                <file role="src" name="user_get_all.hxx"/>
+                                <file role="src" name="user_upsert.cxx"/>
+                                <file role="src" name="user_upsert.hxx"/>
+                                <file role="src" name="view.hxx"/>
+                                <file role="src" name="view_index_drop.cxx"/>
+                                <file role="src" name="view_index_drop.hxx"/>
+                                <file role="src" name="view_index_get.cxx"/>
+                                <file role="src" name="view_index_get.hxx"/>
+                                <file role="src" name="view_index_get_all.cxx"/>
+                                <file role="src" name="view_index_get_all.hxx"/>
+                                <file role="src" name="view_index_upsert.cxx"/>
+                                <file role="src" name="view_index_upsert.hxx"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="document_analytics.cxx"/>
+                            <file role="src" name="document_analytics.hxx"/>
+                            <file role="src" name="document_append.cxx"/>
+                            <file role="src" name="document_append.hxx"/>
+                            <file role="src" name="document_decrement.cxx"/>
+                            <file role="src" name="document_decrement.hxx"/>
+                            <file role="src" name="document_exists.cxx"/>
+                            <file role="src" name="document_exists.hxx"/>
+                            <file role="src" name="document_get.cxx"/>
+                            <file role="src" name="document_get.hxx"/>
+                            <file role="src" name="document_get_and_lock.cxx"/>
+                            <file role="src" name="document_get_and_lock.hxx"/>
+                            <file role="src" name="document_get_and_touch.cxx"/>
+                            <file role="src" name="document_get_and_touch.hxx"/>
+                            <file role="src" name="document_get_projected.cxx"/>
+                            <file role="src" name="document_get_projected.hxx"/>
+                            <file role="src" name="document_increment.cxx"/>
+                            <file role="src" name="document_increment.hxx"/>
+                            <file role="src" name="document_insert.cxx"/>
+                            <file role="src" name="document_insert.hxx"/>
+                            <file role="src" name="document_lookup_in.cxx"/>
+                            <file role="src" name="document_lookup_in.hxx"/>
+                            <file role="src" name="document_mutate_in.cxx"/>
+                            <file role="src" name="document_mutate_in.hxx"/>
+                            <file role="src" name="document_observe.hxx"/>
+                            <file role="src" name="document_prepend.cxx"/>
+                            <file role="src" name="document_prepend.hxx"/>
+                            <file role="src" name="document_query.cxx"/>
+                            <file role="src" name="document_query.hxx"/>
+                            <file role="src" name="document_remove.cxx"/>
+                            <file role="src" name="document_remove.hxx"/>
+                            <file role="src" name="document_replace.cxx"/>
+                            <file role="src" name="document_replace.hxx"/>
+                            <file role="src" name="document_search.cxx"/>
+                            <file role="src" name="document_search.hxx"/>
+                            <file role="src" name="document_touch.cxx"/>
+                            <file role="src" name="document_touch.hxx"/>
+                            <file role="src" name="document_unlock.cxx"/>
+                            <file role="src" name="document_unlock.hxx"/>
+                            <file role="src" name="document_upsert.cxx"/>
+                            <file role="src" name="document_upsert.hxx"/>
+                            <file role="src" name="document_view.cxx"/>
+                            <file role="src" name="document_view.hxx"/>
+                            <file role="src" name="http_noop.cxx"/>
+                            <file role="src" name="http_noop.hxx"/>
+                            <file role="src" name="mcbp_noop.cxx"/>
+                            <file role="src" name="mcbp_noop.hxx"/>
+                        </dir>
+                        <dir name="platform">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="backtrace.c"/>
+                            <file role="src" name="backtrace.h"/>
+                            <file role="src" name="base64.cc"/>
+                            <file role="src" name="base64.h"/>
+                            <file role="src" name="dirutils.cc"/>
+                            <file role="src" name="dirutils.h"/>
+                            <file role="src" name="random.cc"/>
+                            <file role="src" name="random.h"/>
+                            <file role="src" name="string_hex.cc"/>
+                            <file role="src" name="string_hex.h"/>
+                            <file role="src" name="terminate_handler.cc"/>
+                            <file role="src" name="terminate_handler.h"/>
+                            <file role="src" name="uuid.cc"/>
+                            <file role="src" name="uuid.h"/>
+                        </dir>
+                        <dir name="protocol">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="cas.hxx"/>
+                            <file role="src" name="cas_fmt.hxx"/>
+                            <file role="src" name="client_opcode.hxx"/>
+                            <file role="src" name="client_opcode_fmt.hxx"/>
+                            <file role="src" name="client_request.cxx"/>
+                            <file role="src" name="client_request.hxx"/>
+                            <file role="src" name="client_response.cxx"/>
+                            <file role="src" name="client_response.hxx"/>
+                            <file role="src" name="cmd_append.cxx"/>
+                            <file role="src" name="cmd_append.hxx"/>
+                            <file role="src" name="cmd_cluster_map_change_notification.cxx"/>
+                            <file role="src" name="cmd_cluster_map_change_notification.hxx"/>
+                            <file role="src" name="cmd_decrement.cxx"/>
+                            <file role="src" name="cmd_decrement.hxx"/>
+                            <file role="src" name="cmd_exists.cxx"/>
+                            <file role="src" name="cmd_exists.hxx"/>
+                            <file role="src" name="cmd_get.cxx"/>
+                            <file role="src" name="cmd_get.hxx"/>
+                            <file role="src" name="cmd_get_and_lock.cxx"/>
+                            <file role="src" name="cmd_get_and_lock.hxx"/>
+                            <file role="src" name="cmd_get_and_touch.cxx"/>
+                            <file role="src" name="cmd_get_and_touch.hxx"/>
+                            <file role="src" name="cmd_get_cluster_config.cxx"/>
+                            <file role="src" name="cmd_get_cluster_config.hxx"/>
+                            <file role="src" name="cmd_get_collection_id.cxx"/>
+                            <file role="src" name="cmd_get_collection_id.hxx"/>
+                            <file role="src" name="cmd_get_collections_manifest.cxx"/>
+                            <file role="src" name="cmd_get_collections_manifest.hxx"/>
+                            <file role="src" name="cmd_get_error_map.cxx"/>
+                            <file role="src" name="cmd_get_error_map.hxx"/>
+                            <file role="src" name="cmd_get_meta.cxx"/>
+                            <file role="src" name="cmd_get_meta.hxx"/>
+                            <file role="src" name="cmd_hello.cxx"/>
+                            <file role="src" name="cmd_hello.hxx"/>
+                            <file role="src" name="cmd_increment.cxx"/>
+                            <file role="src" name="cmd_increment.hxx"/>
+                            <file role="src" name="cmd_info.hxx"/>
+                            <file role="src" name="cmd_insert.cxx"/>
+                            <file role="src" name="cmd_insert.hxx"/>
+                            <file role="src" name="cmd_lookup_in.cxx"/>
+                            <file role="src" name="cmd_lookup_in.hxx"/>
+                            <file role="src" name="cmd_mutate_in.cxx"/>
+                            <file role="src" name="cmd_mutate_in.hxx"/>
+                            <file role="src" name="cmd_noop.cxx"/>
+                            <file role="src" name="cmd_noop.hxx"/>
+                            <file role="src" name="cmd_prepend.cxx"/>
+                            <file role="src" name="cmd_prepend.hxx"/>
+                            <file role="src" name="cmd_remove.cxx"/>
+                            <file role="src" name="cmd_remove.hxx"/>
+                            <file role="src" name="cmd_replace.cxx"/>
+                            <file role="src" name="cmd_replace.hxx"/>
+                            <file role="src" name="cmd_sasl_auth.cxx"/>
+                            <file role="src" name="cmd_sasl_auth.hxx"/>
+                            <file role="src" name="cmd_sasl_list_mechs.cxx"/>
+                            <file role="src" name="cmd_sasl_list_mechs.hxx"/>
+                            <file role="src" name="cmd_sasl_step.cxx"/>
+                            <file role="src" name="cmd_sasl_step.hxx"/>
+                            <file role="src" name="cmd_select_bucket.cxx"/>
+                            <file role="src" name="cmd_select_bucket.hxx"/>
+                            <file role="src" name="cmd_touch.cxx"/>
+                            <file role="src" name="cmd_touch.hxx"/>
+                            <file role="src" name="cmd_unlock.cxx"/>
+                            <file role="src" name="cmd_unlock.hxx"/>
+                            <file role="src" name="cmd_upsert.cxx"/>
+                            <file role="src" name="cmd_upsert.hxx"/>
+                            <file role="src" name="datatype.hxx"/>
+                            <file role="src" name="durability_level.hxx"/>
+                            <file role="src" name="durability_level_fmt.hxx"/>
+                            <file role="src" name="enhanced_error_info.hxx"/>
+                            <file role="src" name="enhanced_error_info_fmt.hxx"/>
+                            <file role="src" name="frame_info_id.hxx"/>
+                            <file role="src" name="frame_info_id_fmt.hxx"/>
+                            <file role="src" name="hello_feature.hxx"/>
+                            <file role="src" name="hello_feature_fmt.hxx"/>
+                            <file role="src" name="magic.hxx"/>
+                            <file role="src" name="magic_fmt.hxx"/>
+                            <file role="src" name="mutation_token.hxx"/>
+                            <file role="src" name="mutation_token_fmt.hxx"/>
+                            <file role="src" name="server_opcode.hxx"/>
+                            <file role="src" name="server_opcode_fmt.hxx"/>
+                            <file role="src" name="server_request.hxx"/>
+                            <file role="src" name="status.cxx"/>
+                            <file role="src" name="status.hxx"/>
+                            <file role="src" name="status_fmt.hxx"/>
+                        </dir>
+                        <dir name="sasl">
+                            <dir name="plain">
+                                <file role="src" name="plain.cc"/>
+                                <file role="src" name="plain.h"/>
+                            </dir>
+                            <dir name="scram-sha">
+                                <file role="src" name="scram-sha.cc"/>
+                                <file role="src" name="scram-sha.h"/>
+                                <file role="src" name="stringutils.cc"/>
+                                <file role="src" name="stringutils.h"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="client.cc"/>
+                            <file role="src" name="client.h"/>
+                            <file role="src" name="context.cc"/>
+                            <file role="src" name="context.h"/>
+                            <file role="src" name="error.h"/>
+                            <file role="src" name="error_fmt.h"/>
+                            <file role="src" name="mechanism.cc"/>
+                            <file role="src" name="mechanism.h"/>
+                        </dir>
+                        <dir name="topology">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="capabilities.hxx"/>
+                            <file role="src" name="capabilities_fmt.hxx"/>
+                            <file role="src" name="collections_manifest.hxx"/>
+                            <file role="src" name="collections_manifest_fmt.hxx"/>
+                            <file role="src" name="collections_manifest_json.hxx"/>
+                            <file role="src" name="configuration.cxx"/>
+                            <file role="src" name="configuration.hxx"/>
+                            <file role="src" name="configuration_fmt.hxx"/>
+                            <file role="src" name="configuration_json.hxx"/>
+                            <file role="src" name="error_map.hxx"/>
+                            <file role="src" name="error_map_fmt.hxx"/>
+                            <file role="src" name="error_map_json.hxx"/>
+                        </dir>
+                        <dir name="tracing">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="constants.hxx"/>
+                            <file role="src" name="noop_tracer.hxx"/>
+                            <file role="src" name="request_tracer.hxx"/>
+                            <file role="src" name="threshold_logging_options.hxx"/>
+                            <file role="src" name="threshold_logging_tracer.cxx"/>
+                            <file role="src" name="threshold_logging_tracer.hxx"/>
+                        </dir>
+                        <dir name="utils">
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="byteswap.cxx"/>
+                            <file role="src" name="byteswap.hxx"/>
+                            <file role="src" name="connection_string.cxx"/>
+                            <file role="src" name="connection_string.hxx"/>
+                            <file role="src" name="crc32.hxx"/>
+                            <file role="src" name="duration_parser.cxx"/>
+                            <file role="src" name="duration_parser.hxx"/>
+                            <file role="src" name="join_strings.hxx"/>
+                            <file role="src" name="json.cxx"/>
+                            <file role="src" name="json.hxx"/>
+                            <file role="src" name="json_stream_control.hxx"/>
+                            <file role="src" name="json_streaming_lexer.cxx"/>
+                            <file role="src" name="json_streaming_lexer.hxx"/>
+                            <file role="src" name="movable_function.hxx"/>
+                            <file role="src" name="name_codec.hxx"/>
+                            <file role="src" name="unsigned_leb128.hxx"/>
+                            <file role="src" name="url_codec.cxx"/>
+                            <file role="src" name="url_codec.hxx"/>
+                        </dir>
+                        <file role="src" name="bucket.hxx"/>
+                        <file role="src" name="cluster.cxx"/>
+                        <file role="src" name="cluster.hxx"/>
+                        <file role="src" name="cluster_options.cxx"/>
+                        <file role="src" name="cluster_options.hxx"/>
+                        <file role="src" name="diagnostics.hxx"/>
+                        <file role="src" name="diagnostics_fmt.hxx"/>
+                        <file role="src" name="diagnostics_json.hxx"/>
+                        <file role="src" name="document_id.cxx"/>
+                        <file role="src" name="document_id.hxx"/>
+                        <file role="src" name="document_id_fmt.hxx"/>
+                        <file role="src" name="errors.hxx"/>
+                        <file role="src" name="json_string.hxx"/>
+                        <file role="src" name="operations.hxx"/>
+                        <file role="src" name="origin.hxx"/>
+                        <file role="src" name="service_type.hxx"/>
+                        <file role="src" name="service_type_fmt.hxx"/>
+                        <file role="src" name="timeout_defaults.hxx"/>
+                    </dir>
+                    <dir name="third_party">
+                        <dir name="asio">
+                            <dir name="asio">
+                                <dir name="include">
+                                    <dir name="asio">
+                                        <dir name="detail">
+                                            <dir name="impl">
+                                                <file role="src" name="buffer_sequence_adapter.ipp"/>
+                                                <file role="src" name="descriptor_ops.ipp"/>
+                                                <file role="src" name="dev_poll_reactor.hpp"/>
+                                                <file role="src" name="dev_poll_reactor.ipp"/>
+                                                <file role="src" name="epoll_reactor.hpp"/>
+                                                <file role="src" name="epoll_reactor.ipp"/>
+                                                <file role="src" name="eventfd_select_interrupter.ipp"/>
+                                                <file role="src" name="handler_tracking.ipp"/>
+                                                <file role="src" name="io_uring_descriptor_service.ipp"/>
+                                                <file role="src" name="io_uring_file_service.ipp"/>
+                                                <file role="src" name="io_uring_service.hpp"/>
+                                                <file role="src" name="io_uring_service.ipp"/>
+                                                <file role="src" name="io_uring_socket_service_base.ipp"/>
+                                                <file role="src" name="kqueue_reactor.hpp"/>
+                                                <file role="src" name="kqueue_reactor.ipp"/>
+                                                <file role="src" name="null_event.ipp"/>
+                                                <file role="src" name="pipe_select_interrupter.ipp"/>
+                                                <file role="src" name="posix_event.ipp"/>
+                                                <file role="src" name="posix_mutex.ipp"/>
+                                                <file role="src" name="posix_serial_port_service.ipp"/>
+                                                <file role="src" name="posix_thread.ipp"/>
+                                                <file role="src" name="posix_tss_ptr.ipp"/>
+                                                <file role="src" name="reactive_descriptor_service.ipp"/>
+                                                <file role="src" name="reactive_socket_service_base.ipp"/>
+                                                <file role="src" name="resolver_service_base.ipp"/>
+                                                <file role="src" name="scheduler.ipp"/>
+                                                <file role="src" name="select_reactor.hpp"/>
+                                                <file role="src" name="select_reactor.ipp"/>
+                                                <file role="src" name="service_registry.hpp"/>
+                                                <file role="src" name="service_registry.ipp"/>
+                                                <file role="src" name="signal_set_service.ipp"/>
+                                                <file role="src" name="socket_ops.ipp"/>
+                                                <file role="src" name="socket_select_interrupter.ipp"/>
+                                                <file role="src" name="strand_executor_service.hpp"/>
+                                                <file role="src" name="strand_executor_service.ipp"/>
+                                                <file role="src" name="strand_service.hpp"/>
+                                                <file role="src" name="strand_service.ipp"/>
+                                                <file role="src" name="thread_context.ipp"/>
+                                                <file role="src" name="throw_error.ipp"/>
+                                                <file role="src" name="timer_queue_ptime.ipp"/>
+                                                <file role="src" name="timer_queue_set.ipp"/>
+                                                <file role="src" name="win_event.ipp"/>
+                                                <file role="src" name="win_iocp_file_service.ipp"/>
+                                                <file role="src" name="win_iocp_handle_service.ipp"/>
+                                                <file role="src" name="win_iocp_io_context.hpp"/>
+                                                <file role="src" name="win_iocp_io_context.ipp"/>
+                                                <file role="src" name="win_iocp_serial_port_service.ipp"/>
+                                                <file role="src" name="win_iocp_socket_service_base.ipp"/>
+                                                <file role="src" name="win_mutex.ipp"/>
+                                                <file role="src" name="win_object_handle_service.ipp"/>
+                                                <file role="src" name="win_static_mutex.ipp"/>
+                                                <file role="src" name="win_thread.ipp"/>
+                                                <file role="src" name="win_tss_ptr.ipp"/>
+                                                <file role="src" name="winrt_ssocket_service_base.ipp"/>
+                                                <file role="src" name="winrt_timer_scheduler.hpp"/>
+                                                <file role="src" name="winrt_timer_scheduler.ipp"/>
+                                                <file role="src" name="winsock_init.ipp"/>
+                                            </dir>
+                                            <file role="src" name="array.hpp"/>
+                                            <file role="src" name="array_fwd.hpp"/>
+                                            <file role="src" name="assert.hpp"/>
+                                            <file role="src" name="atomic_count.hpp"/>
+                                            <file role="src" name="base_from_cancellation_state.hpp"/>
+                                            <file role="src" name="base_from_completion_cond.hpp"/>
+                                            <file role="src" name="bind_handler.hpp"/>
+                                            <file role="src" name="blocking_executor_op.hpp"/>
+                                            <file role="src" name="buffer_resize_guard.hpp"/>
+                                            <file role="src" name="buffer_sequence_adapter.hpp"/>
+                                            <file role="src" name="buffered_stream_storage.hpp"/>
+                                            <file role="src" name="bulk_executor_op.hpp"/>
+                                            <file role="src" name="call_stack.hpp"/>
+                                            <file role="src" name="chrono.hpp"/>
+                                            <file role="src" name="chrono_time_traits.hpp"/>
+                                            <file role="src" name="completion_handler.hpp"/>
+                                            <file role="src" name="concurrency_hint.hpp"/>
+                                            <file role="src" name="conditionally_enabled_event.hpp"/>
+                                            <file role="src" name="conditionally_enabled_mutex.hpp"/>
+                                            <file role="src" name="config.hpp"/>
+                                            <file role="src" name="consuming_buffers.hpp"/>
+                                            <file role="src" name="cstddef.hpp"/>
+                                            <file role="src" name="cstdint.hpp"/>
+                                            <file role="src" name="date_time_fwd.hpp"/>
+                                            <file role="src" name="deadline_timer_service.hpp"/>
+                                            <file role="src" name="dependent_type.hpp"/>
+                                            <file role="src" name="descriptor_ops.hpp"/>
+                                            <file role="src" name="descriptor_read_op.hpp"/>
+                                            <file role="src" name="descriptor_write_op.hpp"/>
+                                            <file role="src" name="dev_poll_reactor.hpp"/>
+                                            <file role="src" name="epoll_reactor.hpp"/>
+                                            <file role="src" name="event.hpp"/>
+                                            <file role="src" name="eventfd_select_interrupter.hpp"/>
+                                            <file role="src" name="executor_function.hpp"/>
+                                            <file role="src" name="executor_op.hpp"/>
+                                            <file role="src" name="fd_set_adapter.hpp"/>
+                                            <file role="src" name="fenced_block.hpp"/>
+                                            <file role="src" name="functional.hpp"/>
+                                            <file role="src" name="future.hpp"/>
+                                            <file role="src" name="gcc_arm_fenced_block.hpp"/>
+                                            <file role="src" name="gcc_hppa_fenced_block.hpp"/>
+                                            <file role="src" name="gcc_sync_fenced_block.hpp"/>
+                                            <file role="src" name="gcc_x86_fenced_block.hpp"/>
+                                            <file role="src" name="global.hpp"/>
+                                            <file role="src" name="handler_alloc_helpers.hpp"/>
+                                            <file role="src" name="handler_cont_helpers.hpp"/>
+                                            <file role="src" name="handler_invoke_helpers.hpp"/>
+                                            <file role="src" name="handler_tracking.hpp"/>
+                                            <file role="src" name="handler_type_requirements.hpp"/>
+                                            <file role="src" name="handler_work.hpp"/>
+                                            <file role="src" name="hash_map.hpp"/>
+                                            <file role="src" name="io_control.hpp"/>
+                                            <file role="src" name="io_object_impl.hpp"/>
+                                            <file role="src" name="io_uring_descriptor_read_at_op.hpp"/>
+                                            <file role="src" name="io_uring_descriptor_read_op.hpp"/>
+                                            <file role="src" name="io_uring_descriptor_service.hpp"/>
+                                            <file role="src" name="io_uring_descriptor_write_at_op.hpp"/>
+                                            <file role="src" name="io_uring_descriptor_write_op.hpp"/>
+                                            <file role="src" name="io_uring_file_service.hpp"/>
+                                            <file role="src" name="io_uring_null_buffers_op.hpp"/>
+                                            <file role="src" name="io_uring_operation.hpp"/>
+                                            <file role="src" name="io_uring_service.hpp"/>
+                                            <file role="src" name="io_uring_socket_accept_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_connect_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_recv_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_recvfrom_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_recvmsg_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_send_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_sendto_op.hpp"/>
+                                            <file role="src" name="io_uring_socket_service.hpp"/>
+                                            <file role="src" name="io_uring_socket_service_base.hpp"/>
+                                            <file role="src" name="io_uring_wait_op.hpp"/>
+                                            <file role="src" name="is_buffer_sequence.hpp"/>
+                                            <file role="src" name="is_executor.hpp"/>
+                                            <file role="src" name="keyword_tss_ptr.hpp"/>
+                                            <file role="src" name="kqueue_reactor.hpp"/>
+                                            <file role="src" name="limits.hpp"/>
+                                            <file role="src" name="local_free_on_block_exit.hpp"/>
+                                            <file role="src" name="macos_fenced_block.hpp"/>
+                                            <file role="src" name="memory.hpp"/>
+                                            <file role="src" name="mutex.hpp"/>
+                                            <file role="src" name="non_const_lvalue.hpp"/>
+                                            <file role="src" name="noncopyable.hpp"/>
+                                            <file role="src" name="null_event.hpp"/>
+                                            <file role="src" name="null_fenced_block.hpp"/>
+                                            <file role="src" name="null_global.hpp"/>
+                                            <file role="src" name="null_mutex.hpp"/>
+                                            <file role="src" name="null_reactor.hpp"/>
+                                            <file role="src" name="null_signal_blocker.hpp"/>
+                                            <file role="src" name="null_socket_service.hpp"/>
+                                            <file role="src" name="null_static_mutex.hpp"/>
+                                            <file role="src" name="null_thread.hpp"/>
+                                            <file role="src" name="null_tss_ptr.hpp"/>
+                                            <file role="src" name="object_pool.hpp"/>
+                                            <file role="src" name="old_win_sdk_compat.hpp"/>
+                                            <file role="src" name="op_queue.hpp"/>
+                                            <file role="src" name="operation.hpp"/>
+                                            <file role="src" name="pipe_select_interrupter.hpp"/>
+                                            <file role="src" name="pop_options.hpp"/>
+                                            <file role="src" name="posix_event.hpp"/>
+                                            <file role="src" name="posix_fd_set_adapter.hpp"/>
+                                            <file role="src" name="posix_global.hpp"/>
+                                            <file role="src" name="posix_mutex.hpp"/>
+                                            <file role="src" name="posix_serial_port_service.hpp"/>
+                                            <file role="src" name="posix_signal_blocker.hpp"/>
+                                            <file role="src" name="posix_static_mutex.hpp"/>
+                                            <file role="src" name="posix_thread.hpp"/>
+                                            <file role="src" name="posix_tss_ptr.hpp"/>
+                                            <file role="src" name="push_options.hpp"/>
+                                            <file role="src" name="reactive_descriptor_service.hpp"/>
+                                            <file role="src" name="reactive_null_buffers_op.hpp"/>
+                                            <file role="src" name="reactive_socket_accept_op.hpp"/>
+                                            <file role="src" name="reactive_socket_connect_op.hpp"/>
+                                            <file role="src" name="reactive_socket_recv_op.hpp"/>
+                                            <file role="src" name="reactive_socket_recvfrom_op.hpp"/>
+                                            <file role="src" name="reactive_socket_recvmsg_op.hpp"/>
+                                            <file role="src" name="reactive_socket_send_op.hpp"/>
+                                            <file role="src" name="reactive_socket_sendto_op.hpp"/>
+                                            <file role="src" name="reactive_socket_service.hpp"/>
+                                            <file role="src" name="reactive_socket_service_base.hpp"/>
+                                            <file role="src" name="reactive_wait_op.hpp"/>
+                                            <file role="src" name="reactor.hpp"/>
+                                            <file role="src" name="reactor_op.hpp"/>
+                                            <file role="src" name="reactor_op_queue.hpp"/>
+                                            <file role="src" name="recycling_allocator.hpp"/>
+                                            <file role="src" name="regex_fwd.hpp"/>
+                                            <file role="src" name="resolve_endpoint_op.hpp"/>
+                                            <file role="src" name="resolve_op.hpp"/>
+                                            <file role="src" name="resolve_query_op.hpp"/>
+                                            <file role="src" name="resolver_service.hpp"/>
+                                            <file role="src" name="resolver_service_base.hpp"/>
+                                            <file role="src" name="scheduler.hpp"/>
+                                            <file role="src" name="scheduler_operation.hpp"/>
+                                            <file role="src" name="scheduler_task.hpp"/>
+                                            <file role="src" name="scheduler_thread_info.hpp"/>
+                                            <file role="src" name="scoped_lock.hpp"/>
+                                            <file role="src" name="scoped_ptr.hpp"/>
+                                            <file role="src" name="select_interrupter.hpp"/>
+                                            <file role="src" name="select_reactor.hpp"/>
+                                            <file role="src" name="service_registry.hpp"/>
+                                            <file role="src" name="signal_blocker.hpp"/>
+                                            <file role="src" name="signal_handler.hpp"/>
+                                            <file role="src" name="signal_init.hpp"/>
+                                            <file role="src" name="signal_op.hpp"/>
+                                            <file role="src" name="signal_set_service.hpp"/>
+                                            <file role="src" name="socket_holder.hpp"/>
+                                            <file role="src" name="socket_ops.hpp"/>
+                                            <file role="src" name="socket_option.hpp"/>
+                                            <file role="src" name="socket_select_interrupter.hpp"/>
+                                            <file role="src" name="socket_types.hpp"/>
+                                            <file role="src" name="solaris_fenced_block.hpp"/>
+                                            <file role="src" name="source_location.hpp"/>
+                                            <file role="src" name="static_mutex.hpp"/>
+                                            <file role="src" name="std_event.hpp"/>
+                                            <file role="src" name="std_fenced_block.hpp"/>
+                                            <file role="src" name="std_global.hpp"/>
+                                            <file role="src" name="std_mutex.hpp"/>
+                                            <file role="src" name="std_static_mutex.hpp"/>
+                                            <file role="src" name="std_thread.hpp"/>
+                                            <file role="src" name="strand_executor_service.hpp"/>
+                                            <file role="src" name="strand_service.hpp"/>
+                                            <file role="src" name="string_view.hpp"/>
+                                            <file role="src" name="thread.hpp"/>
+                                            <file role="src" name="thread_context.hpp"/>
+                                            <file role="src" name="thread_group.hpp"/>
+                                            <file role="src" name="thread_info_base.hpp"/>
+                                            <file role="src" name="throw_error.hpp"/>
+                                            <file role="src" name="throw_exception.hpp"/>
+                                            <file role="src" name="timer_queue.hpp"/>
+                                            <file role="src" name="timer_queue_base.hpp"/>
+                                            <file role="src" name="timer_queue_ptime.hpp"/>
+                                            <file role="src" name="timer_queue_set.hpp"/>
+                                            <file role="src" name="timer_scheduler.hpp"/>
+                                            <file role="src" name="timer_scheduler_fwd.hpp"/>
+                                            <file role="src" name="tss_ptr.hpp"/>
+                                            <file role="src" name="type_traits.hpp"/>
+                                            <file role="src" name="variadic_templates.hpp"/>
+                                            <file role="src" name="wait_handler.hpp"/>
+                                            <file role="src" name="wait_op.hpp"/>
+                                            <file role="src" name="win_event.hpp"/>
+                                            <file role="src" name="win_fd_set_adapter.hpp"/>
+                                            <file role="src" name="win_fenced_block.hpp"/>
+                                            <file role="src" name="win_global.hpp"/>
+                                            <file role="src" name="win_iocp_file_service.hpp"/>
+                                            <file role="src" name="win_iocp_handle_read_op.hpp"/>
+                                            <file role="src" name="win_iocp_handle_service.hpp"/>
+                                            <file role="src" name="win_iocp_handle_write_op.hpp"/>
+                                            <file role="src" name="win_iocp_io_context.hpp"/>
+                                            <file role="src" name="win_iocp_null_buffers_op.hpp"/>
+                                            <file role="src" name="win_iocp_operation.hpp"/>
+                                            <file role="src" name="win_iocp_overlapped_op.hpp"/>
+                                            <file role="src" name="win_iocp_overlapped_ptr.hpp"/>
+                                            <file role="src" name="win_iocp_serial_port_service.hpp"/>
+                                            <file role="src" name="win_iocp_socket_accept_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_connect_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_recv_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_recvfrom_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_recvmsg_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_send_op.hpp"/>
+                                            <file role="src" name="win_iocp_socket_service.hpp"/>
+                                            <file role="src" name="win_iocp_socket_service_base.hpp"/>
+                                            <file role="src" name="win_iocp_thread_info.hpp"/>
+                                            <file role="src" name="win_iocp_wait_op.hpp"/>
+                                            <file role="src" name="win_mutex.hpp"/>
+                                            <file role="src" name="win_object_handle_service.hpp"/>
+                                            <file role="src" name="win_static_mutex.hpp"/>
+                                            <file role="src" name="win_thread.hpp"/>
+                                            <file role="src" name="win_tss_ptr.hpp"/>
+                                            <file role="src" name="winapp_thread.hpp"/>
+                                            <file role="src" name="wince_thread.hpp"/>
+                                            <file role="src" name="winrt_async_manager.hpp"/>
+                                            <file role="src" name="winrt_async_op.hpp"/>
+                                            <file role="src" name="winrt_resolve_op.hpp"/>
+                                            <file role="src" name="winrt_resolver_service.hpp"/>
+                                            <file role="src" name="winrt_socket_connect_op.hpp"/>
+                                            <file role="src" name="winrt_socket_recv_op.hpp"/>
+                                            <file role="src" name="winrt_socket_send_op.hpp"/>
+                                            <file role="src" name="winrt_ssocket_service.hpp"/>
+                                            <file role="src" name="winrt_ssocket_service_base.hpp"/>
+                                            <file role="src" name="winrt_timer_scheduler.hpp"/>
+                                            <file role="src" name="winrt_utils.hpp"/>
+                                            <file role="src" name="winsock_init.hpp"/>
+                                            <file role="src" name="work_dispatcher.hpp"/>
+                                            <file role="src" name="wrapped_handler.hpp"/>
+                                        </dir>
+                                        <dir name="execution">
+                                            <dir name="detail">
+                                                <file role="src" name="as_invocable.hpp"/>
+                                                <file role="src" name="as_operation.hpp"/>
+                                                <file role="src" name="as_receiver.hpp"/>
+                                                <file role="src" name="bulk_sender.hpp"/>
+                                                <file role="src" name="submit_receiver.hpp"/>
+                                                <file role="src" name="void_receiver.hpp"/>
+                                            </dir>
+                                            <dir name="impl">
+                                                <file role="src" name="bad_executor.ipp"/>
+                                                <file role="src" name="receiver_invocation_error.ipp"/>
+                                            </dir>
+                                            <file role="src" name="allocator.hpp"/>
+                                            <file role="src" name="any_executor.hpp"/>
+                                            <file role="src" name="bad_executor.hpp"/>
+                                            <file role="src" name="blocking.hpp"/>
+                                            <file role="src" name="blocking_adaptation.hpp"/>
+                                            <file role="src" name="bulk_execute.hpp"/>
+                                            <file role="src" name="bulk_guarantee.hpp"/>
+                                            <file role="src" name="connect.hpp"/>
+                                            <file role="src" name="context.hpp"/>
+                                            <file role="src" name="context_as.hpp"/>
+                                            <file role="src" name="execute.hpp"/>
+                                            <file role="src" name="executor.hpp"/>
+                                            <file role="src" name="invocable_archetype.hpp"/>
+                                            <file role="src" name="mapping.hpp"/>
+                                            <file role="src" name="occupancy.hpp"/>
+                                            <file role="src" name="operation_state.hpp"/>
+                                            <file role="src" name="outstanding_work.hpp"/>
+                                            <file role="src" name="prefer_only.hpp"/>
+                                            <file role="src" name="receiver.hpp"/>
+                                            <file role="src" name="receiver_invocation_error.hpp"/>
+                                            <file role="src" name="relationship.hpp"/>
+                                            <file role="src" name="schedule.hpp"/>
+                                            <file role="src" name="scheduler.hpp"/>
+                                            <file role="src" name="sender.hpp"/>
+                                            <file role="src" name="set_done.hpp"/>
+                                            <file role="src" name="set_error.hpp"/>
+                                            <file role="src" name="set_value.hpp"/>
+                                            <file role="src" name="start.hpp"/>
+                                            <file role="src" name="submit.hpp"/>
+                                        </dir>
+                                        <dir name="experimental">
+                                            <dir name="detail">
+                                                <dir name="impl">
+                                                    <file role="src" name="channel_service.hpp"/>
+                                                </dir>
+                                                <file role="src" name="channel_handler.hpp"/>
+                                                <file role="src" name="channel_message.hpp"/>
+                                                <file role="src" name="channel_operation.hpp"/>
+                                                <file role="src" name="channel_payload.hpp"/>
+                                                <file role="src" name="channel_receive_op.hpp"/>
+                                                <file role="src" name="channel_send_functions.hpp"/>
+                                                <file role="src" name="channel_send_op.hpp"/>
+                                                <file role="src" name="channel_service.hpp"/>
+                                                <file role="src" name="completion_handler_erasure.hpp"/>
+                                                <file role="src" name="coro_promise_allocator.hpp"/>
+                                                <file role="src" name="has_signature.hpp"/>
+                                                <file role="src" name="partial_promise.hpp"/>
+                                            </dir>
+                                            <dir name="impl">
+                                                <file role="src" name="append.hpp"/>
+                                                <file role="src" name="as_single.hpp"/>
+                                                <file role="src" name="as_tuple.hpp"/>
+                                                <file role="src" name="channel_error.ipp"/>
+                                                <file role="src" name="coro.hpp"/>
+                                                <file role="src" name="deferred.hpp"/>
+                                                <file role="src" name="parallel_group.hpp"/>
+                                                <file role="src" name="prepend.hpp"/>
+                                                <file role="src" name="promise.hpp"/>
+                                                <file role="src" name="use_coro.hpp"/>
+                                            </dir>
+                                            <file role="src" name="append.hpp"/>
+                                            <file role="src" name="as_single.hpp"/>
+                                            <file role="src" name="as_tuple.hpp"/>
+                                            <file role="src" name="awaitable_operators.hpp"/>
+                                            <file role="src" name="basic_channel.hpp"/>
+                                            <file role="src" name="basic_concurrent_channel.hpp"/>
+                                            <file role="src" name="cancellation_condition.hpp"/>
+                                            <file role="src" name="channel.hpp"/>
+                                            <file role="src" name="channel_error.hpp"/>
+                                            <file role="src" name="channel_traits.hpp"/>
+                                            <file role="src" name="co_spawn.hpp"/>
+                                            <file role="src" name="concurrent_channel.hpp"/>
+                                            <file role="src" name="coro.hpp"/>
+                                            <file role="src" name="coro_traits.hpp"/>
+                                            <file role="src" name="deferred.hpp"/>
+                                            <file role="src" name="parallel_group.hpp"/>
+                                            <file role="src" name="prepend.hpp"/>
+                                            <file role="src" name="promise.hpp"/>
+                                            <file role="src" name="use_coro.hpp"/>
+                                        </dir>
+                                        <dir name="generic">
+                                            <dir name="detail">
+                                                <dir name="impl">
+                                                    <file role="src" name="endpoint.ipp"/>
+                                                </dir>
+                                                <file role="src" name="endpoint.hpp"/>
+                                            </dir>
+                                            <file role="src" name="basic_endpoint.hpp"/>
+                                            <file role="src" name="datagram_protocol.hpp"/>
+                                            <file role="src" name="raw_protocol.hpp"/>
+                                            <file role="src" name="seq_packet_protocol.hpp"/>
+                                            <file role="src" name="stream_protocol.hpp"/>
+                                        </dir>
+                                        <dir name="impl">
+                                            <file role="src" name="any_io_executor.ipp"/>
+                                            <file role="src" name="awaitable.hpp"/>
+                                            <file role="src" name="buffered_read_stream.hpp"/>
+                                            <file role="src" name="buffered_write_stream.hpp"/>
+                                            <file role="src" name="cancellation_signal.ipp"/>
+                                            <file role="src" name="co_spawn.hpp"/>
+                                            <file role="src" name="compose.hpp"/>
+                                            <file role="src" name="connect.hpp"/>
+                                            <file role="src" name="connect_pipe.hpp"/>
+                                            <file role="src" name="connect_pipe.ipp"/>
+                                            <file role="src" name="defer.hpp"/>
+                                            <file role="src" name="detached.hpp"/>
+                                            <file role="src" name="dispatch.hpp"/>
+                                            <file role="src" name="error.ipp"/>
+                                            <file role="src" name="error_code.ipp"/>
+                                            <file role="src" name="execution_context.hpp"/>
+                                            <file role="src" name="execution_context.ipp"/>
+                                            <file role="src" name="executor.hpp"/>
+                                            <file role="src" name="executor.ipp"/>
+                                            <file role="src" name="handler_alloc_hook.ipp"/>
+                                            <file role="src" name="io_context.hpp"/>
+                                            <file role="src" name="io_context.ipp"/>
+                                            <file role="src" name="multiple_exceptions.ipp"/>
+                                            <file role="src" name="post.hpp"/>
+                                            <file role="src" name="read.hpp"/>
+                                            <file role="src" name="read_at.hpp"/>
+                                            <file role="src" name="read_until.hpp"/>
+                                            <file role="src" name="redirect_error.hpp"/>
+                                            <file role="src" name="serial_port_base.hpp"/>
+                                            <file role="src" name="serial_port_base.ipp"/>
+                                            <file role="src" name="spawn.hpp"/>
+                                            <file role="src" name="src.hpp"/>
+                                            <file role="src" name="system_context.hpp"/>
+                                            <file role="src" name="system_context.ipp"/>
+                                            <file role="src" name="system_executor.hpp"/>
+                                            <file role="src" name="thread_pool.hpp"/>
+                                            <file role="src" name="thread_pool.ipp"/>
+                                            <file role="src" name="use_awaitable.hpp"/>
+                                            <file role="src" name="use_future.hpp"/>
+                                            <file role="src" name="write.hpp"/>
+                                            <file role="src" name="write_at.hpp"/>
+                                        </dir>
+                                        <dir name="ip">
+                                            <dir name="detail">
+                                                <dir name="impl">
+                                                    <file role="src" name="endpoint.ipp"/>
+                                                </dir>
+                                                <file role="src" name="endpoint.hpp"/>
+                                                <file role="src" name="socket_option.hpp"/>
+                                            </dir>
+                                            <dir name="impl">
+                                                <file role="src" name="address.hpp"/>
+                                                <file role="src" name="address.ipp"/>
+                                                <file role="src" name="address_v4.hpp"/>
+                                                <file role="src" name="address_v4.ipp"/>
+                                                <file role="src" name="address_v6.hpp"/>
+                                                <file role="src" name="address_v6.ipp"/>
+                                                <file role="src" name="basic_endpoint.hpp"/>
+                                                <file role="src" name="host_name.ipp"/>
+                                                <file role="src" name="network_v4.hpp"/>
+                                                <file role="src" name="network_v4.ipp"/>
+                                                <file role="src" name="network_v6.hpp"/>
+                                                <file role="src" name="network_v6.ipp"/>
+                                            </dir>
+                                            <file role="src" name="address.hpp"/>
+                                            <file role="src" name="address_v4.hpp"/>
+                                            <file role="src" name="address_v4_iterator.hpp"/>
+                                            <file role="src" name="address_v4_range.hpp"/>
+                                            <file role="src" name="address_v6.hpp"/>
+                                            <file role="src" name="address_v6_iterator.hpp"/>
+                                            <file role="src" name="address_v6_range.hpp"/>
+                                            <file role="src" name="bad_address_cast.hpp"/>
+                                            <file role="src" name="basic_endpoint.hpp"/>
+                                            <file role="src" name="basic_resolver.hpp"/>
+                                            <file role="src" name="basic_resolver_entry.hpp"/>
+                                            <file role="src" name="basic_resolver_iterator.hpp"/>
+                                            <file role="src" name="basic_resolver_query.hpp"/>
+                                            <file role="src" name="basic_resolver_results.hpp"/>
+                                            <file role="src" name="host_name.hpp"/>
+                                            <file role="src" name="icmp.hpp"/>
+                                            <file role="src" name="multicast.hpp"/>
+                                            <file role="src" name="network_v4.hpp"/>
+                                            <file role="src" name="network_v6.hpp"/>
+                                            <file role="src" name="resolver_base.hpp"/>
+                                            <file role="src" name="resolver_query_base.hpp"/>
+                                            <file role="src" name="tcp.hpp"/>
+                                            <file role="src" name="udp.hpp"/>
+                                            <file role="src" name="unicast.hpp"/>
+                                            <file role="src" name="v6_only.hpp"/>
+                                        </dir>
+                                        <dir name="local">
+                                            <dir name="detail">
+                                                <dir name="impl">
+                                                    <file role="src" name="endpoint.ipp"/>
+                                                </dir>
+                                                <file role="src" name="endpoint.hpp"/>
+                                            </dir>
+                                            <file role="src" name="basic_endpoint.hpp"/>
+                                            <file role="src" name="connect_pair.hpp"/>
+                                            <file role="src" name="datagram_protocol.hpp"/>
+                                            <file role="src" name="stream_protocol.hpp"/>
+                                        </dir>
+                                        <dir name="posix">
+                                            <file role="src" name="basic_descriptor.hpp"/>
+                                            <file role="src" name="basic_stream_descriptor.hpp"/>
+                                            <file role="src" name="descriptor.hpp"/>
+                                            <file role="src" name="descriptor_base.hpp"/>
+                                            <file role="src" name="stream_descriptor.hpp"/>
+                                        </dir>
+                                        <dir name="ssl">
+                                            <dir name="detail">
+                                                <dir name="impl">
+                                                    <file role="src" name="engine.ipp"/>
+                                                    <file role="src" name="openssl_init.ipp"/>
+                                                </dir>
+                                                <file role="src" name="buffered_handshake_op.hpp"/>
+                                                <file role="src" name="engine.hpp"/>
+                                                <file role="src" name="handshake_op.hpp"/>
+                                                <file role="src" name="io.hpp"/>
+                                                <file role="src" name="openssl_init.hpp"/>
+                                                <file role="src" name="openssl_types.hpp"/>
+                                                <file role="src" name="password_callback.hpp"/>
+                                                <file role="src" name="read_op.hpp"/>
+                                                <file role="src" name="shutdown_op.hpp"/>
+                                                <file role="src" name="stream_core.hpp"/>
+                                                <file role="src" name="verify_callback.hpp"/>
+                                                <file role="src" name="write_op.hpp"/>
+                                            </dir>
+                                            <dir name="impl">
+                                                <file role="src" name="context.hpp"/>
+                                                <file role="src" name="context.ipp"/>
+                                                <file role="src" name="error.ipp"/>
+                                                <file role="src" name="host_name_verification.ipp"/>
+                                                <file role="src" name="rfc2818_verification.ipp"/>
+                                                <file role="src" name="src.hpp"/>
+                                            </dir>
+                                            <file role="src" name="context.hpp"/>
+                                            <file role="src" name="context_base.hpp"/>
+                                            <file role="src" name="error.hpp"/>
+                                            <file role="src" name="host_name_verification.hpp"/>
+                                            <file role="src" name="rfc2818_verification.hpp"/>
+                                            <file role="src" name="stream.hpp"/>
+                                            <file role="src" name="stream_base.hpp"/>
+                                            <file role="src" name="verify_context.hpp"/>
+                                            <file role="src" name="verify_mode.hpp"/>
+                                        </dir>
+                                        <dir name="traits">
+                                            <file role="src" name="bulk_execute_free.hpp"/>
+                                            <file role="src" name="bulk_execute_member.hpp"/>
+                                            <file role="src" name="connect_free.hpp"/>
+                                            <file role="src" name="connect_member.hpp"/>
+                                            <file role="src" name="equality_comparable.hpp"/>
+                                            <file role="src" name="execute_free.hpp"/>
+                                            <file role="src" name="execute_member.hpp"/>
+                                            <file role="src" name="prefer_free.hpp"/>
+                                            <file role="src" name="prefer_member.hpp"/>
+                                            <file role="src" name="query_free.hpp"/>
+                                            <file role="src" name="query_member.hpp"/>
+                                            <file role="src" name="query_static_constexpr_member.hpp"/>
+                                            <file role="src" name="require_concept_free.hpp"/>
+                                            <file role="src" name="require_concept_member.hpp"/>
+                                            <file role="src" name="require_free.hpp"/>
+                                            <file role="src" name="require_member.hpp"/>
+                                            <file role="src" name="schedule_free.hpp"/>
+                                            <file role="src" name="schedule_member.hpp"/>
+                                            <file role="src" name="set_done_free.hpp"/>
+                                            <file role="src" name="set_done_member.hpp"/>
+                                            <file role="src" name="set_error_free.hpp"/>
+                                            <file role="src" name="set_error_member.hpp"/>
+                                            <file role="src" name="set_value_free.hpp"/>
+                                            <file role="src" name="set_value_member.hpp"/>
+                                            <file role="src" name="start_free.hpp"/>
+                                            <file role="src" name="start_member.hpp"/>
+                                            <file role="src" name="static_query.hpp"/>
+                                            <file role="src" name="static_require.hpp"/>
+                                            <file role="src" name="static_require_concept.hpp"/>
+                                            <file role="src" name="submit_free.hpp"/>
+                                            <file role="src" name="submit_member.hpp"/>
+                                        </dir>
+                                        <dir name="ts">
+                                            <file role="src" name="buffer.hpp"/>
+                                            <file role="src" name="executor.hpp"/>
+                                            <file role="src" name="internet.hpp"/>
+                                            <file role="src" name="io_context.hpp"/>
+                                            <file role="src" name="net.hpp"/>
+                                            <file role="src" name="netfwd.hpp"/>
+                                            <file role="src" name="socket.hpp"/>
+                                            <file role="src" name="timer.hpp"/>
+                                        </dir>
+                                        <dir name="windows">
+                                            <file role="src" name="basic_object_handle.hpp"/>
+                                            <file role="src" name="basic_overlapped_handle.hpp"/>
+                                            <file role="src" name="basic_random_access_handle.hpp"/>
+                                            <file role="src" name="basic_stream_handle.hpp"/>
+                                            <file role="src" name="object_handle.hpp"/>
+                                            <file role="src" name="overlapped_handle.hpp"/>
+                                            <file role="src" name="overlapped_ptr.hpp"/>
+                                            <file role="src" name="random_access_handle.hpp"/>
+                                            <file role="src" name="stream_handle.hpp"/>
+                                        </dir>
+                                        <file role="src" name="any_io_executor.hpp"/>
+                                        <file role="src" name="associated_allocator.hpp"/>
+                                        <file role="src" name="associated_cancellation_slot.hpp"/>
+                                        <file role="src" name="associated_executor.hpp"/>
+                                        <file role="src" name="associator.hpp"/>
+                                        <file role="src" name="async_result.hpp"/>
+                                        <file role="src" name="awaitable.hpp"/>
+                                        <file role="src" name="basic_datagram_socket.hpp"/>
+                                        <file role="src" name="basic_deadline_timer.hpp"/>
+                                        <file role="src" name="basic_file.hpp"/>
+                                        <file role="src" name="basic_io_object.hpp"/>
+                                        <file role="src" name="basic_random_access_file.hpp"/>
+                                        <file role="src" name="basic_raw_socket.hpp"/>
+                                        <file role="src" name="basic_readable_pipe.hpp"/>
+                                        <file role="src" name="basic_seq_packet_socket.hpp"/>
+                                        <file role="src" name="basic_serial_port.hpp"/>
+                                        <file role="src" name="basic_signal_set.hpp"/>
+                                        <file role="src" name="basic_socket.hpp"/>
+                                        <file role="src" name="basic_socket_acceptor.hpp"/>
+                                        <file role="src" name="basic_socket_iostream.hpp"/>
+                                        <file role="src" name="basic_socket_streambuf.hpp"/>
+                                        <file role="src" name="basic_stream_file.hpp"/>
+                                        <file role="src" name="basic_stream_socket.hpp"/>
+                                        <file role="src" name="basic_streambuf.hpp"/>
+                                        <file role="src" name="basic_streambuf_fwd.hpp"/>
+                                        <file role="src" name="basic_waitable_timer.hpp"/>
+                                        <file role="src" name="basic_writable_pipe.hpp"/>
+                                        <file role="src" name="bind_cancellation_slot.hpp"/>
+                                        <file role="src" name="bind_executor.hpp"/>
+                                        <file role="src" name="buffer.hpp"/>
+                                        <file role="src" name="buffer_registration.hpp"/>
+                                        <file role="src" name="buffered_read_stream.hpp"/>
+                                        <file role="src" name="buffered_read_stream_fwd.hpp"/>
+                                        <file role="src" name="buffered_stream.hpp"/>
+                                        <file role="src" name="buffered_stream_fwd.hpp"/>
+                                        <file role="src" name="buffered_write_stream.hpp"/>
+                                        <file role="src" name="buffered_write_stream_fwd.hpp"/>
+                                        <file role="src" name="buffers_iterator.hpp"/>
+                                        <file role="src" name="cancellation_signal.hpp"/>
+                                        <file role="src" name="cancellation_state.hpp"/>
+                                        <file role="src" name="cancellation_type.hpp"/>
+                                        <file role="src" name="co_spawn.hpp"/>
+                                        <file role="src" name="completion_condition.hpp"/>
+                                        <file role="src" name="compose.hpp"/>
+                                        <file role="src" name="connect.hpp"/>
+                                        <file role="src" name="connect_pipe.hpp"/>
+                                        <file role="src" name="coroutine.hpp"/>
+                                        <file role="src" name="deadline_timer.hpp"/>
+                                        <file role="src" name="defer.hpp"/>
+                                        <file role="src" name="detached.hpp"/>
+                                        <file role="src" name="dispatch.hpp"/>
+                                        <file role="src" name="error.hpp"/>
+                                        <file role="src" name="error_code.hpp"/>
+                                        <file role="src" name="execution.hpp"/>
+                                        <file role="src" name="execution_context.hpp"/>
+                                        <file role="src" name="executor.hpp"/>
+                                        <file role="src" name="executor_work_guard.hpp"/>
+                                        <file role="src" name="file_base.hpp"/>
+                                        <file role="src" name="handler_alloc_hook.hpp"/>
+                                        <file role="src" name="handler_continuation_hook.hpp"/>
+                                        <file role="src" name="handler_invoke_hook.hpp"/>
+                                        <file role="src" name="high_resolution_timer.hpp"/>
+                                        <file role="src" name="io_context.hpp"/>
+                                        <file role="src" name="io_context_strand.hpp"/>
+                                        <file role="src" name="io_service.hpp"/>
+                                        <file role="src" name="io_service_strand.hpp"/>
+                                        <file role="src" name="is_applicable_property.hpp"/>
+                                        <file role="src" name="is_executor.hpp"/>
+                                        <file role="src" name="is_read_buffered.hpp"/>
+                                        <file role="src" name="is_write_buffered.hpp"/>
+                                        <file role="src" name="multiple_exceptions.hpp"/>
+                                        <file role="src" name="packaged_task.hpp"/>
+                                        <file role="src" name="placeholders.hpp"/>
+                                        <file role="src" name="post.hpp"/>
+                                        <file role="src" name="prefer.hpp"/>
+                                        <file role="src" name="query.hpp"/>
+                                        <file role="src" name="random_access_file.hpp"/>
+                                        <file role="src" name="read.hpp"/>
+                                        <file role="src" name="read_at.hpp"/>
+                                        <file role="src" name="read_until.hpp"/>
+                                        <file role="src" name="readable_pipe.hpp"/>
+                                        <file role="src" name="redirect_error.hpp"/>
+                                        <file role="src" name="registered_buffer.hpp"/>
+                                        <file role="src" name="require.hpp"/>
+                                        <file role="src" name="require_concept.hpp"/>
+                                        <file role="src" name="serial_port.hpp"/>
+                                        <file role="src" name="serial_port_base.hpp"/>
+                                        <file role="src" name="signal_set.hpp"/>
+                                        <file role="src" name="socket_base.hpp"/>
+                                        <file role="src" name="spawn.hpp"/>
+                                        <file role="src" name="ssl.hpp"/>
+                                        <file role="src" name="static_thread_pool.hpp"/>
+                                        <file role="src" name="steady_timer.hpp"/>
+                                        <file role="src" name="strand.hpp"/>
+                                        <file role="src" name="stream_file.hpp"/>
+                                        <file role="src" name="streambuf.hpp"/>
+                                        <file role="src" name="system_context.hpp"/>
+                                        <file role="src" name="system_error.hpp"/>
+                                        <file role="src" name="system_executor.hpp"/>
+                                        <file role="src" name="system_timer.hpp"/>
+                                        <file role="src" name="this_coro.hpp"/>
+                                        <file role="src" name="thread.hpp"/>
+                                        <file role="src" name="thread_pool.hpp"/>
+                                        <file role="src" name="time_traits.hpp"/>
+                                        <file role="src" name="unyield.hpp"/>
+                                        <file role="src" name="use_awaitable.hpp"/>
+                                        <file role="src" name="use_future.hpp"/>
+                                        <file role="src" name="uses_executor.hpp"/>
+                                        <file role="src" name="version.hpp"/>
+                                        <file role="src" name="wait_traits.hpp"/>
+                                        <file role="src" name="writable_pipe.hpp"/>
+                                        <file role="src" name="write.hpp"/>
+                                        <file role="src" name="write_at.hpp"/>
+                                        <file role="src" name="yield.hpp"/>
+                                    </dir>
+                                    <file role="src" name="asio.hpp"/>
+                                </dir>
+                            </dir>
+                        </dir>
+                        <dir name="fmt">
+                            <dir name="include">
+                                <dir name="fmt">
+                                    <file role="src" name="args.h"/>
+                                    <file role="src" name="chrono.h"/>
+                                    <file role="src" name="color.h"/>
+                                    <file role="src" name="compile.h"/>
+                                    <file role="src" name="core.h"/>
+                                    <file role="src" name="format-inl.h"/>
+                                    <file role="src" name="format.h"/>
+                                    <file role="src" name="locale.h"/>
+                                    <file role="src" name="os.h"/>
+                                    <file role="src" name="ostream.h"/>
+                                    <file role="src" name="printf.h"/>
+                                    <file role="src" name="ranges.h"/>
+                                    <file role="src" name="xchar.h"/>
+                                </dir>
+                            </dir>
+                            <dir name="src">
+                                <file role="src" name="fmt.cc"/>
+                                <file role="src" name="format.cc"/>
+                                <file role="src" name="os.cc"/>
+                            </dir>
+                            <dir name="support">
+                                <dir name="cmake">
+                                    <file role="src" name="FindSetEnv.cmake"/>
+                                    <file role="src" name="JoinPaths.cmake"/>
+                                    <file role="src" name="cxx14.cmake"/>
+                                    <file role="src" name="fmt-config.cmake.in"/>
+                                    <file role="src" name="fmt.pc.in"/>
+                                </dir>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="ChangeLog.rst"/>
+                            <file role="src" name="LICENSE.rst"/>
+                            <file role="src" name="README.rst"/>
+                        </dir>
+                        <dir name="gsl">
+                            <dir name="cmake">
+                                <file role="src" name="guidelineSupportLibrary.cmake"/>
+                            </dir>
+                            <dir name="include">
+                                <dir name="gsl">
+                                    <file role="src" name="algorithm"/>
+                                    <file role="src" name="assert"/>
+                                    <file role="src" name="byte"/>
+                                    <file role="src" name="gsl"/>
+                                    <file role="src" name="gsl_algorithm"/>
+                                    <file role="src" name="gsl_assert"/>
+                                    <file role="src" name="gsl_byte"/>
+                                    <file role="src" name="gsl_narrow"/>
+                                    <file role="src" name="gsl_util"/>
+                                    <file role="src" name="narrow"/>
+                                    <file role="src" name="pointers"/>
+                                    <file role="src" name="span"/>
+                                    <file role="src" name="span_ext"/>
+                                    <file role="src" name="string_span"/>
+                                    <file role="src" name="util"/>
+                                </dir>
+                                <file role="src" name="CMakeLists.txt"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="LICENSE"/>
+                            <file role="src" name="ThirdPartyNotices.txt"/>
+                        </dir>
+                        <dir name="hdr_histogram_c">
+                            <dir name="src">
+                                <file role="src" name="CMakeLists.txt"/>
+                                <file role="src" name="hdr_atomic.h"/>
+                                <file role="src" name="hdr_encoding.c"/>
+                                <file role="src" name="hdr_encoding.h"/>
+                                <file role="src" name="hdr_endian.h"/>
+                                <file role="src" name="hdr_histogram.c"/>
+                                <file role="src" name="hdr_histogram.h"/>
+                                <file role="src" name="hdr_histogram_log.c"/>
+                                <file role="src" name="hdr_histogram_log.h"/>
+                                <file role="src" name="hdr_histogram_log_no_op.c"/>
+                                <file role="src" name="hdr_interval_recorder.c"/>
+                                <file role="src" name="hdr_interval_recorder.h"/>
+                                <file role="src" name="hdr_malloc.h"/>
+                                <file role="src" name="hdr_tests.h"/>
+                                <file role="src" name="hdr_thread.c"/>
+                                <file role="src" name="hdr_thread.h"/>
+                                <file role="src" name="hdr_time.c"/>
+                                <file role="src" name="hdr_time.h"/>
+                                <file role="src" name="hdr_writer_reader_phaser.c"/>
+                                <file role="src" name="hdr_writer_reader_phaser.h"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="COPYING.txt"/>
+                            <file role="src" name="LICENSE.txt"/>
+                            <file role="src" name="config.cmake.in"/>
+                        </dir>
+                        <dir name="http_parser">
+                            <file role="src" name="LICENSE-MIT"/>
+                            <file role="src" name="http_parser.c"/>
+                            <file role="src" name="http_parser.h"/>
+                        </dir>
+                        <dir name="json">
+                            <dir name="external">
+                                <dir name="PEGTL">
+                                    <dir name=".cmake">
+                                        <file role="src" name="pegtl-config.cmake.in"/>
+                                        <file role="src" name="test_filesystem.cpp.in"/>
+                                    </dir>
+                                    <dir name="include">
+                                        <dir name="tao">
+                                            <dir name="pegtl">
+                                                <dir name="contrib">
+                                                    <dir name="icu">
+                                                        <file role="src" name="internal.hpp"/>
+                                                        <file role="src" name="utf16.hpp"/>
+                                                        <file role="src" name="utf32.hpp"/>
+                                                        <file role="src" name="utf8.hpp"/>
+                                                    </dir>
+                                                    <dir name="internal">
+                                                        <file role="src" name="endian.hpp"/>
+                                                        <file role="src" name="endian_gcc.hpp"/>
+                                                        <file role="src" name="endian_win.hpp"/>
+                                                        <file role="src" name="peek_mask_uint.hpp"/>
+                                                        <file role="src" name="peek_mask_uint8.hpp"/>
+                                                        <file role="src" name="peek_uint.hpp"/>
+                                                        <file role="src" name="peek_uint8.hpp"/>
+                                                        <file role="src" name="peek_utf16.hpp"/>
+                                                        <file role="src" name="peek_utf32.hpp"/>
+                                                        <file role="src" name="read_uint.hpp"/>
+                                                        <file role="src" name="set_stack_guard.hpp"/>
+                                                        <file role="src" name="vector_stack_guard.hpp"/>
+                                                    </dir>
+                                                    <file role="src" name="abnf.hpp"/>
+                                                    <file role="src" name="add_state.hpp"/>
+                                                    <file role="src" name="alphabet.hpp"/>
+                                                    <file role="src" name="analyze.hpp"/>
+                                                    <file role="src" name="analyze_traits.hpp"/>
+                                                    <file role="src" name="check_bytes.hpp"/>
+                                                    <file role="src" name="control_action.hpp"/>
+                                                    <file role="src" name="coverage.hpp"/>
+                                                    <file role="src" name="forward.hpp"/>
+                                                    <file role="src" name="function.hpp"/>
+                                                    <file role="src" name="http.hpp"/>
+                                                    <file role="src" name="if_then.hpp"/>
+                                                    <file role="src" name="instantiate.hpp"/>
+                                                    <file role="src" name="integer.hpp"/>
+                                                    <file role="src" name="iri.hpp"/>
+                                                    <file role="src" name="json.hpp"/>
+                                                    <file role="src" name="json_pointer.hpp"/>
+                                                    <file role="src" name="limit_bytes.hpp"/>
+                                                    <file role="src" name="limit_depth.hpp"/>
+                                                    <file role="src" name="parse_tree.hpp"/>
+                                                    <file role="src" name="parse_tree_to_dot.hpp"/>
+                                                    <file role="src" name="peg.hpp"/>
+                                                    <file role="src" name="predicates.hpp"/>
+                                                    <file role="src" name="print.hpp"/>
+                                                    <file role="src" name="print_coverage.hpp"/>
+                                                    <file role="src" name="proto3.hpp"/>
+                                                    <file role="src" name="raw_string.hpp"/>
+                                                    <file role="src" name="remove_first_state.hpp"/>
+                                                    <file role="src" name="remove_last_states.hpp"/>
+                                                    <file role="src" name="rep_one_min_max.hpp"/>
+                                                    <file role="src" name="rep_string.hpp"/>
+                                                    <file role="src" name="separated_seq.hpp"/>
+                                                    <file role="src" name="shuffle_states.hpp"/>
+                                                    <file role="src" name="state_control.hpp"/>
+                                                    <file role="src" name="to_string.hpp"/>
+                                                    <file role="src" name="trace.hpp"/>
+                                                    <file role="src" name="uint16.hpp"/>
+                                                    <file role="src" name="uint32.hpp"/>
+                                                    <file role="src" name="uint64.hpp"/>
+                                                    <file role="src" name="uint8.hpp"/>
+                                                    <file role="src" name="unescape.hpp"/>
+                                                    <file role="src" name="uri.hpp"/>
+                                                    <file role="src" name="utf16.hpp"/>
+                                                    <file role="src" name="utf32.hpp"/>
+                                                </dir>
+                                                <dir name="internal">
+                                                    <file role="src" name="action.hpp"/>
+                                                    <file role="src" name="action_input.hpp"/>
+                                                    <file role="src" name="any.hpp"/>
+                                                    <file role="src" name="apply.hpp"/>
+                                                    <file role="src" name="apply0.hpp"/>
+                                                    <file role="src" name="apply0_single.hpp"/>
+                                                    <file role="src" name="apply_single.hpp"/>
+                                                    <file role="src" name="at.hpp"/>
+                                                    <file role="src" name="bof.hpp"/>
+                                                    <file role="src" name="bol.hpp"/>
+                                                    <file role="src" name="bump.hpp"/>
+                                                    <file role="src" name="bump_help.hpp"/>
+                                                    <file role="src" name="bytes.hpp"/>
+                                                    <file role="src" name="control.hpp"/>
+                                                    <file role="src" name="cr_crlf_eol.hpp"/>
+                                                    <file role="src" name="cr_eol.hpp"/>
+                                                    <file role="src" name="crlf_eol.hpp"/>
+                                                    <file role="src" name="cstream_reader.hpp"/>
+                                                    <file role="src" name="cstring_reader.hpp"/>
+                                                    <file role="src" name="dependent_false.hpp"/>
+                                                    <file role="src" name="dependent_true.hpp"/>
+                                                    <file role="src" name="disable.hpp"/>
+                                                    <file role="src" name="discard.hpp"/>
+                                                    <file role="src" name="enable.hpp"/>
+                                                    <file role="src" name="enable_control.hpp"/>
+                                                    <file role="src" name="eof.hpp"/>
+                                                    <file role="src" name="eol.hpp"/>
+                                                    <file role="src" name="eolf.hpp"/>
+                                                    <file role="src" name="failure.hpp"/>
+                                                    <file role="src" name="file_mapper_posix.hpp"/>
+                                                    <file role="src" name="file_mapper_win32.hpp"/>
+                                                    <file role="src" name="file_reader.hpp"/>
+                                                    <file role="src" name="filesystem.hpp"/>
+                                                    <file role="src" name="has_apply.hpp"/>
+                                                    <file role="src" name="has_apply0.hpp"/>
+                                                    <file role="src" name="has_match.hpp"/>
+                                                    <file role="src" name="has_unwind.hpp"/>
+                                                    <file role="src" name="identifier.hpp"/>
+                                                    <file role="src" name="if_apply.hpp"/>
+                                                    <file role="src" name="if_must.hpp"/>
+                                                    <file role="src" name="if_must_else.hpp"/>
+                                                    <file role="src" name="if_then_else.hpp"/>
+                                                    <file role="src" name="input_pair.hpp"/>
+                                                    <file role="src" name="istream_reader.hpp"/>
+                                                    <file role="src" name="istring.hpp"/>
+                                                    <file role="src" name="iterator.hpp"/>
+                                                    <file role="src" name="lf_crlf_eol.hpp"/>
+                                                    <file role="src" name="lf_eol.hpp"/>
+                                                    <file role="src" name="list.hpp"/>
+                                                    <file role="src" name="list_must.hpp"/>
+                                                    <file role="src" name="list_tail.hpp"/>
+                                                    <file role="src" name="list_tail_pad.hpp"/>
+                                                    <file role="src" name="marker.hpp"/>
+                                                    <file role="src" name="minus.hpp"/>
+                                                    <file role="src" name="missing_apply.hpp"/>
+                                                    <file role="src" name="missing_apply0.hpp"/>
+                                                    <file role="src" name="must.hpp"/>
+                                                    <file role="src" name="not_at.hpp"/>
+                                                    <file role="src" name="one.hpp"/>
+                                                    <file role="src" name="opt.hpp"/>
+                                                    <file role="src" name="pad.hpp"/>
+                                                    <file role="src" name="pad_opt.hpp"/>
+                                                    <file role="src" name="path_to_string.hpp"/>
+                                                    <file role="src" name="peek_char.hpp"/>
+                                                    <file role="src" name="peek_utf8.hpp"/>
+                                                    <file role="src" name="pegtl_string.hpp"/>
+                                                    <file role="src" name="plus.hpp"/>
+                                                    <file role="src" name="raise.hpp"/>
+                                                    <file role="src" name="range.hpp"/>
+                                                    <file role="src" name="ranges.hpp"/>
+                                                    <file role="src" name="rematch.hpp"/>
+                                                    <file role="src" name="rep.hpp"/>
+                                                    <file role="src" name="rep_min.hpp"/>
+                                                    <file role="src" name="rep_min_max.hpp"/>
+                                                    <file role="src" name="rep_opt.hpp"/>
+                                                    <file role="src" name="require.hpp"/>
+                                                    <file role="src" name="result_on_found.hpp"/>
+                                                    <file role="src" name="rules.hpp"/>
+                                                    <file role="src" name="seq.hpp"/>
+                                                    <file role="src" name="sor.hpp"/>
+                                                    <file role="src" name="star.hpp"/>
+                                                    <file role="src" name="star_must.hpp"/>
+                                                    <file role="src" name="state.hpp"/>
+                                                    <file role="src" name="string.hpp"/>
+                                                    <file role="src" name="success.hpp"/>
+                                                    <file role="src" name="try_catch_type.hpp"/>
+                                                    <file role="src" name="until.hpp"/>
+                                                </dir>
+                                                <file role="src" name="apply_mode.hpp"/>
+                                                <file role="src" name="argv_input.hpp"/>
+                                                <file role="src" name="ascii.hpp"/>
+                                                <file role="src" name="buffer_input.hpp"/>
+                                                <file role="src" name="change_action.hpp"/>
+                                                <file role="src" name="change_action_and_state.hpp"/>
+                                                <file role="src" name="change_action_and_states.hpp"/>
+                                                <file role="src" name="change_control.hpp"/>
+                                                <file role="src" name="change_state.hpp"/>
+                                                <file role="src" name="change_states.hpp"/>
+                                                <file role="src" name="config.hpp"/>
+                                                <file role="src" name="cstream_input.hpp"/>
+                                                <file role="src" name="demangle.hpp"/>
+                                                <file role="src" name="disable_action.hpp"/>
+                                                <file role="src" name="discard_input.hpp"/>
+                                                <file role="src" name="discard_input_on_failure.hpp"/>
+                                                <file role="src" name="discard_input_on_success.hpp"/>
+                                                <file role="src" name="enable_action.hpp"/>
+                                                <file role="src" name="eol.hpp"/>
+                                                <file role="src" name="eol_pair.hpp"/>
+                                                <file role="src" name="file_input.hpp"/>
+                                                <file role="src" name="istream_input.hpp"/>
+                                                <file role="src" name="match.hpp"/>
+                                                <file role="src" name="memory_input.hpp"/>
+                                                <file role="src" name="mmap_input.hpp"/>
+                                                <file role="src" name="must_if.hpp"/>
+                                                <file role="src" name="normal.hpp"/>
+                                                <file role="src" name="nothing.hpp"/>
+                                                <file role="src" name="parse.hpp"/>
+                                                <file role="src" name="parse_error.hpp"/>
+                                                <file role="src" name="position.hpp"/>
+                                                <file role="src" name="read_input.hpp"/>
+                                                <file role="src" name="require_apply.hpp"/>
+                                                <file role="src" name="require_apply0.hpp"/>
+                                                <file role="src" name="rewind_mode.hpp"/>
+                                                <file role="src" name="rules.hpp"/>
+                                                <file role="src" name="string_input.hpp"/>
+                                                <file role="src" name="tracking_mode.hpp"/>
+                                                <file role="src" name="type_list.hpp"/>
+                                                <file role="src" name="utf8.hpp"/>
+                                                <file role="src" name="version.hpp"/>
+                                                <file role="src" name="visit.hpp"/>
+                                            </dir>
+                                            <file role="src" name="pegtl.hpp"/>
+                                        </dir>
+                                    </dir>
+                                    <file role="src" name="CMakeLists.txt"/>
+                                    <file role="src" name="LICENSE"/>
+                                </dir>
+                            </dir>
+                            <dir name="include">
+                                <dir name="tao">
+                                    <dir name="json">
+                                        <dir name="binding">
+                                            <dir name="internal">
+                                                <file role="src" name="array.hpp"/>
+                                                <file role="src" name="elementr.hpp"/>
+                                                <file role="src" name="elementw.hpp"/>
+                                                <file role="src" name="inherit.hpp"/>
+                                                <file role="src" name="object.hpp"/>
+                                                <file role="src" name="type_key.hpp"/>
+                                            </dir>
+                                            <file role="src" name="constant.hpp"/>
+                                            <file role="src" name="element.hpp"/>
+                                            <file role="src" name="element2.hpp"/>
+                                            <file role="src" name="factory.hpp"/>
+                                            <file role="src" name="for_nothing_value.hpp"/>
+                                            <file role="src" name="for_unknown_key.hpp"/>
+                                            <file role="src" name="inherit.hpp"/>
+                                            <file role="src" name="member.hpp"/>
+                                            <file role="src" name="member_kind.hpp"/>
+                                            <file role="src" name="versions.hpp"/>
+                                        </dir>
+                                        <dir name="cbor">
+                                            <dir name="events">
+                                                <file role="src" name="from_binary.hpp"/>
+                                                <file role="src" name="from_file.hpp"/>
+                                                <file role="src" name="from_input.hpp"/>
+                                                <file role="src" name="from_string.hpp"/>
+                                                <file role="src" name="to_stream.hpp"/>
+                                                <file role="src" name="to_string.hpp"/>
+                                            </dir>
+                                            <dir name="internal">
+                                                <file role="src" name="grammar.hpp"/>
+                                                <file role="src" name="major.hpp"/>
+                                            </dir>
+                                            <file role="src" name="consume_file.hpp"/>
+                                            <file role="src" name="consume_string.hpp"/>
+                                            <file role="src" name="from_binary.hpp"/>
+                                            <file role="src" name="from_file.hpp"/>
+                                            <file role="src" name="from_input.hpp"/>
+                                            <file role="src" name="from_string.hpp"/>
+                                            <file role="src" name="parts_parser.hpp"/>
+                                            <file role="src" name="to_stream.hpp"/>
+                                            <file role="src" name="to_string.hpp"/>
+                                        </dir>
+                                        <dir name="contrib">
+                                            <dir name="internal">
+                                                <file role="src" name="array_traits.hpp"/>
+                                                <file role="src" name="indirect_traits.hpp"/>
+                                                <file role="src" name="object_traits.hpp"/>
+                                                <file role="src" name="type_traits.hpp"/>
+                                            </dir>
+                                            <file role="src" name="array_traits.hpp"/>
+                                            <file role="src" name="deque_traits.hpp"/>
+                                            <file role="src" name="diff.hpp"/>
+                                            <file role="src" name="get.hpp"/>
+                                            <file role="src" name="list_traits.hpp"/>
+                                            <file role="src" name="map_traits.hpp"/>
+                                            <file role="src" name="multimap_traits.hpp"/>
+                                            <file role="src" name="multiset_traits.hpp"/>
+                                            <file role="src" name="pair_traits.hpp"/>
+                                            <file role="src" name="patch.hpp"/>
+                                            <file role="src" name="pointer_traits.hpp"/>
+                                            <file role="src" name="position.hpp"/>
+                                            <file role="src" name="reference.hpp"/>
+                                            <file role="src" name="schema.hpp"/>
+                                            <file role="src" name="set_traits.hpp"/>
+                                            <file role="src" name="shared_ptr_traits.hpp"/>
+                                            <file role="src" name="traits.hpp"/>
+                                            <file role="src" name="tuple_traits.hpp"/>
+                                            <file role="src" name="unique_ptr_traits.hpp"/>
+                                            <file role="src" name="unordered_map_traits.hpp"/>
+                                            <file role="src" name="unordered_set_traits.hpp"/>
+                                            <file role="src" name="variant_traits.hpp"/>
+                                            <file role="src" name="vector_bool_traits.hpp"/>
+                                            <file role="src" name="vector_traits.hpp"/>
+                                        </dir>
+                                        <dir name="events">
+                                            <file role="src" name="apply.hpp"/>
+                                            <file role="src" name="binary_to_base64.hpp"/>
+                                            <file role="src" name="binary_to_base64url.hpp"/>
+                                            <file role="src" name="binary_to_exception.hpp"/>
+                                            <file role="src" name="binary_to_hex.hpp"/>
+                                            <file role="src" name="compare.hpp"/>
+                                            <file role="src" name="debug.hpp"/>
+                                            <file role="src" name="discard.hpp"/>
+                                            <file role="src" name="from_file.hpp"/>
+                                            <file role="src" name="from_input.hpp"/>
+                                            <file role="src" name="from_stream.hpp"/>
+                                            <file role="src" name="from_string.hpp"/>
+                                            <file role="src" name="from_value.hpp"/>
+                                            <file role="src" name="hash.hpp"/>
+                                            <file role="src" name="invalid_string_to_binary.hpp"/>
+                                            <file role="src" name="invalid_string_to_exception.hpp"/>
+                                            <file role="src" name="invalid_string_to_hex.hpp"/>
+                                            <file role="src" name="key_camel_case_to_snake_case.hpp"/>
+                                            <file role="src" name="key_snake_case_to_camel_case.hpp"/>
+                                            <file role="src" name="limit_nesting_depth.hpp"/>
+                                            <file role="src" name="limit_value_count.hpp"/>
+                                            <file role="src" name="non_finite_to_exception.hpp"/>
+                                            <file role="src" name="non_finite_to_null.hpp"/>
+                                            <file role="src" name="non_finite_to_string.hpp"/>
+                                            <file role="src" name="prefer_signed.hpp"/>
+                                            <file role="src" name="prefer_unsigned.hpp"/>
+                                            <file role="src" name="produce.hpp"/>
+                                            <file role="src" name="ref.hpp"/>
+                                            <file role="src" name="statistics.hpp"/>
+                                            <file role="src" name="tee.hpp"/>
+                                            <file role="src" name="to_pretty_stream.hpp"/>
+                                            <file role="src" name="to_stream.hpp"/>
+                                            <file role="src" name="to_string.hpp"/>
+                                            <file role="src" name="to_value.hpp"/>
+                                            <file role="src" name="transformer.hpp"/>
+                                            <file role="src" name="validate_event_order.hpp"/>
+                                            <file role="src" name="validate_keys.hpp"/>
+                                            <file role="src" name="virtual_base.hpp"/>
+                                            <file role="src" name="virtual_ref.hpp"/>
+                                            <file role="src" name="virtual_wrap.hpp"/>
+                                        </dir>
+                                        <dir name="external">
+                                            <file role="src" name="double.hpp"/>
+                                            <file role="src" name="itoa.hpp"/>
+                                            <file role="src" name="ryu.hpp"/>
+                                        </dir>
+                                        <dir name="internal">
+                                            <file role="src" name="action.hpp"/>
+                                            <file role="src" name="base64.hpp"/>
+                                            <file role="src" name="base64url.hpp"/>
+                                            <file role="src" name="dependent_false.hpp"/>
+                                            <file role="src" name="endian.hpp"/>
+                                            <file role="src" name="endian_gcc.hpp"/>
+                                            <file role="src" name="endian_win.hpp"/>
+                                            <file role="src" name="errors.hpp"/>
+                                            <file role="src" name="escape.hpp"/>
+                                            <file role="src" name="filesystem.hpp"/>
+                                            <file role="src" name="format.hpp"/>
+                                            <file role="src" name="grammar.hpp"/>
+                                            <file role="src" name="hexdump.hpp"/>
+                                            <file role="src" name="identity.hpp"/>
+                                            <file role="src" name="number_state.hpp"/>
+                                            <file role="src" name="number_traits.hpp"/>
+                                            <file role="src" name="pair.hpp"/>
+                                            <file role="src" name="parse_util.hpp"/>
+                                            <file role="src" name="sha256.hpp"/>
+                                            <file role="src" name="single.hpp"/>
+                                            <file role="src" name="string_t.hpp"/>
+                                            <file role="src" name="type_traits.hpp"/>
+                                            <file role="src" name="unescape_action.hpp"/>
+                                            <file role="src" name="uri_fragment.hpp"/>
+                                        </dir>
+                                        <dir name="jaxn">
+                                            <dir name="events">
+                                                <file role="src" name="from_file.hpp"/>
+                                                <file role="src" name="from_input.hpp"/>
+                                                <file role="src" name="from_stream.hpp"/>
+                                                <file role="src" name="from_string.hpp"/>
+                                                <file role="src" name="to_pretty_stream.hpp"/>
+                                                <file role="src" name="to_stream.hpp"/>
+                                                <file role="src" name="to_string.hpp"/>
+                                            </dir>
+                                            <dir name="internal">
+                                                <file role="src" name="action.hpp"/>
+                                                <file role="src" name="bunescape_action.hpp"/>
+                                                <file role="src" name="errors.hpp"/>
+                                                <file role="src" name="grammar.hpp"/>
+                                                <file role="src" name="integer.hpp"/>
+                                                <file role="src" name="unescape_action.hpp"/>
+                                            </dir>
+                                            <file role="src" name="consume_file.hpp"/>
+                                            <file role="src" name="consume_string.hpp"/>
+                                            <file role="src" name="from_file.hpp"/>
+                                            <file role="src" name="from_input.hpp"/>
+                                            <file role="src" name="from_stream.hpp"/>
+                                            <file role="src" name="from_string.hpp"/>
+                                            <file role="src" name="is_identifier.hpp"/>
+                                            <file role="src" name="parts_parser.hpp"/>
+                                            <file role="src" name="to_stream.hpp"/>
+                                            <file role="src" name="to_string.hpp"/>
+                                        </dir>
+                                        <dir name="msgpack">
+                                            <dir name="events">
+                                                <file role="src" name="from_binary.hpp"/>
+                                                <file role="src" name="from_file.hpp"/>
+                                                <file role="src" name="from_input.hpp"/>
+                                                <file role="src" name="from_string.hpp"/>
+                                                <file role="src" name="to_stream.hpp"/>
+                                                <file role="src" name="to_string.hpp"/>
+                                            </dir>
+                                            <dir name="internal">
+                                                <file role="src" name="format.hpp"/>
+                                                <file role="src" name="grammar.hpp"/>
+                                            </dir>
+                                            <file role="src" name="consume_file.hpp"/>
+                                            <file role="src" name="consume_string.hpp"/>
+                                            <file role="src" name="from_binary.hpp"/>
+                                            <file role="src" name="from_file.hpp"/>
+                                            <file role="src" name="from_input.hpp"/>
+                                            <file role="src" name="from_string.hpp"/>
+                                            <file role="src" name="parts_parser.hpp"/>
+                                            <file role="src" name="to_stream.hpp"/>
+                                            <file role="src" name="to_string.hpp"/>
+                                        </dir>
+                                        <dir name="ubjson">
+                                            <dir name="events">
+                                                <file role="src" name="from_binary.hpp"/>
+                                                <file role="src" name="from_file.hpp"/>
+                                                <file role="src" name="from_input.hpp"/>
+                                                <file role="src" name="from_string.hpp"/>
+                                                <file role="src" name="to_stream.hpp"/>
+                                                <file role="src" name="to_string.hpp"/>
+                                            </dir>
+                                            <dir name="internal">
+                                                <file role="src" name="grammar.hpp"/>
+                                                <file role="src" name="marker.hpp"/>
+                                            </dir>
+                                            <file role="src" name="consume_file.hpp"/>
+                                            <file role="src" name="consume_string.hpp"/>
+                                            <file role="src" name="from_binary.hpp"/>
+                                            <file role="src" name="from_file.hpp"/>
+                                            <file role="src" name="from_input.hpp"/>
+                                            <file role="src" name="from_string.hpp"/>
+                                            <file role="src" name="parts_parser.hpp"/>
+                                            <file role="src" name="to_stream.hpp"/>
+                                            <file role="src" name="to_string.hpp"/>
+                                        </dir>
+                                        <file role="src" name="basic_value.hpp"/>
+                                        <file role="src" name="binary.hpp"/>
+                                        <file role="src" name="binary_view.hpp"/>
+                                        <file role="src" name="binding.hpp"/>
+                                        <file role="src" name="cbor.hpp"/>
+                                        <file role="src" name="consume.hpp"/>
+                                        <file role="src" name="consume_file.hpp"/>
+                                        <file role="src" name="consume_string.hpp"/>
+                                        <file role="src" name="events.hpp"/>
+                                        <file role="src" name="forward.hpp"/>
+                                        <file role="src" name="from_file.hpp"/>
+                                        <file role="src" name="from_input.hpp"/>
+                                        <file role="src" name="from_stream.hpp"/>
+                                        <file role="src" name="from_string.hpp"/>
+                                        <file role="src" name="jaxn.hpp"/>
+                                        <file role="src" name="message_extension.hpp"/>
+                                        <file role="src" name="msgpack.hpp"/>
+                                        <file role="src" name="operators.hpp"/>
+                                        <file role="src" name="parts_parser.hpp"/>
+                                        <file role="src" name="pointer.hpp"/>
+                                        <file role="src" name="produce.hpp"/>
+                                        <file role="src" name="self_contained.hpp"/>
+                                        <file role="src" name="span.hpp"/>
+                                        <file role="src" name="stream.hpp"/>
+                                        <file role="src" name="to_stream.hpp"/>
+                                        <file role="src" name="to_string.hpp"/>
+                                        <file role="src" name="traits.hpp"/>
+                                        <file role="src" name="type.hpp"/>
+                                        <file role="src" name="ubjson.hpp"/>
+                                        <file role="src" name="utf8.hpp"/>
+                                        <file role="src" name="value.hpp"/>
+                                    </dir>
+                                    <file role="src" name="json.hpp"/>
+                                </dir>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="LICENSE"/>
+                            <file role="src" name="LICENSE.double-conversion"/>
+                            <file role="src" name="LICENSE.itoa"/>
+                            <file role="src" name="LICENSE.ryu"/>
+                        </dir>
+                        <dir name="jsonsl">
+                            <file role="src" name="LICENSE"/>
+                            <file role="src" name="jsonsl.c"/>
+                            <file role="src" name="jsonsl.h"/>
+                        </dir>
+                        <dir name="snappy">
+                            <dir name="cmake">
+                                <file role="src" name="SnappyConfig.cmake.in"/>
+                                <file role="src" name="config.h.in"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="COPYING"/>
+                            <file role="src" name="snappy-c.h"/>
+                            <file role="src" name="snappy-c.cc"/>
+                            <file role="src" name="snappy-internal.h"/>
+                            <file role="src" name="snappy-sinksource.h"/>
+                            <file role="src" name="snappy-sinksource.cc"/>
+                            <file role="src" name="snappy-stubs-internal.h"/>
+                            <file role="src" name="snappy-stubs-internal.cc"/>
+                            <file role="src" name="snappy-stubs-public.h.in"/>
+                            <file role="src" name="snappy.h"/>
+                            <file role="src" name="snappy.cc"/>
+                        </dir>
+                        <dir name="spdlog">
+                            <dir name="cmake">
+                                <file role="src" name="ide.cmake"/>
+                                <file role="src" name="pch.h.in"/>
+                                <file role="src" name="spdlog.pc.in"/>
+                                <file role="src" name="spdlogCPack.cmake"/>
+                                <file role="src" name="spdlogConfig.cmake.in"/>
+                                <file role="src" name="utils.cmake"/>
+                                <file role="src" name="version.rc.in"/>
+                            </dir>
+                            <dir name="include">
+                                <dir name="spdlog">
+                                    <dir name="cfg">
+                                        <file role="src" name="argv.h"/>
+                                        <file role="src" name="env.h"/>
+                                        <file role="src" name="helpers-inl.h"/>
+                                        <file role="src" name="helpers.h"/>
+                                    </dir>
+                                    <dir name="details">
+                                        <file role="src" name="backtracer-inl.h"/>
+                                        <file role="src" name="backtracer.h"/>
+                                        <file role="src" name="circular_q.h"/>
+                                        <file role="src" name="console_globals.h"/>
+                                        <file role="src" name="file_helper-inl.h"/>
+                                        <file role="src" name="file_helper.h"/>
+                                        <file role="src" name="fmt_helper.h"/>
+                                        <file role="src" name="log_msg-inl.h"/>
+                                        <file role="src" name="log_msg.h"/>
+                                        <file role="src" name="log_msg_buffer-inl.h"/>
+                                        <file role="src" name="log_msg_buffer.h"/>
+                                        <file role="src" name="mpmc_blocking_q.h"/>
+                                        <file role="src" name="null_mutex.h"/>
+                                        <file role="src" name="os-inl.h"/>
+                                        <file role="src" name="os.h"/>
+                                        <file role="src" name="periodic_worker-inl.h"/>
+                                        <file role="src" name="periodic_worker.h"/>
+                                        <file role="src" name="registry-inl.h"/>
+                                        <file role="src" name="registry.h"/>
+                                        <file role="src" name="synchronous_factory.h"/>
+                                        <file role="src" name="tcp_client-windows.h"/>
+                                        <file role="src" name="tcp_client.h"/>
+                                        <file role="src" name="thread_pool-inl.h"/>
+                                        <file role="src" name="thread_pool.h"/>
+                                        <file role="src" name="windows_include.h"/>
+                                    </dir>
+                                    <dir name="fmt">
+                                        <dir name="bundled">
+                                            <file role="src" name="args.h"/>
+                                            <file role="src" name="chrono.h"/>
+                                            <file role="src" name="color.h"/>
+                                            <file role="src" name="compile.h"/>
+                                            <file role="src" name="core.h"/>
+                                            <file role="src" name="format-inl.h"/>
+                                            <file role="src" name="format.h"/>
+                                            <file role="src" name="locale.h"/>
+                                            <file role="src" name="os.h"/>
+                                            <file role="src" name="ostream.h"/>
+                                            <file role="src" name="printf.h"/>
+                                            <file role="src" name="ranges.h"/>
+                                            <file role="src" name="xchar.h"/>
+                                        </dir>
+                                        <file role="src" name="bin_to_hex.h"/>
+                                        <file role="src" name="chrono.h"/>
+                                        <file role="src" name="compile.h"/>
+                                        <file role="src" name="fmt.h"/>
+                                        <file role="src" name="ostr.h"/>
+                                        <file role="src" name="xchar.h"/>
+                                    </dir>
+                                    <dir name="sinks">
+                                        <file role="src" name="android_sink.h"/>
+                                        <file role="src" name="ansicolor_sink-inl.h"/>
+                                        <file role="src" name="ansicolor_sink.h"/>
+                                        <file role="src" name="base_sink-inl.h"/>
+                                        <file role="src" name="base_sink.h"/>
+                                        <file role="src" name="basic_file_sink-inl.h"/>
+                                        <file role="src" name="basic_file_sink.h"/>
+                                        <file role="src" name="daily_file_sink.h"/>
+                                        <file role="src" name="dist_sink.h"/>
+                                        <file role="src" name="dup_filter_sink.h"/>
+                                        <file role="src" name="hourly_file_sink.h"/>
+                                        <file role="src" name="mongo_sink.h"/>
+                                        <file role="src" name="msvc_sink.h"/>
+                                        <file role="src" name="null_sink.h"/>
+                                        <file role="src" name="ostream_sink.h"/>
+                                        <file role="src" name="qt_sinks.h"/>
+                                        <file role="src" name="ringbuffer_sink.h"/>
+                                        <file role="src" name="rotating_file_sink-inl.h"/>
+                                        <file role="src" name="rotating_file_sink.h"/>
+                                        <file role="src" name="sink-inl.h"/>
+                                        <file role="src" name="sink.h"/>
+                                        <file role="src" name="stdout_color_sinks-inl.h"/>
+                                        <file role="src" name="stdout_color_sinks.h"/>
+                                        <file role="src" name="stdout_sinks-inl.h"/>
+                                        <file role="src" name="stdout_sinks.h"/>
+                                        <file role="src" name="syslog_sink.h"/>
+                                        <file role="src" name="systemd_sink.h"/>
+                                        <file role="src" name="tcp_sink.h"/>
+                                        <file role="src" name="win_eventlog_sink.h"/>
+                                        <file role="src" name="wincolor_sink-inl.h"/>
+                                        <file role="src" name="wincolor_sink.h"/>
+                                    </dir>
+                                    <file role="src" name="async.h"/>
+                                    <file role="src" name="async_logger-inl.h"/>
+                                    <file role="src" name="async_logger.h"/>
+                                    <file role="src" name="common-inl.h"/>
+                                    <file role="src" name="common.h"/>
+                                    <file role="src" name="formatter.h"/>
+                                    <file role="src" name="fwd.h"/>
+                                    <file role="src" name="logger-inl.h"/>
+                                    <file role="src" name="logger.h"/>
+                                    <file role="src" name="pattern_formatter-inl.h"/>
+                                    <file role="src" name="pattern_formatter.h"/>
+                                    <file role="src" name="spdlog-inl.h"/>
+                                    <file role="src" name="spdlog.h"/>
+                                    <file role="src" name="stopwatch.h"/>
+                                    <file role="src" name="tweakme.h"/>
+                                    <file role="src" name="version.h"/>
+                                </dir>
+                            </dir>
+                            <dir name="src">
+                                <file role="src" name="async.cpp"/>
+                                <file role="src" name="cfg.cpp"/>
+                                <file role="src" name="color_sinks.cpp"/>
+                                <file role="src" name="file_sinks.cpp"/>
+                                <file role="src" name="fmt.cpp"/>
+                                <file role="src" name="spdlog.cpp"/>
+                                <file role="src" name="stdout_sinks.cpp"/>
+                            </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="LICENSE"/>
+                        </dir>
+                    </dir>
+                    <file role="src" name="CMakeLists.txt"/>
+                    <file role="src" name="LICENSE.txt"/>
+                </dir>
+            </dir>
+            <file role="src" name="CMakeLists.txt"/>
+            <file role="src" name="Makefile.frag"/>
+            <file role="src" name="config.m4"/>
+        </dir>
+    </contents>
+    <dependencies>
+        <required>
+            <php>
+                <min>7.4.0</min>
+            </php>
+            <pearinstaller>
+                <min>1.10.1</min>
+            </pearinstaller>
+        </required>
+    </dependencies>
+    <providesextension>couchbase</providesextension>
+    <extsrcrelease/>
+    <changelog>
+    </changelog>
+</package>
+<!--
+vim: et ts=4 sts=4 sw=4
+-->

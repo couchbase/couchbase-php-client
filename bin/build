@@ -1,0 +1,57 @@
+#!/usr/bin/env ruby
+
+#    Copyright 2020-Present Couchbase, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+require "fileutils"
+require "rbconfig"
+
+def which(name)
+  ENV.fetch("PATH", "")
+     .split(File::PATH_SEPARATOR)
+     .map { |path| [path, name].join(File::SEPARATOR) + RbConfig::CONFIG["EXEEXT"] }
+     .find { |file| File.executable?(file) }
+end
+
+def run(*args)
+  args = args.compact.map(&:to_s)
+  puts args.join(" ")
+  system(*args) || abort("command returned non-zero status: #{args.join(" ")}")
+end
+
+PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
+
+CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
+
+run("#{CB_PHP_PREFIX}/bin/php --version")
+run("#{CB_PHP_PREFIX}/bin/php --ini")
+
+Dir.chdir(PROJECT_ROOT) do
+  run("#{CB_PHP_PREFIX}/bin/phpize")
+  run("./configure --with-php-config=#{CB_PHP_PREFIX}/bin/php-config")
+  run("make clean")
+  run("make -j8")
+end
+
+COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+
+run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -m | grep couchbase")
+run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -i | grep couchbase")
+
+File.write("#{PROJECT_ROOT}/build/try_to_load.php", <<EOF)
+<?php
+\\Couchbase\\Extension\\version();
+EOF
+
+run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} #{PROJECT_ROOT}/build/try_to_load.php")

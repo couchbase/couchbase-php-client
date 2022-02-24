@@ -1,0 +1,5 @@
+$(COUCHBASE_CMAKE_BUILD_DIRECTORY)/libcouchbase_php_core.${SHLIB_SUFFIX_NAME}: 
+	$(CMAKE) --build $(COUCHBASE_CMAKE_BUILD_DIRECTORY) --parallel=4 
+
+.PHONY: build-core
+build-core: $(COUCHBASE_CMAKE_BUILD_DIRECTORY)/libcouchbase.${SHLIB_SUFFIX_NAME}
