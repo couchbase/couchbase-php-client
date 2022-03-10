@@ -1,6 +1,7 @@
-PHP_ARG_WITH(couchbase, whether to enable Couchbase support,
-[  --with-couchbase   Include Couchbase support])
-
+PHP_ARG_ENABLE([couchbase],
+               [whether to enable Couchbase support],
+               [AS_HELP_STRING([--enable-couchbase],
+                               [Enable Couchbase support])])
 
 AC_SUBST(PHP_COUCHBASE)
 
@@ -17,10 +18,12 @@ if test "$PHP_COUCHBASE" != "no"; then
   PHP_SUBST([COUCHBASE_CMAKE_SOURCE_DIRECTORY])
   PHP_SUBST([COUCHBASE_CMAKE_BUILD_DIRECTORY])
 
-  COUCHBASE_SHARED_DEPENDENCIES=${phplibdir}/libcouchbase_php_core.${SHLIB_SUFFIX_NAME}
-  PHP_SUBST([COUCHBASE_SHARED_DEPENDENCIES])
-  PHP_ADD_LIBRARY_WITH_PATH(couchbase_php_core, ${phplibdir}, COUCHBASE_SHARED_LIBADD)
+  PHP_ADD_LIBRARY_DEFER_WITH_PATH(couchbase_php_core, $EXTENSION_DIR, COUCHBASE_SHARED_LIBADD)
+  PHP_ADD_LIBRARY_DEFER_WITH_PATH(couchbase_php_core, "$ac_pwd/modules", COUCHBASE_SHARED_LIBADD)
+
   PHP_SUBST([COUCHBASE_SHARED_LIBADD])
+  COUCHBASE_SHARED_DEPENDENCIES="\$(phplibdir)/libcouchbase_php_core.${SHLIB_SUFFIX_NAME}"
+  PHP_SUBST([COUCHBASE_SHARED_DEPENDENCIES])
 
   COUCHBASE_FILES="src/php_couchbase.cxx"
 

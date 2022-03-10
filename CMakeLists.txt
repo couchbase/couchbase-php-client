@@ -36,9 +36,11 @@ add_library(couchbase_php_core SHARED ${SOURCE_FILES})
 target_include_directories(couchbase_php_core PRIVATE ${PROJECT_BINARY_DIR}/generated)
 target_include_directories(couchbase_php_core PRIVATE BEFORE SYSTEM ${PHP_INCLUDE_DIRS})
 target_link_libraries(couchbase_php_core PRIVATE project_options project_warnings couchbase_cxx_client)
-if (COUCHBASE_PHP_LIBDIR)
-    add_custom_command(
-        TARGET couchbase_php_core POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_core>" "${COUCHBASE_PHP_LIBDIR}/$<TARGET_FILE_NAME:couchbase_php_core>"
-        VERBATIM)
+if(COUCHBASE_PHP_LIBDIR)
+  add_custom_command(
+    TARGET couchbase_php_core
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_core>"
+            "${COUCHBASE_PHP_LIBDIR}/$<TARGET_FILE_NAME:couchbase_php_core>"
+    VERBATIM)
 endif()

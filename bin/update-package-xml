@@ -12,7 +12,7 @@ files = [
     "Makefile.frag",
     "cmake/*",
     "config.m4",
-    "lib/**/*.php",
+    "Couchbase/**/*.php",
     "src/**/*.{cxx,hxx}",
     "deps/couchbase-cxx-client/CMakeLists.txt",
     "deps/couchbase-cxx-client/LICENSE.txt",

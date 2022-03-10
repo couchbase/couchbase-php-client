@@ -32,10 +32,8 @@
                 <file role="src" name="ext_build_version.hxx.in"/>
                 <file role="src" name="revisions.cmake"/>
             </dir>
-            <dir name="lib">
-                <dir name="Couchbase">
-                    <file role="php" name="Cluster.php"/>
-                </dir>
+            <dir name="Couchbase">
+                <file role="php" name="Cluster.php"/>
             </dir>
             <dir name="src">
                 <dir name="core">
