@@ -34,6 +34,7 @@
             </dir>
             <dir name="Couchbase">
                 <file role="php" name="Cluster.php"/>
+                <file role="php" name="autoload.php"/>
             </dir>
             <dir name="src">
                 <dir name="core">

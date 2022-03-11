@@ -51,7 +51,10 @@ run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -i | grep couchbase"
 
 File.write("#{PROJECT_ROOT}/build/try_to_load.php", <<EOF)
 <?php
-\\Couchbase\\Extension\\version();
+print_r(\\Couchbase\\Extension\\version());
+
+require_once 'Couchbase/autoload.php';
+var_dump((new ReflectionClass('\\\\Couchbase\\\\Cluster'))->getFileName());
 EOF
 
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} #{PROJECT_ROOT}/build/try_to_load.php")

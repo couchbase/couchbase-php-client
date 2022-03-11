@@ -1,0 +1,10 @@
+#!/usr/bin/ruby
+
+def run(*args)
+  args = args.compact.map(&:to_s)
+  puts args.join(" ")
+  system(*args) || abort("command returned non-zero status: #{args.join(" ")}")
+end
+
+project_root = File.expand_path(File.join(__dir__, ".."))
+run("phpcbf --standard=#{project_root}/phpcs.xml #{project_root}/Couchbase")

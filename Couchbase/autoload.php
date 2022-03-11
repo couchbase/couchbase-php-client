@@ -16,15 +16,17 @@
  * limitations under the License.
  */
 
+
 /**
- * Cluster is an object containing functionality for performing cluster level operations
- * against a cluster and for access to buckets.
+ * Couchbase's PHP autoloader
  */
 
-declare(strict_types=1);
-
-namespace Couchbase;
-
-class Cluster
+function couchbase_autoload($className)
 {
+    $namespace = 'Couchbase\\';
+    if (strpos($className, $namespace) === 0) {
+        include dirname(__FILE__) . '/' . str_replace('\\', '/', substr($className, strlen($namespace))) . '.php';
+    }
 }
+
+spl_autoload_register('couchbase_autoload');
