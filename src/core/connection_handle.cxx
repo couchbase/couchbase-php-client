@@ -1,7 +1,5 @@
-<?php
-
 /**
- * Copyright 2014-Present Couchbase, Inc.
+ * Copyright 2016-Present Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +14,10 @@
  * limitations under the License.
  */
 
-declare(strict_types=1);
+#include "version.hxx"
 
-namespace Couchbase;
+#include <couchbase/meta/version.hxx>
 
-class ClusterOptions
+namespace couchbase::php
 {
-    private string $username;
-    private string $password;
-
-    public function credentials(string $username, string $password): ClusterOptions
-    {
-        $this->username = $username;
-        $this->password = $password;
-        return $this;
-    }
-
-    public function username(): string
-    {
-        return $this->username;
-    }
-
-    public function password(): string
-    {
-        return $this->password;
-    }
-}
+} // namespace couchbase::php

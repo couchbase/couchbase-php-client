@@ -1,0 +1,18 @@
+{
+    "name": "couchbase/couchbase",
+    "description": "The PHP client library provides fast access to documents stored in a Couchbase Server.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "autoload": {
+        "psr-4": {
+            "Couchbase\\": "Couchbase/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sergey Avseyev",
+            "email": "sergey.avseyev@gmail.com"
+        }
+    ],
+    "require": {}
+}

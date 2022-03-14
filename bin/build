@@ -31,6 +31,11 @@ def run(*args)
 end
 
 PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
+unless File.file?(File.join(PROJECT_ROOT, "src/deps/couchbase-cxx-client/third_party/asio/asio/include/asio.hpp"))
+  Dir.chdir(PROJECT_ROOT) do
+    run("git submodule update --init --recursive")
+  end
+end
 
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
 

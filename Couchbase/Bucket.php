@@ -20,28 +20,42 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Management\CollectionManager;
+use Couchbase\Management\ViewIndexManager;
+
 /**
  * Bucket is an object containing functionality for performing bucket level operations
  * against a cluster and for access to scopes and collections.
+ *
+ * @since 4.0.0
  */
 class Bucket
 {
     /**
      * Returns a new Scope object representing the default scope.
      *
+     *
      * @return Scope
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function defaultScope(): Scope
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
-     * Returns a new Collection object representing the default collectiom.
+     * Returns a new Collection object representing the default collection.
+     *
      *
      * @return Collection
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function defaultCollection(): Collection
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -49,9 +63,12 @@ class Bucket
      *
      * @param string $name the name of the scope
      * @return Scope
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function scope(string $name): Scope
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -59,18 +76,24 @@ class Bucket
      *
      * @param callable $encoder the encoder to use to encode data when sending data to the server
      * @param callable $decoder the decoder to use to decode data when retrieving data from the server
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function setTranscoder(callable $encoder, callable $decoder)
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Returns the name of the Bucket.
      *
      * @return string
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function name(): string
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -78,29 +101,38 @@ class Bucket
      *
      * @param string $designDoc the design document to use for the query
      * @param string $viewName the view to use for the query
-     * @param ViewOptions $options the options to use when executing the query
+     * @param ViewOptions|null $options the options to use when executing the query
      * @return ViewResult
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Creates a new CollectionManager object for managing collections and scopes.
      *
      * @return CollectionManager
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function collections(): CollectionManager
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Creates a new ViewIndexManager object for managing views and design documents.
      *
      * @return ViewIndexManager
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function viewIndexes(): ViewIndexManager
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -109,18 +141,24 @@ class Bucket
      *
      * @param mixed $services the services to ping against
      * @param mixed $reportId a name which will be included within the ping result
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function ping($services, $reportId)
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Returns diagnostics information about connections that the SDK has to the cluster. This does not perform
      * any operations.
      *
-     * @param mixed $reportId a name which will be included within the ping result
+     * @param string|null $reportId a name which will be included within the ping result
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
-    public function diagnostics($reportId)
+    public function diagnostics(string $reportId = null)
     {
+        throw new UnsupportedOperationException();
     }
 }

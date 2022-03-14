@@ -14,20 +14,39 @@
  * limitations under the License.
  */
 
-#include "config.h"
+#include "core/common.hxx"
 
 #include "php_couchbase.hxx"
 
+#include "core/persistent_connections_cache.hxx"
 #include "core/version.hxx"
 
 #include <php.h>
 
 #include <ext/standard/info.h>
 
+ZEND_DECLARE_MODULE_GLOBALS(couchbase)
+
+ZEND_RSRC_DTOR_FUNC(couchbase_destroy_persistent_connection)
+{
+    couchbase::php::destroy_persistent_connection(res);
+}
+
+PHP_RSHUTDOWN_FUNCTION(couchbase)
+{
+    /* Check persistent connections and do the necessary actions if needed. */
+    zend_hash_apply(&EG(persistent_list), couchbase::php::check_persistent_connection);
+
+    return SUCCESS;
+}
+
 PHP_MINIT_FUNCTION(couchbase)
 {
     (void)type;
-    (void)module_number;
+
+    couchbase::php::persistent_connection_destructor_id =
+      zend_register_list_destructors_ex(NULL, couchbase_destroy_persistent_connection, "couchbase_persistent_connection", module_number);
+
     return SUCCESS;
 }
 
@@ -72,22 +91,30 @@ static zend_module_dep php_couchbase_deps[] = {
     ZEND_MOD_END
 };
 
+PHP_INI_BEGIN()
+    STD_PHP_INI_ENTRY("couchbase.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_couchbase_globals, couchbase_globals)
+    STD_PHP_INI_ENTRY("couchbase.persistent_timeout", "-1", PHP_INI_SYSTEM, OnUpdateLong, persistent_timeout, zend_couchbase_globals, couchbase_globals)
+PHP_INI_END()
+// clang-format on
+
 zend_module_entry couchbase_module_entry = {
     STANDARD_MODULE_HEADER_EX,
     NULL,
     php_couchbase_deps,
     PHP_COUCHBASE_EXTENSION_NAME,
-    couchbase_functions,
-    PHP_MINIT(couchbase),
-    PHP_MSHUTDOWN(couchbase),
-    NULL,
-    NULL,
-    PHP_MINFO(couchbase),
+    couchbase_functions,      /* extension function list */
+    PHP_MINIT(couchbase),     /* extension-wide startup function */
+    PHP_MSHUTDOWN(couchbase), /* extension-wide shutdown function */
+    NULL,                     /* per-request startup function */
+    PHP_RSHUTDOWN(couchbase), /* per-request shutdown function */
+    PHP_MINFO(couchbase),     /* information function */
     PHP_COUCHBASE_VERSION,
-    STANDARD_MODULE_PROPERTIES
+    PHP_MODULE_GLOBALS(couchbase), /* globals descriptor */
+    NULL,                          /* globals ctor */
+    NULL,                          /* globals dtor */
+    NULL,                          /* post deactivate */
+    STANDARD_MODULE_PROPERTIES_EX,
 };
-
-// clang-format on
 
 #ifdef COMPILE_DL_COUCHBASE
 #ifdef ZTS

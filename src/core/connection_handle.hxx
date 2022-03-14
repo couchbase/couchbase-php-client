@@ -1,7 +1,5 @@
-<?php
-
 /**
- * Copyright 2014-Present Couchbase, Inc.
+ * Copyright 2016-Present Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +14,23 @@
  * limitations under the License.
  */
 
-declare(strict_types=1);
+#pragma once
 
-namespace Couchbase;
+#include <chrono>
 
-class ClusterOptions
+#include <php.h>
+
+namespace couchbase::php
 {
-    private string $username;
-    private string $password;
-
-    public function credentials(string $username, string $password): ClusterOptions
+class connection_handle
+{
+  public:
+    bool is_expired(std::chrono::steady_clock::time_point now)
     {
-        $this->username = $username;
-        $this->password = $password;
-        return $this;
+        return idle_expiry_ < now;
     }
 
-    public function username(): string
-    {
-        return $this->username;
-    }
-
-    public function password(): string
-    {
-        return $this->password;
-    }
-}
+  private:
+    std::chrono::steady_clock::time_point idle_expiry_{}; /* time when the connection will be considered as expired */
+};
+} // namespace couchbase::php

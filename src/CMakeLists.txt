@@ -31,7 +31,7 @@ endif()
 configure_file(${PROJECT_SOURCE_DIR}/cmake/ext_build_version.hxx.in
                ${PROJECT_BINARY_DIR}/generated/ext_build_version.hxx @ONLY)
 
-file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/src/core/*.cxx)
+file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/core/*.cxx)
 add_library(couchbase_php_core SHARED ${SOURCE_FILES})
 target_include_directories(couchbase_php_core PRIVATE ${PROJECT_BINARY_DIR}/generated)
 target_include_directories(couchbase_php_core PRIVATE BEFORE SYSTEM ${PHP_INCLUDE_DIRS})

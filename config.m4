@@ -11,7 +11,7 @@ if test "$PHP_COUCHBASE" != "no"; then
   if ! test -x "${CMAKE}"; then
     AC_MSG_ERROR(Please install cmake to build couchbase extension)
   fi
-  COUCHBASE_CMAKE_SOURCE_DIRECTORY="$srcdir"
+  COUCHBASE_CMAKE_SOURCE_DIRECTORY="$srcdir/src"
   COUCHBASE_CMAKE_BUILD_DIRECTORY="$ac_pwd/cmake-build"
 
   PHP_SUBST([CMAKE])

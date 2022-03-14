@@ -1,3 +1,4 @@
+
 *.core
 *.dep
 *.dep
@@ -48,3 +49,5 @@
 /phpunit.result.cache
 /run-tests.php
 /test.cache
+/vendor/
+composer.lock

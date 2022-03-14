@@ -39,7 +39,7 @@ class BinaryCollection
      *
      * @param string $id the key of the document
      * @param string $value the value to append
-     * @param AppendOptions $options the options to use for the operation
+     * @param AppendOptions|null $options the options to use for the operation
      * @return MutationResult
      */
     public function append(string $id, string $value, AppendOptions $options = null): MutationResult
@@ -51,7 +51,7 @@ class BinaryCollection
      *
      * @param string $id the key of the document
      * @param string $value the value to prepend
-     * @param PrependOptions $options the options to use for the operation
+     * @param PrependOptions|null $options the options to use for the operation
      * @return MutationResult
      */
     public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
@@ -62,7 +62,7 @@ class BinaryCollection
      * Increments a counter document by a value.
      *
      * @param string $id the key of the document
-     * @param IncrementOptions $options the options to use for the operation
+     * @param IncrementOptions|null $options the options to use for the operation
      * @return CounterResult
      */
     public function increment(string $id, IncrementOptions $options = null): CounterResult
@@ -73,7 +73,7 @@ class BinaryCollection
      * Decrements a counter document by a value.
      *
      * @param string $id the key of the document
-     * @param DecrementOptions $options the options to use for the operation
+     * @param DecrementOptions|null $options the options to use for the operation
      * @return CounterResult
      */
     public function decrement(string $id, DecrementOptions $options = null): CounterResult

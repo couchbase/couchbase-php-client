@@ -20,37 +20,99 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\UnsupportedOperationException;
+
+/**
+ * @since 4.0.0
+ */
 class AnalyticsOptions
 {
+    /**
+     * @param int $arg
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function timeout(int $arg): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param array $pairs
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function namedParameters(array $pairs): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param array $args
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function positionalParameters(array $args): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param string $key
+     * @param $value
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function raw(string $key, $value): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param string $value
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function clientContextId(string $value): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param bool $urgent
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function priority(bool $urgent): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param bool $arg
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function readonly(bool $arg): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * @param string $arg
+     * @return AnalyticsOptions
+     * @throws UnsupportedOperationException
+     * @since 4.0.0
+     */
     public function scanConsistency(string $arg): AnalyticsOptions
     {
+        throw new UnsupportedOperationException();
     }
 }
