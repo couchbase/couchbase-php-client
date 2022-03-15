@@ -31,7 +31,6 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     explicit impl(couchbase::origin origin)
       : origin_(std::move(origin))
     {
-        worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
     }
 
     impl(impl&& other) = delete;
@@ -51,6 +50,11 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             }
             cluster_.reset();
         }
+    }
+
+    void start()
+    {
+        worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
     }
 
     core_error_info open()
@@ -76,6 +80,7 @@ connection_handle::connection_handle(couchbase::origin origin, std::chrono::stea
   , id_{ zend_register_resource(this, persistent_connection_destructor_id) }
   , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
 {
+    impl_->start();
 }
 
 core_error_info
@@ -316,7 +321,7 @@ extract_credentials(couchbase::cluster_credentials& credentials, zval* options)
         credentials.password.assign(Z_STRVAL_P(password));
 
         if (const zval* allowed_sasl_mechanisms = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("allowedSaslMechanisms"));
-            allowed_sasl_mechanisms != nullptr) {
+            allowed_sasl_mechanisms != nullptr && Z_TYPE_P(allowed_sasl_mechanisms) != IS_NULL) {
             if (Z_TYPE_P(allowed_sasl_mechanisms) != IS_ARRAY) {
                 return { error::common_errc::invalid_argument,
                          { __LINE__, __FILE__, __func__ },

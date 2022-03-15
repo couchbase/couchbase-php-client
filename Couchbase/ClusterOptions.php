@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 class ClusterOptions
 {
     private ?int $analyticsTimeoutMilliseconds = null;
@@ -263,8 +265,32 @@ class ClusterOptions
         return $this;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function authenticatorHash(): string
+    {
+        if ($this->authenticator == null) {
+            throw new InvalidArgumentException("missing authenticator");
+        }
+        $exported = $this->authenticator->export();
+        if ($exported['type'] == 'password') {
+            return hash("sha256", sprintf("--%s--%s--", $exported['username'], $exported['password']));
+        } else if ($exported['type'] == 'certificate') {
+            return hash("sha256", sprintf("--%s--%s--", $exported['certificatePath'], $exported['keyPath']));
+        } else {
+            throw new InvalidArgumentException("unknown type of the authenticator: " . $exported['type']);
+        }
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
     public function export(): array
     {
+        if ($this->authenticator == null) {
+            throw new InvalidArgumentException("missing authenticator");
+        }
         return [
             'authenticator' => $this->authenticator->export(),
 
@@ -306,18 +332,8 @@ class ClusterOptions
 
             'tlsVerify' => $this->tlsVerifyMode,
 
-            'thresholdLoggingTracerOptions' => $this->thresholdLoggingTracerOptions->export(),
-            'loggingMeterOptions' => $this->loggingMeterOptions->export(),
+            'thresholdLoggingTracerOptions' => $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),
+            'loggingMeterOptions' => $this->loggingMeterOptions == null ? null : $this->loggingMeterOptions->export(),
         ];
-    }
-
-    public function username(): string
-    {
-        return $this->username;
-    }
-
-    public function password(): string
-    {
-        return $this->password;
     }
 }

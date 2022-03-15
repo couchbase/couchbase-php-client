@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\AnalyticsIndexManager;
 use Couchbase\Management\BucketManager;
@@ -38,9 +39,12 @@ class Cluster
     private string $connectionHash;
     private $core;
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function __construct(string $connectionString, ClusterOptions $options)
     {
-        $this->connectionHash = hash("sha256", sprintf("--%s--%s--%s--", $connectionString, $options->username(), $options->password()));
+        $this->connectionHash = hash("sha256", sprintf("--%s--%s--", $connectionString, $options->authenticatorHash()));
         $this->core = Extension\createConnection($this->connectionHash, $connectionString, $options->export());
     }
 
