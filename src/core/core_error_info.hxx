@@ -16,21 +16,20 @@
 
 #pragma once
 
-#include "connection_handle.hxx"
-
-#include <Zend/zend_API.h>
+#include <system_error>
 
 namespace couchbase::php
 {
+// TODO: use std::source_location when C++20 supported
+struct source_location {
+    std::uint32_t line{};
+    std::string file_name{};
+    std::string function_name{};
+};
 
-extern int persistent_connection_destructor_id;
-
-std::pair<connection_handle*, core_error_info>
-create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options);
-
-void
-destroy_persistent_connection(zend_resource* res);
-
-int
-check_persistent_connection(zval* zv);
+struct core_error_info {
+    std::error_code ec{};
+    source_location location{};
+    std::string message{};
+};
 } // namespace couchbase::php

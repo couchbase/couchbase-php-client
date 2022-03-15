@@ -1,4 +1,3 @@
-
 *.core
 *.dep
 *.dep
@@ -22,7 +21,6 @@
 /aclocal.m4
 /autom4te.cache
 /build/
-/cmake-build*/
 /config.guess
 /config.h
 /config.h.in
@@ -48,6 +46,8 @@
 /package.xml
 /phpunit.result.cache
 /run-tests.php
+/src/.idea/
 /test.cache
 /vendor/
+cmake-build*/
 composer.lock

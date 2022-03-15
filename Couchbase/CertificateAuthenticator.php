@@ -20,21 +20,23 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
-
-/**
- * Implements a default meter which logs metrics on a regular basis.  Note that
- * to reduce the performance impact of using this meter, this class is not
- * actually used by the SDK, and simply acts as a placeholder which triggers a
- * native implementation to be used instead.
- */
-class LoggingMeter implements Meter
+class CertificateAuthenticator implements Authenticator
 {
-    /**
-     * @throws UnsupportedOperationException
-     */
-    public function valueRecorder(string $name, array $tags): ValueRecorder
+    private string $certificatePath;
+    private string $keyPath;
+
+    public function __construct(string $certificatePath, string $keyPath)
     {
-        throw new UnsupportedOperationException();
+        $this->certificatePath = $certificatePath;
+        $this->keyPath = $keyPath;
+    }
+
+    public function export(): array
+    {
+        return [
+            'type' => 'certificate',
+            'certificatePath' => $this->certificatePath,
+            'keyPath' => $this->keyPath,
+        ];
     }
 }

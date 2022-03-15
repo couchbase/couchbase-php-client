@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <php.h>
+#include <Zend/zend_API.h>
 
 namespace couchbase::php
 {

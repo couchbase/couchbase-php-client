@@ -36,10 +36,12 @@ use Couchbase\Management\UserManager;
 class Cluster
 {
     private string $connectionHash;
+    private $core;
 
     public function __construct(string $connectionString, ClusterOptions $options)
     {
         $this->connectionHash = hash("sha256", sprintf("--%s--%s--%s--", $connectionString, $options->username(), $options->password()));
+        $this->core = Extension\createConnection($this->connectionHash, $connectionString, $options->export());
     }
 
     /**

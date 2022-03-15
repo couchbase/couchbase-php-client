@@ -20,21 +20,24 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
-
-/**
- * Implements a default meter which logs metrics on a regular basis.  Note that
- * to reduce the performance impact of using this meter, this class is not
- * actually used by the SDK, and simply acts as a placeholder which triggers a
- * native implementation to be used instead.
- */
-class LoggingMeter implements Meter
+class LoggingMeterOptions
 {
+    private ?int $flushIntervalMilliseconds = null;
+
     /**
-     * @throws UnsupportedOperationException
+     * @param int $milliseconds duration in milliseconds how often the metrics should be flushed in the log.
+     * @return LoggingMeterOptions
      */
-    public function valueRecorder(string $name, array $tags): ValueRecorder
+    public function flushInterval(int $milliseconds): LoggingMeterOptions
     {
-        throw new UnsupportedOperationException();
+        $this->flushIntervalMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    public function export(): array
+    {
+        return [
+            'flushInterval' => $this->flushIntervalMilliseconds,
+        ];
     }
 }

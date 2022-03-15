@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+
+#    Copyright 2020-Present Couchbase, Inc.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+require "fileutils"
+
+def run(*args)
+  args = args.compact.map(&:to_s)
+  puts args.join(" ")
+  system(*args) || abort("command returned non-zero status: #{args.join(" ")}")
+end
+
+PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
+CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
+
+COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+unless File.file?(COUCHBASE_EXT)
+  run(File.join(PROJECT_ROOT, "bin/build"))
+end
+
+
+
+run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -d auto_prepend_file=#{File.join(PROJECT_ROOT, "Couchbase/autoload.php")} -a")

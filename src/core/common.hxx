@@ -20,7 +20,9 @@
 #include "config.h"
 #endif
 
-#include <php.h>
+#include "core_error_info.hxx"
+
+#include <Zend/zend_API.h>
 
 ZEND_BEGIN_MODULE_GLOBALS(couchbase)
 zend_long max_persistent{};     /* maximum number of persistent connections per process */

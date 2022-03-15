@@ -67,6 +67,27 @@ PHP_FUNCTION(version)
     RETURN_ZVAL(&version, 1, 0);
 }
 
+PHP_FUNCTION(createConnection)
+{
+    zend_string* connection_hash = nullptr;
+    zend_string* connection_string = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_STR(connection_hash)
+    Z_PARAM_STR(connection_string)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto [handle, e] = couchbase::php::create_persistent_connection(connection_hash, connection_string, options);
+    if (e.ec) {
+        RETURN_NULL();
+    }
+
+    RETURN_RES(handle->resource_id());
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -79,10 +100,16 @@ static PHP_MINFO_FUNCTION(couchbase)
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_version, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_createConnection, 0, 0, 0)
+ZEND_ARG_TYPE_INFO(0, connectionHash, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, connectionString, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
-
+    ZEND_NS_FE("Couchbase\\Extension", createConnection, ai_CouchbaseExtension_createConnection)
     PHP_FE_END
 };
 
