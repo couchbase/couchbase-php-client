@@ -276,7 +276,7 @@ class ClusterOptions
         $exported = $this->authenticator->export();
         if ($exported['type'] == 'password') {
             return hash("sha256", sprintf("--%s--%s--", $exported['username'], $exported['password']));
-        } else if ($exported['type'] == 'certificate') {
+        } elseif ($exported['type'] == 'certificate') {
             return hash("sha256", sprintf("--%s--%s--", $exported['certificatePath'], $exported['keyPath']));
         } else {
             throw new InvalidArgumentException("unknown type of the authenticator: " . $exported['type']);
