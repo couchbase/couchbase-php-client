@@ -37,14 +37,32 @@ unless File.file?(File.join(PROJECT_ROOT, "src/deps/couchbase-cxx-client/third_p
   end
 end
 
-CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
+DEFAULT_PHP_PREFIX =
+  case RbConfig::CONFIG["target_os"]
+  when /darwin/
+    `brew --prefix php 2>/dev/null`.strip
+  else
+    "/usr"
+  end
+
+DEFAULT_CC="cc"
+DEFAULT_CXX="c++"
+if RbConfig::CONFIG["target_os"] =~ /darwin/
+  prefix = `brew --prefix gcc@10 2>/dev/null`.strip
+  DEFAULT_CC = File.join(prefix, "bin/gcc-10")
+  DEFAULT_CXX = File.join(prefix, "bin/g++-10")
+end
+
+CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
+CB_CC = ENV.fetch("CB_CC", DEFAULT_CC)
+CB_CXX = ENV.fetch("CB_CXX", DEFAULT_CXX)
 
 run("#{CB_PHP_PREFIX}/bin/php --version")
 run("#{CB_PHP_PREFIX}/bin/php --ini")
 
 Dir.chdir(PROJECT_ROOT) do
   run("#{CB_PHP_PREFIX}/bin/phpize")
-  run("./configure --with-php-config=#{CB_PHP_PREFIX}/bin/php-config")
+  run("./configure --with-php-config=#{CB_PHP_PREFIX}/bin/php-config CC=#{CB_CC} CXX=#{CB_CXX}")
   run("make clean")
   run("make -j8")
 end

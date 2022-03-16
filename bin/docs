@@ -3,7 +3,15 @@
 require "fileutils"
 require "shellwords"
 
-CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
+DEFAULT_PHP_PREFIX =
+  case RbConfig::CONFIG["target_os"]
+  when /darwin/
+    `brew --prefix php 2>/dev/null`.strip
+  else
+    "/usr"
+  end
+
+CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 
 def run(*args)
   args = args.compact.map(&:to_s)

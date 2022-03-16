@@ -23,7 +23,16 @@ def run(*args)
 end
 
 PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
-CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", "/usr")
+
+DEFAULT_PHP_PREFIX =
+  case RbConfig::CONFIG["target_os"]
+  when /darwin/
+    `brew --prefix php 2>/dev/null`.strip
+  else
+    "/usr"
+  end
+
+CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 
 COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
 unless File.file?(COUCHBASE_EXT)
