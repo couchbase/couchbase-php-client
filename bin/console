@@ -35,10 +35,15 @@ DEFAULT_PHP_PREFIX =
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 
 COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+unless File.exists?(COUCHBASE_EXT)
+  alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
+  if File.exists?(alt_filename)
+    COUCHBASE_EXT = alt_filename
+  end
+end
+
 unless File.file?(COUCHBASE_EXT)
   run(File.join(PROJECT_ROOT, "bin/build"))
 end
-
-
 
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -d auto_prepend_file=#{File.join(PROJECT_ROOT, "Couchbase/autoload.php")} -a")

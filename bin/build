@@ -67,7 +67,13 @@ Dir.chdir(PROJECT_ROOT) do
   run("make -j8")
 end
 
-COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+unless File.exists?(COUCHBASE_EXT)
+  alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
+  if File.exists?(alt_filename)
+    COUCHBASE_EXT = alt_filename
+  end
+end
 
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -m | grep couchbase")
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -i | grep couchbase")
