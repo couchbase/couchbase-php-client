@@ -290,7 +290,28 @@ cb_assign_boolean(bool& field, const zval* options, std::string_view name)
     return {};
 }
 
-std::pair<core_error_info, zval*>
+template<typename Integer>
+static core_error_info
+cb_assign_integer(Integer& field, const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr && Z_TYPE_P(value) != IS_LONG) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("expected {} to be a integer value in the options", name) };
+    }
+    field = Z_LVAL_P(value);
+    return {};
+}
+
+std::pair<zval*, core_error_info>
 connection_handle::document_upsert(const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -308,20 +329,23 @@ connection_handle::document_upsert(const zend_string* bucket,
     couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
     request.flags = std::uint32_t(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
-        return { e, nullptr };
+        return { nullptr, e };
     }
     if (auto e = cb_assign_durability(request, options); e.ec) {
-        return { e, nullptr };
+        return { nullptr, e };
     }
-    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserve_expiry"); e.ec) {
-        return { e, nullptr };
+    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.expiry, options, "expiry"); e.ec) {
+        return { nullptr, e };
     }
 
     auto [err, resp] = impl_->document_upsert(std::move(request));
     if (err.ec) {
-        return { err, nullptr };
+        return { nullptr, err };
     }
-    return { {}, nullptr };
+    return { nullptr, {} };
 }
 
 #define ASSIGN_DURATION_OPTION(name, field, key, value)                                                                                    \

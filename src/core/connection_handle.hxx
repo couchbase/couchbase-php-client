@@ -49,7 +49,7 @@ class connection_handle
 
     [[nodiscard]] core_error_info open();
 
-    [[nodiscard]] std::pair<core_error_info, zval*> document_upsert(const zend_string* bucket,
+    [[nodiscard]] std::pair<zval*, core_error_info> document_upsert(const zend_string* bucket,
                                                                     const zend_string* scope,
                                                                     const zend_string* collection,
                                                                     const zend_string* id,

@@ -20,13 +20,22 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\UnsupportedOperationException;
+
 /**
  * Scope is an object for providing access to collections.
  */
 class Scope
 {
-    public function __construct(Bucket $bucket, string $name)
+    private string $bucketName;
+    private string $name;
+    private $core;
+
+    public function __construct(string $name, string $bucketName, $core)
     {
+        $this->name = $name;
+        $this->bucketName = $bucketName;
+        $this->core = $core;
     }
 
     /**
@@ -36,6 +45,7 @@ class Scope
      */
     public function name(): string
     {
+        return $this->name;
     }
 
     /**
@@ -46,27 +56,32 @@ class Scope
      */
     public function collection(string $name): Collection
     {
+        return new Collection($name, $this->name, $this->bucketName, $this->core);
     }
 
     /**
      * Executes a N1QL query against the cluster with scopeName set implicitly.
      *
      * @param string $statement the N1QL query statement to execute
-     * @param QueryOptions $options the options to use when executing the query
+     * @param QueryOptions|null $options the options to use when executing the query
      * @return QueryResult
+     * @throws UnsupportedOperationException
      */
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
+        throw new UnsupportedOperationException();
     }
 
     /**
      * Executes an analytics query against the cluster with scopeName set implicitly.
      *
      * @param string $statement the analytics query statement to execute
-     * @param AnalyticsOptions $options the options to use when executing the query
+     * @param AnalyticsOptions|null $options the options to use when executing the query
      * @return AnalyticsResult
+     * @throws UnsupportedOperationException
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
+        throw new UnsupportedOperationException();
     }
 }

@@ -32,17 +32,25 @@ use Couchbase\Management\ViewIndexManager;
  */
 class Bucket
 {
+    private string $name;
+    private $core;
+
+    public function __construct(string $name, $core)
+    {
+        $this->name = $name;
+        $this->core = $core;
+    }
+
     /**
      * Returns a new Scope object representing the default scope.
      *
      *
      * @return Scope
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function defaultScope(): Scope
     {
-        throw new UnsupportedOperationException();
+        return new Scope("_default", $this->name, $this->core);
     }
 
     /**
@@ -50,12 +58,11 @@ class Bucket
      *
      *
      * @return Collection
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function defaultCollection(): Collection
     {
-        throw new UnsupportedOperationException();
+        return new Collection("_default", "_default", $this->name, $this->core);
     }
 
     /**
@@ -63,12 +70,11 @@ class Bucket
      *
      * @param string $name the name of the scope
      * @return Scope
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function scope(string $name): Scope
     {
-        throw new UnsupportedOperationException();
+        return new Scope($name, $this->name, $this->core);
     }
 
     /**

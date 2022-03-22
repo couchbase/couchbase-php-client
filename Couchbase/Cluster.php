@@ -58,7 +58,7 @@ class Cluster
      */
     public function bucket(string $name): Bucket
     {
-        throw new UnsupportedOperationException();
+        return new Bucket($name, $this->core);
     }
 
     /**
