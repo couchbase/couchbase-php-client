@@ -25,6 +25,89 @@
 
 namespace couchbase::php
 {
+
+static std::string
+retry_reason_to_string(io::retry_reason reason)
+{
+    switch (reason) {
+        case io::retry_reason::do_not_retry:
+            return "do_not_retry";
+        case io::retry_reason::socket_not_available:
+            return "socket_not_available";
+        case io::retry_reason::service_not_available:
+            return "service_not_available";
+        case io::retry_reason::node_not_available:
+            return "node_not_available";
+        case io::retry_reason::kv_not_my_vbucket:
+            return "kv_not_my_vbucket";
+        case io::retry_reason::kv_collection_outdated:
+            return "kv_collection_outdated";
+        case io::retry_reason::kv_error_map_retry_indicated:
+            return "kv_error_map_retry_indicated";
+        case io::retry_reason::kv_locked:
+            return "kv_locked";
+        case io::retry_reason::kv_temporary_failure:
+            return "kv_temporary_failure";
+        case io::retry_reason::kv_sync_write_in_progress:
+            return "kv_sync_write_in_progress";
+        case io::retry_reason::kv_sync_write_re_commit_in_progress:
+            return "kv_sync_write_re_commit_in_progress";
+        case io::retry_reason::service_response_code_indicated:
+            return "service_response_code_indicated";
+        case io::retry_reason::socket_closed_while_in_flight:
+            return "socket_closed_while_in_flight";
+        case io::retry_reason::circuit_breaker_open:
+            return "circuit_breaker_open";
+        case io::retry_reason::query_prepared_statement_failure:
+            return "query_prepared_statement_failure";
+        case io::retry_reason::query_index_not_found:
+            return "query_index_not_found";
+        case io::retry_reason::analytics_temporary_failure:
+            return "analytics_temporary_failure";
+        case io::retry_reason::search_too_many_requests:
+            return "search_too_many_requests";
+        case io::retry_reason::views_temporary_failure:
+            return "views_temporary_failure";
+        case io::retry_reason::views_no_active_partition:
+            return "views_no_active_partition";
+        case io::retry_reason::unknown:
+            return "unknown";
+    }
+    return "unexpected";
+}
+
+static key_value_error_context
+build_error_context(const error_context::key_value& ctx)
+{
+    key_value_error_context out;
+    out.bucket = ctx.id.bucket();
+    out.scope = ctx.id.scope();
+    out.collection = ctx.id.collection();
+    out.id = ctx.id.key();
+    out.opaque = ctx.opaque;
+    out.cas = ctx.cas.value;
+    if (ctx.status_code) {
+        out.status_code = std::uint16_t(ctx.status_code.value());
+    }
+    if (ctx.error_map_info) {
+        out.error_map_name = ctx.error_map_info->name;
+        out.error_map_description = ctx.error_map_info->description;
+    }
+    if (ctx.enhanced_error_info) {
+        out.enhanced_error_reference = ctx.enhanced_error_info->reference;
+        out.enhanced_error_context = ctx.error_map_info->description;
+    }
+    out.last_dispatched_to = ctx.last_dispatched_to;
+    out.last_dispatched_from = ctx.last_dispatched_from;
+    out.retry_attempts = ctx.retry_attempts;
+    if (!ctx.retry_reasons.empty()) {
+        for (const auto& reason : ctx.retry_reasons) {
+            out.retry_reasons.insert(retry_reason_to_string(reason));
+        }
+    }
+    return out;
+}
+
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
   public:
@@ -68,6 +151,23 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return {};
     }
 
+    std::pair<core_error_info, couchbase::operations::upsert_response> document_upsert(couchbase::operations::upsert_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::upsert_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::upsert_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to upsert document: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
   private:
     asio::io_context ctx_{};
     std::shared_ptr<couchbase::cluster> cluster_{ couchbase::cluster::create(ctx_) };
@@ -87,6 +187,141 @@ core_error_info
 connection_handle::open()
 {
     return impl_->open();
+}
+
+static std::string
+cb_string_new(const zend_string* value)
+{
+    return { ZSTR_VAL(value), ZSTR_LEN(value) };
+}
+
+template<typename Request>
+static core_error_info
+cb_assign_timeout(Request& req, const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("timeoutMilliseconds"));
+    if (value == nullptr || Z_TYPE_P(value) != IS_LONG) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 "expected timeoutMilliseconds to be a number in the options" };
+    }
+    req.timeout = std::chrono::milliseconds(Z_LVAL_P(value));
+    return {};
+}
+
+template<typename Request>
+static core_error_info
+cb_assign_durability(Request& req, const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityLevel"));
+    if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 "expected durabilityLevel to be a string in the authenticator" };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
+        req.durability_level = couchbase::protocol::durability_level::none;
+    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
+        req.durability_level = couchbase::protocol::durability_level::majority;
+    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
+        req.durability_level = couchbase::protocol::durability_level::majority_and_persist_to_active;
+    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
+        req.durability_level = couchbase::protocol::durability_level::persist_to_majority;
+    } else {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
+    }
+    if (req.durability_level != couchbase::protocol::durability_level::none) {
+        const zval* timeout = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityTimeoutSeconds"));
+        if (value == nullptr || Z_TYPE_P(value) != IS_LONG) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected durabilityTimeoutSeconds to be a number in the options" };
+        }
+        req.durability_timeout = std::chrono::seconds(Z_LVAL_P(value)).count();
+    }
+    return {};
+}
+
+static core_error_info
+cb_assign_boolean(bool& field, const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("expected {} to be a boolean value in the options", name) };
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_TRUE:
+            field = true;
+            break;
+        case IS_FALSE:
+        case IS_NULL:
+            field = false;
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("expected {} to be a boolean value in the options", name) };
+    }
+    return {};
+}
+
+std::pair<core_error_info, zval*>
+connection_handle::document_upsert(const zend_string* bucket,
+                                   const zend_string* scope,
+                                   const zend_string* collection,
+                                   const zend_string* id,
+                                   const zend_string* value,
+                                   zend_long flags,
+                                   const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+    couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+    request.flags = std::uint32_t(flags);
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { e, nullptr };
+    }
+    if (auto e = cb_assign_durability(request, options); e.ec) {
+        return { e, nullptr };
+    }
+    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserve_expiry"); e.ec) {
+        return { e, nullptr };
+    }
+
+    auto [err, resp] = impl_->document_upsert(std::move(request));
+    if (err.ec) {
+        return { err, nullptr };
+    }
+    return { {}, nullptr };
 }
 
 #define ASSIGN_DURATION_OPTION(name, field, key, value)                                                                                    \

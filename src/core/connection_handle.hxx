@@ -49,6 +49,14 @@ class connection_handle
 
     [[nodiscard]] core_error_info open();
 
+    [[nodiscard]] std::pair<core_error_info, zval*> document_upsert(const zend_string* bucket,
+                                                                    const zend_string* scope,
+                                                                    const zend_string* collection,
+                                                                    const zend_string* id,
+                                                                    const zend_string* value,
+                                                                    zend_long flags,
+                                                                    const zval* options);
+
   private:
     class impl;
 

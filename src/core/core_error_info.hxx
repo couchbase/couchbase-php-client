@@ -16,7 +16,10 @@
 
 #pragma once
 
+#include <optional>
+#include <set>
 #include <system_error>
+#include <variant>
 
 namespace couchbase::php
 {
@@ -27,9 +30,31 @@ struct source_location {
     std::string function_name{};
 };
 
+struct empty_error_context {
+};
+
+struct key_value_error_context {
+    std::string bucket;
+    std::string scope;
+    std::string collection;
+    std::string id;
+    std::uint32_t opaque{};
+    std::uint64_t cas{};
+    std::optional<std::uint16_t> status_code{};
+    std::optional<std::string> error_map_name{};
+    std::optional<std::string> error_map_description{};
+    std::optional<std::string> enhanced_error_reference{};
+    std::optional<std::string> enhanced_error_context{};
+    std::optional<std::string> last_dispatched_to{};
+    std::optional<std::string> last_dispatched_from{};
+    int retry_attempts{ 0 };
+    std::set<std::string> retry_reasons{};
+};
+
 struct core_error_info {
     std::error_code ec{};
     source_location location{};
     std::string message{};
+    std::variant<empty_error_context, key_value_error_context> error_context{};
 };
 } // namespace couchbase::php
