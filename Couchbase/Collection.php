@@ -298,6 +298,6 @@ class Collection
      */
     public function binary(): BinaryCollection
     {
-        throw new UnsupportedOperationException();
+        return new BinaryCollection($name, $this->scopeName, $this->bucketName, $core);
     }
 }

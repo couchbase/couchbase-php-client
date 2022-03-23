@@ -20,26 +20,42 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use DateTimeInterface;
+
 class UpsertOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?int $expirySeconds = null;
+    private ?bool $preserveExpiry = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return UpsertOptions
      */
-    public function timeout(int $arg): UpsertOptions
+    public function timeout(int $milliseconds): UpsertOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $arg the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
      * @return UpsertOptions
      */
-    public function expiry(mixed $arg): UpsertOptions
+    public function expiry($seconds): UpsertOptions
     {
+        if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = $seconds->getTimestamp();
+        } else {
+            $this->expirySeconds = (int)$seconds;
+        }
+        return $this;
     }
 
     /**
@@ -50,16 +66,22 @@ class UpsertOptions
      */
     public function preserveExpiry(bool $shouldPreserve): UpsertOptions
     {
+        $this->preserveExpiry = $shouldPreserve;
+        return $this;
     }
 
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param int $arg the durability level to enforce
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
      * @return UpsertOptions
      */
-    public function durabilityLevel(int $arg): UpsertOptions
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): UpsertOptions
     {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
     }
 
     /**
@@ -71,5 +93,17 @@ class UpsertOptions
      */
     public function encoder(callable $arg): UpsertOptions
     {
+        return $this;
+    }
+
+    public function export(): array
+    {
+        return [
+            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+            'expirySeconds' => $this->expirySeconds,
+            'preserveExpiry' => $this->preserveExpiry,
+            'durabilityLevel' => $this->durabilityLevel,
+            'durabilityTimeoutSeconds' => $this->durabilityTimeoutSeconds,
+        ];
     }
 }

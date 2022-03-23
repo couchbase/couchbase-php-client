@@ -207,10 +207,18 @@ cb_assign_timeout(Request& req, const zval* options)
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("timeoutMilliseconds"));
-    if (value == nullptr || Z_TYPE_P(value) != IS_LONG) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 "expected timeoutMilliseconds to be a number in the options" };
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_LONG:
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected timeoutMilliseconds to be a number in the options" };
     }
     req.timeout = std::chrono::milliseconds(Z_LVAL_P(value));
     return {};
@@ -228,10 +236,18 @@ cb_assign_durability(Request& req, const zval* options)
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityLevel"));
-    if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 "expected durabilityLevel to be a string in the authenticator" };
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected durabilityLevel to be a string in the authenticator" };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
         req.durability_level = couchbase::protocol::durability_level::none;
@@ -248,12 +264,20 @@ cb_assign_durability(Request& req, const zval* options)
     }
     if (req.durability_level != couchbase::protocol::durability_level::none) {
         const zval* timeout = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityTimeoutSeconds"));
-        if (value == nullptr || Z_TYPE_P(value) != IS_LONG) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected durabilityTimeoutSeconds to be a number in the options" };
+        if (timeout == nullptr) {
+            return {};
         }
-        req.durability_timeout = std::chrono::seconds(Z_LVAL_P(value)).count();
+        switch (Z_TYPE_P(timeout)) {
+            case IS_NULL:
+                return {};
+            case IS_LONG:
+                break;
+            default:
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         "expected durabilityTimeoutSeconds to be a number in the options" };
+        }
+        req.durability_timeout = std::chrono::seconds(Z_LVAL_P(timeout)).count();
     }
     return {};
 }
@@ -275,11 +299,12 @@ cb_assign_boolean(bool& field, const zval* options, std::string_view name)
                  fmt::format("expected {} to be a boolean value in the options", name) };
     }
     switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
         case IS_TRUE:
             field = true;
             break;
         case IS_FALSE:
-        case IS_NULL:
             field = false;
             break;
         default:
@@ -302,10 +327,18 @@ cb_assign_integer(Integer& field, const zval* options, std::string_view name)
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr && Z_TYPE_P(value) != IS_LONG) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("expected {} to be a integer value in the options", name) };
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_LONG:
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("expected {} to be a integer value in the options", name) };
     }
     field = Z_LVAL_P(value);
     return {};

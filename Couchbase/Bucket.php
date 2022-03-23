@@ -94,12 +94,11 @@ class Bucket
      * Returns the name of the Bucket.
      *
      * @return string
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function name(): string
     {
-        throw new UnsupportedOperationException();
+        return $this->name;
     }
 
     /**
