@@ -22,114 +22,154 @@ namespace Couchbase;
 
 class QueryOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?MutationState $consistentWith = null;
+    private ?int $scanConsistency = null;
+    private ?int $scanCap = null;
+    private ?int $pipelineCap = null;
+    private ?int $pipelineBatch = null;
+    private ?int $maxParallelism = null;
+    private ?int $profile = null;
+    private ?bool $readonly = null;
+    private ?bool $flexIndex = null;
+    private ?bool $adHoc = null;
+    private ?array $namedParams = null;
+    private ?array $posParams = null;
+    private ?array $raw = null;
+    private ?string $clientContextId = null;
+    private ?bool $metrics = null;
+    private ?bool $preserveExpiry = null;
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return QueryOptions
      */
-    public function timeout(int $arg): QueryOptions
+    public function timeout(int $milliseconds): QueryOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the mutation state to achieve consistency with for read your own writes (RYOW).
      *
-     * @param MutationState $arg the mutation state to achieve consistency with
+     * @param MutationState $state the mutation state to achieve consistency with
      * @return QueryOptions
      */
-    public function consistentWith(MutationState $arg): QueryOptions
+    public function consistentWith(MutationState $state): QueryOptions
     {
+        $this->consistentWith = $state;
+        return $this;
     }
 
     /**
      * Sets the scan consistency.
      *
-     * @param int $arg the scan consistency level
+     * @param int $consistencyLevel the scan consistency level.
      * @return QueryOptions
      */
-    public function scanConsistency(int $arg): QueryOptions
+    public function scanConsistency(int $consistencyLevel): QueryOptions
     {
+        $this->scanConsistency = $consistencyLevel;
+        return $this;
     }
 
     /**
      * Sets the maximum buffered channel size between the indexer client and the query service for index scans.
      *
-     * @param int $arg the maximum buffered channel size
+     * @param int $cap the maximum buffered channel size
      * @return QueryOptions
      */
-    public function scanCap(int $arg): QueryOptions
+    public function scanCap(int $cap): QueryOptions
     {
+        $this->scanCap = $cap;
+        return $this;
     }
 
     /**
      * Sets the maximum number of items each execution operator can buffer between various operators.
      *
-     * @param int $arg the maximum number of items each execution operation can buffer
+     * @param int $cap the maximum number of items each execution operation can buffer
      * @return QueryOptions
      */
-    public function pipelineCap(int $arg): QueryOptions
+    public function pipelineCap(int $cap): QueryOptions
     {
+        $this->pipelineCap = $cap;
+        return $this;
     }
 
     /**
      * Sets the number of items execution operators can batch for fetch from the KV service.
      *
-     * @param int $arg the pipeline batch size
+     * @param int $batchSize the pipeline batch size
      * @return QueryOptions
      */
-    public function pipelineBatch(int $arg): QueryOptions
+    public function pipelineBatch(int $batchSize): QueryOptions
     {
+        $this->pipelineBatch = $batchSize;
+        return $this;
     }
 
     /**
      * Sets the maximum number of index partitions, for computing aggregation in parallel.
      *
-     * @param int $arg the number of index partitions
+     * @param int $max the number of index partitions
      * @return QueryOptions
      */
-    public function maxParallelism(int $arg): QueryOptions
+    public function maxParallelism(int $max): QueryOptions
     {
+        $this->maxParallelism = $max;
+        return $this;
     }
 
     /**
      * Sets the query profile mode to use.
      *
-     * @param int $arg the query profile mode
+     * @param int $mode the query profile mode
      * @return QueryOptions
      */
-    public function profile(int $arg): QueryOptions
+    public function profile(int $mode): QueryOptions
     {
+        $this->profile = $mode;
+        return $this;
     }
 
     /**
      * Sets whether or not this query is readonly.
      *
-     * @param bool $arg whether the query is readonly
+     * @param bool $readonly whether the query is readonly
      * @return QueryOptions
      */
-    public function readonly(bool $arg): QueryOptions
+    public function readonly(bool $readonly): QueryOptions
     {
+        $this->readonly = $readonly;
+        return $this;
     }
 
     /**
      * Sets whether or not this query allowed to use FlexIndex (full text search integration).
      *
-     * @param bool $arg whether the FlexIndex allowed
+     * @param bool $enabled whether the FlexIndex allowed
      * @return QueryOptions
      */
-    public function flexIndex(bool $arg): QueryOptions
+    public function flexIndex(bool $enabled): QueryOptions
     {
+        $this->flexIndex = $enabled;
+        return $this;
     }
 
     /**
-     * Sets whether or not this query is adhoc.
+     * Sets whether this query is adhoc.
      *
-     * @param bool $arg whether the query is adhoc
+     * @param bool $enabled whether the query is adhoc
      * @return QueryOptions
      */
-    public function adhoc(bool $arg): QueryOptions
+    public function adhoc(bool $enabled): QueryOptions
     {
+        $this->adHoc = $enabled;
+        return $this;
     }
 
     /**
@@ -140,16 +180,20 @@ class QueryOptions
      */
     public function namedParameters(array $pairs): QueryOptions
     {
+        $this->namedParams = $pairs;
+        return $this;
     }
 
     /**
      * Sets the positional parameters for this query.
      *
-     * @param array $args the array of parameters
+     * @param array $params the array of parameters
      * @return QueryOptions
      */
-    public function positionalParameters(array $args): QueryOptions
+    public function positionalParameters(array $params): QueryOptions
     {
+        $this->posParams = $params;
+        return $this;
     }
 
     /**
@@ -159,49 +203,88 @@ class QueryOptions
      * @param string $value the value of the parameter
      * @return QueryOptions
      */
-    public function raw(string $key, $value): QueryOptions
+    public function raw(string $key, $value): ViewOptions
     {
+        if ($this->raw == null) {
+            $this->raw = array();
+        }
+
+        $this->raw[$key] = $value;
+        return $this;
     }
 
     /**
      * Sets the client context id for this query.
      *
-     * @param string $arg the client context id
+     * @param string $id the client context id
      * @return QueryOptions
      */
-    public function clientContextId(string $arg): QueryOptions
+    public function clientContextId(string $id): QueryOptions
     {
+        $this->clientContextId = $id;
+        return $this;
     }
 
     /**
      * Sets whether or not to return metrics with the query.
      *
-     * @param bool $arg whether to return metrics
+     * @param bool $enabled whether to return metrics
      * @return QueryOptions
      */
-    public function metrics(bool $arg): QueryOptions
+    public function metrics(bool $enabled): QueryOptions
     {
+        $this->metrics = $enabled;
+        return $this;
     }
 
     /**
-     * Associate scope name with query
+     * Sets whether to tell the query engine to preserve expiration values set on any documents modified by this query.
      *
-     * @param string $arg the name of the scope
+     * @param bool $preserve whether to preserve expiration values.
      * @return QueryOptions
      */
-    public function scopeName(string $arg): QueryOptions
+    public function preserveExpiry(bool $preserve): QueryOptions
     {
+        $this->preserveExpiry = $preserve;
+        return $this;
     }
 
-    /**
-     * Associate scope qualifier (also known as `query_context`) with the query.
-     *
-     * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
-     *
-     * @param string $arg the scope qualifier
-     * @return QueryOptions
-     */
-    public function scopeQualifier(string $arg): QueryOptions
+    public function export(string $scopeName = null, string $scopeQualifier = null): array
     {
+        $posParams = null;
+        if ($this->posParams != null) {
+            foreach ($this->posParams as $param) {
+                $posParams[] = json_encode($param);
+            }
+        }
+        $namedParams = null;
+        if ($this->namedParams != null) {
+            foreach ($this->namedParams as $key => $param) {
+                $namedParams[$key] = json_encode($param);
+            }
+        }
+
+        return [
+            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+
+            "consistentWith" => $this->consistentWith == null ? null : $this->consistentWith->export(),
+            'scanConsistency' => $this->scanConsistency,
+            'scanCap' => $this->scanCap,
+            'pipelineCap' => $this->pipelineCap,
+            'pipelineBatch' => $this->pipelineBatch,
+            'maxParallelism' => $this->maxParallelism,
+            'profile' => $this->profile,
+            'readonly' => $this->readonly,
+            'flexIndex' => $this->flexIndex,
+            'adHoc' => $this->adHoc,
+            'namedParams' => $namedParams,
+            'posParams' => $posParams,
+            'raw' => $this->raw,
+            'clientContextId' => $this->clientContextId,
+            'metrics' => $this->metrics,
+            'preserveExpiry' => $this->preserveExpiry,
+            'scopeName' => $scopeName,
+            'scopeQualifier' => $scopeQualifier
+        ];
     }
 }

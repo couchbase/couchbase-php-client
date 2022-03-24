@@ -57,6 +57,9 @@ class connection_handle
                                                                     zend_long flags,
                                                                     const zval* options);
 
+    [[nodiscard]] std::pair<zval*, core_error_info> query(const zend_string* bucket,
+                                                                    const zval* options);
+
   private:
     class impl;
 

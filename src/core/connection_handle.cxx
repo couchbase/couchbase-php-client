@@ -108,6 +108,26 @@ build_error_context(const error_context::key_value& ctx)
     return out;
 }
 
+static query_error_context
+build_query_error_context(const error_context::query& ctx)
+{
+    query_error_context out;
+    out.client_context_id = ctx.client_context_id;
+    out.statement = ctx.statement;
+    out.parameters = ctx.parameters;
+    out.first_error_message = ctx.first_error_message;
+    out.first_error_code = ctx.first_error_code;
+    out.http_status = ctx.http_status;
+    out.http_body = ctx.http_body;
+    out.retry_attempts = ctx.retry_attempts;
+    if (!ctx.retry_reasons.empty()) {
+        for (const auto& reason : ctx.retry_reasons) {
+            out.retry_reasons.insert(retry_reason_to_string(reason));
+        }
+    }
+    return out;
+}
+
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
   public:
@@ -168,6 +188,23 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
+    std::pair<core_error_info, couchbase::operations::query_response> query(couchbase::operations::query_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::query_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::query_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_query_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
   private:
     asio::io_context ctx_{};
     std::shared_ptr<couchbase::cluster> cluster_{ couchbase::cluster::create(ctx_) };
@@ -199,7 +236,7 @@ template<typename Request>
 static core_error_info
 cb_assign_timeout(Request& req, const zval* options)
 {
-    if (options == nullptr || Z_TYPE_P(options)) {
+    if (options == nullptr || !Z_TYPE_P(options)) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -228,7 +265,7 @@ template<typename Request>
 static core_error_info
 cb_assign_durability(Request& req, const zval* options)
 {
-    if (options == nullptr || Z_TYPE_P(options)) {
+    if (options == nullptr || !Z_TYPE_P(options)) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -285,7 +322,7 @@ cb_assign_durability(Request& req, const zval* options)
 static core_error_info
 cb_assign_boolean(bool& field, const zval* options, std::string_view name)
 {
-    if (options == nullptr || Z_TYPE_P(options)) {
+    if (options == nullptr || !Z_TYPE_P(options)) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -319,7 +356,7 @@ template<typename Integer>
 static core_error_info
 cb_assign_integer(Integer& field, const zval* options, std::string_view name)
 {
-    if (options == nullptr || Z_TYPE_P(options)) {
+    if (options == nullptr || !Z_TYPE_P(options)) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -340,8 +377,67 @@ cb_assign_integer(Integer& field, const zval* options, std::string_view name)
                      { __LINE__, __FILE__, __func__ },
                      fmt::format("expected {} to be a integer value in the options", name) };
     }
+
     field = Z_LVAL_P(value);
     return {};
+}
+
+template<typename String>
+static core_error_info
+cb_assign_string(String& field, const zval* options, std::string_view name)
+{
+    if (options == nullptr || !Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("expected {} to be a string value in the options", name) };
+    }
+    field = { Z_STRVAL_P(value), Z_STRLEN_P(value) };
+    return {};
+}
+
+template<typename Integer>
+static std::pair<core_error_info, Integer>
+cb_get_integer(const zval* options, std::string_view name)
+{
+    if (options == nullptr || !Z_TYPE_P(options)) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_LONG:
+            break;
+        default:
+            return { { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("expected {} to be a integer value in the options", name) }, {} };
+    }
+
+    return { {}, Z_LVAL_P(value) };
 }
 
 std::pair<zval*, core_error_info>
@@ -379,6 +475,225 @@ connection_handle::document_upsert(const zend_string* bucket,
         return { nullptr, err };
     }
     return { nullptr, {} };
+}
+
+std::pair<zval*, core_error_info>
+connection_handle::query(const zend_string* statement,
+                                   const zval* options)
+{
+    couchbase::operations::query_request request{ cb_string_new(statement) };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { nullptr, e };
+    }
+    {
+        auto [err, scanC] = cb_get_integer<uint64_t>(options, "scanConsistency");
+        if (err.ec) {
+            return { nullptr, err };
+        }
+
+        if (scanC > 0) {
+            if (scanC == 1) {
+                request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
+            } else if (scanC == 2) {
+                request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
+            } else {
+                return {
+                    nullptr,
+                    { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "invalid value used for scan consistency" }
+                };
+            }
+        }
+    }
+    if (auto e = cb_assign_integer(request.scan_cap, options, "scanCap"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.pipeline_cap, options, "pipelineCap"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.pipeline_batch, options, "pipelineBatch"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.max_parallelism, options, "maxParallelism"); e.ec) {
+        return { nullptr, e };
+    }
+    {
+        auto [err, profile] = cb_get_integer<uint64_t>(options, "profile");
+        if (err.ec) {
+            return { nullptr, err };
+        }
+
+        if (profile > 0) {
+            if (profile == 1) {
+                request.profile = couchbase::operations::query_request::profile_mode::off;
+            } else if (profile == 2) {
+                request.profile = couchbase::operations::query_request::profile_mode::phases;
+            } else if (profile == 3) {
+                request.profile = couchbase::operations::query_request::profile_mode::timings;
+            } else {
+                return { nullptr,
+                         { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ },
+                           "invalid value used for profile" } };
+            }
+        }
+    }
+
+    if (auto e = cb_assign_boolean(request.readonly, options, "readonly"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.flex_index, options, "flexIndex"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.adhoc, options, "adHoc"); e.ec) {
+        return { nullptr, e };
+    }
+    {
+        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("posParams"));
+        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+            std::vector<couchbase::json_string> params{};
+            const zval *item = nullptr;
+
+            ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+            {
+                auto str = std::string({Z_STRVAL_P(item), Z_STRLEN_P(item)});
+                params.emplace_back(couchbase::json_string{std::move(str)});
+            }
+            ZEND_HASH_FOREACH_END();
+
+            request.positional_parameters = params;
+        }
+    }
+    {
+        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParams"));
+        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+            std::map<std::string, couchbase::json_string> params{};
+            const zend_string* key = nullptr;
+            const zval *item = nullptr;
+
+            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+            {
+                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
+                params.emplace(k, couchbase::json_string{std::move(str)});
+            }
+            ZEND_HASH_FOREACH_END();
+
+            request.named_parameters = params;
+        }
+    }
+    {
+        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+            std::map<std::string, couchbase::json_string> params{};
+            const zend_string* key = nullptr;
+            const zval *item = nullptr;
+
+            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+            {
+                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
+                params.emplace(k, couchbase::json_string{std::move(str)});
+            }
+            ZEND_HASH_FOREACH_END();
+
+            request.raw = params;
+        }
+    }
+    if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.metrics, options, "metrics"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+        return { nullptr, e };
+    }
+
+    auto [err, resp] = impl_->query(std::move(request));
+    if (err.ec) {
+        return { nullptr, err };
+    }
+
+    zval retval;
+    array_init(&retval);
+    add_assoc_string(&retval, "servedByNode", resp.served_by_node.c_str());
+
+    zval rows;
+    array_init(&rows);
+    for (auto& row : resp.rows) {
+        add_next_index_string(&rows, row.c_str());
+    }
+    add_assoc_zval(&retval, "rows", &rows);
+
+    zval meta;
+    array_init(&meta);
+    add_assoc_string(&meta, "clientContextId", resp.meta.client_context_id.c_str());
+    add_assoc_string(&meta, "requestId", resp.meta.request_id.c_str());
+    add_assoc_string(&meta, "status", resp.meta.status.c_str());
+    if (resp.meta.profile.has_value()) {
+        add_assoc_string(&meta, "profile", resp.meta.profile.value().c_str());
+    }
+    if (resp.meta.signature.has_value()) {
+        add_assoc_string(&meta, "signature", resp.meta.signature.value().c_str());
+    }
+    if (resp.meta.metrics.has_value()) {
+        zval metrics;
+        array_init(&metrics);
+        add_assoc_long(&metrics, "errorCount", resp.meta.metrics.value().error_count);
+        add_assoc_long(&metrics, "mutationCount", resp.meta.metrics.value().mutation_count);
+        add_assoc_long(&metrics, "resultCount", resp.meta.metrics.value().result_count);
+        add_assoc_long(&metrics, "resultSize", resp.meta.metrics.value().result_size);
+        add_assoc_long(&metrics, "sortCount", resp.meta.metrics.value().sort_count);
+        add_assoc_long(&metrics, "warningCount", resp.meta.metrics.value().warning_count);
+        add_assoc_long(&metrics, "elapsedTimeMilliseconds", resp.meta.metrics.value().elapsed_time.count() * 1000);
+        add_assoc_long(&metrics, "executionTimeMilliseconds", resp.meta.metrics.value().execution_time.count() * 1000);
+
+        add_assoc_zval(&meta, "metrics", &metrics);
+    }
+    if (resp.meta.errors.has_value()) {
+        zval errors;
+        array_init(&errors);
+        for (auto& e : resp.meta.errors.value()) {
+            zval error;
+            array_init(&error);
+
+            add_assoc_long(&error, "code", e.code);
+            add_assoc_string(&error, "code", e.message.c_str());
+            if (e.reason.has_value()) {
+                add_assoc_long(&error, "reason", e.reason.value());
+            }
+            if (e.retry.has_value()) {
+                add_assoc_bool(&error, "retry", e.retry.value());
+            }
+
+            add_next_index_zval(&errors, &error);
+        }
+        add_assoc_zval(&retval, "errors", &errors);
+    }
+    if (resp.meta.warnings.has_value()) {
+        zval warnings;
+        array_init(&warnings);
+        for (auto& w : resp.meta.warnings.value()) {
+            zval warning;
+            array_init(&warning);
+
+            add_assoc_long(&warning, "code", w.code);
+            add_assoc_string(&warning, "code", w.message.c_str());
+            if (w.reason.has_value()) {
+                add_assoc_long(&warning, "reason", w.reason.value());
+            }
+            if (w.retry.has_value()) {
+                add_assoc_bool(&warning, "retry", w.retry.value());
+            }
+
+            add_next_index_zval(&warnings, &warning);
+        }
+        add_assoc_zval(&retval, "warnings", &warnings);
+    }
+
+    add_assoc_zval(&retval, "meta", &meta);
+
+
+    return { &retval, {} };
 }
 
 #define ASSIGN_DURATION_OPTION(name, field, key, value)                                                                                    \

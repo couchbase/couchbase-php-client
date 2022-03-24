@@ -23,61 +23,123 @@ namespace Couchbase;
 /**
  * Interface for retrieving metadata such as errors and metrics generated during N1QL queries.
  */
-interface QueryMetaData
+class QueryMetaData
 {
+    private string $status;
+    private string $requestId;
+    private string $clientContextId;
+    private ?string $signature = null;
+    private ?string $profile = null;
+    private array $warnings;
+    private array $errors;
+    private QueryMetrics $metrics;
+
+    public function __construct(array $meta)
+    {
+        $this->status = $meta["status"];
+        $this->requestId = $meta["requestId"];
+        $this->clientContextId = $meta["clientContextId"];
+        if (isset($meta["signature"])) {
+            $this->signature = $meta["signature"];
+        }
+        if (isset($meta["profile"])) {
+            $this->profile = $meta["profile"];
+        }
+        $this->warnings = array();
+        if (isset($meta["warnings"])) {
+            foreach ($meta["warnings"] as $warning) {
+                $this->warnings[] = new QueryWarning($warning);
+            }
+        }
+        $this->errors = array();
+        if (isset($meta["errors"])) {
+            foreach ($meta["errors"] as $error) {
+                $this->errors[] = new QueryWarning($error);
+            }
+        }
+        if (isset($meta["metrics"])) {
+            $this->metrics = new QueryMetrics($meta["metrics"]);
+        } else {
+            $this->metrics = new QueryMetrics(null);
+        }
+    }
+
     /**
      * Returns the query execution status
      *
-     * @return string|null
+     * @return string
      */
-    public function status(): ?string;
+    public function status(): string {
+        return $this->status;
+    }
 
     /**
      * Returns the identifier associated with the query
      *
-     * @return string|null
+     * @return string
      */
-    public function requestId(): ?string;
+    public function requestId(): string {
+        return $this->requestId;
+    }
 
     /**
      * Returns the client context id associated with the query
      *
-     * @return string|null
+     * @return string
      */
-    public function clientContextId(): ?string;
+    public function clientContextId(): ?string {
+        return $this->clientContextId;
+    }
 
     /**
      * Returns the signature of the query
      *
      * @return array|null
      */
-    public function signature(): ?array;
+    public function signature(): ?array {
+        if ($this->signature == null) {
+            return null;
+        }
+        return json_decode($this->signature, true);
+    }
 
     /**
      * Returns any warnings generated during query execution
      *
      * @return array|null
      */
-    public function warnings(): ?array;
+    public function warnings(): ?array {
+        return $this->warnings;
+    }
 
     /**
      * Returns any errors generated during query execution
      *
      * @return array|null
      */
-    public function errors(): ?array;
+    public function errors(): ?array {
+        return $this->errors;
+    }
 
     /**
-     * Returns metrics generated during query execution such as timings and counts
+     * Returns metrics generated during query execution such as timings and counts.
+     * If no metrics were returned then all values will be 0.
      *
-     * @return array|null
+     * @return QueryMetrics
      */
-    public function metrics(): ?array;
+    public function metrics(): QueryMetrics {
+        return $this->metrics;
+    }
 
     /**
      * Returns the profile of the query if enabled
      *
      * @return array|null
      */
-    public function profile(): ?array;
+    public function profile(): ?array {
+        if ($this->profile == null) {
+            return null;
+        }
+        return json_decode($this->profile, true);
+    }
 }

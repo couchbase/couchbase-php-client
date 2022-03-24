@@ -68,12 +68,19 @@ class Cluster
      * @param string $statement the N1QL query statement to execute
      * @param QueryOptions|null $options the options to use when executing the query
      * @return QueryResult
+     * @throws InvalidArgumentException
      * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function query(string $statement, QueryOptions $options = null): QueryResult
+    public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        throw new UnsupportedOperationException();
+        if ($options == null) {
+            $options = new QueryOptions();
+        }
+
+        $result = Extension\query($this->core, $statement, $options->export());
+
+        return new QueryResult($result);
     }
 
     /**

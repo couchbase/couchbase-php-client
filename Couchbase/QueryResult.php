@@ -21,21 +21,34 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving results from N1QL queries.
+ * QueryResult is an object for retrieving results from N1QL queries.
  */
-interface QueryResult
+class QueryResult
 {
+    private QueryMetaData $meta;
+    private array $rows;
+
+    public function __construct(array $result)
+    {
+        $this->meta = new QueryMetaData($result["meta"]);
+        $this->rows = $result["rows"];
+    }
+
     /**
      * Returns metadata generated during query execution such as errors and metrics
      *
-     * @return QueryMetaData|null
+     * @return QueryMetaData
      */
-    public function metaData(): ?QueryMetaData;
+    public function metaData(): QueryMetaData {
+        return $this->meta;
+    }
 
     /**
      * Returns the rows returns during query execution
      *
-     * @return array|null
+     * @return array
      */
-    public function rows(): ?array;
+    public function rows(): array {
+        return $this->rows;
+    }
 }

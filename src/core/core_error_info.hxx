@@ -51,10 +51,22 @@ struct key_value_error_context {
     std::set<std::string> retry_reasons{};
 };
 
+struct query_error_context {
+    std::uint64_t first_error_code{};
+    std::string first_error_message{};
+    std::string client_context_id{};
+    std::string statement{};
+    std::optional<std::string> parameters{};
+    int retry_attempts{ 0 };
+    std::set<std::string> retry_reasons{};
+    std::uint32_t http_status{};
+    std::string http_body{};
+};
+
 struct core_error_info {
     std::error_code ec{};
     source_location location{};
     std::string message{};
-    std::variant<empty_error_context, key_value_error_context> error_context{};
+    std::variant<empty_error_context, key_value_error_context, query_error_context> error_context{};
 };
 } // namespace couchbase::php

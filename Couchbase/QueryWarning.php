@@ -21,17 +21,33 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Set of values for the scan consistency level of a query.
+ * Set of warning or error messages returned by a query.
  */
-interface QueryScanConsistency
+class QueryWarning
 {
-    /**
-     * Set scan consistency to not bounded
-     */
-    public const NOT_BOUNDED = 1;
+    private int $code;
+    private string $message;
+
+    public function __construct(array $warning) {
+        $this->code = $warning["code"];
+        $this->message = $warning["message"];
+    }
 
     /**
-     * Set scan consistency to not request plus
+     * Returns the error code.
+     *
+     * @return int
      */
-    public const REQUEST_PLUS = 2;
+    public function code(): int {
+        return $this->code;
+    }
+
+    /**
+     * Returns the error message.
+     *
+     * @return int
+     */
+    public function message(): int {
+        return $this->message;
+    }
 }

@@ -38,4 +38,8 @@ class MutationState
     public function add(MutationResult $source): MutationState
     {
     }
+
+    public function export(): array
+    {
+    }
 }
