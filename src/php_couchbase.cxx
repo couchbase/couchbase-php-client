@@ -389,6 +389,33 @@ PHP_FUNCTION(query)
     RETURN_ZVAL(res, 1, 0);
 }
 
+PHP_FUNCTION(analyticsQuery)
+{
+    zval* connection = nullptr;
+    zend_string* statement = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(statement)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = static_cast<couchbase::php::connection_handle*>(
+      zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [res, e] = handle->analytics_query(statement, options);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_NULL();
+    }
+
+    RETURN_ZVAL(res, 1, 0);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -424,12 +451,19 @@ ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsQuery, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
     ZEND_NS_FE("Couchbase\\Extension", createConnection, ai_CouchbaseExtension_createConnection)
     ZEND_NS_FE("Couchbase\\Extension", documentUpsert, ai_CouchbaseExtension_documentUpsert)
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
+    ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
     PHP_FE_END
 };
 

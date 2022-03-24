@@ -20,99 +20,151 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
-
 /**
  * @since 4.0.0
  */
 class AnalyticsOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?array $namedParams = null;
+    private ?array $posParams = null;
+    private ?array $raw = null;
+    private ?string $clientContextId = null;
+    private ?bool $priority = null;
+    private ?bool $readonly = null;
+    private ?string $scanConsistency = null;
+
     /**
-     * @param int $arg
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function timeout(int $arg): AnalyticsOptions
+    public function timeout(int $milliseconds): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
-     * @param array $pairs
+     * Sets the named parameters for this query.
+     *
+     * @param array $pairs the associative array of parameters
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
-     * @since 4.0.0
      */
     public function namedParameters(array $pairs): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->namedParams = $pairs;
+        return $this;
     }
 
     /**
-     * @param array $args
+     * Sets the positional parameters for this query.
+     *
+     * @param array $params the array of parameters
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
-     * @since 4.0.0
      */
-    public function positionalParameters(array $args): AnalyticsOptions
+    public function positionalParameters(array $params): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->posParams = $params;
+        return $this;
     }
 
     /**
-     * @param string $key
-     * @param $value
+     * Sets any extra query parameters that the SDK does not provide an option for.
+     *
+     * @param string $key the name of the parameter
+     * @param string $value the value of the parameter
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
-     * @since 4.0.0
      */
-    public function raw(string $key, $value): AnalyticsOptions
+    public function raw(string $key, $value): ViewOptions
     {
-        throw new UnsupportedOperationException();
+        if ($this->raw == null) {
+            $this->raw = array();
+        }
+
+        $this->raw[$key] = $value;
+        return $this;
     }
 
     /**
-     * @param string $value
+     * Sets the client context id for this query.
+     *
+     * @param string $id the client context id
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
-     * @since 4.0.0
      */
-    public function clientContextId(string $value): AnalyticsOptions
+    public function clientContextId(string $id): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->clientContextId = $id;
+        return $this;
     }
 
     /**
-     * @param bool $urgent
+     * Sets whether this query should be assigned as high priority by the analytics engine.
+     *
+     * @param bool $isPriority whether this query should be assiged as high priority.
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function priority(bool $urgent): AnalyticsOptions
+    public function priority(bool $isPriority): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->priority = $isPriority;
+        return $this;
     }
 
     /**
-     * @param bool $arg
+     * Sets whether this query should be readonly.
+     *
+     * @param bool $readonly whether this query should be readonly.
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function readonly(bool $arg): AnalyticsOptions
+    public function readonly(bool $readonly): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->readonly = $readonly;
+        return $this;
     }
 
     /**
-     * @param string $arg
+     * Sets the scan consistency.
+     *
+     * @param string $consistencyLevel the scan consistency level
      * @return AnalyticsOptions
-     * @throws UnsupportedOperationException
-     * @since 4.0.0
      */
-    public function scanConsistency(string $arg): AnalyticsOptions
+    public function scanConsistency(string $consistencyLevel): AnalyticsOptions
     {
-        throw new UnsupportedOperationException();
+        $this->scanConsistency = $consistencyLevel;
+        return $this;
+    }
+
+    public function export(string $scopeName = null, string $scopeQualifier = null): array
+    {
+        $posParams = null;
+        if ($this->posParams != null) {
+            foreach ($this->posParams as $param) {
+                $posParams[] = json_encode($param);
+            }
+        }
+        $namedParams = null;
+        if ($this->namedParams != null) {
+            foreach ($this->namedParams as $key => $param) {
+                $namedParams[$key] = json_encode($param);
+            }
+        }
+
+        return [
+            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+
+            'priority' => $this->priority,
+            'scanConsistency' => $this->scanConsistency,
+            'readonly' => $this->readonly,
+            'namedParams' => $namedParams,
+            'posParams' => $posParams,
+            'raw' => $this->raw,
+            'clientContextId' => $this->clientContextId,
+            'scopeName' => $scopeName,
+            'scopeQualifier' => $scopeQualifier
+        ];
     }
 }

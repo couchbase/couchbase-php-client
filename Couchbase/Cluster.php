@@ -69,7 +69,6 @@ class Cluster
      * @param QueryOptions|null $options the options to use when executing the query
      * @return QueryResult
      * @throws InvalidArgumentException
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
@@ -90,12 +89,17 @@ class Cluster
      * @param string $statement the analytics query statement to execute
      * @param AnalyticsOptions|null $options the options to use when executing the query
      * @return AnalyticsResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
-        throw new UnsupportedOperationException();
+        if ($options == null) {
+            $options = new AnalyticsOptions();
+        }
+
+        $result = Extension\analyticsQuery($this->core, $statement, $options->export());
+
+        return new AnalyticsResult($result);
     }
 
     /**

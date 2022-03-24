@@ -21,34 +21,33 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving results from analytics queries.
+ * Set of warning or error messages returned by an analytics query.
  */
-class AnalyticsResult
+class AnalyticsWarning
 {
-    private AnalyticsMetaData $meta;
-    private array $rows;
+    private int $code;
+    private string $message;
 
-    public function __construct(array $result)
-    {
-        $this->meta = new AnalyticsMetaData($result["meta"]);
-        $this->rows = $result["rows"];
+    public function __construct(array $warning) {
+        $this->code = $warning["code"];
+        $this->message = $warning["message"];
     }
 
     /**
-     * Returns metadata generated during query execution
+     * Returns the error code.
      *
-     * @return AnalyticsMetaData
+     * @return int
      */
-    public function metaData(): AnalyticsMetaData {
-        return $this->meta;
+    public function code(): int {
+        return $this->code;
     }
 
     /**
-     * Returns the rows returned during query execution
+     * Returns the error message.
      *
-     * @return array
+     * @return int
      */
-    public function rows(): array {
-        return $this->rows;
+    public function message(): int {
+        return $this->message;
     }
 }

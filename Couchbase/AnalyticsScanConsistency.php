@@ -21,34 +21,17 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving results from analytics queries.
+ * Set of values for the scan consistency level of an analytics query.
  */
-class AnalyticsResult
+interface AnalyticsScanConsistency
 {
-    private AnalyticsMetaData $meta;
-    private array $rows;
-
-    public function __construct(array $result)
-    {
-        $this->meta = new AnalyticsMetaData($result["meta"]);
-        $this->rows = $result["rows"];
-    }
+    /**
+     * Set scan consistency to not bounded
+     */
+    public const NOT_BOUNDED = 1;
 
     /**
-     * Returns metadata generated during query execution
-     *
-     * @return AnalyticsMetaData
+     * Set scan consistency to not request plus
      */
-    public function metaData(): AnalyticsMetaData {
-        return $this->meta;
-    }
-
-    /**
-     * Returns the rows returned during query execution
-     *
-     * @return array
-     */
-    public function rows(): array {
-        return $this->rows;
-    }
+    public const REQUEST_PLUS = 2;
 }
