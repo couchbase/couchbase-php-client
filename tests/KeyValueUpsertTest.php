@@ -20,8 +20,10 @@ declare(strict_types=1);
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class KeyValueUpsertTest extends Helpers\CouchbaseTestCase {
-    function testHello() {
+class KeyValueUpsertTest extends Helpers\CouchbaseTestCase
+{
+    function testUpsertReturnsCas()
+    {
         $collection = $this->defaultCollection();
         $res = $collection->upsert($this->uniqueId("foo"), ["answer" => 42]);
         $this->assertNotNull($res->cas());

@@ -28,7 +28,12 @@ class AnalyticsWarning
     private int $code;
     private string $message;
 
-    public function __construct(array $warning) {
+    /**
+     * @private
+     * @param array $warning
+     */
+    public function __construct(array $warning)
+    {
         $this->code = $warning["code"];
         $this->message = $warning["message"];
     }
@@ -37,8 +42,10 @@ class AnalyticsWarning
      * Returns the error code.
      *
      * @return int
+     * @since 4.0.0
      */
-    public function code(): int {
+    public function code(): int
+    {
         return $this->code;
     }
 
@@ -46,8 +53,10 @@ class AnalyticsWarning
      * Returns the error message.
      *
      * @return int
+     * @since 4.0.0
      */
-    public function message(): int {
+    public function message(): int
+    {
         return $this->message;
     }
 }

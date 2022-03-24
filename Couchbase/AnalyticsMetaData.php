@@ -32,6 +32,10 @@ class AnalyticsMetaData
     private array $warnings;
     private AnalyticsMetrics $metrics;
 
+    /**
+     * @private
+     * @param array $meta
+     */
     public function __construct(array $meta)
     {
         $this->status = $meta["status"];
@@ -57,8 +61,10 @@ class AnalyticsMetaData
      * Returns the query execution status
      *
      * @return string
+     * @since 4.0.0
      */
-    public function status(): string {
+    public function status(): string
+    {
         return $this->status;
     }
 
@@ -66,8 +72,10 @@ class AnalyticsMetaData
      * Returns the identifier associated with the query
      *
      * @return string
+     * @since 4.0.0
      */
-    public function requestId(): string {
+    public function requestId(): string
+    {
         return $this->requestId;
     }
 
@@ -75,8 +83,10 @@ class AnalyticsMetaData
      * Returns the client context id associated with the query
      *
      * @return string
+     * @since 4.0.0
      */
-    public function clientContextId(): ?string {
+    public function clientContextId(): ?string
+    {
         return $this->clientContextId;
     }
 
@@ -84,8 +94,10 @@ class AnalyticsMetaData
      * Returns the signature of the query
      *
      * @return array|null
+     * @since 4.0.0
      */
-    public function signature(): ?array {
+    public function signature(): ?array
+    {
         if ($this->signature == null) {
             return null;
         }
@@ -96,8 +108,10 @@ class AnalyticsMetaData
      * Returns any warnings generated during query execution
      *
      * @return array|null
+     * @since 4.0.0
      */
-    public function warnings(): ?array {
+    public function warnings(): ?array
+    {
         return $this->warnings;
     }
 
@@ -106,8 +120,10 @@ class AnalyticsMetaData
      * If no metrics were returned then all values will be 0.
      *
      * @return AnalyticsMetrics
+     * @since 4.0.0
      */
-    public function metrics(): AnalyticsMetrics {
+    public function metrics(): AnalyticsMetrics
+    {
         return $this->metrics;
     }
 }

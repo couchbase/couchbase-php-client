@@ -28,6 +28,10 @@ class AnalyticsResult
     private AnalyticsMetaData $meta;
     private array $rows;
 
+    /**
+     * @private
+     * @param array $result
+     */
     public function __construct(array $result)
     {
         $this->meta = new AnalyticsMetaData($result["meta"]);
@@ -38,8 +42,10 @@ class AnalyticsResult
      * Returns metadata generated during query execution
      *
      * @return AnalyticsMetaData
+     * @since 4.0.0
      */
-    public function metaData(): AnalyticsMetaData {
+    public function metaData(): AnalyticsMetaData
+    {
         return $this->meta;
     }
 
@@ -47,8 +53,10 @@ class AnalyticsResult
      * Returns the rows returned during query execution
      *
      * @return array
+     * @since 4.0.0
      */
-    public function rows(): array {
+    public function rows(): array
+    {
         return $this->rows;
     }
 }

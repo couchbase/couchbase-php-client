@@ -28,6 +28,10 @@ class QueryResult
     private QueryMetaData $meta;
     private array $rows;
 
+    /**
+     * @private
+     * @param array $result
+     */
     public function __construct(array $result)
     {
         $this->meta = new QueryMetaData($result["meta"]);
@@ -38,8 +42,10 @@ class QueryResult
      * Returns metadata generated during query execution such as errors and metrics
      *
      * @return QueryMetaData
+     * @since 4.0.0
      */
-    public function metaData(): QueryMetaData {
+    public function metaData(): QueryMetaData
+    {
         return $this->meta;
     }
 
@@ -47,8 +53,10 @@ class QueryResult
      * Returns the rows returns during query execution
      *
      * @return array
+     * @since 4.0.0
      */
-    public function rows(): array {
+    public function rows(): array
+    {
         return $this->rows;
     }
 }

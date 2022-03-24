@@ -71,7 +71,15 @@ unless File.file?(php_unit_phar)
   run("curl -L -o #{php_unit_phar.shellescape} #{php_unit_url}")
 end
 
+couchbase_ext = "#{project_root}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+unless File.exists?(couchbase_ext)
+  alt_filename = "#{project_root}/modules/couchbase.so"
+  if File.exists?(alt_filename)
+    couchbase_ext = alt_filename
+  end
+end
+
 php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
 Dir.chdir(project_root) do 
-  run("#{php_executable} #{php_unit_phar.shellescape} --color --testdox #{File.join(project_root, "tests").shellescape}")
+  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{File.join(project_root, "tests").shellescape}")
 end

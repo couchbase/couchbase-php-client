@@ -91,7 +91,7 @@ class TestEnvironment
         return new PasswordAuthenticator($this->username, $this->password);
     }
 
-    static public function randomId(): string
+    public static function randomId(): string
     {
         try {
             return bin2hex(random_bytes(16));

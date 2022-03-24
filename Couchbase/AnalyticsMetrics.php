@@ -33,7 +33,12 @@ class AnalyticsMetrics
     private int $elapsedTimeMilliseconds;
     private int $executionTimeMilliseconds;
 
-    public function __construct(?array $metrics = null) {
+    /**
+     * @private
+     * @param array|null $metrics
+     */
+    public function __construct(?array $metrics = null)
+    {
         if ($metrics == null) {
             $this->errorCount = 0;
             $this->processedObjects = 0;
@@ -57,6 +62,7 @@ class AnalyticsMetrics
      * The number of errors returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function errorCount(): int
     {
@@ -67,6 +73,7 @@ class AnalyticsMetrics
      * The number of objects processed by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function processedObjects(): int
     {
@@ -77,6 +84,7 @@ class AnalyticsMetrics
      * The number of results returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function resultCount(): int
     {
@@ -87,6 +95,7 @@ class AnalyticsMetrics
      * The total number of bytes in the results.
      *
      * @return int
+     * @since 4.0.0
      */
     public function resultSize(): int
     {
@@ -97,6 +106,7 @@ class AnalyticsMetrics
      * The number of warnings returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function warningCount(): int
     {
@@ -108,6 +118,7 @@ class AnalyticsMetrics
      * request was received until the results were returned.
      *
      * @return int
+     * @since 4.0.0
      */
     public function elapsedTimeMilliseconds(): int
     {
@@ -119,11 +130,10 @@ class AnalyticsMetrics
      * when query execution started until the results were returned.
      *
      * @return int
+     * @since 4.0.0
      */
     public function executionTimeMilliseconds(): int
     {
         return $this->executionTimeMilliseconds;
     }
-
-
 }

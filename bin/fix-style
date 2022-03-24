@@ -38,4 +38,4 @@ def run(*args)
 end
 
 project_root = File.expand_path(File.join(__dir__, ".."))
-run("phpcbf --standard=#{project_root}/phpcs.xml #{project_root}/Couchbase")
+run("phpcbf --standard=#{project_root}/phpcs.xml #{project_root}/Couchbase #{project_root}/tests")

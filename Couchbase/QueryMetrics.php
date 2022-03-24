@@ -34,7 +34,12 @@ class QueryMetrics
     private int $elapsedTimeMilliseconds;
     private int $executionTimeMilliseconds;
 
-    public function __construct(?array $metrics = null) {
+    /**
+     * @private
+     * @param array|null $metrics
+     */
+    public function __construct(?array $metrics = null)
+    {
         if ($metrics == null) {
             $this->errorCount = 0;
             $this->mutationCount = 0;
@@ -60,6 +65,7 @@ class QueryMetrics
      * The number of errors returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function errorCount(): int
     {
@@ -70,6 +76,7 @@ class QueryMetrics
      * The number of mutations performed by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function mutationCount(): int
     {
@@ -80,6 +87,7 @@ class QueryMetrics
      * The number of results returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function resultCount(): int
     {
@@ -90,6 +98,7 @@ class QueryMetrics
      * The total number of bytes in the results.
      *
      * @return int
+     * @since 4.0.0
      */
     public function resultSize(): int
     {
@@ -101,6 +110,7 @@ class QueryMetrics
      * through LIMIT clause.
      *
      * @return int
+     * @since 4.0.0
      */
     public function sortCount(): int
     {
@@ -111,6 +121,7 @@ class QueryMetrics
      * The number of warnings returned by this query.
      *
      * @return int
+     * @since 4.0.0
      */
     public function warningCount(): int
     {
@@ -122,6 +133,7 @@ class QueryMetrics
      * request was received until the results were returned.
      *
      * @return int
+     * @since 4.0.0
      */
     public function elapsedTimeMilliseconds(): int
     {
@@ -133,11 +145,10 @@ class QueryMetrics
      * when query execution started until the results were returned.
      *
      * @return int
+     * @since 4.0.0
      */
     public function executionTimeMilliseconds(): int
     {
         return $this->executionTimeMilliseconds;
     }
-
-
 }
