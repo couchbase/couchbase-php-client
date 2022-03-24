@@ -423,15 +423,14 @@ PHP_FUNCTION(query)
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
 
-    auto* handle = static_cast<couchbase::php::connection_handle*>(
-      zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
     }
     auto [res, e] = handle->query(statement, options);
     if (e.ec) {
         couchbase_throw_exception(e);
-        RETURN_NULL();
+        RETURN_THROWS();
     }
 
     RETURN_ZVAL(res, 1, 0);
@@ -450,15 +449,14 @@ PHP_FUNCTION(analyticsQuery)
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
 
-    auto* handle = static_cast<couchbase::php::connection_handle*>(
-      zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
     }
     auto [res, e] = handle->analytics_query(statement, options);
     if (e.ec) {
         couchbase_throw_exception(e);
-        RETURN_NULL();
+        RETURN_THROWS();
     }
 
     RETURN_ZVAL(res, 1, 0);
