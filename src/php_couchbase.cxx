@@ -274,7 +274,7 @@ couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
     std::stringstream message;
     message << error_info.ec.message() << " (" << error_info.ec.value() << ")";
     if (!error_info.message.empty()) {
-        message << ": " << error_info.message;
+        message << ": \"" << error_info.message << "\"";
     }
     if (!error_info.location.function_name.empty()) {
         message << " in '" << error_info.location.function_name << "'";
@@ -319,10 +319,61 @@ PHP_FUNCTION(createConnection)
     auto [handle, e] = couchbase::php::create_persistent_connection(connection_hash, connection_string, options);
     if (e.ec) {
         couchbase_throw_exception(e);
-        RETURN_NULL();
+        RETURN_THROWS();
     }
 
     RETURN_RES(handle->resource_id());
+}
+
+static inline couchbase::php::connection_handle*
+fetch_couchbase_connection_from_resource(zval* resource)
+{
+    return static_cast<couchbase::php::connection_handle*>(
+      zend_fetch_resource(Z_RES_P(resource), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+}
+
+PHP_FUNCTION(openBucket)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->bucket_open(name); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(closeBucket)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->bucket_close(name); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
 }
 
 PHP_FUNCTION(documentUpsert)
@@ -345,21 +396,18 @@ PHP_FUNCTION(documentUpsert)
     Z_PARAM_STR(value)
     Z_PARAM_LONG(flags)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
-    auto* handle = static_cast<couchbase::php::connection_handle*>(
-      zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->document_upsert(bucket, scope, collection, id, value, flags, options);
-    if (e.ec) {
-        couchbase_throw_exception(e);
-        RETURN_NULL();
-    }
 
-    RETURN_RES(handle->resource_id());
+    if (auto e = handle->document_upsert(return_value, bucket, scope, collection, id, value, flags, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
 }
 
 PHP_FUNCTION(query)
@@ -434,6 +482,16 @@ ZEND_ARG_TYPE_INFO(0, connectionString, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_openBucket, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_closeBucket, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentUpsert, 0, 0, 7)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -442,7 +500,7 @@ ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_query, 0, 0, 2)
@@ -461,6 +519,8 @@ ZEND_END_ARG_INFO()
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
     ZEND_NS_FE("Couchbase\\Extension", createConnection, ai_CouchbaseExtension_createConnection)
+    ZEND_NS_FE("Couchbase\\Extension", openBucket, ai_CouchbaseExtension_openBucket)
+    ZEND_NS_FE("Couchbase\\Extension", closeBucket, ai_CouchbaseExtension_closeBucket)
     ZEND_NS_FE("Couchbase\\Extension", documentUpsert, ai_CouchbaseExtension_documentUpsert)
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
     ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)

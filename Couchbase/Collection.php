@@ -32,6 +32,13 @@ class Collection
     private string $name;
     private $core;
 
+    /**
+     * @private
+     * @param string $name
+     * @param string $scopeName
+     * @param string $bucketName
+     * @param $core
+     */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
     {
         $this->name = $name;
@@ -44,6 +51,7 @@ class Collection
      * Get the name of the collection.
      *
      * @return string
+     * @since 4.0.0
      */
     public function name(): string
     {
@@ -61,6 +69,7 @@ class Collection
      * @param GetOptions|null $options the options to use for the operation
      * @return GetResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function get(string $id, GetOptions $options = null): GetResult
     {
@@ -74,6 +83,7 @@ class Collection
      * @param ExistsOptions|null $options the options to use for the operation
      * @return ExistsResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function exists(string $id, ExistsOptions $options = null): ExistsResult
     {
@@ -89,6 +99,7 @@ class Collection
      * @param GetAndLockOptions|null $options the options to use for the operation
      * @return GetResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function getAndLock(string $id, int $lockTime, GetAndLockOptions $options = null): GetResult
     {
@@ -103,6 +114,7 @@ class Collection
      * @param GetAndTouchOptions|null $options the options to use for the operation
      * @return GetResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function getAndTouch(string $id, int $expiry, GetAndTouchOptions $options = null): GetResult
     {
@@ -116,6 +128,7 @@ class Collection
      * @param GetAnyReplicaOptions|null $options the options to use for the operation
      * @return GetReplicaResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function getAnyReplica(string $id, GetAnyReplicaOptions $options = null): GetReplicaResult
     {
@@ -130,6 +143,7 @@ class Collection
      * @param GetAllReplicasOptions|null $options the options to use for the operation
      * @return array
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
     {
@@ -143,11 +157,15 @@ class Collection
      * @param mixed $value the value to use for the document
      * @param UpsertOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        if ($options != null) {
+            $options = $options->export();
+        }
+        $response = Extension\documentUpsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, json_encode($value), 0, $options);
+        return new MutationResult($response);
     }
 
     /**
@@ -158,6 +176,7 @@ class Collection
      * @param InsertOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function insert(string $id, $value, InsertOptions $options = null): MutationResult
     {
@@ -172,6 +191,7 @@ class Collection
      * @param ReplaceOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult
     {
@@ -185,6 +205,7 @@ class Collection
      * @param RemoveOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function remove(string $id, RemoveOptions $options = null): MutationResult
     {
@@ -200,6 +221,7 @@ class Collection
      * @param UnlockOptions|null $options the options to use for the operation
      * @return Result
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function unlock(string $id, string $cas, UnlockOptions $options = null): Result
     {
@@ -214,6 +236,7 @@ class Collection
      * @param TouchOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function touch(string $id, int $expiry, TouchOptions $options = null): MutationResult
     {
@@ -228,6 +251,7 @@ class Collection
      * @param LookupInOptions|null $options the options to use for the operation
      * @return LookupInResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
     {
@@ -242,6 +266,7 @@ class Collection
      * @param MutateInOptions|null $options the options to use for the operation
      * @return MutateInResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult
     {
@@ -256,6 +281,7 @@ class Collection
      * @param RemoveOptions|null $options the options to use for the operation
      * @return array array of GetResult, one for each of the entries
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function getMulti(array $ids, RemoveOptions $options = null): array
     {
@@ -271,6 +297,7 @@ class Collection
      * @param RemoveOptions|null $options the options to use for the operation
      * @return array array of MutationResult, one for each of the entries
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function removeMulti(array $entries, RemoveOptions $options = null): array
     {
@@ -284,6 +311,7 @@ class Collection
      * @param UpsertOptions|null $options the options to use for the operation
      * @return array array of MutationResult, one for each of the entries
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function upsertMulti(array $entries, UpsertOptions $options = null): array
     {
@@ -294,10 +322,10 @@ class Collection
      * Creates and returns a BinaryCollection object for use with binary type documents.
      *
      * @return BinaryCollection
-     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function binary(): BinaryCollection
     {
-        return new BinaryCollection($name, $this->scopeName, $this->bucketName, $core);
+        return new BinaryCollection($this->name, $this->scopeName, $this->bucketName, $this->core);
     }
 }

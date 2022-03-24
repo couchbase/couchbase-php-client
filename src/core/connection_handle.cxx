@@ -21,6 +21,7 @@
 
 #include <fmt/core.h>
 
+#include <array>
 #include <thread>
 
 namespace couchbase::php
@@ -191,7 +192,29 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return {};
     }
 
-    std::pair<core_error_info, couchbase::operations::upsert_response> document_upsert(couchbase::operations::upsert_request request)
+    core_error_info bucket_open(const std::string& name)
+    {
+        auto barrier = std::make_shared<std::promise<std::error_code>>();
+        auto f = barrier->get_future();
+        cluster_->open_bucket(name, [barrier](std::error_code ec) { barrier->set_value(ec); });
+        if (auto ec = f.get()) {
+            return { ec, { __LINE__, __FILE__, __func__ } };
+        }
+        return {};
+    }
+
+    core_error_info bucket_close(const std::string& name)
+    {
+        auto barrier = std::make_shared<std::promise<std::error_code>>();
+        auto f = barrier->get_future();
+        cluster_->close_bucket(name, [barrier](std::error_code ec) { barrier->set_value(ec); });
+        if (auto ec = f.get()) {
+            return { ec, { __LINE__, __FILE__, __func__ } };
+        }
+        return {};
+    }
+
+    std::pair<couchbase::operations::upsert_response, core_error_info> document_upsert(couchbase::operations::upsert_request request)
     {
         auto barrier = std::make_shared<std::promise<couchbase::operations::upsert_response>>();
         auto f = barrier->get_future();
@@ -199,13 +222,13 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                           [barrier](couchbase::operations::upsert_response&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
+            return { {},
+                     { resp.ctx.ec,
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to upsert document: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_error_context(resp.ctx) },
-                     {} };
+                       build_error_context(resp.ctx) } };
         }
-        return { {}, std::move(resp) };
+        return { std::move(resp), {} };
     }
 
     std::pair<core_error_info, couchbase::operations::query_response> query(couchbase::operations::query_request request)
@@ -267,6 +290,18 @@ static std::string
 cb_string_new(const zend_string* value)
 {
     return { ZSTR_VAL(value), ZSTR_LEN(value) };
+}
+
+core_error_info
+connection_handle::bucket_open(const zend_string* name)
+{
+    return impl_->bucket_open(cb_string_new(name));
+}
+
+core_error_info
+connection_handle::bucket_close(const zend_string* name)
+{
+    return impl_->bucket_close(cb_string_new(name));
 }
 
 template<typename Request>
@@ -470,15 +505,35 @@ cb_get_integer(const zval* options, std::string_view name)
             break;
         default:
             return { { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a integer value in the options", name) }, {} };
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("expected {} to be a integer value in the options", name) },
+                     {} };
     }
 
     return { {}, Z_LVAL_P(value) };
 }
 
-std::pair<zval*, core_error_info>
-connection_handle::document_upsert(const zend_string* bucket,
+static inline void
+mutation_token_to_zval(const couchbase::mutation_token& token, zval* return_value)
+{
+    array_init(return_value);
+    add_assoc_stringl(return_value, "bucketName", token.bucket_name.data(), token.bucket_name.size());
+    add_assoc_long(return_value, "partitionId", token.partition_id);
+    auto val = fmt::format("{:x}", token.partition_uuid);
+    add_assoc_stringl(return_value, "partitionUuid", val.data(), val.size());
+    val = fmt::format("{:x}", token.sequence_number);
+    add_assoc_stringl(return_value, "sequenceNumber", val.data(), val.size());
+}
+
+static inline bool
+is_mutation_token_valid(const couchbase::mutation_token& token)
+{
+    return !token.bucket_name.empty() && token.partition_uuid > 0;
+}
+
+core_error_info
+connection_handle::document_upsert(zval* return_value,
+                                   const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
                                    const zend_string* id,
@@ -495,28 +550,35 @@ connection_handle::document_upsert(const zend_string* bucket,
     couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
     request.flags = std::uint32_t(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
-        return { nullptr, e };
+        return e;
     }
     if (auto e = cb_assign_durability(request, options); e.ec) {
-        return { nullptr, e };
+        return e;
     }
     if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
-        return { nullptr, e };
+        return e;
     }
     if (auto e = cb_assign_integer(request.expiry, options, "expiry"); e.ec) {
-        return { nullptr, e };
+        return e;
     }
 
-    auto [err, resp] = impl_->document_upsert(std::move(request));
+    auto [resp, err] = impl_->document_upsert(std::move(request));
     if (err.ec) {
-        return { nullptr, err };
+        return err;
     }
-    return { nullptr, {} };
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    if (is_mutation_token_valid(resp.token)) {
+        zval token_val;
+        mutation_token_to_zval(resp.token, &token_val);
+        add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
 }
 
 std::pair<zval*, core_error_info>
-connection_handle::query(const zend_string* statement,
-                         const zval* options)
+connection_handle::query(const zend_string* statement, const zval* options)
 {
     couchbase::operations::query_request request{ cb_string_new(statement) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
@@ -568,8 +630,7 @@ connection_handle::query(const zend_string* statement,
                 request.profile = couchbase::operations::query_request::profile_mode::timings;
             } else {
                 return { nullptr,
-                         { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ },
-                           "invalid value used for profile" } };
+                         { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "invalid value used for profile" } };
             }
         }
     }
@@ -587,12 +648,12 @@ connection_handle::query(const zend_string* statement,
         const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("posParams"));
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::vector<couchbase::json_string> params{};
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
             {
-                auto str = std::string({Z_STRVAL_P(item), Z_STRLEN_P(item)});
-                params.emplace_back(couchbase::json_string{std::move(str)});
+                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+                params.emplace_back(couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -604,13 +665,13 @@ connection_handle::query(const zend_string* statement,
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::map<std::string, couchbase::json_string> params{};
             const zend_string* key = nullptr;
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
             {
                 auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
                 auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{std::move(str)});
+                params.emplace(k, couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -622,13 +683,13 @@ connection_handle::query(const zend_string* statement,
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::map<std::string, couchbase::json_string> params{};
             const zend_string* key = nullptr;
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
             {
                 auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
                 auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{std::move(str)});
+                params.emplace(k, couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -729,13 +790,11 @@ connection_handle::query(const zend_string* statement,
 
     add_assoc_zval(&retval, "meta", &meta);
 
-
     return { &retval, {} };
 }
 
 std::pair<zval*, core_error_info>
-connection_handle::analytics_query(const zend_string* statement,
-                                   const zval* options)
+connection_handle::analytics_query(const zend_string* statement, const zval* options)
 {
     couchbase::operations::analytics_request request{ cb_string_new(statement) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
@@ -770,12 +829,12 @@ connection_handle::analytics_query(const zend_string* statement,
         const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("posParams"));
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::vector<couchbase::json_string> params{};
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
             {
-                auto str = std::string({Z_STRVAL_P(item), Z_STRLEN_P(item)});
-                params.emplace_back(couchbase::json_string{std::move(str)});
+                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+                params.emplace_back(couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -787,13 +846,13 @@ connection_handle::analytics_query(const zend_string* statement,
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::map<std::string, couchbase::json_string> params{};
             const zend_string* key = nullptr;
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
             {
                 auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
                 auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{std::move(str)});
+                params.emplace(k, couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -805,13 +864,13 @@ connection_handle::analytics_query(const zend_string* statement,
         if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
             std::map<std::string, couchbase::json_string> params{};
             const zend_string* key = nullptr;
-            const zval *item = nullptr;
+            const zval* item = nullptr;
 
             ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
             {
                 auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
                 auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{std::move(str)});
+                params.emplace(k, couchbase::json_string{ std::move(str) });
             }
             ZEND_HASH_FOREACH_END();
 
@@ -877,7 +936,6 @@ connection_handle::analytics_query(const zend_string* statement,
 
         add_assoc_zval(&retval, "meta", &meta);
     }
-
 
     return { &retval, {} };
 }

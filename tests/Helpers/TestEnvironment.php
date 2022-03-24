@@ -1,0 +1,102 @@
+<?php
+
+/**
+ * Copyright 2014-Present Couchbase, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+declare(strict_types=1);
+
+namespace Helpers;
+
+include_once __DIR__ . "/Caves.php";
+
+use Couchbase\PasswordAuthenticator;
+use Exception;
+use http\Exception\RuntimeException;
+
+class TestEnvironment
+{
+    private string $clusterId;
+    private ?string $connectionString = null;
+    private Caves $caves;
+    private string $username;
+    private string $password;
+    private string $bucketName;
+
+    private static function checkExtension(string $name)
+    {
+        if (!extension_loaded($name)) {
+            $extension = "couchbase";
+            $moduleDirectory = realpath(__DIR__ . '/../../modules');
+            if ($moduleDirectory) {
+                $modulePath = $moduleDirectory . "/" . $extension . "." . PHP_SHLIB_SUFFIX;
+                if (file_exists($modulePath)) {
+                    $extension = $modulePath;
+                }
+            }
+            throw new \RuntimeException("extension '" . $name . "' is not loaded. Check your INI file, or add '-d extension=" . $extension . "' to the interpreter arguments");
+        }
+    }
+
+    public function __construct()
+    {
+        self::checkExtension("json");
+        self::checkExtension("couchbase");
+
+        $this->clusterId = self::randomId();
+        $this->caves = new Caves();
+        $this->username = getenv("TEST_USERNAME") ?: "Administrator";
+        $this->password = getenv("TEST_PASSWORD") ?: "password";
+        $this->bucketName = getenv("TEST_BUCKET") ?: "default";
+    }
+
+    public function bucketName(): string
+    {
+        return $this->bucketName;
+    }
+
+    public function start()
+    {
+        $this->caves->start();
+    }
+
+    public function stop()
+    {
+        $this->caves->stop();
+        $this->connectionString = null;
+    }
+
+    public function connectionString(): string
+    {
+        if ($this->connectionString == null) {
+            $this->connectionString = $this->caves->createCluster($this->clusterId);
+        }
+        return $this->connectionString;
+    }
+
+    public function buildPasswordAuthenticator(): PasswordAuthenticator
+    {
+        return new PasswordAuthenticator($this->username, $this->password);
+    }
+
+    static public function randomId(): string
+    {
+        try {
+            return bin2hex(random_bytes(16));
+        } catch (Exception $e) {
+            return sprintf("%s_%s", time(), rand());
+        }
+    }
+}

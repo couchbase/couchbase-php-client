@@ -53,7 +53,6 @@ class Cluster
      *
      * @param string $name the name of the bucket
      * @return Bucket
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function bucket(string $name): Bucket

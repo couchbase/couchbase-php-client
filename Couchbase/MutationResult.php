@@ -23,12 +23,30 @@ namespace Couchbase;
 /**
  * Interface for results created by operations that perform mutations.
  */
-interface MutationResult extends Result
+class MutationResult extends Result
 {
+    private ?MutationToken $mutationToken = null;
+
+    /**
+     * @private
+     * @param array $response raw response from the extension
+     */
+    public function __construct(array $response)
+    {
+        parent::__construct($response);
+        if (array_key_exists("mutationToken", $response)) {
+            $this->mutationToken = new MutationToken($response["mutationToken"]);
+        }
+    }
+
     /**
      * Returns the mutation token generated during the mutation
      *
      * @return MutationToken|null
+     * @since 4.0.0
      */
-    public function mutationToken(): ?MutationToken;
+    public function mutationToken(): ?MutationToken
+    {
+        return $this->mutationToken;
+    }
 }

@@ -1,6 +1,7 @@
 *.core
 *.dep
 *.dep
+*.ini
 *.lo
 *.loT
 *.o
@@ -51,3 +52,4 @@
 /vendor/
 cmake-build*/
 composer.lock
+php_test_results_*.txt

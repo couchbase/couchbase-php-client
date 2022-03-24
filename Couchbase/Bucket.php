@@ -39,6 +39,7 @@ class Bucket
     {
         $this->name = $name;
         $this->core = $core;
+        Extension\openBucket($this->core, $this->name);
     }
 
     /**

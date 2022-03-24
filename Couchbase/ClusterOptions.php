@@ -67,198 +67,375 @@ class ClusterOptions
 
     private ?Authenticator $authenticator;
 
+    /**
+     * @param Authenticator $authenticator
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
+    public function authenticator(Authenticator $authenticator): ClusterOptions
+    {
+        $this->authenticator = $authenticator;
+        return $this;
+    }
+
+    /**
+     * @param string $username
+     * @param string $password
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function credentials(string $username, string $password): ClusterOptions
     {
         $this->authenticator = new PasswordAuthenticator($username, $password);
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function analyticsTimeout(int $milliseconds): ClusterOptions
     {
         $this->analyticsTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function bootstrapTimeout(int $milliseconds): ClusterOptions
     {
         $this->bootstrapTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function connectTimeout(int $milliseconds): ClusterOptions
     {
         $this->connectTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function dnsSrvTimeout(int $milliseconds): ClusterOptions
     {
         $this->dnsSrvTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function keyValueDurableTimeout(int $milliseconds): ClusterOptions
     {
         $this->keyValueDurableTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function keyValueTimeout(int $milliseconds): ClusterOptions
     {
         $this->keyValueTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function managementTimeout(int $milliseconds): ClusterOptions
     {
         $this->searchTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function queryTimeout(int $milliseconds): ClusterOptions
     {
         $this->queryTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function resolveTimeout(int $milliseconds): ClusterOptions
     {
         $this->resolveTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function searchTimeout(int $milliseconds): ClusterOptions
     {
         $this->searchTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function viewTimeout(int $milliseconds): ClusterOptions
     {
         $this->viewTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $numberOfConnections
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function maxHttpConnections(int $numberOfConnections): ClusterOptions
     {
         $this->maxHttpConnections = $numberOfConnections;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function configIdleRedialTimeout(int $milliseconds): ClusterOptions
     {
         $this->configIdleRedialTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function configPollFloor(int $milliseconds): ClusterOptions
     {
         $this->configPollFloorMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function configPollInterval(int $milliseconds): ClusterOptions
     {
         $this->configPollIntervalMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param int $milliseconds
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function tcpKeepAliveInterval(int $milliseconds): ClusterOptions
     {
         $this->tcpKeepAliveIntervalMilliseconds = $milliseconds;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableClustermapNotification(bool $enable): ClusterOptions
     {
         $this->enableClustermapNotification = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableCompression(bool $enable): ClusterOptions
     {
         $this->enableCompression = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableDnsSrv(bool $enable): ClusterOptions
     {
         $this->enableDnsSrv = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableMetrics(bool $enable): ClusterOptions
     {
         $this->enableMetrics = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableMutationTokens(bool $enable): ClusterOptions
     {
         $this->enableMutationTokens = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableTcpKeepAlive(bool $enable): ClusterOptions
     {
         $this->enableTcpKeepAlive = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableTls(bool $enable): ClusterOptions
     {
         $this->enableTls = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableTracing(bool $enable): ClusterOptions
     {
         $this->enableTracing = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function enableUnorderedExecution(bool $enable): ClusterOptions
     {
         $this->enableUnorderedExecution = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function forceIpv4(bool $enable): ClusterOptions
     {
         $this->forceIpv4 = $enable;
         return $this;
     }
 
+    /**
+     * @param bool $enable
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function showQueries(bool $enable): ClusterOptions
     {
         $this->showQueries = $enable;
         return $this;
     }
 
+    /**
+     * @param string $networkSelector
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function network(string $networkSelector): ClusterOptions
     {
         $this->network = $networkSelector;
         return $this;
     }
 
+    /**
+     * @param string $certificatePath
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function trustCertificate(string $certificatePath): ClusterOptions
     {
         $this->trustCertificate = $certificatePath;
         return $this;
     }
 
+    /**
+     * @param string $userAgentExtraString
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function userAgentExtra(string $userAgentExtraString): ClusterOptions
     {
         $this->userAgentExtra = $userAgentExtraString;
         return $this;
     }
 
+    /**
+     * @param string $mode
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function tlsVerify(string $mode): ClusterOptions
     {
         $this->tlsVerifyMode = $mode;
         return $this;
     }
 
+    /**
+     * @param ThresholdLoggingOptions $options
+     * @return ClusterOptions
+     * @since 4.0.0
+     */
     public function thresholdLoggingTracerOptions(ThresholdLoggingOptions $options): ClusterOptions
     {
         $this->thresholdLoggingTracerOptions = $options;
@@ -266,6 +443,8 @@ class ClusterOptions
     }
 
     /**
+     * @private
+     * @return string the string that uniquely identifies particular authenticator layout
      * @throws InvalidArgumentException
      */
     public function authenticatorHash(): string
@@ -284,6 +463,8 @@ class ClusterOptions
     }
 
     /**
+     * @private
+     * @return array
      * @throws InvalidArgumentException
      */
     public function export(): array

@@ -32,6 +32,13 @@ class BinaryCollection
     private string $name;
     private $core;
 
+    /**
+     * @private
+     * @param string $name
+     * @param string $scopeName
+     * @param string $bucketName
+     * @param $core
+     */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
     {
         $this->name = $name;
@@ -44,6 +51,7 @@ class BinaryCollection
      * Get the name of the binary collection.
      *
      * @return string
+     * @since 4.0.0
      */
     public function name(): string
     {
@@ -58,6 +66,7 @@ class BinaryCollection
      * @param AppendOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function append(string $id, string $value, AppendOptions $options = null): MutationResult
     {
@@ -72,6 +81,7 @@ class BinaryCollection
      * @param PrependOptions|null $options the options to use for the operation
      * @return MutationResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
     {
@@ -85,6 +95,7 @@ class BinaryCollection
      * @param IncrementOptions|null $options the options to use for the operation
      * @return CounterResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function increment(string $id, IncrementOptions $options = null): CounterResult
     {
@@ -98,6 +109,7 @@ class BinaryCollection
      * @param DecrementOptions|null $options the options to use for the operation
      * @return CounterResult
      * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function decrement(string $id, DecrementOptions $options = null): CounterResult
     {

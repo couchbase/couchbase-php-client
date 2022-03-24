@@ -23,33 +23,66 @@ namespace Couchbase;
 /**
  * An object which contains meta information of the document needed to enforce query consistency.
  */
-interface MutationToken
+class MutationToken
 {
+    private string $bucketName;
+    private int $partitionId;
+    private string $partitionUuid;
+    private string $sequenceNumber;
+
+    /**
+     * @private
+     * @param array $response
+     */
+    public function __construct(array $response)
+    {
+        $this->bucketName = $response["bucketName"];
+        $this->partitionId = $response["partitionId"];
+        $this->partitionUuid = $response["partitionUuid"];
+        $this->sequenceNumber = $response["sequenceNumber"];
+    }
+
     /**
      * Returns bucket name
      *
      * @return string
+     * @since 4.0.0
      */
-    public function bucketName();
+    public function bucketName(): string
+    {
+        return $this->bucketName;
+    }
 
     /**
      * Returns partition number
      *
      * @return int
+     * @since 4.0.0
      */
-    public function partitionId();
+    public function partitionId(): int
+    {
+        return $this->partitionId;
+    }
 
     /**
      * Returns UUID of the partition
      *
      * @return string
+     * @since 4.0.0
      */
-    public function partitionUuid();
+    public function partitionUuid(): string
+    {
+        return $this->partitionUuid;
+    }
 
     /**
      * Returns the sequence number inside partition
      *
      * @return string
+     * @since 4.0.0
      */
-    public function sequenceNumber();
+    public function sequenceNumber(): string
+    {
+        return $this->sequenceNumber;
+    }
 }
