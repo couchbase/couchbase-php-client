@@ -26,8 +26,8 @@ namespace Couchbase;
 class AnalyticsOptions
 {
     private ?int $timeoutMilliseconds = null;
-    private ?array $namedParams = null;
-    private ?array $posParams = null;
+    private ?array $namedParameters = null;
+    private ?array $positionalParameters = null;
     private ?array $raw = null;
     private ?string $clientContextId = null;
     private ?bool $priority = null;
@@ -55,7 +55,7 @@ class AnalyticsOptions
      */
     public function namedParameters(array $pairs): AnalyticsOptions
     {
-        $this->namedParams = $pairs;
+        $this->namedParameters = $pairs;
         return $this;
     }
 
@@ -67,7 +67,7 @@ class AnalyticsOptions
      */
     public function positionalParameters(array $params): AnalyticsOptions
     {
-        $this->posParams = $params;
+        $this->positionalParameters = $params;
         return $this;
     }
 
@@ -140,16 +140,16 @@ class AnalyticsOptions
 
     public function export(string $scopeName = null, string $scopeQualifier = null): array
     {
-        $posParams = null;
-        if ($this->posParams != null) {
-            foreach ($this->posParams as $param) {
-                $posParams[] = json_encode($param);
+        $positionalParameters = null;
+        if ($this->positionalParameters != null) {
+            foreach ($this->positionalParameters as $param) {
+                $positionalParameters[] = json_encode($param);
             }
         }
-        $namedParams = null;
-        if ($this->namedParams != null) {
-            foreach ($this->namedParams as $key => $param) {
-                $namedParams[$key] = json_encode($param);
+        $namedParameters = null;
+        if ($this->namedParameters != null) {
+            foreach ($this->namedParameters as $key => $param) {
+                $namedParameters[$key] = json_encode($param);
             }
         }
 
@@ -159,8 +159,8 @@ class AnalyticsOptions
             'priority' => $this->priority,
             'scanConsistency' => $this->scanConsistency,
             'readonly' => $this->readonly,
-            'namedParams' => $namedParams,
-            'posParams' => $posParams,
+            'namedParameters' => $namedParameters,
+            'positionalParameters' => $positionalParameters,
             'raw' => $this->raw,
             'clientContextId' => $this->clientContextId,
             'scopeName' => $scopeName,

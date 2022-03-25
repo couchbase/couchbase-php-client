@@ -644,57 +644,48 @@ connection_handle::query(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_boolean(request.adhoc, options, "adHoc"); e.ec) {
         return { nullptr, e };
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("posParams"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::vector<couchbase::json_string> params{};
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::json_string> params{};
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                params.emplace_back(couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
 
-            request.positional_parameters = params;
+        {
+            auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+            params.emplace_back(std::move(str));
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.positional_parameters = params;
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParams"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::map<std::string, couchbase::json_string> params{};
-            const zend_string* key = nullptr;
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
-
-            request.named_parameters = params;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.named_parameters = params;
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::map<std::string, couchbase::json_string> params{};
-            const zend_string* key = nullptr;
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
-
-            request.raw = params;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.raw = params;
     }
     if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
         return { nullptr, e };
@@ -742,15 +733,19 @@ connection_handle::query(const zend_string* statement, const zval* options)
         add_assoc_long(&metrics, "resultSize", resp.meta.metrics.value().result_size);
         add_assoc_long(&metrics, "sortCount", resp.meta.metrics.value().sort_count);
         add_assoc_long(&metrics, "warningCount", resp.meta.metrics.value().warning_count);
-        add_assoc_long(&metrics, "elapsedTimeMilliseconds", resp.meta.metrics.value().elapsed_time.count() * 1000);
-        add_assoc_long(&metrics, "executionTimeMilliseconds", resp.meta.metrics.value().execution_time.count() * 1000);
+        add_assoc_long(&metrics,
+                       "elapsedTimeMilliseconds",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().elapsed_time).count());
+        add_assoc_long(&metrics,
+                       "executionTimeMilliseconds",
+                       std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().execution_time).count());
 
         add_assoc_zval(&meta, "metrics", &metrics);
     }
     if (resp.meta.errors.has_value()) {
         zval errors;
         array_init(&errors);
-        for (auto& e : resp.meta.errors.value()) {
+        for (const auto& e : resp.meta.errors.value()) {
             zval error;
             array_init(&error);
 
@@ -770,7 +765,7 @@ connection_handle::query(const zend_string* statement, const zval* options)
     if (resp.meta.warnings.has_value()) {
         zval warnings;
         array_init(&warnings);
-        for (auto& w : resp.meta.warnings.value()) {
+        for (const auto& w : resp.meta.warnings.value()) {
             zval warning;
             array_init(&warning);
 
@@ -800,82 +795,75 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { nullptr, e };
     }
-    {
-        auto [err, scanC] = cb_get_integer<uint64_t>(options, "scanConsistency");
-        if (err.ec) {
-            return { nullptr, err };
-        }
 
-        if (scanC > 0) {
-            if (scanC == 1) {
+    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
+        switch (scan_consistency) {
+            case 1:
                 request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::not_bounded;
-            } else if (scanC == 2) {
+                break;
+
+            case 2:
                 request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::request_plus;
-            } else {
-                return {
-                    nullptr,
-                    { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "invalid value used for scan consistency" }
-                };
-            }
+                break;
+
+            default:
+                if (scan_consistency > 0) {
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for scan consistency: {}", scan_consistency) } };
+                }
         }
+    } else {
+        return { nullptr, e };
     }
+
     if (auto e = cb_assign_boolean(request.readonly, options, "readonly"); e.ec) {
         return { nullptr, e };
     }
     if (auto e = cb_assign_boolean(request.priority, options, "priority"); e.ec) {
         return { nullptr, e };
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("posParams"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::vector<couchbase::json_string> params{};
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::json_string> params{};
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                params.emplace_back(couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
-
-            request.positional_parameters = params;
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            params.emplace_back(std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) }));
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.positional_parameters = params;
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParams"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::map<std::string, couchbase::json_string> params{};
-            const zend_string* key = nullptr;
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
-
-            request.named_parameters = params;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.named_parameters = params;
     }
-    {
-        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
-        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-            std::map<std::string, couchbase::json_string> params{};
-            const zend_string* key = nullptr;
-            const zval* item = nullptr;
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
 
-            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-            {
-                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-                params.emplace(k, couchbase::json_string{ std::move(str) });
-            }
-            ZEND_HASH_FOREACH_END();
-
-            request.raw = params;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
         }
+        ZEND_HASH_FOREACH_END();
+
+        request.raw = params;
     }
     if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
         return { nullptr, e };
@@ -891,8 +879,8 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
 
     zval rows;
     array_init(&rows);
-    for (auto& row : resp.rows) {
-        add_next_index_string(&rows, row.c_str());
+    for (const auto& row : resp.rows) {
+        add_next_index_stringl(&rows, row.data(), row.size());
     }
     add_assoc_zval(&retval, "rows", &rows);
     {
@@ -913,8 +901,12 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
             add_assoc_long(&metrics, "resultCount", resp.meta.metrics.result_count);
             add_assoc_long(&metrics, "resultSize", resp.meta.metrics.result_size);
             add_assoc_long(&metrics, "warningCount", resp.meta.metrics.warning_count);
-            add_assoc_long(&metrics, "elapsedTimeMilliseconds", resp.meta.metrics.elapsed_time.count() * 1000);
-            add_assoc_long(&metrics, "executionTimeMilliseconds", resp.meta.metrics.execution_time.count() * 1000);
+            add_assoc_long(&metrics,
+                           "elapsedTimeMilliseconds",
+                           std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.elapsed_time).count());
+            add_assoc_long(&metrics,
+                           "executionTimeMilliseconds",
+                           std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.execution_time).count());
 
             add_assoc_zval(&meta, "metrics", &metrics);
         }
@@ -922,7 +914,7 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
         {
             zval warnings;
             array_init(&warnings);
-            for (auto& w : resp.meta.warnings) {
+            for (const auto& w : resp.meta.warnings) {
                 zval warning;
                 array_init(&warning);
 

@@ -32,7 +32,7 @@ class Caves
 
     public function start()
     {
-        $this->logPrefix = sprintf("%d-%s", $this->controlPort(), time());
+        $this->logPrefix = sprintf("%d-%d", time(), $this->controlPort());
         $started = false;
         $env = [];
         while (!$started) {
