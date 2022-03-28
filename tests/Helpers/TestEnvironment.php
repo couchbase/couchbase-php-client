@@ -24,13 +24,12 @@ include_once __DIR__ . "/Caves.php";
 
 use Couchbase\PasswordAuthenticator;
 use Exception;
-use http\Exception\RuntimeException;
 
 class TestEnvironment
 {
     private string $clusterId;
     private ?string $connectionString = null;
-    private Caves $caves;
+    private ?Caves $caves = null;
     private string $username;
     private string $password;
     private string $bucketName;
@@ -56,7 +55,11 @@ class TestEnvironment
         self::checkExtension("couchbase");
 
         $this->clusterId = self::randomId();
-        $this->caves = new Caves();
+
+        $this->connectionString = getenv("TEST_CONNECTION_STRING");
+        if ($this->connectionString == null) {
+            $this->caves = new Caves();
+        }
         $this->username = getenv("TEST_USERNAME") ?: "Administrator";
         $this->password = getenv("TEST_PASSWORD") ?: "password";
         $this->bucketName = getenv("TEST_BUCKET") ?: "default";
@@ -67,20 +70,34 @@ class TestEnvironment
         return $this->bucketName;
     }
 
+    public function useCaves(): bool
+    {
+        return $this->caves != null;
+    }
+
+    public function useCouchbase(): bool
+    {
+        return !$this->useCaves();
+    }
+
     public function start()
     {
-        $this->caves->start();
+        if ($this->useCaves()) {
+            $this->caves->start();
+        }
     }
 
     public function stop()
     {
-        $this->caves->stop();
-        $this->connectionString = null;
+        if ($this->useCaves()) {
+            $this->caves->stop();
+            $this->connectionString = null;
+        }
     }
 
     public function connectionString(): string
     {
-        if ($this->connectionString == null) {
+        if ($this->useCaves() && $this->connectionString == null) {
             $this->connectionString = $this->caves->createCluster($this->clusterId);
         }
         return $this->connectionString;

@@ -24,10 +24,11 @@ include_once __DIR__ . "/TestEnvironment.php";
 include_once __DIR__ . "/../../Couchbase/autoload.php";
 
 use Couchbase\Bucket;
+use Couchbase\Cluster;
 use Couchbase\ClusterOptions;
 use Couchbase\Collection;
+
 use PHPUnit\Framework\TestCase;
-use Couchbase\Cluster;
 
 class CouchbaseTestCase extends TestCase
 {
