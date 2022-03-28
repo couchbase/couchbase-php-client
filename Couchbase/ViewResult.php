@@ -46,7 +46,8 @@ class ViewResult
      *
      * @return ViewMetaData|null
      */
-    public function metaData(): ?ViewMetaData {
+    public function metaData(): ?ViewMetaData
+    {
         return $this->meta;
     }
 
@@ -55,7 +56,8 @@ class ViewResult
      *
      * @return array|null
      */
-    public function rows(): ?array {
+    public function rows(): ?array
+    {
         return $this->rows;
     }
 }

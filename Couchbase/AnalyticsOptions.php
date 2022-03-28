@@ -145,8 +145,8 @@ class AnalyticsOptions
                 'scopeName' => $scopeName,
                 'scopeQualifier' => $scopeQualifier
             ];
-        } 
-        
+        }
+
         $positionalParameters = null;
         if ($options->positionalParameters != null) {
             foreach ($options->positionalParameters as $param) {

@@ -294,9 +294,12 @@ class ViewOptions
      * @return ViewOptions
      * @since 4.0.0
      */
-    public function range($start, $end, $inclusiveEnd = false): ViewOptions {
-        trigger_error('Method ' . __METHOD__ . ' is deprecated, use startKey(), endKey(), and inclusiveEnd()',
-            E_USER_DEPRECATED);
+    public function range($start, $end, $inclusiveEnd = false): ViewOptions
+    {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use startKey(), endKey(), and inclusiveEnd()',
+            E_USER_DEPRECATED
+        );
         $this->startKey = $start;
         $this->endKey = $end;
         $this->inclusiveEnd = $inclusiveEnd;
@@ -314,9 +317,12 @@ class ViewOptions
      * @return ViewOptions
      * @since 4.0.0
      */
-    public function idRange($start, $end, $inclusiveEnd = false): ViewOptions {
-        trigger_error('Method ' . __METHOD__ . ' is deprecated, use startKeyDocId(), endKeyDocId(), and inclusiveEnd()',
-            E_USER_DEPRECATED);
+    public function idRange($start, $end, $inclusiveEnd = false): ViewOptions
+    {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use startKeyDocId(), endKeyDocId(), and inclusiveEnd()',
+            E_USER_DEPRECATED
+        );
         $this->startKeyDocId = $start;
         $this->endKeyDocId = $end;
         $this->inclusiveEnd = $inclusiveEnd;
@@ -364,7 +370,7 @@ class ViewOptions
         }
         $keys = null;
         if ($options->keys != null) {
-            foreach ($options->keys as  $param) {
+            foreach ($options->keys as $param) {
                 $keys[] = json_encode($param);
             }
         }

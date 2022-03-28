@@ -262,9 +262,12 @@ class QueryOptions
      * @return QueryOptions
      * @since 4.0.0
      */
-    public function scopeName(string $name): QueryOptions {
-        trigger_error('Method ' . __METHOD__ . ' is deprecated, use scope level query()',
-            E_USER_DEPRECATED);
+    public function scopeName(string $name): QueryOptions
+    {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
+            E_USER_DEPRECATED
+        );
         $this->scopeName = $name;
         return $this;
     }
@@ -279,9 +282,12 @@ class QueryOptions
      * @return QueryOptions
      * @since 4.0.0
      */
-    public function scopeQualifier(string $qualifier): QueryOptions {
-        trigger_error('Method ' . __METHOD__ . ' is deprecated, use scope level query()',
-            E_USER_DEPRECATED);
+    public function scopeQualifier(string $qualifier): QueryOptions
+    {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
+            E_USER_DEPRECATED
+        );
         $this->scopeQualifier = $qualifier;
         return $this;
     }

@@ -45,7 +45,8 @@ class ViewMetaData
      *
      * @return int|null
      */
-    public function totalRows(): ?int {
+    public function totalRows(): ?int
+    {
         return $this->totalRows;
     }
 
@@ -54,7 +55,8 @@ class ViewMetaData
      *
      * @return array|null
      */
-    public function debug(): ?array {
+    public function debug(): ?array
+    {
         return $this->debug;
     }
 }

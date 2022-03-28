@@ -29,9 +29,23 @@ class GetOptions
     private bool $withExpiry = false;
     private ?array $projections = null;
 
+    /**
+     * @since 4.0.0
+     */
     public function __construct()
     {
         $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return GetOptions
+     * @since 4.0.0
+     */
+    public static function build(): GetOptions
+    {
+        return new GetOptions();
     }
 
     /**

@@ -18,6 +18,10 @@
 
 declare(strict_types=1);
 
+use Couchbase\GetOptions;
+use Couchbase\RawJsonTranscoder;
+use Couchbase\UpsertOptions;
+
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class TranscodersTest extends Helpers\CouchbaseTestCase
@@ -36,5 +40,25 @@ class TranscodersTest extends Helpers\CouchbaseTestCase
         $property = $reflector->getProperty("value");
         $property->setAccessible(true);
         $this->assertEquals('{"answer":42}', $property->getValue($res));
+    }
+
+    function testRawJsonTranscoderDoesNotRecodeJsonOnEncode()
+    {
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, '{"answer":42}', UpsertOptions::build()->transcoder(RawJsonTranscoder::getInstance()));
+        $res = $collection->get($id);
+        $this->assertEquals(["answer" => 42], $res->content());
+    }
+
+    function testRawJsonTranscoderReturnsRawDataOnDecode()
+    {
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["answer" => 42]);
+        $res = $collection->get($id, GetOptions::build()->transcoder(RawJsonTranscoder::getInstance()));
+        $this->assertEquals('{"answer":42}', $res->content());
     }
 }
