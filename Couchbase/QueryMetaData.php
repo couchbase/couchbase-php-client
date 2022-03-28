@@ -32,7 +32,7 @@ class QueryMetaData
     private ?string $profile = null;
     private array $warnings;
     private array $errors;
-    private QueryMetrics $metrics;
+    private ?array $metrics;
 
     /**
      * @private
@@ -62,19 +62,17 @@ class QueryMetaData
             }
         }
         if (array_key_exists("metrics", $meta)) {
-            $this->metrics = new QueryMetrics($meta["metrics"]);
-        } else {
-            $this->metrics = new QueryMetrics(null);
+            $this->metrics = $meta["metrics"];
         }
     }
 
     /**
      * Returns the query execution status
      *
-     * @return string
+     * @return string|null
      * @since 4.0.0
      */
-    public function status(): string
+    public function status(): ?string
     {
         return $this->status;
     }
@@ -82,10 +80,10 @@ class QueryMetaData
     /**
      * Returns the identifier associated with the query
      *
-     * @return string
+     * @return string|null
      * @since 4.0.0
      */
-    public function requestId(): string
+    public function requestId(): ?string
     {
         return $this->requestId;
     }
@@ -141,10 +139,10 @@ class QueryMetaData
      * Returns metrics generated during query execution such as timings and counts.
      * If no metrics were returned then all values will be 0.
      *
-     * @return QueryMetrics
+     * @return array|null
      * @since 4.0.0
      */
-    public function metrics(): QueryMetrics
+    public function metrics(): ?array
     {
         return $this->metrics;
     }

@@ -39,12 +39,15 @@ class QueryOptions
     private ?string $clientContextId = null;
     private ?bool $metrics = null;
     private ?bool $preserveExpiry = null;
+    private ?string $scopeName = null;
+    private ?string $scopeQualifier = null;
 
     /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function timeout(int $milliseconds): QueryOptions
     {
@@ -57,6 +60,7 @@ class QueryOptions
      *
      * @param MutationState $state the mutation state to achieve consistency with
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function consistentWith(MutationState $state): QueryOptions
     {
@@ -69,6 +73,7 @@ class QueryOptions
      *
      * @param int $consistencyLevel the scan consistency level.
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function scanConsistency(int $consistencyLevel): QueryOptions
     {
@@ -81,6 +86,7 @@ class QueryOptions
      *
      * @param int $cap the maximum buffered channel size
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function scanCap(int $cap): QueryOptions
     {
@@ -93,6 +99,7 @@ class QueryOptions
      *
      * @param int $cap the maximum number of items each execution operation can buffer
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function pipelineCap(int $cap): QueryOptions
     {
@@ -105,6 +112,7 @@ class QueryOptions
      *
      * @param int $batchSize the pipeline batch size
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function pipelineBatch(int $batchSize): QueryOptions
     {
@@ -129,6 +137,7 @@ class QueryOptions
      *
      * @param int $mode the query profile mode
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function profile(int $mode): QueryOptions
     {
@@ -141,6 +150,7 @@ class QueryOptions
      *
      * @param bool $readonly whether the query is readonly
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function readonly(bool $readonly): QueryOptions
     {
@@ -153,6 +163,7 @@ class QueryOptions
      *
      * @param bool $enabled whether the FlexIndex allowed
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function flexIndex(bool $enabled): QueryOptions
     {
@@ -165,6 +176,7 @@ class QueryOptions
      *
      * @param bool $enabled whether the query is adhoc
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function adhoc(bool $enabled): QueryOptions
     {
@@ -177,6 +189,7 @@ class QueryOptions
      *
      * @param array $pairs the associative array of parameters
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function namedParameters(array $pairs): QueryOptions
     {
@@ -189,6 +202,7 @@ class QueryOptions
      *
      * @param array $params the array of parameters
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function positionalParameters(array $params): QueryOptions
     {
@@ -202,6 +216,7 @@ class QueryOptions
      * @param string $key the name of the parameter
      * @param string $value the value of the parameter
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function raw(string $key, $value): ViewOptions
     {
@@ -218,6 +233,7 @@ class QueryOptions
      *
      * @param string $id the client context id
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function clientContextId(string $id): QueryOptions
     {
@@ -230,6 +246,7 @@ class QueryOptions
      *
      * @param bool $enabled whether to return metrics
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function metrics(bool $enabled): QueryOptions
     {
@@ -238,10 +255,37 @@ class QueryOptions
     }
 
     /**
+     * Associate scope name with query
+     *
+     * @param string $name the name of the scope
+     * @return QueryOptions
+     * @since 4.0.0
+     */
+    public function scopeName(string $name): QueryOptions {
+        $this->scopeName = $name;
+        return $this;
+    }
+
+    /**
+     * Associate scope qualifier (also known as `query_context`) with the query.
+     *
+     * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
+     *
+     * @param string $qualifier the scope qualifier
+     * @return QueryOptions
+     * @since 4.0.0
+     */
+    public function scopeQualifier(string $qualifier): QueryOptions {
+        $this->scopeQualifier = $qualifier;
+        return $this;
+    }
+
+    /**
      * Sets whether to tell the query engine to preserve expiration values set on any documents modified by this query.
      *
      * @param bool $preserve whether to preserve expiration values.
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function preserveExpiry(bool $preserve): QueryOptions
     {
@@ -249,7 +293,7 @@ class QueryOptions
         return $this;
     }
 
-    public function export(string $scopeName = null, string $scopeQualifier = null): array
+    public function export(): array
     {
         $positionalParameters = null;
         if ($this->positionalParameters != null) {
@@ -289,8 +333,8 @@ class QueryOptions
             'clientContextId' => $this->clientContextId,
             'metrics' => $this->metrics,
             'preserveExpiry' => $this->preserveExpiry,
-            'scopeName' => $scopeName,
-            'scopeQualifier' => $scopeQualifier
+            'scopeName' => $this->scopeName,
+            'scopeQualifier' => $this->scopeQualifier
         ];
     }
 }

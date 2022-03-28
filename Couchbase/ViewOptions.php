@@ -26,7 +26,7 @@ class ViewOptions
 {
     private ?int $timeoutMilliseconds = null;
 //    private ?int $includeDocuments = null;
-    private ?jsonSerializable $key = null;
+    private $key = null;
     private ?array $keys = null;
     private ?int $limit = null;
     private ?int $skip = null;
@@ -36,8 +36,8 @@ class ViewOptions
     private ?bool $group = null;
     private ?int $groupLevel = null;
     private ?array $raw = null;
-    private ?jsonSerializable $startKey = null;
-    private ?jsonSerializable $endKey = null;
+    private $startKey = null;
+    private $endKey = null;
     private ?string $startKeyDocId = null;
     private ?string $endKeyDocId = null;
     private ?bool $inclusiveEnd = null;
@@ -50,6 +50,7 @@ class ViewOptions
      *
      * @param int $milliseconds the operation timeout to apply
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function timeout(int $milliseconds): ViewOptions
     {
@@ -70,10 +71,11 @@ class ViewOptions
     /**
      * Sets the specific key to fetch from the index.
      *
-     * @param jsonSerializable $key the key to fetch from the index.
+     * @param mixed $key the key to fetch from the index.
      * @return ViewOptions
+     * @since 4.0.0
      */
-    public function key(jsonSerializable $key): ViewOptions
+    public function key($key): ViewOptions
     {
         $this->key = $key;
         return $this;
@@ -84,6 +86,7 @@ class ViewOptions
      *
      * @param array $keys the keys to fetch from the index.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function keys(array $keys): ViewOptions
     {
@@ -96,6 +99,7 @@ class ViewOptions
      *
      * @param int $limit the number of documents to limit to.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function limit(int $limit): ViewOptions
     {
@@ -108,6 +112,7 @@ class ViewOptions
      *
      * @param int $skip the number of documents to skip.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function skip(int $skip): ViewOptions
     {
@@ -120,6 +125,7 @@ class ViewOptions
      *
      * @param int $consistencyLevel the scan consistency level
      * @return QueryOptions
+     * @since 4.0.0
      */
     public function scanConsistency(int $consistencyLevel): ViewOptions
     {
@@ -132,6 +138,7 @@ class ViewOptions
      *
      * @param int $order the order of the results.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function order(int $order): ViewOptions
     {
@@ -144,6 +151,7 @@ class ViewOptions
      *
      * @param bool $reduce whether to apply the reduce function.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function reduce(bool $reduce): ViewOptions
     {
@@ -156,6 +164,7 @@ class ViewOptions
      *
      * @param bool $enabled whether to enable grouping of results.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function group(bool $enabled): ViewOptions
     {
@@ -166,8 +175,9 @@ class ViewOptions
     /**
      * Sets the depth within the key to group results.
      *
-     * @param bool $depth the depth within the key to group results.
+     * @param int $depth the depth within the key to group results.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function groupLevel(int $depth): ViewOptions
     {
@@ -179,10 +189,11 @@ class ViewOptions
      * Sets any extra query parameters that the SDK does not provide an option for.
      *
      * @param string $key the name of the parameter
-     * @param string $value the value of the parameter
+     * @param mixed $value the value of the parameter
      * @return ViewOptions
+     * @since 4.0.0
      */
-    public function raw(string $key, string $value): ViewOptions
+    public function raw(string $key, $value): ViewOptions
     {
         if ($this->raw == null) {
             $this->raw = array();
@@ -195,10 +206,11 @@ class ViewOptions
     /**
      * Sets the key to skip to before beginning to return results.
      *
-     * @param jsonSerializable $key the key to skip to before beginning to return results.
+     * @param mixed $key the key to skip to before beginning to return results.
      * @return ViewOptions
+     * @since 4.0.0
      */
-    public function startKey(jsonSerializable $key): ViewOptions
+    public function startKey($key): ViewOptions
     {
         $this->startKey = $key;
         return $this;
@@ -207,10 +219,11 @@ class ViewOptions
     /**
      * Sets the key to stop returning results at.
      *
-     * @param jsonSerializable $key the key to stop returning results at.
+     * @param mixed $key the key to stop returning results at.
      * @return ViewOptions
+     * @since 4.0.0
      */
-    public function endKey(jsonSerializable $key): ViewOptions
+    public function endKey($key): ViewOptions
     {
         $this->endKey = $key;
         return $this;
@@ -222,6 +235,7 @@ class ViewOptions
      *
      * @param string $key the key to use.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function startKeyDocId(string $key): ViewOptions
     {
@@ -235,6 +249,7 @@ class ViewOptions
      *
      * @param string $key the key to use.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function endKeyDocId(string $key): ViewOptions
     {
@@ -247,6 +262,7 @@ class ViewOptions
      *
      * @param bool $enabled whether the endKey/endKeyDocId values should be inclusive or exclusive.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function inclusiveEnd(bool $enabled): ViewOptions
     {
@@ -254,16 +270,56 @@ class ViewOptions
         return $this;
     }
 
+//    /**
+//     * Sets the behaviour of the query engine should an error occur during the gathering
+//     * of view index results which would result in only partial results being available.
+//     *
+//     * @param int $onError the behaviour mode to apply on error.
+//     * @return ViewOptions
+//     */
+//    public function onError(int $onError): ViewOptions
+//    {
+//        $this->onError = $onError;
+//        return $this;
+//    }
+
     /**
-     * Sets the behaviour of the query engine should an error occur during the gathering
-     * of view index results which would result in only partial results being available.
+     * Sets the range of keys to skip to before beginning to return results and to stop returning results at.
      *
-     * @param int $onError the behaviour mode to apply on error.
+     * @deprecated
+     *
+     * @param mixed $start the key to skip to before beginning to return results.
+     * @param mixed $end the key to stop returning results at.
+     * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
      * @return ViewOptions
+     * @since 4.0.0
      */
-    public function onError(int $onError): ViewOptions
-    {
-        $this->onError = $onError;
+    public function range($start, $end, $inclusiveEnd = false): ViewOptions {
+        trigger_error('Method ' . __METHOD__ . ' is deprecated, use startKey(), endKey(), and inclusiveEnd()',
+            E_USER_DEPRECATED);
+        $this->startKey = $start;
+        $this->endKey = $end;
+        $this->inclusiveEnd = $inclusiveEnd;
+        return $this;
+    }
+
+    /**
+     * Sets the range of keys to skip to before beginning to return results and to stop returning results at.
+     *
+     * @deprecated
+     *
+     * @param mixed $start the doc id to skip to before beginning to return results.
+     * @param mixed $end the doc id to stop returning results at.
+     * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
+     * @return ViewOptions
+     * @since 4.0.0
+     */
+    public function idRange($start, $end, $inclusiveEnd = false): ViewOptions {
+        trigger_error('Method ' . __METHOD__ . ' is deprecated, use startKeyDocId(), endKeyDocId(), and inclusiveEnd()',
+            E_USER_DEPRECATED);
+        $this->startKeyDocId = $start;
+        $this->endKeyDocId = $end;
+        $this->inclusiveEnd = $inclusiveEnd;
         return $this;
     }
 
@@ -272,6 +328,7 @@ class ViewOptions
      *
      * @param bool $enabled whether to return debug information as part of the view response.
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function debug(bool $enabled): ViewOptions
     {
@@ -284,6 +341,7 @@ class ViewOptions
      *
      * @param int $namespace whether the SDK should prefix the design document name with a "dev_" prefix..
      * @return ViewOptions
+     * @since 4.0.0
      */
     public function namespace(int $namespace): ViewOptions
     {

@@ -41,10 +41,10 @@ class AnalyticsResult
     /**
      * Returns metadata generated during query execution
      *
-     * @return AnalyticsMetaData
+     * @return AnalyticsMetaData|null
      * @since 4.0.0
      */
-    public function metaData(): AnalyticsMetaData
+    public function metaData(): ?AnalyticsMetaData
     {
         return $this->meta;
     }
@@ -52,10 +52,10 @@ class AnalyticsResult
     /**
      * Returns the rows returned during query execution
      *
-     * @return array
+     * @return array|null
      * @since 4.0.0
      */
-    public function rows(): array
+    public function rows(): ?array
     {
         return $this->rows;
     }

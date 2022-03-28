@@ -44,18 +44,18 @@ class ViewResult
     /**
      * Returns metadata generated during query execution
      *
-     * @return ViewMetaData
+     * @return ViewMetaData|null
      */
-    public function metaData(): ViewMetaData {
+    public function metaData(): ?ViewMetaData {
         return $this->meta;
     }
 
     /**
      * Returns any rows returned by the query
      *
-     * @return array
+     * @return array|null
      */
-    public function rows(): array {
+    public function rows(): ?array {
         return $this->rows;
     }
 }

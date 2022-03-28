@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-interface ViewScanConsistency
+interface ViewConsistency
 {
     public const NOT_BOUNDED = 1;
     public const REQUEST_PLUS = 2;

@@ -30,7 +30,7 @@ class AnalyticsMetaData
     private string $clientContextId;
     private ?string $signature = null;
     private array $warnings;
-    private AnalyticsMetrics $metrics;
+    private ?array $metrics;
 
     /**
      * @private
@@ -51,19 +51,17 @@ class AnalyticsMetaData
             }
         }
         if (array_key_exists("metrics", $meta)) {
-            $this->metrics = new AnalyticsMetrics($meta["metrics"]);
-        } else {
-            $this->metrics = new AnalyticsMetrics(null);
+            $this->metrics = $meta["metrics"];
         }
     }
 
     /**
      * Returns the query execution status
      *
-     * @return string
+     * @return string|null
      * @since 4.0.0
      */
-    public function status(): string
+    public function status(): ?string
     {
         return $this->status;
     }
@@ -71,10 +69,10 @@ class AnalyticsMetaData
     /**
      * Returns the identifier associated with the query
      *
-     * @return string
+     * @return string|null
      * @since 4.0.0
      */
-    public function requestId(): string
+    public function requestId(): ?string
     {
         return $this->requestId;
     }
@@ -82,7 +80,7 @@ class AnalyticsMetaData
     /**
      * Returns the client context id associated with the query
      *
-     * @return string
+     * @return string|null
      * @since 4.0.0
      */
     public function clientContextId(): ?string
@@ -119,10 +117,10 @@ class AnalyticsMetaData
      * Returns metrics generated during query execution such as timings and counts.
      * If no metrics were returned then all values will be 0.
      *
-     * @return AnalyticsMetrics
+     * @return array|null
      * @since 4.0.0
      */
-    public function metrics(): AnalyticsMetrics
+    public function metrics(): ?array
     {
         return $this->metrics;
     }
