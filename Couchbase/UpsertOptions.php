@@ -24,6 +24,7 @@ use DateTimeInterface;
 
 class UpsertOptions
 {
+    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
     private ?bool $preserveExpiry = null;
@@ -31,10 +32,19 @@ class UpsertOptions
     private ?int $durabilityTimeoutSeconds = null;
 
     /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
      * @return UpsertOptions
+     * @since 4.0.0
      */
     public function timeout(int $milliseconds): UpsertOptions
     {
@@ -47,6 +57,7 @@ class UpsertOptions
      *
      * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
      * @return UpsertOptions
+     * @since 4.0.0
      */
     public function expiry($seconds): UpsertOptions
     {
@@ -63,6 +74,7 @@ class UpsertOptions
      *
      * @param bool $shouldPreserve if true, the expiration time will not be updated
      * @return UpsertOptions
+     * @since 4.0.0
      */
     public function preserveExpiry(bool $shouldPreserve): UpsertOptions
     {
@@ -76,6 +88,7 @@ class UpsertOptions
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
      * @return UpsertOptions
+     * @since 4.0.0
      */
     public function durabilityLevel(string $level, ?int $timeoutSeconds): UpsertOptions
     {
@@ -87,23 +100,49 @@ class UpsertOptions
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg encoding function with signature (returns tuple of bytes, flags and datatype):
-     *
-     *   `function encoder($value): [string $bytes, int $flags, int $datatype]`
+     * @param Transcoder $transcoder
+     * @return UpsertOptions
+     * @since 4.0.0
      */
-    public function encoder(callable $arg): UpsertOptions
+    public function transcoder(Transcoder $transcoder): UpsertOptions
     {
+        $this->transcoder = $transcoder;
         return $this;
     }
 
-    public function export(): array
+    /**
+     * Delegates encoding of the document to associated transcoder
+     *
+     * @param UpsertOptions|null $options
+     * @param $document
+     * @return array
+     * @since 4.0.0
+     */
+    public static function encodeDocument(?UpsertOptions $options, $document): array
     {
+        if ($options == null) {
+            return JsonTranscoder::getInstance()->encode($document);
+        }
+        return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @private
+     * @param UpsertOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?UpsertOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
         return [
-            'timeoutMilliseconds' => $this->timeoutMilliseconds,
-            'expirySeconds' => $this->expirySeconds,
-            'preserveExpiry' => $this->preserveExpiry,
-            'durabilityLevel' => $this->durabilityLevel,
-            'durabilityTimeoutSeconds' => $this->durabilityTimeoutSeconds,
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'expirySeconds' => $options->expirySeconds,
+            'preserveExpiry' => $options->preserveExpiry,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
         ];
     }
 }

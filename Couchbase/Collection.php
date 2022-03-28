@@ -61,9 +61,10 @@ class Collection
     /**
      * Gets a document from the server.
      *
-     * This can take 3 paths, a standard full document fetch, a subdocument full document fetch also
-     * fetching document expiry (when withExpiry is set), or a subdocument fetch (when projections are
-     * used).
+     * This can take 3 paths:
+     * * a standard full document fetch,
+     * * a subdocument full document fetch also fetching document expiry (when withExpiry is set),
+     * * or a subdocument fetch (when projections are used).
      *
      * @param string $id the key of the document to fetch
      * @param GetOptions|null $options the options to use for the operation
@@ -73,7 +74,8 @@ class Collection
      */
     public function get(string $id, GetOptions $options = null): GetResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentGet($this->core, $this->bucketName, $this->scopeName, $this->name, $id, GetOptions::export($options));
+        return new GetResult($response, GetOptions::getTranscoder($options));
     }
 
     /**
@@ -161,10 +163,8 @@ class Collection
      */
     public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult
     {
-        if ($options != null) {
-            $options = $options->export();
-        }
-        $response = Extension\documentUpsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, json_encode($value), 0, $options);
+        $encoded = UpsertOptions::encodeDocument($options, $value);
+        $response = Extension\documentUpsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], UpsertOptions::export($options));
         return new MutationResult($response);
     }
 

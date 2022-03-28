@@ -233,18 +233,19 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return {};
     }
 
-    std::pair<couchbase::operations::upsert_response, core_error_info> document_upsert(couchbase::operations::upsert_request request)
+    template<typename Request, typename Response = typename Request::response_type>
+    std::pair<Response, core_error_info> key_value_execute(const char* operation, Request request)
     {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::upsert_response>>();
+
+        auto barrier = std::make_shared<std::promise<Response>>();
         auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::upsert_response&& resp) { barrier->set_value(std::move(resp)); });
+        cluster_->execute(std::move(request), [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         if (resp.ctx.ec) {
             return { {},
                      { resp.ctx.ec,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to upsert document: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       fmt::format("unable to execute KV operation \"{}\": {}, {}", operation, resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_error_context(resp.ctx) } };
         }
         return { std::move(resp), {} };
@@ -328,6 +329,12 @@ cb_string_new(const zend_string* value)
     return { ZSTR_VAL(value), ZSTR_LEN(value) };
 }
 
+static std::string
+cb_string_new(const zval* value)
+{
+    return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
+}
+
 core_error_info
 connection_handle::bucket_open(const zend_string* name)
 {
@@ -344,7 +351,7 @@ template<typename Request>
 static core_error_info
 cb_assign_timeout(Request& req, const zval* options)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -373,7 +380,7 @@ template<typename Request>
 static core_error_info
 cb_assign_durability(Request& req, const zval* options)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -431,7 +438,7 @@ template<typename Boolean>
 static core_error_info
 cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -440,9 +447,7 @@ cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
     if (value == nullptr) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("expected {} to be a boolean value in the options", name) };
+        return {};
     }
     switch (Z_TYPE_P(value)) {
         case IS_NULL:
@@ -465,7 +470,7 @@ template<typename Integer>
 static core_error_info
 cb_assign_integer(Integer& field, const zval* options, std::string_view name)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -495,7 +500,7 @@ template<typename String>
 static core_error_info
 cb_assign_string(String& field, const zval* options, std::string_view name)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -520,11 +525,46 @@ cb_assign_string(String& field, const zval* options, std::string_view name)
     return {};
 }
 
+static core_error_info
+cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(value) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("expected array for options argument \"{}\"", name) };
+    }
+
+    zval* item;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+    {
+        if (Z_TYPE_P(item) != IS_STRING) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("expected \"{}\" option to be an array of strings, detected non-string value", name) };
+        }
+        auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        field.emplace_back(cb_string_new(item));
+    }
+    ZEND_HASH_FOREACH_END();
+    return {};
+}
+
 template<typename Integer>
 static std::pair<core_error_info, Integer>
 cb_get_integer(const zval* options, std::string_view name)
 {
-    if (options == nullptr || !Z_TYPE_P(options)) {
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
@@ -599,7 +639,7 @@ connection_handle::document_upsert(zval* return_value,
         return e;
     }
 
-    auto [resp, err] = impl_->document_upsert(std::move(request));
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -610,6 +650,67 @@ connection_handle::document_upsert(zval* return_value,
         zval token_val;
         mutation_token_to_zval(resp.token, &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
+}
+
+core_error_info
+connection_handle::document_get(zval* return_value,
+                                const zend_string* bucket,
+                                const zend_string* scope,
+                                const zend_string* collection,
+                                const zend_string* id,
+                                const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    bool with_expiry = false;
+    if (auto e = cb_assign_boolean(with_expiry, options, "withExpiry"); e.ec) {
+        return e;
+    }
+    std::vector<std::string> projections{};
+    if (auto e = cb_assign_vector_of_strings(projections, options, "projections"); e.ec) {
+        return e;
+    }
+    if (!with_expiry && projections.empty()) {
+        couchbase::operations::get_request request{ doc_id };
+        if (auto e = cb_assign_timeout(request, options); e.ec) {
+            return e;
+        }
+
+        auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+        if (err.ec) {
+            return err;
+        }
+        array_init(return_value);
+        auto cas = fmt::format("{:x}", resp.cas.value);
+        add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+        add_assoc_long(return_value, "flags", resp.flags);
+        add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+        return {};
+    }
+    couchbase::operations::get_projected_request request{ doc_id };
+    request.with_expiry = with_expiry;
+    request.projections = projections;
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    add_assoc_long(return_value, "flags", resp.flags);
+    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    if (resp.expiry) {
+        add_assoc_long(return_value, "expiry", resp.expiry.value());
     }
     return {};
 }
@@ -695,7 +796,6 @@ connection_handle::query(const zend_string* statement, const zval* options)
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
-
         {
             auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
             params.emplace_back(std::move(str));
@@ -753,7 +853,7 @@ connection_handle::query(const zend_string* statement, const zval* options)
 
     zval rows;
     array_init(&rows);
-    for (auto& row : resp.rows) {
+    for (const auto& row : resp.rows) {
         add_next_index_string(&rows, row.c_str());
     }
     add_assoc_zval(&retval, "rows", &rows);

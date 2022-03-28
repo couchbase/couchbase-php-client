@@ -1,0 +1,1 @@
+{"version":1,"defects":{"KeyValueGetTest::testGetThrowsDocumentNotFoundException":3,"KeyValueGetTest::testGetReturnsCorrectCas":4,"KeyValueUpsertTest::testUpsertReturnsCas":4},"times":{"KeyValueGetTest::testGetThrowsDocumentNotFoundException":0.035,"KeyValueGetTest::testGetReturnsCorrectCas":0.055,"KeyValueUpsertTest::testUpsertReturnsCas":0.049}}

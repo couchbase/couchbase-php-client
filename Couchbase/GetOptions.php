@@ -20,16 +20,31 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use PHPUnit\Util\Json;
+
 class GetOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+    private bool $withExpiry = false;
+    private ?array $projections = null;
+
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return GetOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): GetOptions
+    public function timeout(int $milliseconds): GetOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
@@ -39,11 +54,14 @@ class GetOptions
      * operation into a subdocument operation performing a full document
      * fetch as well as the expiry.
      *
-     * @param bool $arg whether or not to include document expiry
+     * @param bool $fetchExpiry whether to include document expiry
      * @return GetOptions
+     * @since 4.0.0
      */
-    public function withExpiry(bool $arg): GetOptions
+    public function withExpiry(bool $fetchExpiry): GetOptions
     {
+        $this->withExpiry = $fetchExpiry;
+        return $this;
     }
 
     /**
@@ -54,21 +72,54 @@ class GetOptions
      * operation into a subdocument operation fetching only the required
      * fields.
      *
-     * @param array $arg the array of field names
+     * @param array $projections the array of field names (array of strings)
      * @return GetOptions
+     * @since 4.0.0
      */
-    public function project(array $arg): GetOptions
+    public function project(array $projections): GetOptions
     {
+        $this->projections = $projections;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg decoding function with signature (returns decoded value):
-     *
-     *   `function decoder(string $bytes, int $flags, int $datatype): mixed`
+     * @param Transcoder $transcoder
+     * @return GetOptions
+     * @since 4.0.0
      */
-    public function decoder(callable $arg): GetOptions
+    public function transcoder(Transcoder $transcoder): GetOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param GetOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?GetOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
+    }
+
+
+    public static function export(?GetOptions $options)
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'withExpiry' => $options->withExpiry,
+            'projections' => $options->projections,
+        ];
     }
 }

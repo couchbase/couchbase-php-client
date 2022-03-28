@@ -20,17 +20,57 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use DateTimeImmutable;
+use DateTimeInterface;
+
 /**
  * Interface for results created by the get operation.
  */
-interface GetResult extends Result
+class GetResult extends Result
 {
+    private Transcoder $transcoder;
+    private ?int $expiry = null;
+    private string $value;
+    private int $flags;
+
     /**
-     * Returns the content of the document fetched
-     *
-     * @return array|null
+     * @private
+     * @param array $response
+     * @param Transcoder $transcoder
+     * @since 4.0.0
      */
-    public function content(): ?array;
+    public function __construct(array $response, Transcoder $transcoder)
+    {
+        parent::__construct($response);
+        $this->transcoder = $transcoder;
+        $this->flags = $response["flags"];
+        $this->value = $response["value"];
+        if (array_key_exists("expiry", $response)) {
+            $this->expiry = $response["expiry"];
+        }
+    }
+
+    /**
+     * Returns the content of the document decoded using associated transcoder
+     *
+     * @return mixed
+     * @since 4.0.0
+     */
+    public function content()
+    {
+        return $this->transcoder->decode($this->value, $this->flags);
+    }
+
+    /**
+     * Returns the content of the document decoded using custom transcoder
+     *
+     * @return mixed
+     * @since 4.0.0
+     */
+    public function contentAs(Transcoder $transcoder, ?int $overrideFlags = null)
+    {
+        return $transcoder->decode($this->value, $overrideFlags == null ? $overrideFlags : $this->flags);
+    }
 
     /**
      * Returns the document expiration time or null if the document does not expire.
@@ -38,6 +78,17 @@ interface GetResult extends Result
      * Note, that this function will return expiry only when GetOptions had withExpiry set to true.
      *
      * @return DateTimeInterface|null
+     * @since 4.0.0
      */
-    public function expiryTime(): ?DateTimeInterface;
+    public function expiryTime(): ?DateTimeInterface
+    {
+        if ($this->expiry == null) {
+            return null;
+        }
+        try {
+            return new DateTimeImmutable($this->expiry);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 }

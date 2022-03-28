@@ -119,142 +119,142 @@ PHP_MINIT_FUNCTION(couchbase)
       zend_register_list_destructors_ex(nullptr, couchbase_destroy_persistent_connection, "couchbase_persistent_connection", module_number);
 
     zend_class_entry ce;
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "Exception", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "Exception", nullptr);
     couchbase_exception_ce = zend_register_internal_class_ex(&ce, zend_ce_exception);
 
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "TimeoutException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TimeoutException", nullptr);
     timeout_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "UnambiguousTimeoutException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "UnambiguousTimeoutException", nullptr);
     unambiguous_timeout_exception_ce = zend_register_internal_class_ex(&ce, timeout_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "AmbiguousTimeoutException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "AmbiguousTimeoutException", nullptr);
     ambiguous_timeout_exception_ce = zend_register_internal_class_ex(&ce, timeout_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "AuthenticationFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "AuthenticationFailureException", nullptr);
     authentication_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "BucketExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "BucketExistsException", nullptr);
     bucket_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "BucketNotFlushableException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "BucketNotFlushableException", nullptr);
     bucket_not_flushable_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "BucketNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "BucketNotFoundException", nullptr);
     bucket_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "CasMismatchException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CasMismatchException", nullptr);
     cas_mismatch_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "CollectionExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CollectionExistsException", nullptr);
     collection_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "CollectionNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CollectionNotFoundException", nullptr);
     collection_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "CompilationFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CompilationFailureException", nullptr);
     compilation_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ConsistencyMismatchException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ConsistencyMismatchException", nullptr);
     consistency_mismatch_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DatasetExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DatasetExistsException", nullptr);
     dataset_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DatasetNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DatasetNotFoundException", nullptr);
     dataset_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DataverseExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DataverseExistsException", nullptr);
     dataverse_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DataverseNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DataverseNotFoundException", nullptr);
     dataverse_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DecodingFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DecodingFailureException", nullptr);
     decoding_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DeltaInvalidException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DeltaInvalidException", nullptr);
     delta_invalid_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DesignDocumentNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DesignDocumentNotFoundException", nullptr);
     design_document_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DocumentExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentExistsException", nullptr);
     document_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DocumentIrretrievableException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentIrretrievableException", nullptr);
     document_irretrievable_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DocumentLockedException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentLockedException", nullptr);
     document_locked_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DocumentNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentNotFoundException", nullptr);
     document_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DocumentNotJsonException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentNotJsonException", nullptr);
     document_not_json_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DurabilityAmbiguousException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurabilityAmbiguousException", nullptr);
     durability_ambiguous_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DurabilityImpossibleException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurabilityImpossibleException", nullptr);
     durability_impossible_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DurabilityLevelNotAvailableException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurabilityLevelNotAvailableException", nullptr);
     durability_level_not_available_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DurableWriteInProgressException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurableWriteInProgressException", nullptr);
     durable_write_in_progress_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "DurableWriteReCommitInProgressException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurableWriteReCommitInProgressException", nullptr);
     durable_write_re_commit_in_progress_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "EncodingFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "EncodingFailureException", nullptr);
     encoding_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "FeatureNotAvailableException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "FeatureNotAvailableException", nullptr);
     feature_not_available_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "GroupNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "GroupNotFoundException", nullptr);
     group_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "IndexExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "IndexExistsException", nullptr);
     index_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "IndexFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "IndexFailureException", nullptr);
     index_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "IndexNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "IndexNotFoundException", nullptr);
     index_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "IndexNotReadyException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "IndexNotReadyException", nullptr);
     index_not_ready_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "InternalServerFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "InternalServerFailureException", nullptr);
     internal_server_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "InvalidArgumentException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "InvalidArgumentException", nullptr);
     invalid_argument_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "JobQueueFullException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "JobQueueFullException", nullptr);
     job_queue_full_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "LinkExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "LinkExistsException", nullptr);
     link_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "LinkNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "LinkNotFoundException", nullptr);
     link_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "NumberTooBigException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "NumberTooBigException", nullptr);
     number_too_big_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ParsingFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ParsingFailureException", nullptr);
     parsing_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathExistsException", nullptr);
     path_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathInvalidException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathInvalidException", nullptr);
     path_invalid_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathMismatchException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathMismatchException", nullptr);
     path_mismatch_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathNotFoundException", nullptr);
     path_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathTooBigException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathTooBigException", nullptr);
     path_too_big_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PathTooDeepException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathTooDeepException", nullptr);
     path_too_deep_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PlanningFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PlanningFailureException", nullptr);
     planning_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "PreparedStatementFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PreparedStatementFailureException", nullptr);
     prepared_statement_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "RequestCanceledException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "RequestCanceledException", nullptr);
     request_canceled_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ScopeExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ScopeExistsException", nullptr);
     scope_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ScopeNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ScopeNotFoundException", nullptr);
     scope_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ServiceNotAvailableException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ServiceNotAvailableException", nullptr);
     service_not_available_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "TemporaryFailureException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TemporaryFailureException", nullptr);
     temporary_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "UnsupportedOperationException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "UnsupportedOperationException", nullptr);
     unsupported_operation_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "UserExistsException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "UserExistsException", nullptr);
     user_exists_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "UserNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "UserNotFoundException", nullptr);
     user_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ValueInvalidException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ValueInvalidException", nullptr);
     value_invalid_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ValueTooDeepException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ValueTooDeepException", nullptr);
     value_too_deep_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ValueTooLargeException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ValueTooLargeException", nullptr);
     value_too_large_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "ViewNotFoundException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "ViewNotFoundException", nullptr);
     view_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "XattrCannotModifyVirtualAttributeException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "XattrCannotModifyVirtualAttributeException", nullptr);
     xattr_cannot_modify_virtual_attribute_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "XattrInvalidKeyComboException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "XattrInvalidKeyComboException", nullptr);
     xattr_invalid_key_combo_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "XattrUnknownMacroException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "XattrUnknownMacroException", nullptr);
     xattr_unknown_macro_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase", "XattrUnknownVirtualAttributeException", nullptr);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "XattrUnknownVirtualAttributeException", nullptr);
     xattr_unknown_virtual_attribute_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
 
     return SUCCESS;
@@ -410,6 +410,36 @@ PHP_FUNCTION(documentUpsert)
     }
 }
 
+PHP_FUNCTION(documentGet)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_get(return_value, bucket, scope, collection, id, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(query)
 {
     zval* connection = nullptr;
@@ -534,6 +564,15 @@ ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentGet, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_query, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
@@ -562,6 +601,7 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", openBucket, ai_CouchbaseExtension_openBucket)
     ZEND_NS_FE("Couchbase\\Extension", closeBucket, ai_CouchbaseExtension_closeBucket)
     ZEND_NS_FE("Couchbase\\Extension", documentUpsert, ai_CouchbaseExtension_documentUpsert)
+    ZEND_NS_FE("Couchbase\\Extension", documentGet, ai_CouchbaseExtension_documentGet)
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
     ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
     ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)

@@ -62,11 +62,16 @@ class connection_handle
                                                   zend_long flags,
                                                   const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> query(const zend_string* statement,
-                                                          const zval* options);
+    [[nodiscard]] core_error_info document_get(zval* return_value,
+                                               const zend_string* bucket,
+                                               const zend_string* scope,
+                                               const zend_string* collection,
+                                               const zend_string* id,
+                                               const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> analytics_query(const zend_string* statement,
-                                                                    const zval* options);
+    [[nodiscard]] std::pair<zval*, core_error_info> query(const zend_string* statement, const zval* options);
+
+    [[nodiscard]] std::pair<zval*, core_error_info> analytics_query(const zend_string* statement, const zval* options);
 
     [[nodiscard]] std::pair<zval*, core_error_info> view_query(const zend_string* bucket_name,
                                                                const zend_string* design_document_name,
