@@ -84,12 +84,12 @@ class Collection
      * @param string $id the key of the document to check if exists
      * @param ExistsOptions|null $options the options to use for the operation
      * @return ExistsResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function exists(string $id, ExistsOptions $options = null): ExistsResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentExists($this->core, $this->bucketName, $this->scopeName, $this->name, $id, ExistsOptions::export($options));
+        return new ExistsResult($response);
     }
 
     /**

@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use PHPUnit\Util\Json;
-
 class GetOptions
 {
     private Transcoder $transcoder;
@@ -124,8 +122,13 @@ class GetOptions
         return $options->transcoder;
     }
 
-
-    public static function export(?GetOptions $options)
+    /**
+     * @private
+     * @param GetOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?GetOptions $options): array
     {
         if ($options == null) {
             return [];

@@ -242,7 +242,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         cluster_->execute(std::move(request), [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         if (resp.ctx.ec) {
-            return { {},
+            return { std::move(resp),
                      { resp.ctx.ec,
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to execute KV operation \"{}\": {}, {}", operation, resp.ctx.ec.value(), resp.ctx.ec.message()),
@@ -285,7 +285,8 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
-    std::pair<core_error_info, couchbase::operations::document_view_response> view_query(couchbase::operations::document_view_request request)
+    std::pair<core_error_info, couchbase::operations::document_view_response> view_query(
+      couchbase::operations::document_view_request request)
     {
         auto barrier = std::make_shared<std::promise<couchbase::operations::document_view_response>>();
         auto f = barrier->get_future();
@@ -715,6 +716,42 @@ connection_handle::document_get(zval* return_value,
     return {};
 }
 
+core_error_info
+connection_handle::document_exists(zval* return_value,
+                                   const zend_string* bucket,
+                                   const zend_string* scope,
+                                   const zend_string* collection,
+                                   const zend_string* id,
+                                   const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::exists_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec && resp.ctx.ec != error::key_value_errc::document_not_found) {
+        return err;
+    }
+    array_init(return_value);
+    add_assoc_bool(return_value, "exists", resp.exists());
+    add_assoc_bool(return_value, "deleted", resp.deleted);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    add_assoc_long(return_value, "flags", resp.flags);
+    add_assoc_long(return_value, "datatype", resp.datatype);
+    add_assoc_long(return_value, "expiry", resp.expiry);
+    auto sequence_number = fmt::format("{:x}", resp.sequence_number);
+    add_assoc_stringl(return_value, "sequenceNumber", sequence_number.data(), sequence_number.size());
+    return {};
+}
+
 std::pair<zval*, core_error_info>
 connection_handle::query(const zend_string* statement, const zval* options)
 {
@@ -1097,16 +1134,16 @@ connection_handle::view_query(const zend_string* bucket_name,
 
         default:
             return { nullptr,
-                    { error::common_errc::invalid_argument,
+                     { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("invalid value used for namespace: {}", name_space_val) } };
     }
 
-
-    couchbase::operations::document_view_request request{ cb_string_new(bucket_name),
-                                                          cb_string_new(design_document_name),
-                                                          cb_string_new(view_name),
-                                                            cxx_name_space,
+    couchbase::operations::document_view_request request{
+        cb_string_new(bucket_name),
+        cb_string_new(design_document_name),
+        cb_string_new(view_name),
+        cxx_name_space,
     };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { nullptr, e };
@@ -1161,33 +1198,33 @@ connection_handle::view_query(const zend_string* bucket_name,
                 break;
 
             default:
-                    return { nullptr,
-                             { error::common_errc::invalid_argument,
-                               { __LINE__, __FILE__, __func__ },
-                               fmt::format("invalid value used for order: {}", order) } };
+                return { nullptr,
+                         { error::common_errc::invalid_argument,
+                           { __LINE__, __FILE__, __func__ },
+                           fmt::format("invalid value used for order: {}", order) } };
         }
     } else {
         return { nullptr, e };
     }
-//    {
-//        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
-//        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-//            std::map<std::string, std::string> values{};
-//            const zend_string* key = nullptr;
-//            const zval *item = nullptr;
-//
-//            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-//            {
-//                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-//                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-//                values.emplace(k, std::move(str));
-//            }
-//            ZEND_HASH_FOREACH_END();
-//
-//            request.raw = values;
-//            request.
-//        }
-//    }
+    //    {
+    //        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+    //        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+    //            std::map<std::string, std::string> values{};
+    //            const zend_string* key = nullptr;
+    //            const zval *item = nullptr;
+    //
+    //            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+    //            {
+    //                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+    //                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
+    //                values.emplace(k, std::move(str));
+    //            }
+    //            ZEND_HASH_FOREACH_END();
+    //
+    //            request.raw = values;
+    //            request.
+    //        }
+    //    }
     if (auto e = cb_assign_boolean(request.reduce, options, "reduce"); e.ec) {
         return { nullptr, e };
     }
@@ -1221,9 +1258,9 @@ connection_handle::view_query(const zend_string* bucket_name,
     if (auto e = cb_assign_boolean(request.inclusive_end, options, "inclusiveEnd"); e.ec) {
         return { nullptr, e };
     }
-//    if (auto e = cb_assign_integer(request.on_error, options, "onError"); e.ec) {
-//        return { nullptr, e };
-//    }
+    //    if (auto e = cb_assign_integer(request.on_error, options, "onError"); e.ec) {
+    //        return { nullptr, e };
+    //    }
     if (auto e = cb_assign_boolean(request.debug, options, "debug"); e.ec) {
         return { nullptr, e };
     }

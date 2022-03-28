@@ -20,15 +20,97 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-/**
- * Interface for results created by the exists operation.
- */
-interface ExistsResult extends Result
+use DateTimeImmutable;
+use DateTimeInterface;
+
+class ExistsResult extends Result
 {
+    private bool $exists;
+    private bool $deleted;
+    private int $expiry;
+    private int $flags;
+    private string $cas;
+    private string $sequenceNumber;
+
     /**
-     * Returns whether or not the document exists
+     * @private
+     * @param array $response
+     * @since 4.0.0
+     */
+    public function __construct(array $response)
+    {
+        parent::__construct($response);
+        $this->exists = $response["exists"];
+        $this->deleted = $response["deleted"];
+        $this->expiry = $response["expiry"];
+        $this->flags = $response["flags"];
+        $this->cas = $response["cas"];
+        $this->sequenceNumber = $response["sequenceNumber"];
+    }
+
+    /**
+     * Returns whether the document exists
      *
      * @return bool
+     * @since 4.0.0
      */
-    public function exists(): bool;
+    public function exists(): bool
+    {
+        return $this->exists;
+    }
+
+    /**
+     * Returns true if the document had been just deleted.
+     *
+     * @return bool
+     * @since 4.0.0
+     */
+    public function deleted(): bool
+    {
+        return $this->deleted;
+    }
+
+    /**
+     * @return string
+     */
+    public function cas(): string
+    {
+        return $this->cas;
+    }
+
+    /**
+     * @return string
+     */
+    public function sequenceNumber(): string
+    {
+        return $this->sequenceNumber;
+    }
+
+    /**
+     * @return int
+     */
+    public function flags(): int
+    {
+        return $this->flags;
+    }
+
+    /**
+     * Returns the document expiration time or null if the document does not expire.
+     *
+     * Note, that this function will return expiry only when GetOptions had withExpiry set to true.
+     *
+     * @return DateTimeInterface|null
+     * @since 4.0.0
+     */
+    public function expiryTime(): ?DateTimeInterface
+    {
+        if ($this->expiry == null) {
+            return null;
+        }
+        try {
+            return new DateTimeImmutable($this->expiry);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 }

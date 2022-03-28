@@ -22,13 +22,45 @@ namespace Couchbase;
 
 class ExistsOptions
 {
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return ExistsOptions
+     * @since 4.0.0
+     */
+    public static function build(): ExistsOptions
+    {
+        return new ExistsOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return ExistsOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): ExistsOptions
+    public function timeout(int $milliseconds): ExistsOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param ExistsOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?ExistsOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }
