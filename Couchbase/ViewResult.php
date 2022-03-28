@@ -21,21 +21,41 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving results from view queries.
+ * Class for retrieving results from view queries.
  */
-interface ViewResult
+class ViewResult
 {
+    private ViewMetaData $meta;
+    private array $rows;
+
+    public function __construct(array $result)
+    {
+        $meta = null;
+        if (array_key_exists("meta", $result)) {
+            $meta = $result["meta"];
+        }
+        $this->meta = new ViewMetaData($meta);
+        $this->rows = array();
+        foreach ($result["rows"] as $resultRow) {
+            $this->rows[] = new ViewRow($resultRow);
+        }
+    }
+
     /**
      * Returns metadata generated during query execution
      *
-     * @return ViewMetaData|null
+     * @return ViewMetaData
      */
-    public function metaData(): ?ViewMetaData;
+    public function metaData(): ViewMetaData {
+        return $this->meta;
+    }
 
     /**
      * Returns any rows returned by the query
      *
-     * @return array|null
+     * @return array
      */
-    public function rows(): ?array;
+    public function rows(): array {
+        return $this->rows;
+    }
 }

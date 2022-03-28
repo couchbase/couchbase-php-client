@@ -68,6 +68,12 @@ class connection_handle
     [[nodiscard]] std::pair<zval*, core_error_info> analytics_query(const zend_string* statement,
                                                                     const zval* options);
 
+    [[nodiscard]] std::pair<zval*, core_error_info> view_query(const zend_string* bucket_name,
+                                                               const zend_string* design_document_name,
+                                                               const zend_string* view_name,
+                                                               const zend_long name_space,
+                                                               const zval* options);
+
   private:
     class impl;
 

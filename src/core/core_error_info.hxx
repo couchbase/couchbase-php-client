@@ -20,6 +20,7 @@
 #include <set>
 #include <system_error>
 #include <variant>
+#include <vector>
 
 namespace couchbase::php
 {
@@ -75,10 +76,22 @@ struct analytics_error_context {
     std::string http_body{};
 };
 
+struct view_query_error_context {
+    std::string client_context_id{};
+    std::string design_document_name{};
+    std::string view_name{};
+    std::vector<std::string> query_string{};
+    int retry_attempts{ 0 };
+    std::set<std::string> retry_reasons{};
+    std::uint32_t http_status{};
+    std::string http_body{};
+};
+
 struct core_error_info {
     std::error_code ec{};
     source_location location{};
     std::string message{};
-    std::variant<empty_error_context, key_value_error_context, query_error_context, analytics_error_context> error_context{};
+    std::variant<empty_error_context, key_value_error_context, query_error_context,
+                 analytics_error_context, view_query_error_context> error_context{};
 };
 } // namespace couchbase::php

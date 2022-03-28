@@ -263,6 +263,12 @@ class QueryOptions
                 $namedParameters[$key] = json_encode($param);
             }
         }
+        $raw = null;
+        if ($this->raw != null) {
+            foreach ($this->raw as $key => $param) {
+                $raw[$key] = json_encode($param);
+            }
+        }
 
         return [
             'timeoutMilliseconds' => $this->timeoutMilliseconds,
@@ -279,7 +285,7 @@ class QueryOptions
             'adHoc' => $this->adHoc,
             'namedParameters' => $namedParameters,
             'positionalParameters' => $positionalParameters,
-            'raw' => $this->raw,
+            'raw' => $raw,
             'clientContextId' => $this->clientContextId,
             'metrics' => $this->metrics,
             'preserveExpiry' => $this->preserveExpiry,

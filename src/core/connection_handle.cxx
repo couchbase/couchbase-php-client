@@ -149,6 +149,25 @@ build_analytics_error_context(const error_context::analytics& ctx)
     return out;
 }
 
+static view_query_error_context
+build_view_query_error_context(const error_context::view& ctx)
+{
+    view_query_error_context out;
+    out.client_context_id = ctx.client_context_id;
+    out.design_document_name = ctx.design_document_name;
+    out.view_name = ctx.view_name;
+    out.query_string = ctx.query_string;
+    out.http_status = ctx.http_status;
+    out.http_body = ctx.http_body;
+    out.retry_attempts = ctx.retry_attempts;
+    if (!ctx.retry_reasons.empty()) {
+        for (const auto& reason : ctx.retry_reasons) {
+            out.retry_reasons.insert(retry_reason_to_string(reason));
+        }
+    }
+    return out;
+}
+
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
   public:
@@ -260,6 +279,23 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_analytics_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::document_view_response> view_query(couchbase::operations::document_view_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::document_view_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::document_view_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to view query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_view_query_error_context(resp.ctx) },
                      {} };
         }
         return { {}, std::move(resp) };
@@ -391,8 +427,9 @@ cb_assign_durability(Request& req, const zval* options)
     return {};
 }
 
+template<typename Boolean>
 static core_error_info
-cb_assign_boolean(bool& field, const zval* options, std::string_view name)
+cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
 {
     if (options == nullptr || !Z_TYPE_P(options)) {
         return {};
@@ -584,24 +621,26 @@ connection_handle::query(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { nullptr, e };
     }
-    {
-        auto [err, scanC] = cb_get_integer<uint64_t>(options, "scanConsistency");
-        if (err.ec) {
-            return { nullptr, err };
-        }
-
-        if (scanC > 0) {
-            if (scanC == 1) {
+    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
+        switch (scan_consistency) {
+            case 1:
                 request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
-            } else if (scanC == 2) {
+                break;
+
+            case 2:
                 request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
-            } else {
-                return {
-                    nullptr,
-                    { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "invalid value used for scan consistency" }
-                };
-            }
+                break;
+
+            default:
+                if (scan_consistency > 0) {
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for scan consistency: {}", scan_consistency) } };
+                }
         }
+    } else {
+        return { nullptr, e };
     }
     if (auto e = cb_assign_integer(request.scan_cap, options, "scanCap"); e.ec) {
         return { nullptr, e };
@@ -615,24 +654,30 @@ connection_handle::query(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_integer(request.max_parallelism, options, "maxParallelism"); e.ec) {
         return { nullptr, e };
     }
-    {
-        auto [err, profile] = cb_get_integer<uint64_t>(options, "profile");
-        if (err.ec) {
-            return { nullptr, err };
-        }
-
-        if (profile > 0) {
-            if (profile == 1) {
+    if (auto [e, profile] = cb_get_integer<uint64_t>(options, "profile"); !e.ec) {
+        switch (profile) {
+            case 1:
                 request.profile = couchbase::operations::query_request::profile_mode::off;
-            } else if (profile == 2) {
+                break;
+
+            case 2:
                 request.profile = couchbase::operations::query_request::profile_mode::phases;
-            } else if (profile == 3) {
+                break;
+
+            case 3:
                 request.profile = couchbase::operations::query_request::profile_mode::timings;
-            } else {
-                return { nullptr,
-                         { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "invalid value used for profile" } };
-            }
+                break;
+
+            default:
+                if (profile > 0) {
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for profile: {}", profile) } };
+                }
         }
+    } else {
+        return { nullptr, e };
     }
 
     if (auto e = cb_assign_boolean(request.readonly, options, "readonly"); e.ec) {
@@ -927,6 +972,196 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
         }
 
         add_assoc_zval(&retval, "meta", &meta);
+    }
+
+    return { &retval, {} };
+}
+
+std::pair<zval*, core_error_info>
+connection_handle::view_query(const zend_string* bucket_name,
+                              const zend_string* design_document_name,
+                              const zend_string* view_name,
+                              const zend_long name_space,
+                              const zval* options)
+{
+    couchbase::operations::design_document::name_space cxx_name_space;
+    auto name_space_val = std::uint32_t(name_space);
+    switch (name_space_val) {
+        case 1:
+            cxx_name_space = couchbase::operations::design_document::name_space::development;
+            break;
+
+        case 2:
+            cxx_name_space = couchbase::operations::design_document::name_space::production;
+            break;
+
+        default:
+            return { nullptr,
+                    { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for namespace: {}", name_space_val) } };
+    }
+
+
+    couchbase::operations::document_view_request request{ cb_string_new(bucket_name),
+                                                          cb_string_new(design_document_name),
+                                                          cb_string_new(view_name),
+                                                            cxx_name_space,
+    };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
+        switch (scan_consistency) {
+            case 1:
+                request.consistency = couchbase::operations::document_view_request::scan_consistency::not_bounded;
+                break;
+
+            case 2:
+                request.consistency = couchbase::operations::document_view_request::scan_consistency::request_plus;
+                break;
+
+            case 3:
+                request.consistency = couchbase::operations::document_view_request::scan_consistency::update_after;
+                break;
+
+            default:
+                if (scan_consistency > 0) {
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for scan consistency: {}", scan_consistency) } };
+                }
+        }
+    } else {
+        return { nullptr, e };
+    }
+
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("keys"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<std::string> keys{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            keys.emplace_back(std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) }));
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.keys = keys;
+    }
+    if (auto [e, order] = cb_get_integer<uint64_t>(options, "order"); !e.ec) {
+        switch (order) {
+            case 0:
+                request.order = couchbase::operations::document_view_request::sort_order::ascending;
+                break;
+
+            case 1:
+                request.order = couchbase::operations::document_view_request::sort_order::descending;
+                break;
+
+            default:
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for order: {}", order) } };
+        }
+    } else {
+        return { nullptr, e };
+    }
+//    {
+//        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+//        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+//            std::map<std::string, std::string> values{};
+//            const zend_string* key = nullptr;
+//            const zval *item = nullptr;
+//
+//            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+//            {
+//                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+//                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
+//                values.emplace(k, std::move(str));
+//            }
+//            ZEND_HASH_FOREACH_END();
+//
+//            request.raw = values;
+//            request.
+//        }
+//    }
+    if (auto e = cb_assign_boolean(request.reduce, options, "reduce"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.group, options, "group"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.group_level, options, "groupLevel"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.limit, options, "limit"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.skip, options, "skip"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.key, options, "key"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.start_key, options, "startKey"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.end_key, options, "endKey"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.start_key_doc_id, options, "startKeyDocId"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.end_key_doc_id, options, "endKeyDocId"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.inclusive_end, options, "inclusiveEnd"); e.ec) {
+        return { nullptr, e };
+    }
+//    if (auto e = cb_assign_integer(request.on_error, options, "onError"); e.ec) {
+//        return { nullptr, e };
+//    }
+    if (auto e = cb_assign_boolean(request.debug, options, "debug"); e.ec) {
+        return { nullptr, e };
+    }
+
+    auto [err, resp] = impl_->view_query(std::move(request));
+    if (err.ec) {
+        return { nullptr, err };
+    }
+
+    zval retval;
+    array_init(&retval);
+
+    zval rows;
+    array_init(&rows);
+    for (auto& row : resp.rows) {
+        zval zrow;
+        array_init(&zrow);
+        if (row.id.has_value()) {
+            add_assoc_string(&zrow, "id", row.id.value().c_str());
+        }
+        add_assoc_string(&zrow, "value", row.value.c_str());
+        add_assoc_string(&zrow, "key", row.key.c_str());
+
+        add_next_index_zval(&rows, &zrow);
+    }
+    add_assoc_zval(&retval, "rows", &rows);
+
+    {
+        zval meta;
+        array_init(&meta);
+        if (resp.meta.debug_info.has_value()) {
+            add_assoc_string(&meta, "debugInfo", resp.meta.debug_info.value().c_str());
+        }
+        if (resp.meta.total_rows.has_value()) {
+            add_assoc_long(&meta, "totalRows", resp.meta.total_rows.value());
+        }
+
+        add_assoc_zval(&meta, "meta", &meta);
     }
 
     return { &retval, {} };

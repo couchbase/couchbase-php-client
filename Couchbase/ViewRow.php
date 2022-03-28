@@ -25,6 +25,19 @@ namespace Couchbase;
  */
 class ViewRow
 {
+    private ?string $id = null;
+    private $key;
+    private $value;
+
+    public function __construct(array $row)
+    {
+        if (array_key_exists("id", $row)) {
+            $this->id = $row["id"];
+        }
+        $this->key = $row["key"];
+        $this->value = $row["value"];
+    }
+
     /**
      * Returns the id of the row
      *
@@ -32,6 +45,7 @@ class ViewRow
      */
     public function id(): ?string
     {
+        return $this->id;
     }
 
     /**
@@ -39,6 +53,7 @@ class ViewRow
      */
     public function key()
     {
+        return json_decode($this->key);
     }
 
     /**
@@ -46,6 +61,7 @@ class ViewRow
      */
     public function value()
     {
+        return json_decode($this->value);
     }
 
     /**

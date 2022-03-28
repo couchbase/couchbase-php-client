@@ -109,12 +109,20 @@ class Bucket
      * @param string $viewName the view to use for the query
      * @param ViewOptions|null $options the options to use when executing the query
      * @return ViewResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
     {
-        throw new UnsupportedOperationException();
+        if ($options == null) {
+            $options = new ViewOptions();
+        }
+
+        $opts =  $options->export();
+        $namespace = $opts["namespace"];
+
+        $result = Extension\viewQuery($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
+
+        return new ViewResult($result);
     }
 
     /**

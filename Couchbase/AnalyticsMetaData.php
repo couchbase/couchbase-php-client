@@ -41,16 +41,16 @@ class AnalyticsMetaData
         $this->status = $meta["status"];
         $this->requestId = $meta["requestId"];
         $this->clientContextId = $meta["clientContextId"];
-        if (isset($meta["signature"])) {
+        if (array_key_exists("signature", $meta)) {
             $this->signature = $meta["signature"];
         }
         $this->warnings = array();
-        if (isset($meta["warnings"])) {
+        if (array_key_exists("warnings", $meta)) {
             foreach ($meta["warnings"] as $warning) {
                 $this->warnings[] = new AnalyticsWarning($warning);
             }
         }
-        if (isset($meta["metrics"])) {
+        if (array_key_exists("metrics", $meta)) {
             $this->metrics = new AnalyticsMetrics($meta["metrics"]);
         } else {
             $this->metrics = new AnalyticsMetrics(null);

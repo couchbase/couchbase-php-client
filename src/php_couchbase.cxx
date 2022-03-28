@@ -462,6 +462,39 @@ PHP_FUNCTION(analyticsQuery)
     RETURN_ZVAL(res, 1, 0);
 }
 
+PHP_FUNCTION(viewQuery)
+{
+    zval* connection = nullptr;
+    zend_string* bucketName = nullptr;
+    zend_string* designDocumentName = nullptr;
+    zend_string* viewName = nullptr;
+    zend_long nameSpace = 0;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucketName)
+    Z_PARAM_STR(designDocumentName)
+    Z_PARAM_STR(viewName)
+    Z_PARAM_LONG(nameSpace)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = static_cast<couchbase::php::connection_handle*>(
+      zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [res, e] = handle->view_query(bucketName, designDocumentName, viewName, nameSpace, options);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_NULL();
+    }
+
+    RETURN_ZVAL(res, 1, 0);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -513,6 +546,15 @@ ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_viewQuery, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, designDocumentName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, viewName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, nameSpace, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -522,6 +564,7 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", documentUpsert, ai_CouchbaseExtension_documentUpsert)
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
     ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
+    ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)
     PHP_FE_END
 };
 

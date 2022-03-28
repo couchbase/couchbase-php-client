@@ -43,25 +43,25 @@ class QueryMetaData
         $this->status = $meta["status"];
         $this->requestId = $meta["requestId"];
         $this->clientContextId = $meta["clientContextId"];
-        if (isset($meta["signature"])) {
+        if (array_key_exists("signature", $meta)) {
             $this->signature = $meta["signature"];
         }
-        if (isset($meta["profile"])) {
+        if (array_key_exists("profile", $meta)) {
             $this->profile = $meta["profile"];
         }
         $this->warnings = array();
-        if (isset($meta["warnings"])) {
+        if (array_key_exists("warnings", $meta)) {
             foreach ($meta["warnings"] as $warning) {
                 $this->warnings[] = new QueryWarning($warning);
             }
         }
         $this->errors = array();
-        if (isset($meta["errors"])) {
+        if (array_key_exists("errors", $meta)) {
             foreach ($meta["errors"] as $error) {
                 $this->errors[] = new QueryWarning($error);
             }
         }
-        if (isset($meta["metrics"])) {
+        if (array_key_exists("metrics", $meta)) {
             $this->metrics = new QueryMetrics($meta["metrics"]);
         } else {
             $this->metrics = new QueryMetrics(null);

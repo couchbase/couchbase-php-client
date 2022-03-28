@@ -152,6 +152,12 @@ class AnalyticsOptions
                 $namedParameters[$key] = json_encode($param);
             }
         }
+        $raw = null;
+        if ($this->raw != null) {
+            foreach ($this->raw as $key => $param) {
+                $raw[$key] = json_encode($param);
+            }
+        }
 
         return [
             'timeoutMilliseconds' => $this->timeoutMilliseconds,
@@ -161,7 +167,7 @@ class AnalyticsOptions
             'readonly' => $this->readonly,
             'namedParameters' => $namedParameters,
             'positionalParameters' => $positionalParameters,
-            'raw' => $this->raw,
+            'raw' => $raw,
             'clientContextId' => $this->clientContextId,
             'scopeName' => $scopeName,
             'scopeQualifier' => $scopeQualifier

@@ -21,21 +21,40 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving metadata generated during view queries.
+ * Class for retrieving metadata generated during view queries.
  */
-interface ViewMetaData
+class ViewMetaData
 {
+    private ?int $totalRows = null;
+    private ?array $debug = null;
+
+    public function __construct(?array $meta = null)
+    {
+        if ($meta != null) {
+            if (array_key_exists("totalRows", $meta)) {
+                $this->totalRows = $meta["totalRows"];
+            }
+            if (array_key_exists("debug", $meta)) {
+                $this->debug = $meta["debug"];
+            }
+        }
+    }
+
     /**
      * Returns the total number of rows returned by this view query
      *
      * @return int|null
      */
-    public function totalRows(): ?int;
+    public function totalRows(): ?int {
+        return $this->totalRows;
+    }
 
     /**
      * Returns debug information for this view query if enabled
      *
      * @return array|null
      */
-    public function debug(): ?array;
+    public function debug(): ?array {
+        return $this->debug;
+    }
 }
