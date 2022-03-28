@@ -34,6 +34,28 @@ class JsonTranscoder implements Transcoder
         return self::$instance;
     }
 
+    private int $encodeFlags;
+    private int $encodeDepth;
+    private bool $decodeAssociative;
+    private int $decodeDepth;
+    private int $decodeFlags;
+
+    /**
+     * @param bool $decodeAssociative passed as $associative to json_decode()
+     * @param int $decodeDepth passed as $depth to json_decode()
+     * @param int $decodeFlags passed as $flags to json_decode()
+     * @param int $encodeFlags passed as $flags to json_encode()
+     * @param int $encodeDepth passed as $depth to json_encode()
+     */
+    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = 0, int $encodeFlags = 0, int $encodeDepth = 512)
+    {
+        $this->decodeAssociative = $decodeAssociative;
+        $this->decodeDepth = $decodeDepth;
+        $this->decodeFlags = $decodeFlags;
+        $this->encodeFlags = $encodeFlags;
+        $this->encodeDepth = $encodeDepth;
+    }
+
     /**
      * Encodes data using json_encode() from json extension
      *
@@ -43,7 +65,10 @@ class JsonTranscoder implements Transcoder
      */
     public function encode($value): array
     {
-        return [json_encode($value), (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode()];
+        return [
+            json_encode($value, $this->encodeFlags, $this->encodeDepth),
+            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode()
+        ];
     }
 
     /**
@@ -58,8 +83,8 @@ class JsonTranscoder implements Transcoder
     public function decode(string $bytes, int $flags)
     {
         if (TranscoderFlags::decode($flags)->isJson()) {
-            return json_decode($bytes);
+            return json_decode($bytes, $this->decodeAssociative, $this->decodeDepth, $this->decodeFlags);
         }
-        throw new DecodingFailureException(sprintf("unable to decode bytes with JsonTranscoder: unknown flags %08x", $flags));
+        throw new DecodingFailureException(sprintf("unable to decode bytes with JsonTranscoder: unknown flags 0x%08x", $flags));
     }
 }

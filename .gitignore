@@ -13,6 +13,7 @@
 .phpdoc
 /*.out
 /.idea/
+/.phpunit.result.cache
 /Debug/
 /Makefile
 /Makefile.fragments

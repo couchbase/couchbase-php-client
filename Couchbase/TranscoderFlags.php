@@ -102,6 +102,6 @@ class TranscoderFlags
      */
     public function encode(): int
     {
-        return (($this->dataFormat & $this->compression) << 24) | $this->typeCode;
+        return (($this->dataFormat | $this->compression) << 24) | $this->typeCode;
     }
 }
