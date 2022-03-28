@@ -167,4 +167,14 @@ class Cluster
     {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * @private
+     * @param string $bucketName
+     * @return string|null
+     */
+    public function version(string $bucketName): ?string
+    {
+        return Extension\clusterVersion($this->core, $bucketName);
+    }
 }

@@ -18,14 +18,12 @@
 
 declare(strict_types=1);
 
-use Couchbase\GetOptions;
-use Couchbase\RawJsonTranscoder;
-use Couchbase\UpsertOptions;
 use Helpers\ServerVersion;
+use Couchbase\Extension;
 
-include_once __DIR__ . "/Helpers/ServerVersion.php";
+include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class ServerVersionTest extends PHPUnit\Framework\TestCase
+class ServerVersionTest extends Helpers\CouchbaseTestCase
 {
     function testSimpleServerVersion()
     {
@@ -48,5 +46,16 @@ class ServerVersionTest extends PHPUnit\Framework\TestCase
         $version = ServerVersion::parse("6.6.2-8888-community");
         $this->assertTrue($version->isMadHatter());
         $this->assertEquals("6.6.2-8888-community", "" . $version);
+    }
+
+    function testRuntimeVersion()
+    {
+        $this->skipIfCaves();
+
+        $cluster = $this->connectCluster();
+        $versionString = $cluster->version($this->env()->bucketName());
+        $this->assertNotNull($versionString);
+        $version = ServerVersion::parse($versionString);
+        $this->assertGreaterThan(6, $version->major());
     }
 }

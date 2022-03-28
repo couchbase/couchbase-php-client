@@ -331,6 +331,28 @@ fetch_couchbase_connection_from_resource(zval* resource)
     return static_cast<couchbase::php::connection_handle*>(
       zend_fetch_resource(Z_RES_P(resource), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
 }
+PHP_FUNCTION(clusterVersion)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    auto version = handle->cluster_version(name);
+    if (version.empty()) {
+        RETURN_NULL();
+    }
+    RETURN_STRINGL(version.data(), version.size());
+}
 
 PHP_FUNCTION(openBucket)
 {
@@ -567,6 +589,11 @@ static PHP_MINFO_FUNCTION(couchbase)
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_version, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_clusterVersion, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_createConnection, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connectionHash, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, connectionString, IS_STRING, 0)
@@ -636,6 +663,7 @@ ZEND_END_ARG_INFO()
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
+    ZEND_NS_FE("Couchbase\\Extension", clusterVersion, ai_CouchbaseExtension_clusterVersion)
     ZEND_NS_FE("Couchbase\\Extension", createConnection, ai_CouchbaseExtension_createConnection)
     ZEND_NS_FE("Couchbase\\Extension", openBucket, ai_CouchbaseExtension_openBucket)
     ZEND_NS_FE("Couchbase\\Extension", closeBucket, ai_CouchbaseExtension_closeBucket)

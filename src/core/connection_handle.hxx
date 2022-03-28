@@ -47,6 +47,8 @@ class connection_handle
         return idle_expiry_ < now;
     }
 
+    [[nodiscard]] std::string cluster_version(const zend_string* name);
+
     [[nodiscard]] core_error_info open();
 
     [[nodiscard]] core_error_info bucket_open(const zend_string* name);

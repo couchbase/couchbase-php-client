@@ -18,6 +18,7 @@
 #include "persistent_connections_cache.hxx"
 
 #include <couchbase/cluster.hxx>
+#include <couchbase/operations/management/cluster_describe.hxx>
 
 #include <fmt/core.h>
 
@@ -200,6 +201,26 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
     }
 
+    std::string cluster_version(const std::string& bucket_name = "")
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::cluster_describe_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(
+          couchbase::operations::management::cluster_describe_request{},
+          [barrier](couchbase::operations::management::cluster_describe_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec == couchbase::error::common_errc::service_not_available && !bucket_name.empty()) {
+            if (auto e = bucket_open(bucket_name); e.ec) {
+                return {};
+            }
+            return cluster_version();
+        }
+        if (resp.ctx.ec || resp.info.nodes.empty()) {
+            return {};
+        }
+        return resp.info.nodes.front().version;
+    }
+
     core_error_info open()
     {
         auto barrier = std::make_shared<std::promise<std::error_code>>();
@@ -236,7 +257,6 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     template<typename Request, typename Response = typename Request::response_type>
     std::pair<Response, core_error_info> key_value_execute(const char* operation, Request request)
     {
-
         auto barrier = std::make_shared<std::promise<Response>>();
         auto f = barrier->get_future();
         cluster_->execute(std::move(request), [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
@@ -334,6 +354,12 @@ static std::string
 cb_string_new(const zval* value)
 {
     return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
+}
+
+std::string
+connection_handle::cluster_version(const zend_string* bucket_name)
+{
+    return impl_->cluster_version(cb_string_new(bucket_name));
 }
 
 core_error_info

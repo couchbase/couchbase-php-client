@@ -81,4 +81,20 @@ class CouchbaseTestCase extends TestCase
         }
         return self::env()::randomId();
     }
+
+    public function skipIfCaves(): void
+    {
+        if (self::env()->useCaves()) {
+            $caller = debug_backtrace()[1];
+            $this->markTestSkipped(sprintf("%s::%s is not supported on CAVES", $caller["class"], $caller["function"]));
+        }
+    }
+
+    public function skipIfCouchbase(): void
+    {
+        if (self::env()->useCaves()) {
+            $caller = debug_backtrace()[1];
+            $this->markTestSkipped(sprintf("%s::%s is not supported on Couchbase server (only for CAVES)", $caller["class"], $caller["function"]));
+        }
+    }
 }

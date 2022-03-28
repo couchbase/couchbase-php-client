@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Helpers;
 
 include_once __DIR__ . "/Caves.php";
+include_once __DIR__ . "/ServerVersion.php";
 
 use Couchbase\PasswordAuthenticator;
 use Exception;
@@ -33,6 +34,7 @@ class TestEnvironment
     private string $username;
     private string $password;
     private string $bucketName;
+    private ServerVersion $version;
 
     private static function checkExtension(string $name)
     {
@@ -56,7 +58,7 @@ class TestEnvironment
 
         $this->clusterId = self::randomId();
 
-        $this->connectionString = getenv("TEST_CONNECTION_STRING");
+        $this->connectionString = getenv("TEST_CONNECTION_STRING") ?: null;
         if ($this->connectionString == null) {
             $this->caves = new Caves();
         }
@@ -101,6 +103,22 @@ class TestEnvironment
             $this->connectionString = $this->caves->createCluster($this->clusterId);
         }
         return $this->connectionString;
+    }
+
+    public function version(): ServerVersion
+    {
+        if (isset($this->version)) {
+            return $this->version;
+        }
+        $versionString = null;
+        if ($this->useCouchbase()) {
+            $versionString = $this->connectCluster()->version($this->bucketName);
+        }
+        if ($versionString == null) {
+            $versionString = getenv("TEST_SERVER_VERSION") ?: "7.0";
+        }
+        $this->version = ServerVersion::parse($versionString);
+        return $this->version;
     }
 
     public function buildPasswordAuthenticator(): PasswordAuthenticator
