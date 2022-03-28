@@ -349,57 +349,62 @@ class ViewOptions
         return $this;
     }
 
-    public function export(): array
+    public static function export(?ViewOptions $options): array
     {
+        if ($options == null) {
+            return [
+                'namespace' => DesignDocumentNamespace::PRODUCTION,
+            ];
+        }
         $raw = null;
-        if ($this->raw != null) {
-            foreach ($this->raw as $key => $param) {
+        if ($options->raw != null) {
+            foreach ($options->raw as $key => $param) {
                 $raw[$key] = $param;
             }
         }
         $keys = null;
-        if ($this->keys != null) {
-            foreach ($this->keys as  $param) {
+        if ($options->keys != null) {
+            foreach ($options->keys as  $param) {
                 $keys[] = json_encode($param);
             }
         }
         $namespace = DesignDocumentNamespace::PRODUCTION;
-        if ($this->namespace != null) {
-            $namespace = $this->namespace;
+        if ($options->namespace != null) {
+            $namespace = $options->namespace;
         }
         $key = null;
-        if ($this->key != null) {
-            $key = json_encode($this->key);
+        if ($options->key != null) {
+            $key = json_encode($options->key);
         }
         $startKey = null;
-        if ($this->startKey != null) {
-            $startKey = json_encode($this->startKey);
+        if ($options->startKey != null) {
+            $startKey = json_encode($options->startKey);
         }
         $endKey = null;
-        if ($this->endKey != null) {
-            $endKey = json_encode($this->endKey);
+        if ($options->endKey != null) {
+            $endKey = json_encode($options->endKey);
         }
 
         return [
-            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
 
             'key' => $key,
             'keys' => $keys,
-            'limit' => $this->limit,
-            'skip' => $this->skip,
-            'scanConsistency' => $this->scanConsistency,
-            'order' => $this->order,
-            'reduce' => $this->reduce,
-            'group' => $this->group,
-            'groupLevel' => $this->groupLevel,
+            'limit' => $options->limit,
+            'skip' => $options->skip,
+            'scanConsistency' => $options->scanConsistency,
+            'order' => $options->order,
+            'reduce' => $options->reduce,
+            'group' => $options->group,
+            'groupLevel' => $options->groupLevel,
             'raw' => $raw,
             'startKey' => $startKey,
             'endKey' => $endKey,
-            'startKeyDocId' => $this->startKeyDocId,
-            'endKeyDocId' => $this->endKeyDocId,
-            'inclusiveEnd' => $this->inclusiveEnd,
-            'onError' => $this->onError,
-            'debug' => $this->debug,
+            'startKeyDocId' => $options->startKeyDocId,
+            'endKeyDocId' => $options->endKeyDocId,
+            'inclusiveEnd' => $options->inclusiveEnd,
+            'onError' => $options->onError,
+            'debug' => $options->debug,
             'namespace' => $namespace,
         ];
     }

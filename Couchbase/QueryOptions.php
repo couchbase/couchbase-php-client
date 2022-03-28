@@ -257,11 +257,14 @@ class QueryOptions
     /**
      * Associate scope name with query
      *
+     * @deprecated
      * @param string $name the name of the scope
      * @return QueryOptions
      * @since 4.0.0
      */
     public function scopeName(string $name): QueryOptions {
+        trigger_error('Method ' . __METHOD__ . ' is deprecated, use scope level query()',
+            E_USER_DEPRECATED);
         $this->scopeName = $name;
         return $this;
     }
@@ -271,11 +274,14 @@ class QueryOptions
      *
      * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
      *
+     * @deprecated
      * @param string $qualifier the scope qualifier
      * @return QueryOptions
      * @since 4.0.0
      */
     public function scopeQualifier(string $qualifier): QueryOptions {
+        trigger_error('Method ' . __METHOD__ . ' is deprecated, use scope level query()',
+            E_USER_DEPRECATED);
         $this->scopeQualifier = $qualifier;
         return $this;
     }
@@ -293,48 +299,61 @@ class QueryOptions
         return $this;
     }
 
-    public function export(): array
+    public static function export(?QueryOptions $options, string $scopeName = null, string $scopeQualifier = null): array
     {
+        if ($options == null) {
+            return [
+                'scopeName' => $scopeName,
+                'scopeQualifier' => $scopeQualifier
+            ];
+        }
+
         $positionalParameters = null;
-        if ($this->positionalParameters != null) {
-            foreach ($this->positionalParameters as $param) {
+        if ($options->positionalParameters != null) {
+            foreach ($options->positionalParameters as $param) {
                 $positionalParameters[] = json_encode($param);
             }
         }
         $namedParameters = null;
-        if ($this->namedParameters != null) {
-            foreach ($this->namedParameters as $key => $param) {
+        if ($options->namedParameters != null) {
+            foreach ($options->namedParameters as $key => $param) {
                 $namedParameters[$key] = json_encode($param);
             }
         }
         $raw = null;
-        if ($this->raw != null) {
-            foreach ($this->raw as $key => $param) {
+        if ($options->raw != null) {
+            foreach ($options->raw as $key => $param) {
                 $raw[$key] = json_encode($param);
             }
         }
+        if ($scopeName == null && $options->scopeName != null) {
+            $scopeName = $options->scopeName;
+        }
+        if ($scopeQualifier == null && $options->scopeQualifier != null) {
+            $scopeQualifier = $options->scopeQualifier;
+        }
 
         return [
-            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
 
-            "consistentWith" => $this->consistentWith == null ? null : $this->consistentWith->export(),
-            'scanConsistency' => $this->scanConsistency,
-            'scanCap' => $this->scanCap,
-            'pipelineCap' => $this->pipelineCap,
-            'pipelineBatch' => $this->pipelineBatch,
-            'maxParallelism' => $this->maxParallelism,
-            'profile' => $this->profile,
-            'readonly' => $this->readonly,
-            'flexIndex' => $this->flexIndex,
-            'adHoc' => $this->adHoc,
+            "consistentWith" => $options->consistentWith == null ? null : $options->consistentWith->export(),
+            'scanConsistency' => $options->scanConsistency,
+            'scanCap' => $options->scanCap,
+            'pipelineCap' => $options->pipelineCap,
+            'pipelineBatch' => $options->pipelineBatch,
+            'maxParallelism' => $options->maxParallelism,
+            'profile' => $options->profile,
+            'readonly' => $options->readonly,
+            'flexIndex' => $options->flexIndex,
+            'adHoc' => $options->adHoc,
             'namedParameters' => $namedParameters,
             'positionalParameters' => $positionalParameters,
             'raw' => $raw,
-            'clientContextId' => $this->clientContextId,
-            'metrics' => $this->metrics,
-            'preserveExpiry' => $this->preserveExpiry,
-            'scopeName' => $this->scopeName,
-            'scopeQualifier' => $this->scopeQualifier
+            'clientContextId' => $options->clientContextId,
+            'metrics' => $options->metrics,
+            'preserveExpiry' => $options->preserveExpiry,
+            'scopeName' => $scopeName,
+            'scopeQualifier' => $scopeQualifier
         ];
     }
 }

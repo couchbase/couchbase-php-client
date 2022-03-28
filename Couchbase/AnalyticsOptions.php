@@ -138,37 +138,44 @@ class AnalyticsOptions
         return $this;
     }
 
-    public function export(string $scopeName = null, string $scopeQualifier = null): array
+    public static function export(?AnalyticsOptions $options, string $scopeName = null, string $scopeQualifier = null): array
     {
+        if ($options == null) {
+            return [
+                'scopeName' => $scopeName,
+                'scopeQualifier' => $scopeQualifier
+            ];
+        } 
+        
         $positionalParameters = null;
-        if ($this->positionalParameters != null) {
-            foreach ($this->positionalParameters as $param) {
+        if ($options->positionalParameters != null) {
+            foreach ($options->positionalParameters as $param) {
                 $positionalParameters[] = json_encode($param);
             }
         }
         $namedParameters = null;
-        if ($this->namedParameters != null) {
-            foreach ($this->namedParameters as $key => $param) {
+        if ($options->namedParameters != null) {
+            foreach ($options->namedParameters as $key => $param) {
                 $namedParameters[$key] = json_encode($param);
             }
         }
         $raw = null;
-        if ($this->raw != null) {
-            foreach ($this->raw as $key => $param) {
+        if ($options->raw != null) {
+            foreach ($options->raw as $key => $param) {
                 $raw[$key] = json_encode($param);
             }
         }
 
         return [
-            'timeoutMilliseconds' => $this->timeoutMilliseconds,
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
 
-            'priority' => $this->priority,
-            'scanConsistency' => $this->scanConsistency,
-            'readonly' => $this->readonly,
+            'priority' => $options->priority,
+            'scanConsistency' => $options->scanConsistency,
+            'readonly' => $options->readonly,
             'namedParameters' => $namedParameters,
             'positionalParameters' => $positionalParameters,
             'raw' => $raw,
-            'clientContextId' => $this->clientContextId,
+            'clientContextId' => $options->clientContextId,
             'scopeName' => $scopeName,
             'scopeQualifier' => $scopeQualifier
         ];

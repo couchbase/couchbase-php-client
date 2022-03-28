@@ -72,11 +72,7 @@ class Cluster
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        if ($options == null) {
-            $options = new QueryOptions();
-        }
-
-        $result = Extension\query($this->core, $statement, $options->export());
+        $result = Extension\query($this->core, $statement, QueryOptions::export($options));
 
         return new QueryResult($result);
     }
@@ -92,11 +88,7 @@ class Cluster
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
-        if ($options == null) {
-            $options = new AnalyticsOptions();
-        }
-
-        $result = Extension\analyticsQuery($this->core, $statement, $options->export());
+        $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options));
 
         return new AnalyticsResult($result);
     }

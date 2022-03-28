@@ -113,11 +113,7 @@ class Bucket
      */
     public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
     {
-        if ($options == null) {
-            $options = new ViewOptions();
-        }
-
-        $opts =  $options->export();
+        $opts =  ViewOptions::export($options);
         $namespace = $opts["namespace"];
 
         $result = Extension\viewQuery($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
