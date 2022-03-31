@@ -20,6 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * A FTS query that matches several terms (a "phrase") as is. The order of the terms mater and no further processing is
  * applied to them, so they must appear in the index exactly as provided.  Usually for debugging purposes, prefer
@@ -27,27 +30,66 @@ namespace Couchbase;
  */
 class PhraseSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private array $terms;
+    private ?float $boost = null;
+    private ?string $field = null;
+
+    public function jsonSerialize(): mixed
     {
+        return PhraseSearchQuery::export($this);
     }
 
     public function __construct(string ...$terms)
     {
+        $this->terms = $terms;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return PhraseSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): PhraseSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return PhraseSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): PhraseSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @throws InvalidArgumentException
+     */
+    public static function export(PhraseSearchQuery $query): array
+    {
+        if (count($query->terms) == 0) {
+            throw new InvalidArgumentException();
+        }
+
+        $json = [
+            'terms' => json_encode($query->terms),
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

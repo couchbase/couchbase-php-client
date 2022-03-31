@@ -20,10 +20,16 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 class Coordinate implements JsonSerializable
 {
-    public function jsonSerialize()
+    private float $longitude;
+    private float $latitude;
+
+    public function jsonSerialize(): mixed
     {
+        return Coordinate::export($this);
     }
 
     /**
@@ -34,5 +40,15 @@ class Coordinate implements JsonSerializable
      */
     public function __construct(float $longitude, float $latitude)
     {
+        $this->longitude = $longitude;
+        $this->latitude = $latitude;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(Coordinate $coord): array
+    {
+        return [$coord->longitude, $coord->latitude];
     }
 }

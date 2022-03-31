@@ -138,12 +138,12 @@ class AnalyticsOptions
         return $this;
     }
 
-    public static function export(?AnalyticsOptions $options, string $scopeName = null, string $scopeQualifier = null): array
+    public static function export(?AnalyticsOptions $options, string $scopeName = null, string $bucketName = null): array
     {
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'scopeQualifier' => $scopeQualifier
+                'bucketName' => $bucketName
             ];
         }
 
@@ -177,7 +177,7 @@ class AnalyticsOptions
             'raw' => $raw,
             'clientContextId' => $options->clientContextId,
             'scopeName' => $scopeName,
-            'scopeQualifier' => $scopeQualifier
+            'bucketName' => $bucketName,
         ];
     }
 }

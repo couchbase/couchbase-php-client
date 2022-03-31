@@ -20,16 +20,32 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A facet that gives the number of occurrences of the most recurring terms in all hits.
  */
 class TermSearchFacet implements JsonSerializable, SearchFacet
 {
-    public function jsonSerialize()
+    private string $field;
+    private int $limit;
+
+    public function jsonSerialize(): mixed
     {
+        return TermSearchFacet::export($this);
     }
 
     public function __construct(string $field, int $limit)
     {
+        $this->field = $field;
+        $this->limit = $limit;
+    }
+
+    public static function export(TermSearchFacet $facet): array
+    {
+        return [
+            'field' => $facet->field,
+            'size' => $facet->limit
+        ];
     }
 }

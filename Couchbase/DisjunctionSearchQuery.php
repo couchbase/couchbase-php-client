@@ -20,41 +20,111 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * A compound FTS query that performs a logical OR between all its sub-queries (disjunction). It requires that a
  * minimum of the queries match. The minimum is configurable (default 1).
  */
 class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+    private array $queries;
+    private ?int $min = null;
+
+    public function jsonSerialize(): mixed
     {
+        return DisjunctionSearchQuery::export($this);
     }
 
     public function __construct(array $queries)
     {
+        $this->queries = $queries;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return DisjunctionSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): DisjunctionSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
+     * Adds new predicate queries to this disjunction query.
+     *
+     * @param SearchQuery ...$queries the queries to add.
+     * @return DisjunctionSearchQuery
+     * @since 4.0.0
+     */
+    public function or(SearchQuery ...$queries): DisjunctionSearchQuery
+    {
+        $this->queries = array_merge($this->queries, $queries);
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     *
      * @param SearchQuery ...$queries
      * @return DisjunctionSearchQuery
      */
     public function either(SearchQuery ...$queries): DisjunctionSearchQuery
     {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use or()',
+            E_USER_DEPRECATED
+        );
+
+        $this->queries = array_merge($this->queries, $queries);
+        return $this;
     }
 
     /**
      * @param int $min
      * @return DisjunctionSearchQuery
+     * @since 4.0.0
      */
     public function min(int $min): DisjunctionSearchQuery
     {
+        $this->min = $min;
+        return $this;
+    }
+
+    public function childQueries(): array
+    {
+        return $this->queries;
+    }
+
+    /**
+     * @private
+     * @throws InvalidArgumentException
+     */
+    public static function export(DisjunctionSearchQuery $query): array
+    {
+        if (count($query->queries) == 0) {
+            throw new InvalidArgumentException();
+        }
+        if (count($query->queries) < $query->min) {
+            throw new InvalidArgumentException();
+        }
+
+        $json = [
+            'disjuncts' => $query->queries
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->min != null) {
+            $json['min'] = $query->min;
+        }
+
+        return $json;
     }
 }

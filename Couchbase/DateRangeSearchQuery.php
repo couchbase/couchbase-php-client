@@ -20,14 +20,26 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * A FTS query that matches documents on a range of values. At least one bound is required, and the
  * inclusiveness of each bound can be configured.
  */
 class DateRangeSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+    private ?string $field = null;
+    private ?string $start = null;
+    private ?string $end = null;
+    private ?bool $inclusiveStart = null;
+    private ?bool $inclusiveEnd = null;
+    private ?string $datetimeParser = null;
+
+    public function jsonSerialize(): mixed
     {
+        return DateRangeSearchQuery::export($this);
     }
 
     public function __construct()
@@ -35,48 +47,112 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return DateRangeSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): DateRangeSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return DateRangeSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): DateRangeSearchQuery
     {
+        $this->field = $field;
+        return $this;
     }
 
     /**
+     * Sets the lower boundary of the range, inclusive or not depending on the second parameter.
+     *
      * @param int|string $start The strings will be taken verbatim and supposed to be formatted with custom date
      *      time formatter (see dateTimeParser). Integers interpreted as unix timestamps and represented as RFC3339
      *      strings.
      * @param bool $inclusive
      * @return DateRangeSearchQuery
+     * @since 4.0.0
      */
     public function start($start, bool $inclusive = false): DateRangeSearchQuery
     {
+        $this->start = $start;
+        $this -> inclusiveStart = $inclusive;
+        return $this;
     }
 
     /**
+     * Sets the upper boundary of the range, inclusive or not depending on the second parameter.
+     *
      * @param int|string $end The strings will be taken verbatim and supposed to be formatted with custom date
      *      time formatter (see dateTimeParser). Integers interpreted as unix timestamps and represented as RFC3339
      *      strings.
      * @param bool $inclusive
      * @return DateRangeSearchQuery
+     * @since 4.0.0
      */
     public function end($end, bool $inclusive = false): DateRangeSearchQuery
     {
+        $this->end = $end;
+        $this -> inclusiveEnd = $inclusive;
+        return $this;
+    }
+
+
+    /**
+     * Sets the name of the date/time parser to use to interpret start/end.
+     *
+     * @param string $parser the name of the parser.
+     * @return DateRangeSearchFacet
+     * @since 4.0.0
+     */
+    public function datetimeParser(string $parser): DateRangeSearchQuery
+    {
+        $this->datetimeParser = $parser;
+        return $this;
     }
 
     /**
-     * @param string $dateTimeParser
-     * @return DateRangeSearchQuery
+     * @private
+     * @throws InvalidArgumentException
      */
-    public function dateTimeParser(string $dateTimeParser): DateRangeSearchQuery
+    public static function export(DateRangeSearchQuery $query): array
     {
+        if ($query->start == null && $query->end == null) {
+            throw new InvalidArgumentException();
+        }
+
+        $json = [];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+        if ($query->start != null) {
+            $json['start'] = $query->start;
+        }
+        if ($query->end != null) {
+            $json['end'] = $query->end;
+        }
+        if ($query->inclusiveStart != null) {
+            $json['inclusive_start'] = $query->inclusiveStart;
+        }
+        if ($query->inclusiveEnd != null) {
+            $json['inclusive_end'] = $query->inclusiveEnd;
+        }
+        if ($query->datetimeParser != null) {
+            $json['datetime_parser'] = $query->datetimeParser;
+        }
+
+        return $json;
     }
 }

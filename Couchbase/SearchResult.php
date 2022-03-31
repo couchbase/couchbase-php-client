@@ -3,14 +3,14 @@
 /**
  * Copyright 2014-Present Couchbase, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -21,16 +21,37 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface for retrieving results from search queries.
+ * Class for retrieving results from search queries.
  */
-interface SearchResult
+class SearchResult
 {
+    private ?SearchMetaData $metadata = null;
+    private ?array $facets = null;
+    private ?array $rows = null;
+
+    /**
+     * @private
+     * @param array $result
+     */
+    public function __construct(array $result)
+    {
+        $this->metadata = new SearchMetaData($result['meta']);
+        $this->rows = $result['rows'];
+        $this->facets = [];
+        foreach ($result['facets'] as $facet) {
+            $this->facets[$facet['name']] = new SearchFacetResult($facet);
+        }
+    }
+
     /**
      * Returns metadata generated during query execution
      *
      * @return SearchMetaData|null
      */
-    public function metaData(): ?SearchMetaData;
+    public function metaData(): ?SearchMetaData
+    {
+        return $this->metadata;
+    }
 
     /**
      * Returns any facets returned by the query
@@ -38,12 +59,18 @@ interface SearchResult
      * Array contains instances of SearchFacetResult
      * @return array|null
      */
-    public function facets(): ?array;
+    public function facets(): ?array
+    {
+        return $this->facets;
+    }
 
     /**
      * Returns any rows returned by the query
      *
      * @return array|null
      */
-    public function rows(): ?array;
+    public function rows(): ?array
+    {
+        return $this->rows;
+    }
 }

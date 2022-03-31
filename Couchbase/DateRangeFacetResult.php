@@ -24,25 +24,58 @@ namespace Couchbase;
  * A range (or bucket) for a date range facet result. Counts the number of matches
  * that fall into the named range (which can overlap with other user-defined ranges).
  */
-interface DateRangeFacetResult
+class DateRangeFacetResult
 {
+    private string $name;
+    private ?string $start = null;
+    private ?string $end = null;
+    private int $count;
+
+    /**
+     * @private
+     * @param array $range
+     */
+    public function __construct(array $range)
+    {
+        $this->name = $range['name'];
+        $this->start = $range['start'];
+        $this->end = $range['end'];
+        $this->count = $range['count'];
+    }
+
     /**
      * @return string
+     * @since 4.0.0
      */
-    public function name(): string;
+    public function name(): string
+    {
+        return $this->name;
+    }
 
     /**
      * @return string|null
+     * @since 4.0.0
      */
-    public function start(): ?string;
+    public function start(): ?string
+    {
+        return $this->start;
+    }
 
     /**
      * @return string|null
+     * @since 4.0.0
      */
-    public function end(): ?string;
+    public function end(): ?string
+    {
+        return $this->end;
+    }
 
     /**
      * @return int
+     * @since 4.0.0
      */
-    public function count(): int;
+    public function count(): int
+    {
+        return $this->count;
+    }
 }

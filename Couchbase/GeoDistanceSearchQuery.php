@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that finds all matches from a given location (point) within the given distance.
  *
@@ -27,27 +29,66 @@ namespace Couchbase;
  */
 class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private float $longitude;
+    private float $latitude;
+    private string $distance;
+    private ?float $boost = null;
+    private ?string $field = null;
+
+    public function jsonSerialize(): mixed
     {
+        return GeoDistanceSearchQuery::export($this);
     }
 
     public function __construct(float $longitude, float $latitude, string $distance = null)
     {
+        $this->longitude = $longitude;
+        $this->latitude = $latitude;
+        $this->distance = $distance;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return GeoDistanceSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): GeoDistanceSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return GeoDistanceSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): GeoDistanceSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(GeoDistanceSearchQuery $query): array
+    {
+        $json = [
+            'location' => [$query->longitude, $query->latitude],
+            'distance' => $query->distance
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

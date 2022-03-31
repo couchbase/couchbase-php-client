@@ -21,33 +21,82 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * Interface representing facet results.
+ * Class representing facet results.
  *
  * Only one method might return non-null value among terms(), numericRanges() and dateRanges().
  */
-interface SearchFacetResult
+class SearchFacetResult
 {
+    private string $field;
+    private int $total;
+    private int $missing;
+    private int $other;
+    private ?array $terms = null;
+    private ?array $numericRanges = null;
+    private ?array $dateRanges = null;
+
+    /**
+     * @private
+     * @param array $facet
+     */
+    public function __construct(array $facet)
+    {
+        $this->field = $facet['field'];
+        $this->total = $facet['total'];
+        $this->missing = $facet['missing'];
+        $this->other = $facet['other'];
+        if (array_key_exists('terms', $facet)) {
+            $this->terms = [];
+            foreach ($facet['terms'] as $term) {
+                $this->terms[] = new TermFacetResult($term);
+            }
+        }
+        if (array_key_exists('dateRanges', $facet)) {
+            $this->dateRanges = [];
+            foreach ($facet['dateRanges'] as $range) {
+                $this->dateRanges[] = new DateRangeFacetResult($range);
+            }
+        }
+        if (array_key_exists('numericRanges', $facet)) {
+            $this->numericRanges = [];
+            foreach ($facet['numericRanges'] as $range) {
+                $this->numericRanges[] = new NumericRangeFacetResult($range);
+            }
+        }
+    }
     /**
      * The field the SearchFacet was targeting.
      *
      * @return string
+     * @since 4.0.0
      */
-    public function field(): string;
+    public function field(): string
+    {
+        return $this->field;
+    }
 
     /**
      * The total number of *valued* facet results. Total = other() + terms (but doesn't include * missing()).
      *
      * @return int
+     * @since 4.0.0
      */
-    public function total(): int;
+    public function total(): int
+    {
+        return $this->total;
+    }
 
     /**
      * The number of results that couldn't be faceted, missing the adequate value. Not matter how many more
      * buckets are added to the original facet, these result won't ever be included in one.
      *
      * @return int
+     * @since 4.0.0
      */
-    public function missing(): int;
+    public function missing(): int
+    {
+        return $this->missing;
+    }
 
     /**
      * The number of results that could have been faceted (because they have a value for the facet's field) but
@@ -55,21 +104,37 @@ interface SearchFacetResult
      * faceted.
      *
      * @return int
+     * @since 4.0.0
      */
-    public function other(): int;
+    public function other(): int
+    {
+        return $this->other;
+    }
 
     /**
      * @return array of pairs string name to TermFacetResult
+     * @since 4.0.0
      */
-    public function terms(): ?array;
+    public function terms(): ?array
+    {
+        return $this->terms;
+    }
 
     /**
      * @return array of pairs string name to NumericRangeFacetResult
+     * @since 4.0.0
      */
-    public function numericRanges(): ?array;
+    public function numericRanges(): ?array
+    {
+        return $this->numericRanges;
+    }
 
     /**
      * @return array of pairs string name to DateRangeFacetResult
+     * @since 4.0.0
      */
-    public function dateRanges(): ?array;
+    public function dateRanges(): ?array
+    {
+        return $this->dateRanges;
+    }
 }

@@ -577,6 +577,62 @@ PHP_FUNCTION(viewQuery)
     RETURN_ZVAL(res, 1, 0);
 }
 
+PHP_FUNCTION(searchQuery)
+{
+    zval* connection = nullptr;
+    zend_string* indexName = nullptr;
+    zend_string* query = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(3, 4)
+            Z_PARAM_RESOURCE(connection)
+            Z_PARAM_STR(indexName)
+            Z_PARAM_STR(query)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = static_cast<couchbase::php::connection_handle*>(
+            zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [res, e] = handle->search_query(indexName, query, options);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+
+    RETURN_ZVAL(res, 1, 0);
+}
+
+PHP_FUNCTION(searchIndexUpsert)
+{
+    zval* connection = nullptr;
+    zval* index = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+            Z_PARAM_RESOURCE(connection)
+            Z_PARAM_ARRAY(index)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = static_cast<couchbase::php::connection_handle*>(
+            zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [res, e] = handle->search_index_upsert(index, options);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+
+    RETURN_ZVAL(res, 1, 0);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -660,6 +716,19 @@ ZEND_ARG_TYPE_INFO(0, nameSpace, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchQuery, 0, 0, 3)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexUpsert, 0, 0, 2)
+                ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+                ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
+                ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -673,6 +742,8 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
     ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
     ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)
+    ZEND_NS_FE("Couchbase\\Extension", searchQuery, ai_CouchbaseExtension_searchQuery)
+    ZEND_NS_FE("Couchbase\\Extension", searchIndexUpsert, ai_CouchbaseExtension_searchIndexUpsert)
     PHP_FE_END
 };
 

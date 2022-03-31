@@ -20,32 +20,92 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * A compound FTS query that performs a logical AND between all its sub-queries (conjunction).
  */
 class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+    private array $queries;
+
+    public function jsonSerialize(): mixed
     {
+        return ConjunctionSearchQuery::export($this);
     }
 
     public function __construct(array $queries)
     {
+        $this->queries = $queries;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return ConjunctionSearchQuery
+     * @since 4.0.0
      */
-    public function boost($boost): ConjunctionSearchQuery
+    public function boost(float $boost): ConjunctionSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
+     * Adds new predicate queries to this conjunction query.
+     *
+     * @param SearchQuery ...$queries the queries to add.
+     * @return ConjunctionSearchQuery
+     * @since 4.0.0
+     */
+    public function and(SearchQuery ...$queries): ConjunctionSearchQuery
+    {
+        $this->queries = array_merge($this->queries, $queries);
+        return $this;
+    }
+
+    /**
+     * @deprecated
+     *
      * @param SearchQuery ...$queries
      * @return ConjunctionSearchQuery
      */
     public function every(SearchQuery ...$queries): ConjunctionSearchQuery
     {
+        trigger_error(
+            'Method ' . __METHOD__ . ' is deprecated, use and()',
+            E_USER_DEPRECATED
+        );
+
+        $this->queries = array_merge($this->queries, $queries);
+        return $this;
+    }
+
+    public function childQueries(): array
+    {
+        return $this->queries;
+    }
+
+    /**
+     * @private
+     * @throws InvalidArgumentException
+     */
+    public static function export(ConjunctionSearchQuery $query): array
+    {
+        if (count($query->queries) == 0) {
+            throw new InvalidArgumentException();
+        }
+
+        $json = [
+            'conjuncts' => $query->queries
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+
+        return $json;
     }
 }

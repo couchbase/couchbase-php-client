@@ -24,25 +24,57 @@ namespace Couchbase;
  * A range (or bucket) for a numeric range facet result. Counts the number of matches
  * that fall into the named range (which can overlap with other user-defined ranges).
  */
-interface NumericRangeFacetResult
+class NumericRangeFacetResult
 {
+    private string $name;
+    private $min;
+    private $max;
+    private int $count;
+
+    /**
+     * @private
+     * @param array $range
+     */
+    public function __construct(array $range)
+    {
+        $this->name = $range['name'];
+        $this->min = $range['min'];
+        $this->max = $range['max'];
+        $this->count = $range['count'];
+    }
+
     /**
      * @return string
+     * @since 4.0.0
      */
-    public function name(): string;
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return int|float|null
+     * @since 4.0.0
+     */
+    public function min()
+    {
+        return $this->min;
+    }
 
     /**
      * @return int|float|null
      */
-    public function min();
-
-    /**
-     * @return int|float|null
-     */
-    public function max();
+    public function max()
+    {
+        return $this->max;
+    }
 
     /**
      * @return int
+     * @since 4.0.0
      */
-    public function count(): int;
+    public function count(): int
+    {
+        return $this->count;
+    }
 }

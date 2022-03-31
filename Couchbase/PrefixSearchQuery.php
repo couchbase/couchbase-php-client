@@ -20,32 +20,68 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that allows for simple matching on a given prefix.
  */
 class PrefixSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $prefix;
+    private ?float $boost;
+    private ?string $field;
+
+    public function jsonSerialize(): mixed
     {
+        return PrefixSearchQuery::export($this);
     }
 
     public function __construct(string $prefix)
     {
+        $this->prefix = $prefix;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return PrefixSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): PrefixSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return PrefixSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): PrefixSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(PrefixSearchQuery $query): array
+    {
+        $json = [
+            'prefix' => $query->prefix
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

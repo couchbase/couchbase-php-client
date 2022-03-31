@@ -20,32 +20,75 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query which allows to match geo bounding boxes.
  */
 class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private float $topLeftLongitude;
+    private float $topLeftLatitude;
+    private float $bottomRightLongitude;
+    private float $bottomRightLatitude;
+    private ?float $boost = null;
+    private ?string $field = null;
+
+    public function jsonSerialize(): mixed
     {
+        return GeoBoundingBoxSearchQuery::export($this);
     }
 
     public function __construct(float $topLeftLongitude, float $topLeftLatitude, float $bottomRightLongitude, float $bottomRightLatitude)
     {
+        $this->topLeftLongitude = $topLeftLongitude;
+        $this->topLeftLatitude = $topLeftLatitude;
+        $this->bottomRightLongitude = $bottomRightLongitude;
+        $this->bottomRightLatitude = $bottomRightLatitude;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return GeoBoundingBoxSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): GeoBoundingBoxSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return GeoBoundingBoxSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): GeoBoundingBoxSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(GeoBoundingBoxSearchQuery $query): array
+    {
+        $json = [
+            'top_left' => [$query->topLeftLongitude, $query->topLeftLatitude],
+            'bottom_right' => [$query->bottomRightLongitude, $query->bottomRightLatitude],
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

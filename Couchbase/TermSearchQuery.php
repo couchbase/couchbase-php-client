@@ -20,48 +20,103 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A facet that gives the number of occurrences of the most recurring terms in all hits.
  */
 class TermSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $term;
+    private ?float $boost = null;
+    private ?string $field = null;
+    private ?int $prefixLength = null;
+    private ?int $fuzziness = null;
+
+    public function jsonSerialize(): mixed
     {
+        return TermSearchQuery::export($this);
     }
 
     public function __construct(string $term)
     {
+        $this->term = $term;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return TermSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): TermSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return TermSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): TermSearchQuery
     {
+        $this->field = $field;
+        return $this;
     }
 
     /**
-     * @param int $prefixLength
+     * Sets the prefix length for this query.
+     *
+     * @param int $prefixLength the prefix length to use.
      * @return TermSearchQuery
+     * @since 4.0.0
      */
     public function prefixLength(int $prefixLength): TermSearchQuery
     {
+        $this->prefixLength = $prefixLength;
+        return $this;
     }
 
     /**
-     * @param int $fuzziness
+     *
+     * Set the fuzziness for this query.
+     *
+     * @param int $fuzziness the fuzziness to use.
      * @return TermSearchQuery
+     * @since 4.0.0
      */
     public function fuzziness(int $fuzziness): TermSearchQuery
     {
+        $this->fuzziness = $fuzziness;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(TermSearchQuery $query): array
+    {
+        $json = [
+            'term' => $query->term,
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+        if ($query->prefixLength != null) {
+            $json['prefix_length'] = $query->prefixLength;
+        }
+        if ($query->fuzziness != null) {
+            $json['fuzziness'] = $query->fuzziness;
+        }
+
+        return $json;
     }
 }

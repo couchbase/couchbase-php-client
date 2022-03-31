@@ -20,13 +20,20 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that finds all matches within the given polygon area.
  */
 class GeoPolygonQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private array $coordinates;
+    private ?float $boost = null;
+    private ?string $field = null;
+
+    public function jsonSerialize(): mixed
     {
+        return GeoPolygonQuery::export($this);
     }
 
     /**
@@ -36,21 +43,55 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      */
     public function __construct(array $coordinates)
     {
+        $this->coordinates = $coordinates;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return GeoPolygonQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): GeoPolygonQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return GeoPolygonQuery
+     * @since 4.0.0
      */
     public function field(string $field): GeoPolygonQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(GeoPolygonQuery $query): array
+    {
+        $coordinates = array();
+        foreach ($query->coordinates as $coordinate) {
+            $coordinates[] = $coordinate;
+        }
+
+        $json = [
+            'polygon_points' => $coordinates
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

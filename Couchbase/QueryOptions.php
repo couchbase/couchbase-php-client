@@ -305,12 +305,12 @@ class QueryOptions
         return $this;
     }
 
-    public static function export(?QueryOptions $options, string $scopeName = null, string $scopeQualifier = null): array
+    public static function export(?QueryOptions $options, string $scopeName = null, string $bucketName = null): array
     {
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'scopeQualifier' => $scopeQualifier
+                'bucketName' => $bucketName
             ];
         }
 
@@ -335,9 +335,6 @@ class QueryOptions
         if ($scopeName == null && $options->scopeName != null) {
             $scopeName = $options->scopeName;
         }
-        if ($scopeQualifier == null && $options->scopeQualifier != null) {
-            $scopeQualifier = $options->scopeQualifier;
-        }
 
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
@@ -359,7 +356,8 @@ class QueryOptions
             'metrics' => $options->metrics,
             'preserveExpiry' => $options->preserveExpiry,
             'scopeName' => $scopeName,
-            'scopeQualifier' => $scopeQualifier
+            'bucketName' => $bucketName,
+            'scopeQualifier' => $options->scopeQualifier
         ];
     }
 }

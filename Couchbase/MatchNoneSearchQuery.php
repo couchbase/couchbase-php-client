@@ -20,13 +20,18 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that matches 0 document (usually for debugging purposes).
  */
 class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+
+    public function jsonSerialize(): mixed
     {
+        return MatchNoneSearchQuery::export($this);
     }
 
     public function __construct()
@@ -34,10 +39,30 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return MatchNoneSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): MatchNoneSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(MatchNoneSearchQuery $query): array
+    {
+        $json = [
+            'match_none' => json_encode(null)
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+
+        return $json;
     }
 }

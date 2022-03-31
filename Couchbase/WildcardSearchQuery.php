@@ -20,32 +20,68 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that allows for simple matching using wildcard characters (* and ?).
  */
 class WildcardSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $wildcard;
+    private ?float $boost = null;
+    private ?string $field = null;
+
+    public function jsonSerialize(): mixed
     {
+        return WildcardSearchQuery::export($this);
     }
 
     public function __construct(string $wildcard)
     {
+        $this->wildcard = $wildcard;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return WildcardSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): WildcardSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return WildcardSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): WildcardSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(WildcardSearchQuery $query): array
+    {
+        $json = [
+            'wildcard' => $query->wildcard
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

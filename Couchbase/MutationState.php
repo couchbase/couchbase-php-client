@@ -25,6 +25,7 @@ namespace Couchbase;
  */
 class MutationState
 {
+    private array $tokens;
     public function __construct()
     {
     }
@@ -37,6 +38,17 @@ class MutationState
      */
     public function add(MutationResult $source): MutationState
     {
+        $token = $source->mutationToken();
+        if ($token != null) {
+            $this->tokens[] = $token;
+        }
+
+        return $this;
+    }
+
+    public function tokens(): array
+    {
+        return $this->tokens;
     }
 
     public function export(): array

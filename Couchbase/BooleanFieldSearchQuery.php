@@ -20,32 +20,68 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that queries fields explicitly indexed as boolean.
  */
 class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+    private ?string $field = null;
+    private bool $value;
+
+    public function jsonSerialize(): mixed
     {
+        return BooleanFieldSearchQuery::export($this);
     }
 
-    public function __construct(bool $arg)
+    public function __construct(bool $value)
     {
+        $this->value = $value;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return BooleanFieldSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): BooleanFieldSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return BooleanFieldSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): BooleanFieldSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(BooleanFieldSearchQuery $facet): array
+    {
+        $json = [
+            'bool' => $facet->value
+        ];
+        if ($facet->boost != null) {
+            $json['boost'] = $facet->boost;
+        }
+        if ($facet->field != null) {
+            $json['field'] = $facet->field;
+        }
+
+        return $json;
     }
 }

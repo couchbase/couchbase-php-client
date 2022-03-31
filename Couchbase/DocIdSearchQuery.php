@@ -20,41 +20,81 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 /**
  * A FTS query that matches on Couchbase document IDs. Useful to restrict the search space to a list of keys (by using
  * this in a compound query).
  */
-class DocIdSearchQuery implements JsonSerializable, SearchQuery
+class DocIdSearchQuery implements SearchQuery
 {
-    public function jsonSerialize()
-    {
-    }
+    private array $documentIds;
+    private ?float $boost = null;
+    private ?string $field = null;
 
     public function __construct()
     {
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return DocIdSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): DocIdSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return DocIdSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): DocIdSearchQuery
     {
+        $this->field = $field;
+        return $this;
     }
 
     /**
-     * @param string ...$documentIds
+     * Sets the document ids to restrict the search to.
+     *
+     * @param string ...$documentIds the document ids to restrict the search to.
      * @return DocIdSearchQuery
+     * @since 4.0.0
      */
     public function docIds(string ...$documentIds): DocIdSearchQuery
     {
+        $this->documentIds = $documentIds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @throws InvalidArgumentException
+     */
+    public static function export(DocIdSearchQuery $query): array
+    {
+        if (count($query->documentIds) == 0) {
+            throw new InvalidArgumentException();
+        }
+
+        $json = [
+            'ids' => $query->documentIds,
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

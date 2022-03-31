@@ -101,12 +101,13 @@ class Cluster
      * @param SearchQuery $query the search query to execute
      * @param SearchOptions|null $options the options to use when executing the query
      * @return SearchResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
     {
-        throw new UnsupportedOperationException();
+        $result = Extension\searchQuery($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+
+        return new SearchResult($result);
     }
 
     /**
@@ -176,5 +177,13 @@ class Cluster
     public function version(string $bucketName): ?string
     {
         return Extension\clusterVersion($this->core, $bucketName);
+    }
+
+    /**
+     * @private
+     */
+    public function core()
+    {
+        return $this->core;
     }
 }

@@ -20,41 +20,86 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that matches several given terms (a "phrase"), applying further processing
  * like analyzers to them.
  */
 class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $matchPhrase;
+    private ?float $boost = null;
+    private ?string $field = null;
+    private ?string $analyzer = null;
+
+    public function jsonSerialize(): mixed
     {
+        return MatchPhraseSearchQuery::export($this);
     }
 
-    public function __construct(string $value)
+    public function __construct(string $phrase)
     {
+        $this->matchPhrase = $phrase;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return MatchPhraseSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): MatchPhraseSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return MatchPhraseSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): MatchPhraseSearchQuery
     {
+        $this->field = $field;
+        return $this;
     }
 
     /**
-     * @param string $analyzer
+     * Sets the analytics for this query.
+     *
+     * @param string $analyzer the analyzer to use for this query.
      * @return MatchPhraseSearchQuery
+     * @since 4.0.0
      */
     public function analyzer(string $analyzer): MatchPhraseSearchQuery
     {
+        $this->analyzer = $analyzer;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(MatchPhraseSearchQuery $query): array
+    {
+        $json = [
+            'match_phrase' => $query->matchPhrase,
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+        if ($query->analyzer != null) {
+            $json['analyzer'] = $query->analyzer;
+        }
+
+        return $json;
     }
 }

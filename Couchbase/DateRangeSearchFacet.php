@@ -20,17 +20,26 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A facet that categorizes hits inside date ranges (or buckets) provided by the user.
  */
 class DateRangeSearchFacet implements JsonSerializable, SearchFacet
 {
-    public function jsonSerialize()
+    private string $field;
+    private int $limit;
+    private array $ranges;
+
+    public function jsonSerialize(): mixed
     {
+        return DateRangeSearchFacet::export($this);
     }
 
     public function __construct(string $field, int $limit)
     {
+        $this->field = $field;
+        $this->limit = $limit;
     }
 
     /**
@@ -38,8 +47,37 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
      * @param int|string $start
      * @param int|string $end
      * @return DateRangeSearchFacet
+     * @since 4.0.0
      */
     public function addRange(string $name, $start = null, $end = null): DateRangeSearchFacet
     {
+        if ($this->ranges == null) {
+            $this->ranges = [];
+        }
+
+        $range = [
+            'name' => $name
+        ];
+
+        if ($start != null) {
+            $range['start'] = $start;
+        }
+
+        if ($end != null) {
+            $range['end'] = $end;
+        }
+
+        $this->ranges[] = $range;
+
+        return $this;
+    }
+
+    public static function export(DateRangeSearchFacet $facet): array
+    {
+        return [
+            'field' => $facet->field,
+            'limit' => $facet->limit,
+            'date_ranges' => $facet->ranges,
+        ];
     }
 }

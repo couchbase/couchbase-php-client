@@ -20,17 +20,30 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
+
 /**
  * A facet that categorizes hits into numerical ranges (or buckets) provided by the user.
  */
 class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
 {
-    public function jsonSerialize()
+    private string $field;
+    private int $limit;
+    private array $ranges;
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function jsonSerialize(): mixed
     {
+        return NumericRangeSearchFacet::export($this);
     }
 
     public function __construct(string $field, int $limit)
     {
+        $this->field = $field;
+        $this->limit = $limit;
     }
 
     /**
@@ -38,8 +51,45 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
      * @param float $min
      * @param float $max
      * @return NumericRangeSearchFacet
+     * @since 4.0.0
      */
     public function addRange(string $name, float $min = null, float $max = null): NumericRangeSearchFacet
     {
+        if ($this->ranges == null) {
+            $this->ranges = [];
+        }
+
+        $range = [
+            'name' => $name
+        ];
+
+        if ($min != null) {
+            $range['min'] = $min;
+        }
+
+        if ($max != null) {
+            $range['max'] = $max;
+        }
+
+        $this->ranges[] = $range;
+
+        return $this;
+    }
+
+    /**
+     * @private
+     * @throws InvalidArgumentException
+     */
+    public static function export(NumericRangeSearchFacet $facet): array
+    {
+        if ($facet->ranges == null) {
+            throw new InvalidArgumentException();
+        }
+
+        return [
+            'field' => $facet->field,
+            'limit' => $facet->limit,
+            'numeric_ranges' => $facet->ranges,
+        ];
     }
 }

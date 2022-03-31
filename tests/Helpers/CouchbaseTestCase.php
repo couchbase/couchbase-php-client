@@ -28,6 +28,7 @@ use Couchbase\Cluster;
 use Couchbase\ClusterOptions;
 use Couchbase\Collection;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 
 class CouchbaseTestCase extends TestCase
@@ -95,6 +96,35 @@ class CouchbaseTestCase extends TestCase
         if (self::env()->useCaves()) {
             $caller = debug_backtrace()[1];
             $this->markTestSkipped(sprintf("%s::%s is not supported on Couchbase server (only for CAVES)", $caller["class"], $caller["function"]));
+        }
+    }
+
+    public function retryFor(int $failAfterSecs, int $sleepMillis, callable $fn)
+    {
+        $deadline = time() + $failAfterSecs;
+        $sleepMicros = $sleepMillis * 1000;
+
+        $endException = null;
+        while (time() <= $deadline) {
+            try {
+                return $fn();
+            } catch (Exception $ex) {
+                $endException = $ex;
+            }
+
+            usleep($sleepMicros);
+        }
+
+        throw $endException;
+    }
+
+    public function createSearchDocs(Cluster $cluster, int $num, string $service)
+    {
+        $collection = $cluster->bucket($this->env()->bucketName())->defaultCollection();
+        $idBase = $this->uniqueId();
+        ;
+        for ($i = 0; $i < $num; $i++) {
+            $collection->upsert(sprintf("%d_%s_%d", $i, $idBase, $service), ["answer" => 42, "service" => $service]);
         }
     }
 }

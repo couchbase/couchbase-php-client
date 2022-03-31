@@ -23,29 +23,58 @@ namespace Couchbase;
 /**
  * A FTS query that allows for simple matching of regular expressions.
  */
-class RegexpSearchQuery implements JsonSerializable, SearchQuery
+class RegexpSearchQuery implements SearchQuery
 {
-    public function jsonSerialize()
-    {
-    }
+    private string $regexp;
+    private ?float $boost = null;
+    private ?string $field = null;
 
     public function __construct(string $regexp)
     {
+        $this->regexp = $regexp;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return RegexpSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): RegexpSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return RegexpSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): RegexpSearchQuery
     {
+        $this->field = $field;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(RegexpSearchQuery $query): array
+    {
+        $json = [
+            'regexp' => $query->regexp
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+
+        return $json;
     }
 }

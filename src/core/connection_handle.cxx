@@ -19,6 +19,9 @@
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>
+#include <couchbase/operations/management/search_index.hxx>
+#include <couchbase/operations/management/search_index_upsert.hxx>
+#include <couchbase/protocol/mutation_token.hxx>
 
 #include <fmt/core.h>
 
@@ -166,6 +169,46 @@ build_view_query_error_context(const error_context::view& ctx)
             out.retry_reasons.insert(retry_reason_to_string(reason));
         }
     }
+    return out;
+}
+
+static search_error_context
+build_search_query_error_context(const error_context::search& ctx)
+{
+    search_error_context out;
+    out.client_context_id = ctx.client_context_id;
+    out.index_name = ctx.index_name;
+    out.query = ctx.query;
+    out.parameters = ctx.parameters;
+    out.http_status = ctx.http_status;
+    out.http_body = ctx.http_body;
+    out.retry_attempts = ctx.retry_attempts;
+    if (!ctx.retry_reasons.empty()) {
+        for (const auto& reason : ctx.retry_reasons) {
+            out.retry_reasons.insert(retry_reason_to_string(reason));
+        }
+    }
+    return out;
+}
+
+static http_error_context
+build_http_error_context(const error_context::http& ctx)
+{
+    http_error_context out;
+    out.client_context_id = ctx.client_context_id;
+    out.method = ctx.method;
+    out.path = ctx.path;
+    out.http_status = ctx.http_status;
+    out.http_body = ctx.http_body;
+    out.retry_attempts = ctx.retry_attempts;
+    if (!ctx.retry_reasons.empty()) {
+        for (const auto& reason : ctx.retry_reasons) {
+            out.retry_reasons.insert(retry_reason_to_string(reason));
+        }
+    }
+    out.last_dispatched_from = ctx.last_dispatched_from;
+    out.last_dispatched_to = ctx.last_dispatched_to;
+
     return out;
 }
 
@@ -318,6 +361,42 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to view query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_view_query_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::search_response> search_query(
+            couchbase::operations::search_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::search_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::search_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                             { __LINE__, __FILE__, __func__ },
+                             fmt::format("unable to search query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                             build_search_query_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::search_index_upsert_response> search_index_upsert(
+            couchbase::operations::management::search_index_upsert_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::search_index_upsert_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::management::search_index_upsert_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                             { __LINE__, __FILE__, __func__ },
+                             fmt::format("unable to upsert search index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                             build_http_error_context(resp.ctx) },
                      {} };
         }
         return { {}, std::move(resp) };
@@ -895,6 +974,32 @@ connection_handle::query(const zend_string* statement, const zval* options)
 
         request.raw = params;
     }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::mutation_token> vectors{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            couchbase::mutation_token token {};
+            if (auto e = cb_assign_integer(token.partition_id, options, "partitionId"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_integer(token.partition_uuid, options, "partitionUuid"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_integer(token.sequence_number, options, "sequenceNumber"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_string(token.bucket_name, options, "bucketName"); e.ec) {
+                return { nullptr, e };
+            }
+            vectors.emplace_back(token);
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.mutation_state = vectors;
+    }
     if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
         return { nullptr, e };
     }
@@ -902,6 +1007,12 @@ connection_handle::query(const zend_string* statement, const zval* options)
         return { nullptr, e };
     }
     if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.bucket_name, options, "bucketName"); e.ec) {
         return { nullptr, e };
     }
 
@@ -1076,6 +1187,12 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
     if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
         return { nullptr, e };
     }
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(request.bucket_name, options, "bucketName"); e.ec) {
+        return { nullptr, e };
+    }
 
     auto [err, resp] = impl_->analytics_query(std::move(request));
     if (err.ec) {
@@ -1136,6 +1253,261 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
 
         add_assoc_zval(&retval, "meta", &meta);
     }
+
+    return { &retval, {} };
+}
+
+std::pair<zval*, core_error_info>
+connection_handle::search_query(const zend_string* index_name, const zend_string* query, const zval* options)
+{
+    couchbase::operations::search_request request{ cb_string_new(index_name), cb_string_new(query) };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.limit, options, "limit"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_integer(request.skip, options, "skip"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.explain, options, "explain"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.disable_scoring, options, "disableScoring"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_boolean(request.include_locations, options, "includeLocations"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.highlight_fields, options, "highlightFields"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.fields, options, "fields"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.collections, options, "collections"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.sort_specs, options, "sortSpecs"); e.ec) {
+        return { nullptr, e };
+    }
+
+    if (auto [e, highlight_style] = cb_get_integer<uint64_t>(options, "highlightStyle"); !e.ec) {
+        switch (highlight_style) {
+            case 1:
+                request.highlight_style = couchbase::operations::search_request::highlight_style_type::ansi;
+                break;
+
+            case 2:
+                request.highlight_style = couchbase::operations::search_request::highlight_style_type::html;
+                break;
+
+            default:
+                if (highlight_style > 0) {
+                    return { nullptr,
+                             { error::common_errc::invalid_argument,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format("invalid value used for highlight style: {}", highlight_style) } };
+                }
+        }
+    } else {
+        return { nullptr, e };
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::mutation_token> vectors{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            couchbase::mutation_token token {};
+            if (auto e = cb_assign_integer(token.partition_id, options, "partitionId"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_integer(token.partition_uuid, options, "partitionUuid"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_integer(token.sequence_number, options, "sequenceNumber"); e.ec) {
+                return { nullptr, e };
+            }
+            if (auto e = cb_assign_string(token.bucket_name, options, "bucketName"); e.ec) {
+                return { nullptr, e };
+            }
+            vectors.emplace_back(token);
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.mutation_state = vectors;
+    }
+
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.raw = params;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("facets"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, std::string> facets{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            facets[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.facets = facets;
+    }
+    if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
+        return { nullptr, e };
+    }
+
+    auto [err, resp] = impl_->search_query(std::move(request));
+    if (err.ec) {
+        return { nullptr, err };
+    }
+
+    zval retval;
+    array_init(&retval);
+
+    add_assoc_string(&retval, "status", resp.status.c_str());
+    add_assoc_string(&retval, "error", resp.error.c_str());
+
+    zval rows;
+    array_init(&rows);
+    for (const auto& row : resp.rows) {
+        zval z_row;
+        array_init(&z_row);
+        add_assoc_string(&z_row, "index", row.index.c_str());
+        add_assoc_string(&z_row, "id", row.id.c_str());
+        add_assoc_string(&z_row, "fields", row.fields.c_str());
+        add_assoc_string(&z_row, "explanation", row.explanation.c_str());
+        add_assoc_long(&z_row, "score", row.score);
+
+        zval z_locations;
+        array_init(&z_locations);
+        for(const auto& location: row.locations) {
+            zval z_location;
+            array_init(&z_location);
+            add_assoc_string(&z_location, "field", location.field.c_str());
+            add_assoc_string(&z_location, "term", location.term.c_str());
+            add_assoc_long(&z_location, "position", location.position);
+            add_assoc_long(&z_location, "startOffset", location.start_offset);
+            add_assoc_long(&z_location, "endOffset", location.end_offset);
+
+            if (location.array_positions.has_value()) {
+                zval z_array_positions;
+                array_init(&z_array_positions);
+                for (const auto& position: location.array_positions.value()) {
+                    add_next_index_long(&z_array_positions, position);
+                }
+
+                add_assoc_zval(&z_location, "arrayPositions", &z_array_positions);
+            }
+            add_next_index_zval(&z_locations, &z_location);
+        }
+        add_assoc_zval(&z_row, "locations", &z_locations);
+
+        add_next_index_zval(&rows, &z_row);
+    }
+    add_assoc_zval(&retval, "rows", &rows);
+
+    zval metadata;
+    array_init(&metadata);
+    add_assoc_string(&metadata, "clientContextId", resp.meta.client_context_id.c_str());
+
+    zval metrics;
+    array_init(&metrics);
+    add_assoc_long(&metrics, "tookMilliseconds",std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.took).count());
+    add_assoc_long(&metrics, "totalRows", resp.meta.metrics.total_rows);
+    add_assoc_double(&metrics, "maxScore", resp.meta.metrics.max_score);
+    add_assoc_long(&metrics, "successPartitionCount", resp.meta.metrics.success_partition_count);
+    add_assoc_long(&metrics, "errorPartitionCount", resp.meta.metrics.error_partition_count);
+    add_assoc_zval(&metadata, "metrics", &metrics);
+
+    zval errors;
+    array_init(&errors);
+    std::map<std::string, std::string>::iterator it;
+    for (it = resp.meta.errors.begin(); it != resp.meta.errors.end(); it++) {
+        add_assoc_string(&errors, it->first.c_str(), it->second.c_str());
+    }
+    add_assoc_zval(&metadata, "errors", &errors);
+
+    add_assoc_zval(&retval, "meta", &metadata);
+
+    zval facets;
+    array_init(&facets);
+    for(const auto& facet: resp.facets) {
+        zval z_facet;
+        array_init(&z_facet);
+        add_assoc_string(&z_facet, "name", facet.name.c_str());
+        add_assoc_string(&z_facet, "field", facet.field.c_str());
+        add_assoc_long(&z_facet, "total", facet.total);
+        add_assoc_long(&z_facet, "missing", facet.missing);
+        add_assoc_long(&z_facet, "other", facet.other);
+
+        zval terms;
+        array_init(&terms);
+        for(const auto& term: facet.terms) {
+            zval z_term;
+            array_init(&z_term);
+            add_assoc_string(&z_term, "term", term.term.c_str());
+            add_assoc_long(&z_term, "count", term.count);
+            add_next_index_zval(&terms, &z_term);
+        }
+        add_assoc_zval(&z_facet, "terms", &terms);
+
+        zval date_ranges;
+        array_init(&date_ranges);
+        for(const auto& range: facet.date_ranges) {
+            zval z_range;
+            array_init(&z_range);
+            add_assoc_string(&z_range, "name", range.name.c_str());
+            add_assoc_long(&z_range, "count", range.count);
+            if (range.start.has_value()) {
+                add_assoc_string(&z_range, "start", range.start.value().c_str());
+            }
+            if (range.end.has_value()) {
+                add_assoc_string(&z_range, "end", range.end.value().c_str());
+            }
+            add_next_index_zval(&date_ranges, &z_range);
+        }
+        add_assoc_zval(&z_facet, "dateRanges", &date_ranges);
+
+        zval numeric_ranges;
+        array_init(&numeric_ranges);
+        for(const auto& range: facet.numeric_ranges) {
+            zval z_range;
+            array_init(&z_range);
+            add_assoc_string(&z_range, "name", range.name.c_str());
+            add_assoc_long(&z_range, "count", range.count);
+            if (std::holds_alternative<std::uint64_t>(range.min)) {
+                add_assoc_long(&z_range, "min", std::get<std::uint64_t>(range.min));
+            } else if (std::holds_alternative<double>(range.min)) {
+                add_assoc_long(&z_range, "min", std::get<double>(range.min));
+            }
+            if (std::holds_alternative<std::uint64_t>(range.max)) {
+                add_assoc_long(&z_range, "max", std::get<std::uint64_t>(range.max));
+            } else if (std::holds_alternative<double>(range.max)) {
+                add_assoc_long(&z_range, "max", std::get<double>(range.max));
+            }
+            add_next_index_zval(&numeric_ranges, &z_range);
+        }
+        add_assoc_zval(&z_facet, "numericRanges", &numeric_ranges);
+
+        add_next_index_zval(&facets, &z_facet);
+    }
+    add_assoc_zval(&retval, "facets", &facets);
 
     return { &retval, {} };
 }
@@ -1232,25 +1604,24 @@ connection_handle::view_query(const zend_string* bucket_name,
     } else {
         return { nullptr, e };
     }
-    //    {
-    //        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
-    //        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-    //            std::map<std::string, std::string> values{};
-    //            const zend_string* key = nullptr;
-    //            const zval *item = nullptr;
-    //
-    //            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-    //            {
-    //                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-    //                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
-    //                values.emplace(k, std::move(str));
-    //            }
-    //            ZEND_HASH_FOREACH_END();
-    //
-    //            request.raw = values;
-    //            request.
-    //        }
-    //    }
+//    {
+//        const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+//        if (value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+//            std::map<std::string, std::string> values{};
+//            const zend_string* key = nullptr;
+//            const zval *item = nullptr;
+//
+//            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+//            {
+//                auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+//                auto k = std::string({ ZSTR_VAL(key), ZSTR_LEN(key) });
+//                values.emplace(k, std::move(str));
+//            }
+//            ZEND_HASH_FOREACH_END();
+//
+//            request.raw = values;
+//        }
+//    }
     if (auto e = cb_assign_boolean(request.reduce, options, "reduce"); e.ec) {
         return { nullptr, e };
     }
@@ -1326,6 +1697,58 @@ connection_handle::view_query(const zend_string* bucket_name,
 
         add_assoc_zval(&meta, "meta", &meta);
     }
+
+    return { &retval, {} };
+}
+
+std::pair<zval*, core_error_info>
+connection_handle::search_index_upsert(const zval* index,
+                              const zval* options)
+{
+    couchbase::operations::management::search_index idx{
+    };
+    if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.type, index, "type"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.uuid, index, "uuid"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.params_json, index, "params"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.source_uuid, index, "sourceUuid"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.source_name, index, "sourceName"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.source_type, index, "sourceType"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.source_params_json, index, "sourceParams"); e.ec) {
+        return { nullptr, e };
+    }
+
+    couchbase::operations::management::search_index_upsert_request request {
+        idx
+    };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { nullptr, e };
+    }
+
+    auto [err, resp] = impl_->search_index_upsert(std::move(request));
+    if (err.ec) {
+        return { nullptr, err };
+    }
+
+    zval retval;
+    array_init(&retval);
+    add_assoc_string(&retval, "status", resp.status.c_str());
+    add_assoc_string(&retval, "error", resp.error.c_str());
 
     return { &retval, {} };
 }

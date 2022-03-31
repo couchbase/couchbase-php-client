@@ -20,24 +20,51 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that performs a search according to the "string query" syntax.
  */
 class QueryStringSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $queryString;
+    private ?float $boost = null;
+
+    public function jsonSerialize(): mixed
     {
+        return QueryStringSearchQuery::export($this);
     }
 
     public function __construct(string $queryString)
     {
+        $this->queryString = $queryString;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return QueryStringSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): QueryStringSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(QueryStringSearchQuery $query): array
+    {
+        $json = [
+            'query' => $query->queryString
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+
+        return $json;
     }
 }

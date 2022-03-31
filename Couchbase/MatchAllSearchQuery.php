@@ -20,13 +20,18 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that matches all indexed documents (usually for debugging purposes).
  */
 class MatchAllSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+
+    public function jsonSerialize(): mixed
     {
+        return MatchAllSearchQuery::export($this);
     }
 
     public function __construct()
@@ -34,10 +39,30 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return MatchAllSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): MatchAllSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(MatchAllSearchQuery $query): array
+    {
+        $json = [
+            'match_all' => json_encode(null)
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+
+        return $json;
     }
 }

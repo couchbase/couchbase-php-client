@@ -20,57 +20,121 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that matches a given term, applying further processing to it
  * like analyzers, stemming and even #fuzziness(int).
  */
 class MatchSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private string $match;
+    private ?float $boost = null;
+    private ?string $field = null;
+    private ?int $prefixLength = null;
+    private ?int $fuzziness = null;
+    private ?string $analyzer = null;
+
+    public function jsonSerialize(): mixed
     {
+        return MatchSearchQuery::export($this);
     }
 
-    public function __construct(string $value)
+    public function __construct(string $match)
     {
+        $this->match = $match;
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return MatchSearchQuery
+     * @since 4.0.0
      */
     public function boost(float $boost): MatchSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param string $field
+     * Sets the field for this query.
+     *
+     * @param string $field the field to use.
      * @return MatchSearchQuery
+     * @since 4.0.0
      */
     public function field(string $field): MatchSearchQuery
     {
+        $this->field = $field;
+        return $this;
     }
 
     /**
-     * @param string $analyzer
+     * Sets the analytics for this query.
+     *
+     * @param string $analyzer the analyzer to use for this query.
      * @return MatchSearchQuery
+     * @since 4.0.0
      */
     public function analyzer(string $analyzer): MatchSearchQuery
     {
+        $this->analyzer = $analyzer;
+        return $this;
     }
 
     /**
-     * @param int $prefixLength
+     * Sets the prefix length for this query.
+     *
+     * @param int $prefixLength the prefix length to use.
      * @return MatchSearchQuery
+     * @since 4.0.0
      */
     public function prefixLength(int $prefixLength): MatchSearchQuery
     {
+        $this->prefixLength = $prefixLength;
+        return $this;
     }
 
     /**
-     * @param int $fuzziness
+     *
+     * Set the fuzziness for this query.
+     *
+     * @param int $fuzziness the fuzziness to use.
      * @return MatchSearchQuery
+     * @since 4.0.0
      */
     public function fuzziness(int $fuzziness): MatchSearchQuery
     {
+        $this->fuzziness = $fuzziness;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(MatchSearchQuery $query): array
+    {
+        $json = [
+            'match' => $query->match,
+        ];
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+        if ($query->field != null) {
+            $json['field'] = $query->field;
+        }
+        if ($query->prefixLength != null) {
+            $json['prefix_length'] = $query->prefixLength;
+        }
+        if ($query->fuzziness != null) {
+            $json['fuzziness'] = $query->fuzziness;
+        }
+        if ($query->analyzer != null) {
+            $json['analyzer'] = $query->analyzer;
+        }
+
+        return $json;
     }
 }

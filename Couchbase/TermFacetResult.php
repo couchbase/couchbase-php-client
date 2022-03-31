@@ -24,15 +24,36 @@ namespace Couchbase;
  * A range (or bucket) for a term search facet result.
  * Counts the number of occurrences of a given term.
  */
-interface TermFacetResult
+class TermFacetResult
 {
+    private string $term;
+    private int $count;
+
+    /**
+     * @private
+     * @param array $term
+     */
+    public function __construct(array $term)
+    {
+        $this->term = $term['term'];
+        $this->count = $term['count'];
+    }
+
     /**
      * @return string
+     * @since 4.0.0
      */
-    public function term(): string;
+    public function term(): string
+    {
+        return $this->term;
+    }
 
     /**
      * @return int
+     * @since 4.0.0
      */
-    public function count(): int;
+    public function count(): int
+    {
+        return $this->count;
+    }
 }

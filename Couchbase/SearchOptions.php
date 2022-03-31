@@ -20,20 +20,33 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-class SearchOptions implements JsonSerializable
+class SearchOptions
 {
-    public function jsonSerialize()
-    {
-    }
+    private ?int $timeoutMilliseconds = null;
+    private ?int $limit = null;
+    private ?int $skip = null;
+    private ?bool $explain = null;
+    private ?bool $disableScoring = null;
+    private ?array $consistentWith = null;
+    private ?array $fields = null;
+    private ?array $facets = null;
+    private ?array $sort = null;
+    private ?array $highlight = null;
+    private ?array $collectionNames = null;
+    private ?array $raw;
+    private ?bool $includeLocations = null;
 
     /**
      * Sets the server side timeout in milliseconds
      *
      * @param int $ms the server side timeout to apply
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function timeout(int $ms): SearchOptions
     {
+        $this->timeoutMilliseconds = $ms;
+        return $this;
     }
 
     /**
@@ -41,9 +54,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param int $limit the maximum number of hits to return
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function limit(int $limit): SearchOptions
     {
+        $this->limit = $limit;
+        return $this;
     }
 
     /**
@@ -51,9 +67,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param int $skip the number of results to skip
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function skip(int $skip): SearchOptions
     {
+        $this->skip = $skip;
+        return $this;
     }
 
     /**
@@ -61,9 +80,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param bool $explain
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function explain(bool $explain): SearchOptions
     {
+        $this->explain = $explain;
+        return $this;
     }
 
     /**
@@ -71,9 +93,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param bool $disabled
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function disableScoring(bool $disabled): SearchOptions
     {
+        $this->disableScoring = $disabled;
+        return $this;
     }
 
     /**
@@ -84,9 +109,21 @@ class SearchOptions implements JsonSerializable
      *
      * @param MutationState $state the mutation state information to work with
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function consistentWith(string $index, MutationState $state): SearchOptions
     {
+        $vectors = [];
+        foreach ($state->tokens() as $token) {
+            $vectors[] = [
+                'partitionId' => $token->partitionId(),
+                'partitionUuid' => $token->partitionUuid(),
+                'sequenceNumber' => $token->sequenceNumber(),
+                'bucketName' => $token->bucketName()
+            ];
+        }
+        $this->consistentWith = $vectors;
+        return $this;
     }
 
     /**
@@ -97,9 +134,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param string[] $fields
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function fields(array $fields): SearchOptions
     {
+        $this->fields = $fields;
+        return $this;
     }
 
     /**
@@ -112,6 +152,7 @@ class SearchOptions implements JsonSerializable
      *
      * @param SearchFacet[] $facets
      * @return SearchOptions
+     * @since 4.0.0
      *
      * @see \SearchFacet
      * @see \TermSearchFacet
@@ -120,6 +161,13 @@ class SearchOptions implements JsonSerializable
      */
     public function facets(array $facets): SearchOptions
     {
+        if ($this->facets == null) {
+            $this->facets = [];
+        }
+        foreach ($facets as $name => $facet) {
+            $this->facets[$name] = json_encode($facet);
+        }
+        return $this;
     }
 
     /**
@@ -137,9 +185,12 @@ class SearchOptions implements JsonSerializable
      *
      * @param array $specs sort the fields that should take part in the sorting.
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function sort(array $specs): SearchOptions
     {
+        $this->sort = $specs;
+        return $this;
     }
 
     /**
@@ -150,6 +201,7 @@ class SearchOptions implements JsonSerializable
      * @param string ...$fields the optional fields on which to highlight.
      *   If none, all fields where there is a match are highlighted.
      * @return SearchOptions
+     * @since 4.0.0
      *
      * @see \SearchHighlightMode::HTML
      * @see \SearchHighlightMode::ANSI
@@ -157,6 +209,9 @@ class SearchOptions implements JsonSerializable
      */
     public function highlight(string $style = null, array $fields = null): SearchOptions
     {
+        $this->highlight['style'] = $style;
+        $this->highlight['fields'] = $fields;
+        return $this;
     }
 
 
@@ -165,8 +220,83 @@ class SearchOptions implements JsonSerializable
      *
      * @param string[] $collectionNames
      * @return SearchOptions
+     * @since 4.0.0
      */
     public function collections(array $collectionNames): SearchOptions
     {
+        $this->collectionNames = $collectionNames;
+        return $this;
+    }
+
+    /**
+     * Sets any extra query parameters that the SDK does not provide an option for.
+     *
+     * @param string $key the name of the parameter
+     * @param mixed $value the value of the parameter
+     * @return SearchOptions
+     */
+    public function raw(string $key, $value): SearchOptions
+    {
+        if ($this->raw == null) {
+            $this->raw = array();
+        }
+
+        $this->raw[$key] = $value;
+        return $this;
+    }
+
+    /**
+     * If set to true, the result will include search row locations.
+     *
+     * @param bool $enabled
+     * @return SearchOptions
+     * @since 4.0.0
+     */
+    public function includeLocations(bool $enabled): SearchOptions
+    {
+        $this->includeLocations = $enabled;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(SearchOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        $highlightStyle = null;
+        switch ($options->highlight) {
+            case SearchHighlightMode::ANSI:
+                $highlightStyle = 1;
+                break;
+            case SearchHighlightMode::HTML:
+                $highlightStyle = 2;
+                break;
+            case SearchHighlightMode::SIMPLE:
+                break;
+        }
+        $highlightFields = null;
+        if ($options->highlight != null) {
+            $highlightFields = $options->highlight['fields'];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'limit' => $options->limit,
+            'from' => $options->skip,
+            'explain' => $options->explain,
+            'disableScoring' => $options->disableScoring,
+            'fields' => $options->fields,
+            'sortSpecs' => $options->sort,
+            'consistentWith' => $options->consistentWith,
+            'facets' => $options->facets,
+            'highlightStyle' => $highlightStyle,
+            'highlightFields' => $highlightFields,
+            'collections' => $options->collectionNames,
+            'includeLocations' => $options->includeLocations,
+        ];
     }
 }

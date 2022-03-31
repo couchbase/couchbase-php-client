@@ -20,48 +20,115 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A compound FTS query that allows various combinations of sub-queries.
  */
 class BooleanSearchQuery implements JsonSerializable, SearchQuery
 {
-    public function jsonSerialize()
+    private ?float $boost = null;
+    private ConjunctionSearchQuery $must;
+    private DisjunctionSearchQuery $mustNot;
+    private DisjunctionSearchQuery $should;
+
+    public function jsonSerialize(): mixed
     {
+        return BooleanSearchQuery::export($this);
     }
 
     public function __construct()
     {
+        $this->must = new ConjunctionSearchQuery([]);
+        $this->mustNot = new DisjunctionSearchQuery([]);
+        $this->should = new DisjunctionSearchQuery([]);
     }
 
     /**
-     * @param float $boost
+     * Sets the boost for this query.
+     *
+     * @param float $boost the boost value to use.
      * @return BooleanSearchQuery
+     * @since 4.0.0
      */
-    public function boost($boost): BooleanSearchQuery
+    public function boost(float $boost): BooleanSearchQuery
     {
+        $this->boost = $boost;
+        return $this;
     }
 
     /**
-     * @param ConjunctionSearchQuery $query
+     * Sets a query which must match.
+     *
+     * @param ConjunctionSearchQuery $query query which must match.
      * @return BooleanSearchQuery
+     * @since 4.0.0
      */
     public function must(ConjunctionSearchQuery $query): BooleanSearchQuery
     {
+        $this->must->and($query);
+        return $this;
     }
 
     /**
-     * @param DisjunctionSearchQuery $query
+     * Sets a query which must not match.
+     *
+     * @param DisjunctionSearchQuery $query query which must not match.
      * @return BooleanSearchQuery
+     * @since 4.0.0
      */
     public function mustNot(DisjunctionSearchQuery $query): BooleanSearchQuery
     {
+        $this->mustNot->or($query);
+        return $this;
     }
 
     /**
-     * @param DisjunctionSearchQuery $query
+     * Sets a query which must should match.
+     *
+     * @param DisjunctionSearchQuery $query query which should match.
      * @return BooleanSearchQuery
+     * @since 4.0.0
      */
     public function should(DisjunctionSearchQuery $query): BooleanSearchQuery
     {
+        $this->should->or($query);
+        return $this;
+    }
+
+    /**
+     * Sets the minimum value before the should query will boost.
+     *
+     * @param int $minForShould the minimum value before the should query will boost
+     * @return BooleanSearchQuery
+     * @since 4.0.0
+     */
+    public function min(int $minForShould): BooleanSearchQuery
+    {
+        $this->should->min($minForShould);
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(BooleanSearchQuery $query): array
+    {
+        $json = [];
+
+        if (count($query->must->childQueries()) > 0) {
+            $json['must'] = $query->must;
+        }
+        if (count($query->mustNot->childQueries()) > 0) {
+            $json['must_not'] = $query->mustNot;
+        }
+        if (count($query->should->childQueries()) > 0) {
+            $json['should'] = $query->should;
+        }
+        if ($query->boost != null) {
+            $json['boost'] = $query->boost;
+        }
+
+        return $json;
     }
 }
