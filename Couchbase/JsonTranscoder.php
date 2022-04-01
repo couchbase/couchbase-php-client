@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\DecodingFailureException;
+use JsonException;
 
 class JsonTranscoder implements Transcoder
 {
@@ -47,7 +48,7 @@ class JsonTranscoder implements Transcoder
      * @param int $encodeFlags passed as $flags to json_encode()
      * @param int $encodeDepth passed as $depth to json_encode()
      */
-    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = 0, int $encodeFlags = 0, int $encodeDepth = 512)
+    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = JSON_THROW_ON_ERROR, int $encodeFlags = 0, int $encodeDepth = 512)
     {
         $this->decodeAssociative = $decodeAssociative;
         $this->decodeDepth = $decodeDepth;
@@ -82,8 +83,12 @@ class JsonTranscoder implements Transcoder
      */
     public function decode(string $bytes, int $flags)
     {
-        if (TranscoderFlags::decode($flags)->isJson()) {
-            return json_decode($bytes, $this->decodeAssociative, $this->decodeDepth, $this->decodeFlags);
+        if (TranscoderFlags::decode($flags)->isJson() || $flags == 0 /* subdoc API cannot set flags */) {
+            try {
+                return json_decode($bytes, $this->decodeAssociative, $this->decodeDepth, $this->decodeFlags);
+            } catch (JsonException $e) {
+                throw new DecodingFailureException("unable to decode bytes with JsonTranscoder", 0, $e);
+            }
         }
         throw new DecodingFailureException(sprintf("unable to decode bytes with JsonTranscoder: unknown flags 0x%08x", $flags));
     }

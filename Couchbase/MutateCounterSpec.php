@@ -25,7 +25,75 @@ namespace Couchbase;
  */
 class MutateCounterSpec implements MutateInSpec
 {
-    public function __construct(string $path, int $delta, bool $isXattr, bool $createPath)
+    private bool $isXattr;
+    private bool $createParents;
+    private string $path;
+    private int $value;
+
+    /**
+     * @param string $path
+     * @param int $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @since 4.0.0
+     */
+    public function __construct(string $path, int $value, bool $isXattr = false, bool $createParents = false)
     {
+        $this->isXattr = $isXattr;
+        $this->createParents = $createParents;
+        $this->path = $path;
+        $this->value = $value;
+    }
+
+    /**
+     * @param string $path
+     * @param mixed $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @return MutateCounterSpec
+     * @since 4.0.0
+     */
+    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false): MutateCounterSpec
+    {
+        return new MutateCounterSpec($path, $value, $isXattr, $createParents);
+    }
+
+    /**
+     * @param bool $isXattr
+     * @return MutateCounterSpec
+     * @since 4.0.0
+     */
+    public function xattr(bool $isXattr): MutateCounterSpec
+    {
+        $this->isXattr = $isXattr;
+        return $this;
+    }
+
+    /**
+     * @param bool $createParents
+     * @return MutateCounterSpec
+     * @since 4.0.0
+     */
+    public function createParents(bool $createParents): MutateCounterSpec
+    {
+        $this->createParents = $createParents;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param MutateInOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(?MutateInOptions $options): array
+    {
+        return [
+            'opcode' => 'counter',
+            'isXattr' => $this->isXattr,
+            'createParents' => $this->createParents,
+            'path' => $this->path,
+            'value' => $this->value,
+        ];
     }
 }

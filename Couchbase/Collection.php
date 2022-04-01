@@ -247,7 +247,7 @@ class Collection
      * Performs a set of subdocument lookup operations against the document.
      *
      * @param string $id the key of the document
-     * @param array $specs the LookupInSpecs to perform against the document
+     * @param array<LookupInSpec> $specs the array of selectors to query against the document
      * @param LookupInOptions|null $options the options to use for the operation
      * @return LookupInResult
      * @throws UnsupportedOperationException
@@ -262,15 +262,21 @@ class Collection
      * Performs a set of subdocument lookup operations against the document.
      *
      * @param string $id the key of the document
-     * @param array $specs the MutateInSpecs to perform against the document
+     * @param array<MutateInSpec> $specs the array of modifications to perform against the document
      * @param MutateInOptions|null $options the options to use for the operation
      * @return MutateInResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = array_map(
+            function (MutateInSpec $item) use ($options) {
+                return $item->export($options);
+            },
+            $specs
+        );
+        $response = Extension\documentMutateIn($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded, MutateInOptions::export($options));
+        return new MutateInResult($response, $options);
     }
 
     /**

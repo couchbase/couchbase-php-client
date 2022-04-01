@@ -18,13 +18,14 @@
 
 #include <couchbase/errors.hxx>
 
+#include <fmt/core.h>
+
 namespace couchbase::php
 {
+
 zend_class_entry*
 map_error_to_exception(const core_error_info& info)
 {
-    /*
-     */
     if (info.ec.category() == couchbase::error::detail::get_common_category()) {
         switch (couchbase::error::common_errc(info.ec.value())) {
             case couchbase::error::common_errc::service_not_available:
@@ -194,5 +195,137 @@ map_error_to_exception(const core_error_info& info)
         }
     }
     return couchbase_exception_ce;
+}
+
+static void
+common_error_context_to_zval(const common_error_context& ctx, zval* return_value)
+{
+    if (ctx.last_dispatched_to) {
+        add_assoc_stringl(return_value, "lastDispatchedTo", ctx.last_dispatched_to.value().data(), ctx.last_dispatched_to.value().size());
+    }
+    if (ctx.last_dispatched_from) {
+        add_assoc_stringl(
+          return_value, "lastDispatchedFrom", ctx.last_dispatched_from.value().data(), ctx.last_dispatched_from.value().size());
+    }
+    if (ctx.retry_attempts > 0) {
+        add_assoc_long(return_value, "retryAttempts", ctx.retry_attempts);
+    }
+    if (!ctx.retry_reasons.empty()) {
+        zval reasons;
+        array_init_size(&reasons, ctx.retry_reasons.size());
+        for (const auto& reason : ctx.retry_reasons) {
+            add_next_index_string(&reasons, reason.c_str());
+        }
+        add_assoc_zval(return_value, "retryReasons", &reasons);
+    }
+}
+
+static void
+common_http_error_context_to_zval(const common_http_error_context& ctx, zval* return_value)
+{
+    add_assoc_stringl(return_value, "clientContextId", ctx.client_context_id.data(), ctx.client_context_id.size());
+    add_assoc_long(return_value, "httpStatus", ctx.http_status);
+    add_assoc_stringl(return_value, "httpBody", ctx.http_body.data(), ctx.http_body.size());
+    common_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const key_value_error_context& ctx, zval* return_value)
+{
+    add_assoc_stringl(return_value, "bucketName", ctx.bucket.data(), ctx.bucket.size());
+    add_assoc_stringl(return_value, "collection", ctx.collection.data(), ctx.collection.size());
+    add_assoc_stringl(return_value, "scope", ctx.scope.data(), ctx.scope.size());
+    add_assoc_stringl(return_value, "id", ctx.id.data(), ctx.id.size());
+    add_assoc_long(return_value, "opaque", ctx.opaque);
+    if (ctx.cas > 0) {
+        auto cas = fmt::format("{:x}", ctx.cas);
+        add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    }
+    if (ctx.status_code) {
+        add_assoc_long(return_value, "statusCode", ctx.status_code.value_or(0xffff));
+    }
+    if (ctx.error_map_name) {
+        add_assoc_stringl(return_value, "errorMapName", ctx.error_map_name.value().data(), ctx.error_map_name.value().size());
+    }
+    if (ctx.error_map_description) {
+        add_assoc_stringl(
+          return_value, "errorMapDescription", ctx.error_map_description.value().data(), ctx.error_map_description.value().size());
+    }
+    if (ctx.enhanced_error_reference) {
+        add_assoc_stringl(
+          return_value, "enhancedErrorReference", ctx.enhanced_error_reference.value().data(), ctx.enhanced_error_reference.value().size());
+    }
+    if (ctx.enhanced_error_context) {
+        add_assoc_stringl(
+          return_value, "enhancedErrorContext", ctx.enhanced_error_context.value().data(), ctx.enhanced_error_context.value().size());
+    }
+    common_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const query_error_context& ctx, zval* return_value)
+{
+    add_assoc_long(return_value, "firstErrorCode", ctx.first_error_code);
+    add_assoc_stringl(return_value, "firstErrorMessage", ctx.first_error_message.data(), ctx.first_error_message.size());
+    add_assoc_stringl(return_value, "statement", ctx.statement.data(), ctx.statement.size());
+    if (ctx.parameters) {
+        add_assoc_stringl(return_value, "parameters", ctx.parameters.value().data(), ctx.parameters.value().size());
+    }
+    common_http_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const analytics_error_context& ctx, zval* return_value)
+{
+    add_assoc_long(return_value, "firstErrorCode", ctx.first_error_code);
+    add_assoc_stringl(return_value, "firstErrorMessage", ctx.first_error_message.data(), ctx.first_error_message.size());
+    add_assoc_stringl(return_value, "statement", ctx.statement.data(), ctx.statement.size());
+    if (ctx.parameters) {
+        add_assoc_stringl(return_value, "parameters", ctx.parameters.value().data(), ctx.parameters.value().size());
+    }
+    common_http_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const view_query_error_context& ctx, zval* return_value)
+{
+    add_assoc_stringl(return_value, "designDocumentName", ctx.design_document_name.data(), ctx.design_document_name.size());
+    add_assoc_stringl(return_value, "viewName", ctx.view_name.data(), ctx.view_name.size());
+    common_http_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const search_error_context& ctx, zval* return_value)
+{
+    add_assoc_stringl(return_value, "indexName", ctx.index_name.data(), ctx.index_name.size());
+    if (ctx.query) {
+        add_assoc_stringl(return_value, "query", ctx.query.value().data(), ctx.query.value().size());
+    }
+    if (ctx.parameters) {
+        add_assoc_stringl(return_value, "parameters", ctx.parameters.value().data(), ctx.parameters.value().size());
+    }
+    common_http_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const http_error_context& ctx, zval* return_value)
+{
+    add_assoc_stringl(return_value, "method", ctx.method.data(), ctx.method.size());
+    add_assoc_stringl(return_value, "path", ctx.path.data(), ctx.path.size());
+    common_http_error_context_to_zval(ctx, return_value);
+}
+
+static void
+error_context_to_zval(const empty_error_context& /* ctx */, zval* /* return_value */)
+{
+    /* nothing to do */
+}
+
+void
+error_context_to_zval(const core_error_info& info, zval* return_value)
+{
+    array_init(return_value);
+    add_assoc_stringl(return_value, "error", info.message.data(), info.message.size());
+    std::visit([return_value](const auto& ctx) { error_context_to_zval(ctx, return_value); }, info.error_context);
 }
 } // namespace couchbase::php

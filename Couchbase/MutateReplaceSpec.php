@@ -25,7 +25,91 @@ namespace Couchbase;
  */
 class MutateReplaceSpec implements MutateInSpec
 {
-    public function __construct(string $path, $value, bool $isXattr)
+    private bool $isXattr;
+    private bool $createParents;
+    private bool $expandMacros;
+    private string $path;
+    private $value;
+
+    /**
+     * @param string $path
+     * @param mixed $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @param bool $expandMacros
+     * @since 4.0.0
+     */
+    public function __construct(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
     {
+        $this->isXattr = $isXattr;
+        $this->createParents = $createParents;
+        $this->expandMacros = $expandMacros;
+        $this->path = $path;
+        $this->value = $value;
+    }
+
+    /**
+     * @param string $path
+     * @param mixed $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @param bool $expandMacros
+     * @return MutateReplaceSpec
+     * @since 4.0.0
+     */
+    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateReplaceSpec
+    {
+        return new MutateReplaceSpec($path, $value, $isXattr, $createParents, $expandMacros);
+    }
+
+    /**
+     * @param bool $isXattr
+     * @return MutateReplaceSpec
+     * @since 4.0.0
+     */
+    public function xattr(bool $isXattr): MutateReplaceSpec
+    {
+        $this->isXattr = $isXattr;
+        return $this;
+    }
+
+    /**
+     * @param bool $createParents
+     * @return MutateReplaceSpec
+     * @since 4.0.0
+     */
+    public function createParents(bool $createParents): MutateReplaceSpec
+    {
+        $this->createParents = $createParents;
+        return $this;
+    }
+
+    /**
+     * @param bool $expandMacros
+     * @return MutateReplaceSpec
+     * @since 4.0.0
+     */
+    public function expandMacros(bool $expandMacros): MutateReplaceSpec
+    {
+        $this->expandMacros = $expandMacros;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param MutateInOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(?MutateInOptions $options): array
+    {
+        return [
+            'opcode' => 'replace',
+            'isXattr' => $this->isXattr,
+            'createParents' => $this->createParents,
+            'expandMacros' => $this->expandMacros,
+            'path' => $this->path,
+            'value' => $this->value,
+        ];
     }
 }

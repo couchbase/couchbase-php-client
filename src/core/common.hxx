@@ -111,4 +111,7 @@ namespace couchbase::php
 {
 zend_class_entry*
 map_error_to_exception(const core_error_info& info);
-}
+
+void
+error_context_to_zval(const core_error_info& info, zval* return_value);
+} // namespace couchbase::php

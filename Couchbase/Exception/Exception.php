@@ -25,4 +25,16 @@ namespace Couchbase\Exception;
  */
 class Exception extends \Exception
 {
+    private ?array $context = null;
+
+    /**
+     * Returns error details.
+     *
+     * @return array|null
+     * @since 4.0.0
+     */
+    public function getContext(): ?array
+    {
+        return $this->context;
+    }
 }

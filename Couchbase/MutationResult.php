@@ -30,12 +30,13 @@ class MutationResult extends Result
     /**
      * @private
      * @param array $response raw response from the extension
+     * @since 4.0.0
      */
     public function __construct(array $response)
     {
         parent::__construct($response);
-        if (array_key_exists("mutationToken", $response)) {
-            $this->mutationToken = new MutationToken($response["mutationToken"]);
+        if (array_key_exists('mutationToken', $response)) {
+            $this->mutationToken = new MutationToken($response['mutationToken']);
         }
     }
 

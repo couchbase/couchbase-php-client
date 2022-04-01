@@ -25,4 +25,11 @@ namespace Couchbase;
  */
 interface MutateInSpec
 {
+    /**
+     * @private
+     * @param MutateInOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(?MutateInOptions $options): array;
 }

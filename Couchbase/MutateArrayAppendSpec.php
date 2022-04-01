@@ -20,12 +20,98 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 /**
  * Indicates to append a value to an array at a path in a document.
  */
 class MutateArrayAppendSpec implements MutateInSpec
 {
-    public function __construct(string $path, array $values, bool $isXattr, bool $createPath, bool $expandMacros)
+    private bool $isXattr;
+    private bool $createParents;
+    private bool $expandMacros;
+    private string $path;
+    private $value;
+
+    /**
+     * @param string $path
+     * @param mixed $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @param bool $expandMacros
+     * @since 4.0.0
+     */
+    public function __construct(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
     {
+        $this->isXattr = $isXattr;
+        $this->createParents = $createParents;
+        $this->expandMacros = $expandMacros;
+        $this->path = $path;
+        $this->value = $value;
+    }
+
+    /**
+     * @param string $path
+     * @param mixed $value
+     * @param bool $isXattr
+     * @param bool $createParents
+     * @param bool $expandMacros
+     * @return MutateArrayAppendSpec
+     * @since 4.0.0
+     */
+    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateArrayAppendSpec
+    {
+        return new MutateArrayAppendSpec($path, $value, $isXattr, $createParents, $expandMacros);
+    }
+
+    /**
+     * @param bool $isXattr
+     * @return MutateArrayAppendSpec
+     * @since 4.0.0
+     */
+    public function xattr(bool $isXattr): MutateArrayAppendSpec
+    {
+        $this->isXattr = $isXattr;
+        return $this;
+    }
+
+    /**
+     * @param bool $createParents
+     * @return MutateArrayAppendSpec
+     * @since 4.0.0
+     */
+    public function createParents(bool $createParents): MutateArrayAppendSpec
+    {
+        $this->createParents = $createParents;
+        return $this;
+    }
+
+    /**
+     * @param bool $expandMacros
+     * @return MutateArrayAppendSpec
+     * @since 4.0.0
+     */
+    public function expandMacros(bool $expandMacros): MutateArrayAppendSpec
+    {
+        $this->expandMacros = $expandMacros;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param MutateInOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(?MutateInOptions $options): array
+    {
+        return [
+            'opcode' => 'arrayPushLast',
+            'isXattr' => $this->isXattr,
+            'createParents' => $this->createParents,
+            'expandMacros' => $this->expandMacros,
+            'path' => $this->path,
+            'value' => MutateInOptions::encodeValue($options, $this->value),
+        ];
     }
 }

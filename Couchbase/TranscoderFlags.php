@@ -84,6 +84,33 @@ class TranscoderFlags
     }
 
     /**
+     * @return int
+     * @since 4.0.0
+     */
+    public function dataFormat(): int
+    {
+        return $this->dataFormat;
+    }
+
+    /**
+     * @return int
+     * @since 4.0.0
+     */
+    public function typeCode(): int
+    {
+        return $this->typeCode;
+    }
+
+    /**
+     * @return int
+     * @since 4.0.0
+     */
+    public function compression(): int
+    {
+        return $this->compression;
+    }
+
+    /**
      * Parses network representation of the flags
      *
      * @param int $flags
