@@ -122,7 +122,7 @@ class CouchbaseTestCase extends TestCase
     {
         $collection = $cluster->bucket($this->env()->bucketName())->defaultCollection();
         $idBase = $this->uniqueId();
-        ;
+
         for ($i = 0; $i < $num; $i++) {
             $collection->upsert(sprintf("%d_%s_%d", $i, $idBase, $service), ["answer" => 42, "service" => $service]);
         }
