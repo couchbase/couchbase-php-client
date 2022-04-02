@@ -290,24 +290,7 @@ couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
     }
 
     zval ex;
-    zend_class_entry* ex_ce = couchbase::php::map_error_to_exception(error_info);
-
-    object_init_ex(&ex, ex_ce);
-    std::stringstream message;
-    message << error_info.ec.message() << " (" << error_info.ec.value() << ")";
-    if (!error_info.message.empty()) {
-        message << ": \"" << error_info.message << "\"";
-    }
-    if (!error_info.location.function_name.empty()) {
-        message << " in '" << error_info.location.function_name << "'";
-    }
-    zend_update_property_string(ex_ce, Z_OBJ(ex), ZEND_STRL("message"), message.str().c_str());
-    zend_update_property_string(ex_ce, Z_OBJ(ex), ZEND_STRL("file"), error_info.location.file_name.c_str());
-    zend_update_property_long(ex_ce, Z_OBJ(ex), ZEND_STRL("line"), error_info.location.line);
-    zend_update_property_long(ex_ce, Z_OBJ(ex), ZEND_STRL("code"), error_info.ec.value());
-    zval context;
-    couchbase::php::error_context_to_zval(error_info, &context);
-    zend_update_property(couchbase_exception_ce, Z_OBJ(ex), ZEND_STRL("context"), &context);
+    couchbase::php::create_exception(&ex, error_info);
     zend_throw_exception_object(&ex);
 }
 
@@ -807,6 +790,96 @@ PHP_FUNCTION(documentLookupIn)
     }
 }
 
+PHP_FUNCTION(documentGetMulti)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zval* ids = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_ARRAY(ids)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_get_multi(return_value, bucket, scope, collection, ids, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(documentRemoveMulti)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zval* entries = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_ARRAY(entries)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_get_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(documentUpsertMulti)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zval* entries = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_ARRAY(entries)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_upsert_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(query)
 {
     zval* connection = nullptr;
@@ -1101,6 +1174,33 @@ ZEND_ARG_TYPE_INFO(0, specs, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentGetMulti, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, ids, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentRemoveMulti, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, entries, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentUpsertMulti, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, entries, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_query, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
@@ -1154,6 +1254,9 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", documentExists, ai_CouchbaseExtension_documentExists)
     ZEND_NS_FE("Couchbase\\Extension", documentMutateIn, ai_CouchbaseExtension_documentMutateIn)
     ZEND_NS_FE("Couchbase\\Extension", documentLookupIn, ai_CouchbaseExtension_documentLookupIn)
+    ZEND_NS_FE("Couchbase\\Extension", documentGetMulti, ai_CouchbaseExtension_documentGetMulti)
+    ZEND_NS_FE("Couchbase\\Extension", documentRemoveMulti, ai_CouchbaseExtension_documentRemoveMulti)
+    ZEND_NS_FE("Couchbase\\Extension", documentUpsertMulti, ai_CouchbaseExtension_documentUpsertMulti)
     ZEND_NS_FE("Couchbase\\Extension", query, ai_CouchbaseExtension_query)
     ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
     ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)

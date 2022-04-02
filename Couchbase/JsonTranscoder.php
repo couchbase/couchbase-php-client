@@ -48,7 +48,7 @@ class JsonTranscoder implements Transcoder
      * @param int $encodeFlags passed as $flags to json_encode()
      * @param int $encodeDepth passed as $depth to json_encode()
      */
-    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = JSON_THROW_ON_ERROR, int $encodeFlags = 0, int $encodeDepth = 512)
+    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = JSON_THROW_ON_ERROR, int $encodeFlags = JSON_THROW_ON_ERROR, int $encodeDepth = 512)
     {
         $this->decodeAssociative = $decodeAssociative;
         $this->decodeDepth = $decodeDepth;

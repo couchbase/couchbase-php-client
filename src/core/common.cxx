@@ -20,6 +20,8 @@
 
 #include <fmt/core.h>
 
+#include <sstream>
+
 namespace couchbase::php
 {
 
@@ -327,5 +329,32 @@ error_context_to_zval(const core_error_info& info, zval* return_value)
     array_init(return_value);
     add_assoc_stringl(return_value, "error", info.message.data(), info.message.size());
     std::visit([return_value](const auto& ctx) { error_context_to_zval(ctx, return_value); }, info.error_context);
+}
+
+void
+create_exception(zval* return_value, const core_error_info& error_info)
+{
+    if (!error_info.ec) {
+        return; // success
+    }
+
+    zend_class_entry* ex_ce = couchbase::php::map_error_to_exception(error_info);
+
+    object_init_ex(return_value, ex_ce);
+    std::stringstream message;
+    message << error_info.ec.message() << " (" << error_info.ec.value() << ")";
+    if (!error_info.message.empty()) {
+        message << ": \"" << error_info.message << "\"";
+    }
+    if (!error_info.location.function_name.empty()) {
+        message << " in '" << error_info.location.function_name << "'";
+    }
+    zend_update_property_string(ex_ce, Z_OBJ_P(return_value), ZEND_STRL("message"), message.str().c_str());
+    zend_update_property_string(ex_ce, Z_OBJ_P(return_value), ZEND_STRL("file"), error_info.location.file_name.c_str());
+    zend_update_property_long(ex_ce, Z_OBJ_P(return_value), ZEND_STRL("line"), error_info.location.line);
+    zend_update_property_long(ex_ce, Z_OBJ_P(return_value), ZEND_STRL("code"), error_info.ec.value());
+    zval context;
+    couchbase::php::error_context_to_zval(error_info, &context);
+    zend_update_property(couchbase_exception_ce, Z_OBJ_P(return_value), ZEND_STRL("context"), &context);
 }
 } // namespace couchbase::php

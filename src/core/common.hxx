@@ -114,4 +114,7 @@ map_error_to_exception(const core_error_info& info);
 
 void
 error_context_to_zval(const core_error_info& info, zval* return_value);
+
+void
+create_exception(zval* return_value, const couchbase::php::core_error_info& error_info);
 } // namespace couchbase::php

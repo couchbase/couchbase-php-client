@@ -15,6 +15,7 @@
  */
 
 #include "connection_handle.hxx"
+#include "common.hxx"
 #include "persistent_connections_cache.hxx"
 
 #include <couchbase/cluster.hxx>
@@ -449,6 +450,24 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { std::move(resp), {} };
     }
 
+    template<typename Request, typename Response = typename Request::response_type>
+    std::vector<Response> key_value_execute_multi(std::vector<Request> requests)
+    {
+        std::vector<std::shared_ptr<std::promise<Response>>> barriers;
+        barriers.reserve(requests.size());
+        for (auto&& request : requests) {
+            auto barrier = std::make_shared<std::promise<Response>>();
+            cluster_->execute(request, [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
+            barriers.emplace_back(barrier);
+        }
+        std::vector<Response> responses;
+        responses.reserve(requests.size());
+        for (const auto& barrier : barriers) {
+            responses.emplace_back(barrier->get_future().get());
+        }
+        return responses;
+    }
+
     std::pair<core_error_info, couchbase::operations::query_response> query(couchbase::operations::query_request request)
     {
         auto barrier = std::make_shared<std::promise<couchbase::operations::query_response>>();
@@ -588,9 +607,9 @@ connection_handle::bucket_close(const zend_string* name)
     return impl_->bucket_close(cb_string_new(name));
 }
 
-template<typename Request>
+template<typename Duration>
 static core_error_info
-cb_assign_timeout(Request& req, const zval* options)
+cb_get_timeout(Duration& timeout, const zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
@@ -613,9 +632,21 @@ cb_assign_timeout(Request& req, const zval* options)
                      { __LINE__, __FILE__, __func__ },
                      "expected timeoutMilliseconds to be a number in the options" };
     }
-    req.timeout = std::chrono::milliseconds(Z_LVAL_P(value));
+    timeout = std::chrono::milliseconds(Z_LVAL_P(value));
     return {};
 }
+
+template<typename Request>
+static core_error_info
+cb_assign_timeout(Request& req, const zval* options)
+{
+    return cb_get_timeout(req.timeout, options);
+}
+
+struct durability_holder {
+    protocol::durability_level durability_level{ protocol::durability_level::none };
+    std::optional<std::uint16_t> durability_timeout{};
+};
 
 template<typename Request>
 static core_error_info
@@ -932,6 +963,7 @@ connection_handle::document_upsert(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
@@ -975,6 +1007,7 @@ connection_handle::document_insert(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
@@ -1024,6 +1057,7 @@ connection_handle::document_replace(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
@@ -1068,6 +1102,7 @@ connection_handle::document_get(zval* return_value,
             return err;
         }
         array_init(return_value);
+        add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
         auto cas = fmt::format("{:x}", resp.cas.value);
         add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
         add_assoc_long(return_value, "flags", resp.flags);
@@ -1085,6 +1120,7 @@ connection_handle::document_get(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
@@ -1122,6 +1158,7 @@ connection_handle::document_get_and_lock(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
@@ -1156,6 +1193,7 @@ connection_handle::document_get_and_touch(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
@@ -1190,6 +1228,7 @@ connection_handle::document_touch(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
@@ -1224,6 +1263,7 @@ connection_handle::document_unlock(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
@@ -1259,6 +1299,7 @@ connection_handle::document_remove(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
@@ -1293,6 +1334,7 @@ connection_handle::document_exists(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     add_assoc_bool(return_value, "exists", resp.exists());
     add_assoc_bool(return_value, "deleted", resp.deleted);
     auto cas = fmt::format("{:x}", resp.cas.value);
@@ -1409,6 +1451,7 @@ connection_handle::document_mutate_in(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     add_assoc_bool(return_value, "deleted", resp.deleted);
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
@@ -1490,6 +1533,7 @@ connection_handle::document_lookup_in(zval* return_value,
         return err;
     }
     array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
     add_assoc_bool(return_value, "deleted", resp.deleted);
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
@@ -1511,6 +1555,273 @@ connection_handle::document_lookup_in(zval* return_value,
     add_assoc_zval(return_value, "fields", &fields);
     return {};
 }
+
+core_error_info
+connection_handle::document_get_multi(zval* return_value,
+                                      const zend_string* bucket,
+                                      const zend_string* scope,
+                                      const zend_string* collection,
+                                      const zval* ids,
+                                      const zval* options)
+{
+    if (Z_TYPE_P(ids) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected ids to be an array" };
+    }
+
+    std::optional<std::chrono::milliseconds> timeout;
+    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+        return e;
+    }
+
+    std::vector<couchbase::operations::get_request> requests;
+    requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
+    const zval* id = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
+    {
+        couchbase::document_id doc_id{
+            cb_string_new(bucket),
+            cb_string_new(scope),
+            cb_string_new(collection),
+            cb_string_new(id),
+        };
+
+        couchbase::operations::get_request request{ doc_id };
+        request.timeout = timeout;
+        requests.emplace_back(request);
+    }
+    ZEND_HASH_FOREACH_END();
+
+    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    array_init(return_value);
+    for (const auto& resp : responses) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+        if (resp.ctx.ec) {
+            zval ex;
+            create_exception(
+              &ex,
+              { resp.ctx.ec,
+                { __LINE__, __FILE__, __func__ },
+                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                build_error_context(resp.ctx) });
+            add_assoc_zval(&entry, "error", &ex);
+        }
+        auto cas = fmt::format("{:x}", resp.cas.value);
+        add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
+        add_assoc_long(&entry, "flags", resp.flags);
+        add_assoc_stringl(&entry, "value", resp.value.data(), resp.value.size());
+        add_next_index_zval(return_value, &entry);
+    }
+    return {};
+}
+
+core_error_info
+connection_handle::document_remove_multi(zval* return_value,
+                                         const zend_string* bucket,
+                                         const zend_string* scope,
+                                         const zend_string* collection,
+                                         const zval* entries,
+                                         const zval* options)
+{
+    if (Z_TYPE_P(entries) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected entries to be an array" };
+    }
+
+    std::optional<std::chrono::milliseconds> timeout;
+    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+        return e;
+    }
+    durability_holder durability{};
+    if (auto e = cb_assign_durability(durability, options); e.ec) {
+        return e;
+    }
+
+    std::vector<couchbase::operations::remove_request> requests;
+    requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
+    const zval* tuple = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
+    {
+        switch (Z_TYPE_P(tuple)) {
+            case IS_STRING: {
+                couchbase::document_id doc_id{
+                    cb_string_new(bucket),
+                    cb_string_new(scope),
+                    cb_string_new(collection),
+                    cb_string_new(tuple),
+                };
+                couchbase::operations::remove_request request{ doc_id };
+                request.timeout = timeout;
+                request.durability_level = durability.durability_level;
+                request.durability_timeout = durability.durability_timeout;
+                requests.emplace_back(request);
+            } break;
+            case IS_ARRAY: {
+                if (zend_array_count(Z_ARRVAL_P(tuple)) != 2) {
+                    return { error::common_errc::invalid_argument,
+                             { __LINE__, __FILE__, __func__ },
+                             "expected that removeMulti ID-CAS tuples be represented by arrays with exactly two entries" };
+                }
+                const zval* id = zend_hash_index_find(Z_ARRVAL_P(tuple), 0);
+                if (id == nullptr || Z_TYPE_P(id) != IS_STRING) {
+                    return { error::common_errc::invalid_argument,
+                             { __LINE__, __FILE__, __func__ },
+                             "expected that removeMulti first member (ID) of ID-CAS tuple be a string" };
+                }
+                const zval* cas = zend_hash_index_find(Z_ARRVAL_P(tuple), 1);
+                if (cas == nullptr || Z_TYPE_P(cas) != IS_STRING) {
+                    return { error::common_errc::invalid_argument,
+                             { __LINE__, __FILE__, __func__ },
+                             "expected that removeMulti second member (CAS) of ID-CAS tuple be a string" };
+                }
+                couchbase::document_id doc_id{
+                    cb_string_new(bucket),
+                    cb_string_new(scope),
+                    cb_string_new(collection),
+                    cb_string_new(id),
+                };
+                couchbase::operations::remove_request request{ doc_id };
+                request.timeout = timeout;
+                request.durability_level = durability.durability_level;
+                request.durability_timeout = durability.durability_timeout;
+                if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(cas), Z_STRLEN_P(cas)), request.cas); e.ec) {
+                    return e;
+                }
+                requests.emplace_back(request);
+            } break;
+            default:
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         "expected that removeMulti entries will be either ID strings or pairs of ID with CAS" };
+                break;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    array_init(return_value);
+    for (const auto& resp : responses) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+        if (resp.ctx.ec) {
+            zval ex;
+            create_exception(
+              &ex,
+              { resp.ctx.ec,
+                { __LINE__, __FILE__, __func__ },
+                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                build_error_context(resp.ctx) });
+            add_assoc_zval(&entry, "error", &ex);
+        }
+        auto cas = fmt::format("{:x}", resp.cas.value);
+        add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
+        if (is_mutation_token_valid(resp.token)) {
+            zval token_val;
+            mutation_token_to_zval(resp.token, &token_val);
+            add_assoc_zval(&entry, "mutationToken", &token_val);
+        }
+        add_next_index_zval(return_value, &entry);
+    }
+    return {};
+}
+
+core_error_info
+connection_handle::document_upsert_multi(zval* return_value,
+                                         const zend_string* bucket,
+                                         const zend_string* scope,
+                                         const zend_string* collection,
+                                         const zval* entries,
+                                         const zval* options)
+{
+    if (Z_TYPE_P(entries) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected entries to be an array" };
+    }
+    std::optional<std::chrono::milliseconds> timeout;
+    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+        return e;
+    }
+    durability_holder durability{};
+    if (auto e = cb_assign_durability(durability, options); e.ec) {
+        return e;
+    }
+    bool preserve_expiry{ false };
+    if (auto e = cb_assign_boolean(preserve_expiry, options, "preserveExpiry"); e.ec) {
+        return e;
+    }
+
+    std::vector<couchbase::operations::upsert_request> requests;
+    requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
+    const zval* tuple = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
+    {
+        if (Z_TYPE_P(tuple) != IS_ARRAY || zend_array_count(Z_ARRVAL_P(tuple)) != 3) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected that core upsertMulti entries will be ID-VALUE-FLAGS tuples" };
+        }
+        const zval* id = zend_hash_index_find(Z_ARRVAL_P(tuple), 0);
+        if (id == nullptr || Z_TYPE_P(id) != IS_STRING) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected that core upsertMulti first member (ID) of ID-VALUE-FLAGS tuple be a string" };
+        }
+        const zval* value = zend_hash_index_find(Z_ARRVAL_P(tuple), 1);
+        if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected that core upsertMulti second member (CAS) of ID-VALUE-FLAGS tuple be a string" };
+        }
+        const zval* flags = zend_hash_index_find(Z_ARRVAL_P(tuple), 2);
+        if (flags == nullptr || Z_TYPE_P(flags) != IS_LONG) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected that core upsertMulti third member (FLAGS) of ID-VALUE-FLAGS tuple be an integer" };
+        }
+        couchbase::document_id doc_id{
+            cb_string_new(bucket),
+            cb_string_new(scope),
+            cb_string_new(collection),
+            cb_string_new(id),
+        };
+        couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+        request.timeout = timeout;
+        request.flags = static_cast<std::uint32_t>(Z_LVAL_P(flags));
+        request.durability_level = durability.durability_level;
+        request.durability_timeout = durability.durability_timeout;
+        request.preserve_expiry = preserve_expiry;
+        requests.emplace_back(request);
+    }
+    ZEND_HASH_FOREACH_END();
+
+    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    array_init(return_value);
+    for (const auto& resp : responses) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+        if (resp.ctx.ec) {
+            zval ex;
+            create_exception(
+              &ex,
+              { resp.ctx.ec,
+                { __LINE__, __FILE__, __func__ },
+                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                build_error_context(resp.ctx) });
+            add_assoc_zval(&entry, "error", &ex);
+        }
+        auto cas = fmt::format("{:x}", resp.cas.value);
+        add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
+        if (is_mutation_token_valid(resp.token)) {
+            zval token_val;
+            mutation_token_to_zval(resp.token, &token_val);
+            add_assoc_zval(&entry, "mutationToken", &token_val);
+        }
+        add_next_index_zval(return_value, &entry);
+    }
+    return {};
+}
+
 std::pair<zval*, core_error_info>
 connection_handle::query(const zend_string* statement, const zval* options)
 {

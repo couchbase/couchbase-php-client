@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\UnsupportedOperationException;
 use DateTimeInterface;
 
@@ -307,14 +308,19 @@ class Collection
      * non-null value in error() property of the corresponding result object.
      *
      * @param array $ids array of IDs, organized like this ["key1", "key2", ...]
-     * @param RemoveOptions|null $options the options to use for the operation
-     * @return array array of GetResult, one for each of the entries
-     * @throws UnsupportedOperationException
+     * @param GetOptions|null $options the options to use for the operation
+     * @return array<GetResult> array of GetResult, one for each of the entries
      * @since 4.0.0
      */
-    public function getMulti(array $ids, RemoveOptions $options = null): array
+    public function getMulti(array $ids, GetOptions $options = null): array
     {
-        throw new UnsupportedOperationException();
+        $responses = Extension\documentGetMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $ids, GetOptions::export($options));
+        return array_map(
+            function (array $response) use ($options) {
+                return new GetResult($response, GetOptions::getTranscoder($options));
+            },
+            $responses
+        );
     }
 
     /**
@@ -322,15 +328,21 @@ class Collection
      * remove the document unconditionally.
      *
      * @param array $entries array of arrays, organized like this
-     *   [["key1", "encodedCas1"], ["key2", , "encodedCas2"], ...] or ["key1", "key2", ...]
+     *   [["key1", "encodedCas1"], ["key2", "encodedCas2"], ...] or ["key1", "key2", ...]
      * @param RemoveOptions|null $options the options to use for the operation
-     * @return array array of MutationResult, one for each of the entries
+     * @return array<MutationResult> array of MutationResult, one for each of the entries
      * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function removeMulti(array $entries, RemoveOptions $options = null): array
     {
-        throw new UnsupportedOperationException();
+        $responses = Extension\documentRemoveMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $entries, RemoveOptions::export($options));
+        return array_map(
+            function (array $response) {
+                return new MutationResult($response);
+            },
+            $responses
+        );
     }
 
     /**
@@ -338,13 +350,36 @@ class Collection
      *
      * @param array $entries array of arrays, organized like this [["key1", $value1], ["key2", $value2], ...]
      * @param UpsertOptions|null $options the options to use for the operation
-     * @return array array of MutationResult, one for each of the entries
-     * @throws UnsupportedOperationException
+     * @return array<MutationResult> array of MutationResult, one for each of the entries
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function upsertMulti(array $entries, UpsertOptions $options = null): array
     {
-        throw new UnsupportedOperationException();
+        $encodedEntries = array_map(
+            function (array $entry) use ($options) {
+                if (count($entry) != 2) {
+                    throw new InvalidArgumentException("expected ID-VALUE tuple to have exactly 2 entries");
+                }
+                if (!is_string($entry[0])) {
+                    throw new InvalidArgumentException("expected first entry (ID) of ID-VALUE tuple to be a string");
+                }
+                $encoded = UpsertOptions::encodeDocument($options, $entry[1]);
+                return [
+                    $entry[0],   // id
+                    $encoded[0], // value
+                    $encoded[1], // flags
+                ];
+            },
+            $entries
+        );
+        $responses = Extension\documentUpsertMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $encodedEntries, UpsertOptions::export($options));
+        return array_map(
+            function (array $response) {
+                return new MutationResult($response);
+            },
+            $responses
+        );
     }
 
     /**
