@@ -27,11 +27,11 @@ class EncryptionSettings
      *
      * @param string $level Accepted values are 'none', 'half', 'full'.
      *
-     * @see AnalyticsEncryptionLevel::NONE
+     * @return EncryptionSettings
      * @see AnalyticsEncryptionLevel::HALF
      * @see AnalyticsEncryptionLevel::FULL
      *
-     * @return EncryptionSettings
+     * @see AnalyticsEncryptionLevel::NONE
      */
     public function level(string $level)
     {

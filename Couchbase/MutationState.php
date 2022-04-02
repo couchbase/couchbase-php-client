@@ -26,6 +26,7 @@ namespace Couchbase;
 class MutationState
 {
     private array $tokens;
+
     public function __construct()
     {
     }

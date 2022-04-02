@@ -85,7 +85,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     public function start($start, bool $inclusive = false): DateRangeSearchQuery
     {
         $this->start = $start;
-        $this -> inclusiveStart = $inclusive;
+        $this->inclusiveStart = $inclusive;
         return $this;
     }
 
@@ -102,7 +102,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     public function end($end, bool $inclusive = false): DateRangeSearchQuery
     {
         $this->end = $end;
-        $this -> inclusiveEnd = $inclusive;
+        $this->inclusiveEnd = $inclusive;
         return $this;
     }
 

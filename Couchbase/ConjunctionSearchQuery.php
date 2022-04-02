@@ -68,10 +68,10 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @deprecated
-     *
      * @param SearchQuery ...$queries
      * @return ConjunctionSearchQuery
+     * @deprecated
+     *
      */
     public function every(SearchQuery ...$queries): ConjunctionSearchQuery
     {

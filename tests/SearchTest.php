@@ -33,10 +33,10 @@ class SearchTest extends Helpers\CouchbaseTestCase
         Extension\searchIndexUpsert(
             $cluster->core(),
             [
-            'name' => $indexName,
-            'type' => 'fulltext-index',
-            'sourceType' => 'couchbase',
-            'sourceName' => $bucketName
+                'name' => $indexName,
+                'type' => 'fulltext-index',
+                'sourceType' => 'couchbase',
+                'sourceName' => $bucketName
             ]
         );
     }

@@ -82,7 +82,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     public function min(int $min, bool $inclusive = true): NumericRangeSearchQuery
     {
         $this->min = $min;
-        $this -> inclusiveMin = $inclusive;
+        $this->inclusiveMin = $inclusive;
         return $this;
     }
 
@@ -97,7 +97,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     public function max(int $max, bool $inclusive = false): NumericRangeSearchQuery
     {
         $this->max = $max;
-        $this -> inclusiveMax = $inclusive;
+        $this->inclusiveMax = $inclusive;
         return $this;
     }
 

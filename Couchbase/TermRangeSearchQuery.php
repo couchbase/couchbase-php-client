@@ -85,7 +85,7 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
     public function min(string $min, bool $inclusive = true): TermRangeSearchQuery
     {
         $this->min = $min;
-        $this -> inclusiveMin = $inclusive;
+        $this->inclusiveMin = $inclusive;
         return $this;
     }
 
@@ -100,7 +100,7 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
     public function max(string $max, bool $inclusive = false): TermRangeSearchQuery
     {
         $this->max = $max;
-        $this -> inclusiveMax = $inclusive;
+        $this->inclusiveMax = $inclusive;
         return $this;
     }
 

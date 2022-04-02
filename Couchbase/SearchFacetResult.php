@@ -64,6 +64,7 @@ class SearchFacetResult
             }
         }
     }
+
     /**
      * The field the SearchFacet was targeting.
      *

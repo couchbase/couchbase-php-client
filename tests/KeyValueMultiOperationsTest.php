@@ -89,8 +89,8 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
 
         $results = $collection->upsertMulti(
             [
-            [$idFoo, ["value" => "foo"]],
-            [$idBar, ["value" => "bar"]],
+                [$idFoo, ["value" => "foo"]],
+                [$idBar, ["value" => "bar"]],
             ]
         );
         $this->assertCount(2, $results);

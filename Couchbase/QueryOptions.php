@@ -257,9 +257,9 @@ class QueryOptions
     /**
      * Associate scope name with query
      *
-     * @deprecated
      * @param string $name the name of the scope
      * @return QueryOptions
+     * @deprecated
      * @since 4.0.0
      */
     public function scopeName(string $name): QueryOptions
@@ -277,9 +277,9 @@ class QueryOptions
      *
      * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
      *
-     * @deprecated
      * @param string $qualifier the scope qualifier
      * @return QueryOptions
+     * @deprecated
      * @since 4.0.0
      */
     public function scopeQualifier(string $qualifier): QueryOptions

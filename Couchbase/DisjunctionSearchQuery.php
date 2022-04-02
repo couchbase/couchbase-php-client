@@ -70,10 +70,10 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @deprecated
-     *
      * @param SearchQuery ...$queries
      * @return DisjunctionSearchQuery
+     * @deprecated
+     *
      */
     public function either(SearchQuery ...$queries): DisjunctionSearchQuery
     {

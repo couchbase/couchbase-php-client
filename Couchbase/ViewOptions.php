@@ -142,7 +142,7 @@ class ViewOptions
      */
     public function order(int $order): ViewOptions
     {
-        $this->order  = $order;
+        $this->order = $order;
         return $this;
     }
 
@@ -286,12 +286,12 @@ class ViewOptions
     /**
      * Sets the range of keys to skip to before beginning to return results and to stop returning results at.
      *
-     * @deprecated
-     *
      * @param mixed $start the key to skip to before beginning to return results.
      * @param mixed $end the key to stop returning results at.
      * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
      * @return ViewOptions
+     * @deprecated
+     *
      * @since 4.0.0
      */
     public function range($start, $end, $inclusiveEnd = false): ViewOptions
@@ -309,12 +309,12 @@ class ViewOptions
     /**
      * Sets the range of keys to skip to before beginning to return results and to stop returning results at.
      *
-     * @deprecated
-     *
      * @param mixed $start the doc id to skip to before beginning to return results.
      * @param mixed $end the doc id to stop returning results at.
      * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
      * @return ViewOptions
+     * @deprecated
+     *
      * @since 4.0.0
      */
     public function idRange($start, $end, $inclusiveEnd = false): ViewOptions
