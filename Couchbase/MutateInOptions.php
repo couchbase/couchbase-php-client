@@ -37,6 +37,9 @@ class MutateInOptions
     private ?bool $preserveExpiry = null;
     private string $storeSemantics;
 
+    /**
+     * @since 4.0.0
+     */
     public function __construct()
     {
         $this->transcoder = JsonTranscoder::getInstance();

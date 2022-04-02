@@ -22,14 +22,40 @@ namespace Couchbase;
 
 class LookupInOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+    private ?bool $withExpiry = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return LookupInOptions
+     * @since 4.0.0
+     */
+    public static function build(): LookupInOptions
+    {
+        return new LookupInOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return LookupInOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): LookupInOptions
+    public function timeout(int $milliseconds): LookupInOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
@@ -40,10 +66,67 @@ class LookupInOptions
      * to exceed the maximum number (16) of paths allowed in a subdocument
      * operation.
      *
-     * @param bool $arg whether or not to include document expiry
+     * @param bool $fetchExpiry whether to include document expiry
      * @return LookupInOptions
+     * @since 4.0.0
      */
-    public function withExpiry(bool $arg): LookupInOptions
+    public function withExpiry(bool $fetchExpiry): LookupInOptions
     {
+        $this->withExpiry = $fetchExpiry;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @return bool
+     * @since 4.0.0
+     */
+    public function needToFetchExpiry(): bool
+    {
+        return $this->withExpiry;
+    }
+
+    /**
+     * Associate custom transcoder with the request.
+     *
+     * @param Transcoder $transcoder
+     * @return LookupInOptions
+     * @since 4.0.0
+     */
+    public function transcoder(Transcoder $transcoder): LookupInOptions
+    {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param LookupInOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?LookupInOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
+    }
+
+    /**
+     * @private
+     * @param LookupInOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?LookupInOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

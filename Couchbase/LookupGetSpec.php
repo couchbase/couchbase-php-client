@@ -25,7 +25,42 @@ namespace Couchbase;
  */
 class LookupGetSpec implements LookupInSpec
 {
+    private string $path;
+    private bool $isXattr;
+
+    /**
+     * @param string $path
+     * @param bool $isXattr
+     * @since 4.0.0
+     */
     public function __construct(string $path, bool $isXattr = false)
     {
+        $this->path = $path;
+        $this->isXattr = $isXattr;
+    }
+
+    /**
+     * @param string $path
+     * @param bool $isXattr
+     * @return LookupGetSpec
+     * @since 4.0.0
+     */
+    public static function build(string $path, bool $isXattr = false): LookupGetSpec
+    {
+        return new LookupGetSpec($path, $isXattr);
+    }
+
+    /**
+     * @private
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(): array
+    {
+        return [
+            'opcode' => 'get',
+            'isXattr' => $this->isXattr,
+            'path' => $this->path,
+        ];
     }
 }

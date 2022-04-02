@@ -86,6 +86,14 @@ class connection_handle
                                                      const zval* specs,
                                                      const zval* options);
 
+    [[nodiscard]] core_error_info document_lookup_in(zval* return_value,
+                                                     const zend_string* bucket,
+                                                     const zend_string* scope,
+                                                     const zend_string* collection,
+                                                     const zend_string* id,
+                                                     const zval* specs,
+                                                     const zval* options);
+
     [[nodiscard]] std::pair<zval*, core_error_info> query(const zend_string* statement, const zval* options);
 
     [[nodiscard]] std::pair<zval*, core_error_info> analytics_query(const zend_string* statement, const zval* options);

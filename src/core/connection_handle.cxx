@@ -917,7 +917,7 @@ connection_handle::document_upsert(zval* return_value,
     if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expiry"); e.ec) {
+    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
         return e;
     }
 
@@ -1062,7 +1062,7 @@ connection_handle::document_mutate_in(zval* return_value,
     if (auto e = cb_assign_boolean(request.create_as_deleted, options, "createAsDeleted"); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expiry"); e.ec) {
+    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
         return e;
     }
     if (auto e = cb_assign_cas(request.cas, options); e.ec) {
@@ -1166,6 +1166,79 @@ connection_handle::document_mutate_in(zval* return_value,
     return {};
 }
 
+core_error_info
+connection_handle::document_lookup_in(zval* return_value,
+                                      const zend_string* bucket,
+                                      const zend_string* scope,
+                                      const zend_string* collection,
+                                      const zend_string* id,
+                                      const zval* specs,
+                                      const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::lookup_in_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.access_deleted, options, "accessDeleted"); e.ec) {
+        return e;
+    }
+
+    if (Z_TYPE_P(specs) == IS_ARRAY) {
+        const zval* item = nullptr;
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+        {
+            auto [operation, e] = decode_lookup_subdoc_opcode(item);
+            if (e.ec) {
+                return e;
+            }
+            bool xattr = false;
+            if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+                return e;
+            }
+            std::string path;
+            if (e = cb_assign_string(path, item, "path"); e.ec) {
+                return e;
+            }
+            request.specs.add_spec(operation, xattr, path);
+        }
+        ZEND_HASH_FOREACH_END();
+    } else {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "specs must be an array" };
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec && resp.ctx.ec != error::key_value_errc::document_not_found) {
+        return err;
+    }
+    array_init(return_value);
+    add_assoc_bool(return_value, "deleted", resp.deleted);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    zval fields;
+    array_init_size(&fields, resp.fields.size());
+    for (const auto& field : resp.fields) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_long(&entry, "originalIndex", field.original_index);
+        add_assoc_stringl(&entry, "path", field.path.data(), field.path.size());
+        add_assoc_stringl(&entry, "value", field.value.data(), field.value.size());
+        add_assoc_bool(&entry, "exists", field.exists);
+        add_assoc_string(&entry, "opcode", subdoc_opcode_to_string(field.opcode));
+        add_assoc_long(&entry, "status", std::uint16_t(field.status));
+        add_assoc_long(&entry, "errorCode", field.ec.value());
+        add_assoc_string(&entry, "errorMessage", field.ec.message().c_str());
+        add_next_index_zval(&fields, &entry);
+    }
+    add_assoc_zval(return_value, "fields", &fields);
+    return {};
+}
 std::pair<zval*, core_error_info>
 connection_handle::query(const zend_string* statement, const zval* options)
 {

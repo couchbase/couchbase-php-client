@@ -255,7 +255,17 @@ class Collection
      */
     public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = array_map(
+            function (LookupInSpec $item) {
+                return $item->export();
+            },
+            $specs
+        );
+        if ($options != null && $options->needToFetchExpiry()) {
+            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => '$document.exptime'];
+        }
+        $response = Extension\documentLookupIn($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded, LookupInOptions::export($options));
+        return new LookupInResult($response, LookupInOptions::getTranscoder($options));
     }
 
     /**

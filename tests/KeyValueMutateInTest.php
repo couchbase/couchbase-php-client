@@ -33,13 +33,12 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $res = $collection->mutateIn(
             $id,
             [
-            MutateUpsertSpec::build("foo", "bar")
+                MutateUpsertSpec::build("foo", "bar")
             ],
             MutateInOptions::build()->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT)
         );
         $this->assertNotNull($res->cas());
         $cas = $res->cas();
-        var_dump($res);
 
         $res = $collection->get($id);
         $this->assertEquals($cas, $res->cas());

@@ -25,7 +25,42 @@ namespace Couchbase;
  */
 class LookupExistsSpec implements LookupInSpec
 {
+    private string $path;
+    private bool $isXattr;
+
+    /**
+     * @param string $path
+     * @param bool $isXattr
+     * @since 4.0.0
+     */
     public function __construct(string $path, bool $isXattr = false)
     {
+        $this->path = $path;
+        $this->isXattr = $isXattr;
+    }
+
+    /**
+     * @param string $path
+     * @param bool $isXattr
+     * @return LookupExistsSpec
+     * @since 4.0.0
+     */
+    public static function build(string $path, bool $isXattr = false): LookupExistsSpec
+    {
+        return new LookupExistsSpec($path, $isXattr);
+    }
+
+    /**
+     * @private
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(): array
+    {
+        return [
+            'opcode' => 'exists',
+            'isXattr' => $this->isXattr,
+            'path' => $this->path,
+        ];
     }
 }

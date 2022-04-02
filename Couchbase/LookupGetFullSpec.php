@@ -25,7 +25,38 @@ namespace Couchbase;
  */
 class LookupGetFullSpec implements LookupInSpec
 {
-    public function __construct()
+    private bool $isXattr;
+
+    /**
+     * @param string $path
+     * @param bool $isXattr
+     * @since 4.0.0
+     */
+    public function __construct(bool $isXattr = false)
     {
+        $this->isXattr = $isXattr;
+    }
+
+    /**
+     * @param bool $isXattr
+     * @return LookupGetFullSpec
+     * @since 4.0.0
+     */
+    public static function build(bool $isXattr = false): LookupGetFullSpec
+    {
+        return new LookupGetFullSpec($isXattr);
+    }
+
+    /**
+     * @private
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(): array
+    {
+        return [
+            'opcode' => 'getDocument',
+            'isXattr' => $this->isXattr,
+        ];
     }
 }

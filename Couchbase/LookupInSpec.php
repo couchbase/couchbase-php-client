@@ -25,4 +25,10 @@ namespace Couchbase;
  */
 interface LookupInSpec
 {
+    /**
+     * @private
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(): array;
 }
