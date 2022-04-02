@@ -22,33 +22,64 @@ namespace Couchbase;
 
 class RemoveOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+    private ?string $cas = null;
+
     /**
-     * Sets the operation timeout in milliseconds.
+     * Static helper to keep code more readable
      *
-     * @param int $arg the operation timeout to apply
      * @return RemoveOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): RemoveOptions
+    public static function build(): RemoveOptions
     {
+        return new RemoveOptions();
     }
 
     /**
-     * Sets the durability level to enforce when writing the document.
+     * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the durability level to enforce
+     * @param int $milliseconds the operation timeout to apply
      * @return RemoveOptions
+     * @since 4.0.0
      */
-    public function durabilityLevel(int $arg): RemoveOptions
+    public function timeout(int $milliseconds): RemoveOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the cas value to use when performing this operation.
      *
-     * @param string $arg the cas value to use
+     * @param string $cas the CAS value to use
      * @return RemoveOptions
+     * @since 4.0.0
      */
-    public function cas(string $arg): RemoveOptions
+    public function cas(string $cas): RemoveOptions
     {
+        $this->cas = $cas;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param RemoveOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?RemoveOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'cas' => $options->cas,
+        ];
     }
 }

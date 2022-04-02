@@ -95,6 +95,13 @@ class connection_handle
                                                   const zend_string* cas,
                                                   const zval* options);
 
+    [[nodiscard]] core_error_info document_remove(zval* return_value,
+                                                  const zend_string* bucket,
+                                                  const zend_string* scope,
+                                                  const zend_string* collection,
+                                                  const zend_string* id,
+                                                  const zval* options);
+
     [[nodiscard]] core_error_info document_touch(zval* return_value,
                                                  const zend_string* bucket,
                                                  const zend_string* scope,

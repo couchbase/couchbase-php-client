@@ -210,12 +210,12 @@ class Collection
      * @param string $id the key of the document
      * @param RemoveOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function remove(string $id, RemoveOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentRemove($this->core, $this->bucketName, $this->scopeName, $this->name, $id, RemoveOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**
