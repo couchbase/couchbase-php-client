@@ -181,12 +181,13 @@ class Collection
      * @param mixed $value the value to use for the document
      * @param InsertOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function insert(string $id, $value, InsertOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = InsertOptions::encodeDocument($options, $value);
+        $response = Extension\documentInsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], InsertOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**
@@ -196,12 +197,13 @@ class Collection
      * @param mixed $value the value to use for the document
      * @param ReplaceOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = ReplaceOptions::encodeDocument($options, $value);
+        $response = Extension\documentReplace($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], ReplaceOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**

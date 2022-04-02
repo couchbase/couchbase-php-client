@@ -943,6 +943,98 @@ connection_handle::document_upsert(zval* return_value,
 }
 
 core_error_info
+connection_handle::document_insert(zval* return_value,
+                                   const zend_string* bucket,
+                                   const zend_string* scope,
+                                   const zend_string* collection,
+                                   const zend_string* id,
+                                   const zend_string* value,
+                                   zend_long flags,
+                                   const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+    couchbase::operations::insert_request request{ doc_id, cb_string_new(value) };
+    request.flags = static_cast<std::uint32_t>(flags);
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_durability(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    if (is_mutation_token_valid(resp.token)) {
+        zval token_val;
+        mutation_token_to_zval(resp.token, &token_val);
+        add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
+}
+
+core_error_info
+connection_handle::document_replace(zval* return_value,
+                                    const zend_string* bucket,
+                                    const zend_string* scope,
+                                    const zend_string* collection,
+                                    const zend_string* id,
+                                    const zend_string* value,
+                                    zend_long flags,
+                                    const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+    couchbase::operations::replace_request request{ doc_id, cb_string_new(value) };
+    request.flags = static_cast<std::uint32_t>(flags);
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_durability(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_cas(request.cas, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    if (is_mutation_token_valid(resp.token)) {
+        zval token_val;
+        mutation_token_to_zval(resp.token, &token_val);
+        add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
+}
+
+core_error_info
 connection_handle::document_get(zval* return_value,
                                 const zend_string* bucket,
                                 const zend_string* scope,

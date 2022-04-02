@@ -64,6 +64,24 @@ class connection_handle
                                                   zend_long flags,
                                                   const zval* options);
 
+    [[nodiscard]] core_error_info document_insert(zval* return_value,
+                                                  const zend_string* bucket,
+                                                  const zend_string* scope,
+                                                  const zend_string* collection,
+                                                  const zend_string* id,
+                                                  const zend_string* value,
+                                                  zend_long flags,
+                                                  const zval* options);
+
+    [[nodiscard]] core_error_info document_replace(zval* return_value,
+                                                   const zend_string* bucket,
+                                                   const zend_string* scope,
+                                                   const zend_string* collection,
+                                                   const zend_string* id,
+                                                   const zend_string* value,
+                                                   zend_long flags,
+                                                   const zval* options);
+
     [[nodiscard]] core_error_info document_get(zval* return_value,
                                                const zend_string* bucket,
                                                const zend_string* scope,

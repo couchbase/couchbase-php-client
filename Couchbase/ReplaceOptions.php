@@ -20,26 +20,65 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use DateTimeInterface;
+
 class ReplaceOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+    private ?int $expirySeconds = null;
+    private ?bool $preserveExpiry = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+    private ?string $cas = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return ReplaceOptions
+     * @since 4.0.0
+     */
+    public static function build(): ReplaceOptions
+    {
+        return new ReplaceOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return ReplaceOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): ReplaceOptions
+    public function timeout(int $milliseconds): ReplaceOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $arg the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
      * @return ReplaceOptions
+     * @since 4.0.0
      */
-    public function expiry(mixed $arg): ReplaceOptions
+    public function expiry($seconds): ReplaceOptions
     {
+        if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = $seconds->getTimestamp();
+        } else {
+            $this->expirySeconds = (int)$seconds;
+        }
+        return $this;
     }
 
     /**
@@ -47,39 +86,89 @@ class ReplaceOptions
      *
      * @param bool $shouldPreserve if true, the expiration time will not be updated
      * @return ReplaceOptions
+     * @since 4.0.0
      */
     public function preserveExpiry(bool $shouldPreserve): ReplaceOptions
     {
-    }
-
-    /**
-     * Sets the cas value for the operation.
-     *
-     * @param string $arg the cas value
-     * @return ReplaceOptions
-     */
-    public function cas(string $arg): ReplaceOptions
-    {
+        $this->preserveExpiry = $shouldPreserve;
+        return $this;
     }
 
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param int $arg the durability level to enforce
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
      * @return ReplaceOptions
+     * @since 4.0.0
      */
-    public function durabilityLevel(int $arg): ReplaceOptions
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): ReplaceOptions
     {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * Sets the cas value to use when performing this operation.
+     *
+     * @param string $cas the CAS value to use
+     * @return ReplaceOptions
+     * @since 4.0.0
+     */
+    public function cas(string $cas): ReplaceOptions
+    {
+        $this->cas = $cas;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg encoding function with signature (returns tuple of bytes, flags and datatype):
-     *
-     *   `function encoder($value): [string $bytes, int $flags, int $datatype]`
+     * @param Transcoder $transcoder
+     * @return ReplaceOptions
+     * @since 4.0.0
      */
-    public function encoder(callable $arg): ReplaceOptions
+    public function transcoder(Transcoder $transcoder): ReplaceOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Delegates encoding of the document to associated transcoder
+     *
+     * @param ReplaceOptions|null $options
+     * @param $document
+     * @return array
+     * @since 4.0.0
+     */
+    public static function encodeDocument(?ReplaceOptions $options, $document): array
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance()->encode($document);
+        }
+        return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @private
+     * @param ReplaceOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?ReplaceOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'expirySeconds' => $options->expirySeconds,
+            'preserveExpiry' => $options->preserveExpiry,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'cas' => $options->cas,
+        ];
     }
 }

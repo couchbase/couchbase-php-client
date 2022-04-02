@@ -457,6 +457,74 @@ PHP_FUNCTION(documentUpsert)
     }
 }
 
+PHP_FUNCTION(documentInsert)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zend_string* value = nullptr;
+    zend_long flags = 0;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(7, 8)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_STR(value)
+    Z_PARAM_LONG(flags)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_insert(return_value, bucket, scope, collection, id, value, flags, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(documentReplace)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zend_string* value = nullptr;
+    zend_long flags = 0;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(7, 8)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_STR(value)
+    Z_PARAM_LONG(flags)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_replace(return_value, bucket, scope, collection, id, value, flags, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(documentGet)
 {
     zval* connection = nullptr;
@@ -924,6 +992,28 @@ ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentInsert, 0, 0, 7)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentReplace, 0, 0, 7)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentGet, 0, 0, 5)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -1053,6 +1143,8 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", openBucket, ai_CouchbaseExtension_openBucket)
     ZEND_NS_FE("Couchbase\\Extension", closeBucket, ai_CouchbaseExtension_closeBucket)
     ZEND_NS_FE("Couchbase\\Extension", documentUpsert, ai_CouchbaseExtension_documentUpsert)
+    ZEND_NS_FE("Couchbase\\Extension", documentInsert, ai_CouchbaseExtension_documentInsert)
+    ZEND_NS_FE("Couchbase\\Extension", documentReplace, ai_CouchbaseExtension_documentReplace)
     ZEND_NS_FE("Couchbase\\Extension", documentGet, ai_CouchbaseExtension_documentGet)
     ZEND_NS_FE("Couchbase\\Extension", documentGetAndTouch, ai_CouchbaseExtension_documentGetAndTouch)
     ZEND_NS_FE("Couchbase\\Extension", documentGetAndLock, ai_CouchbaseExtension_documentGetAndLock)

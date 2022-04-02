@@ -20,46 +20,125 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use DateTimeInterface;
+
 class InsertOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+    private ?int $expirySeconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return InsertOptions
+     * @since 4.0.0
+     */
+    public static function build(): InsertOptions
+    {
+        return new InsertOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return InsertOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): InsertOptions
+    public function timeout(int $milliseconds): InsertOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the expiry time for the document.
      *
-     * @param int $arg the expiry time in ms
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
      * @return InsertOptions
+     * @since 4.0.0
      */
-    public function expiry(int $arg): InsertOptions
+    public function expiry($seconds): InsertOptions
     {
+        if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = $seconds->getTimestamp();
+        } else {
+            $this->expirySeconds = (int)$seconds;
+        }
+        return $this;
     }
 
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param int $arg the durability level to enforce
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
      * @return InsertOptions
+     * @since 4.0.0
      */
-    public function durabilityLevel(int $arg): InsertOptions
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): InsertOptions
     {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg encoding function with signature (returns tuple of bytes, flags and datatype):
-     *
-     *   `function encoder($value): [string $bytes, int $flags, int $datatype]`
+     * @param Transcoder $transcoder
+     * @return InsertOptions
+     * @since 4.0.0
      */
-    public function encoder(callable $arg): InsertOptions
+    public function transcoder(Transcoder $transcoder): InsertOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Delegates encoding of the document to associated transcoder
+     *
+     * @param InsertOptions|null $options
+     * @param $document
+     * @return array
+     * @since 4.0.0
+     */
+    public static function encodeDocument(?InsertOptions $options, $document): array
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance()->encode($document);
+        }
+        return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @private
+     * @param InsertOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?InsertOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'expirySeconds' => $options->expirySeconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+        ];
     }
 }
