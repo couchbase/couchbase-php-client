@@ -97,15 +97,15 @@ class Collection
      * perform mutations against it.
      *
      * @param string $id the key of the document to get
-     * @param int $lockTime the length of time to lock the document in ms
+     * @param int $lockTimeSeconds the length of time to lock the document in seconds
      * @param GetAndLockOptions|null $options the options to use for the operation
      * @return GetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function getAndLock(string $id, int $lockTime, GetAndLockOptions $options = null): GetResult
+    public function getAndLock(string $id, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentGetAndLock($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $lockTimeSeconds, GetAndLockOptions::export($options));
+        return new GetResult($response, GetAndLockOptions::getTranscoder($options));
     }
 
     /**
@@ -220,12 +220,12 @@ class Collection
      * @param string $cas the current cas value of the document
      * @param UnlockOptions|null $options the options to use for the operation
      * @return Result
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function unlock(string $id, string $cas, UnlockOptions $options = null): Result
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentUnlock($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $cas, UnlockOptions::export($options));
+        return new Result($response);
     }
 
     /**

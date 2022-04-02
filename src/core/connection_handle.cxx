@@ -675,6 +675,25 @@ cb_assign_durability(Request& req, const zval* options)
     return {};
 }
 
+static inline core_error_info
+cb_string_to_cas(const std::string& cas_string, protocol::cas& cas)
+{
+    try {
+        std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
+        cas = protocol::cas{ cas_value };
+    } catch (const std::invalid_argument&) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("no numeric conversion could be performed for encoded CAS value: \"{}\"", cas_string) };
+    } catch (const std::out_of_range&) {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("the number encoded as CAS is out of the range of representable values by a unsigned long long: \"{}\"",
+                             cas_string) };
+    }
+    return {};
+}
+
 static core_error_info
 cb_assign_cas(protocol::cas& cas, const zval* options)
 {
@@ -699,20 +718,7 @@ cb_assign_cas(protocol::cas& cas, const zval* options)
                      { __LINE__, __FILE__, __func__ },
                      "expected durabilityLevel to be a string in the options" };
     }
-    std::string cas_string(Z_STRVAL_P(value), Z_STRLEN_P(value));
-    try {
-        std::uint64_t cas_value = std::stoull(cas_string, 0, 16);
-        cas = protocol::cas{ cas_value };
-    } catch (const std::invalid_argument&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("no numeric conversion could be performed for encoded CAS value: \"{}\"", cas_string) };
-    } catch (const std::out_of_range&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("the number encoded as CAS is out of the range of representable values by a unsigned long long: \"{}\"",
-                             cas_string) };
-    }
+    cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
     return {};
 }
 
@@ -994,6 +1000,74 @@ connection_handle::document_get(zval* return_value,
     if (resp.expiry) {
         add_assoc_long(return_value, "expiry", resp.expiry.value());
     }
+    return {};
+}
+
+core_error_info
+connection_handle::document_get_and_lock(zval* return_value,
+                                         const zend_string* bucket,
+                                         const zend_string* scope,
+                                         const zend_string* collection,
+                                         const zend_string* id,
+                                         zend_long lock_time,
+                                         const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::get_and_lock_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.lock_time = static_cast<std::uint32_t>(lock_time);
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    add_assoc_long(return_value, "flags", resp.flags);
+    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    return {};
+}
+
+core_error_info
+connection_handle::document_unlock(zval* return_value,
+                                   const zend_string* bucket,
+                                   const zend_string* scope,
+                                   const zend_string* collection,
+                                   const zend_string* id,
+                                   const zend_string* locked_cas,
+                                   const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::unlock_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_string_to_cas(std::string(ZSTR_VAL(locked_cas), ZSTR_LEN(locked_cas)), request.cas); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
 }
 

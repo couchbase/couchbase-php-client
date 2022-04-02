@@ -71,6 +71,22 @@ class connection_handle
                                                const zend_string* id,
                                                const zval* options);
 
+    [[nodiscard]] core_error_info document_get_and_lock(zval* return_value,
+                                                        const zend_string* bucket,
+                                                        const zend_string* scope,
+                                                        const zend_string* collection,
+                                                        const zend_string* id,
+                                                        zend_long lock_time,
+                                                        const zval* options);
+
+    [[nodiscard]] core_error_info document_unlock(zval* return_value,
+                                                  const zend_string* bucket,
+                                                  const zend_string* scope,
+                                                  const zend_string* collection,
+                                                  const zend_string* id,
+                                                  const zend_string* cas,
+                                                  const zval* options);
+
     [[nodiscard]] core_error_info document_exists(zval* return_value,
                                                   const zend_string* bucket,
                                                   const zend_string* scope,

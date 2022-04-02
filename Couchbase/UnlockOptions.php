@@ -22,13 +22,45 @@ namespace Couchbase;
 
 class UnlockOptions
 {
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return UnlockOptions
+     * @since 4.0.0
+     */
+    public static function build(): UnlockOptions
+    {
+        return new UnlockOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return UnlockOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): UnlockOptions
+    public function timeout(int $milliseconds): UnlockOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param UnlockOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?UnlockOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

@@ -22,24 +22,82 @@ namespace Couchbase;
 
 class GetAndLockOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return GetAndLockOptions
+     * @since 4.0.0
+     */
+    public static function build(): GetAndLockOptions
+    {
+        return new GetAndLockOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return GetAndLockOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): GetAndLockOptions
+    public function timeout(int $milliseconds): GetAndLockOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg decoding function with signature (returns decoded value):
-     *
-     *   `function decoder(string $bytes, int $flags, int $datatype): mixed`
+     * @param Transcoder $transcoder
+     * @return GetAndLockOptions
+     * @since 4.0.0
      */
-    public function decoder(callable $arg): GetAndLockOptions
+    public function transcoder(Transcoder $transcoder): GetAndLockOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param GetAndLockOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?GetAndLockOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
+    }
+
+    /**
+     * @private
+     * @param GetAndLockOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?GetAndLockOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }
