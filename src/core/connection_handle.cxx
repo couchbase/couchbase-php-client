@@ -913,7 +913,7 @@ connection_handle::document_upsert(zval* return_value,
         cb_string_new(id),
     };
     couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
-    request.flags = std::uint32_t(flags);
+    request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1034,6 +1034,72 @@ connection_handle::document_get_and_lock(zval* return_value,
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
     add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    return {};
+}
+
+core_error_info
+connection_handle::document_get_and_touch(zval* return_value,
+                                          const zend_string* bucket,
+                                          const zend_string* scope,
+                                          const zend_string* collection,
+                                          const zend_string* id,
+                                          zend_long expiry,
+                                          const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::get_and_touch_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.expiry = static_cast<std::uint32_t>(expiry);
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    add_assoc_long(return_value, "flags", resp.flags);
+    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    return {};
+}
+
+core_error_info
+connection_handle::document_touch(zval* return_value,
+                                  const zend_string* bucket,
+                                  const zend_string* scope,
+                                  const zend_string* collection,
+                                  const zend_string* id,
+                                  zend_long expiry,
+                                  const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+
+    couchbase::operations::touch_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.expiry = static_cast<std::uint32_t>(expiry);
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
 }
 

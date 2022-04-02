@@ -22,24 +22,82 @@ namespace Couchbase;
 
 class GetAndTouchOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return GetAndTouchOptions
+     * @since 4.0.0
+     */
+    public static function build(): GetAndTouchOptions
+    {
+        return new GetAndTouchOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return GetAndTouchOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): GetAndTouchOptions
+    public function timeout(int $milliseconds): GetAndTouchOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg decoding function with signature (returns decoded value):
-     *
-     *   `function decoder(string $bytes, int $flags, int $datatype): mixed`
+     * @param Transcoder $transcoder
+     * @return GetAndTouchOptions
+     * @since 4.0.0
      */
-    public function decoder(callable $arg): GetAndTouchOptions
+    public function transcoder(Transcoder $transcoder): GetAndTouchOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param GetAndTouchOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?GetAndTouchOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
+    }
+
+    /**
+     * @private
+     * @param GetAndTouchOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?GetAndTouchOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

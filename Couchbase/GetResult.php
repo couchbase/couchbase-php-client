@@ -82,13 +82,9 @@ class GetResult extends Result
      */
     public function expiryTime(): ?DateTimeInterface
     {
-        if ($this->expiry == null) {
+        if ($this->expiry == null || $this->expiry == 0) {
             return null;
         }
-        try {
-            return new DateTimeImmutable($this->expiry);
-        } catch (\Exception $e) {
-            return null;
-        }
+        return DateTimeImmutable::createFromFormat("U", sprintf("%d", $this->expiry)) ?: null;
     }
 }

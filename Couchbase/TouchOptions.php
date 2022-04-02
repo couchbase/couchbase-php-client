@@ -22,13 +22,45 @@ namespace Couchbase;
 
 class TouchOptions
 {
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return TouchOptions
+     * @since 4.0.0
+     */
+    public static function build(): TouchOptions
+    {
+        return new TouchOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return TouchOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): TouchOptions
+    public function timeout(int $milliseconds): TouchOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param TouchOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?TouchOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

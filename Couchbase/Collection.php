@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\UnsupportedOperationException;
+use DateTimeInterface;
 
 /**
  * Collection is an object containing functionality for performing KeyValue operations against the server.
@@ -112,15 +113,20 @@ class Collection
      * Gets a document from the server and simultaneously updates its expiry time.
      *
      * @param string $id the key of the document
-     * @param int $expiry the length of time to update the expiry to in ms
+     * @param int|DateTimeInterface $expiry the length of time to update the expiry to in seconds, or epoch timestamp
      * @param GetAndTouchOptions|null $options the options to use for the operation
      * @return GetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function getAndTouch(string $id, int $expiry, GetAndTouchOptions $options = null): GetResult
+    public function getAndTouch(string $id, $expiry, GetAndTouchOptions $options = null): GetResult
     {
-        throw new UnsupportedOperationException();
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+        } else {
+            $expirySeconds = (int)$expiry;
+        }
+        $response = Extension\documentGetAndTouch($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $expirySeconds, GetAndTouchOptions::export($options));
+        return new GetResult($response, GetAndTouchOptions::getTranscoder($options));
     }
 
     /**
@@ -232,15 +238,20 @@ class Collection
      * Touches a document, setting a new expiry time.
      *
      * @param string $id the key of the document
-     * @param int $expiry the expiry time for the document in ms
+     * @param int|DateTimeInterface $expiry the expiry time for the document in ms
      * @param TouchOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function touch(string $id, int $expiry, TouchOptions $options = null): MutationResult
+    public function touch(string $id, $expiry, TouchOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+        } else {
+            $expirySeconds = (int)$expiry;
+        }
+        $response = Extension\documentTouch($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $expirySeconds, TouchOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**

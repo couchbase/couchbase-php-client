@@ -165,7 +165,7 @@ class LookupInResult extends Result
     {
         $expiry = $this->contentByPath('$document.exptime');
         if ($expiry != null) {
-            return DateTimeImmutable::createFromFormat("U", sprintf("%d", $expiry));
+            return DateTimeImmutable::createFromFormat("U", sprintf("%d", $expiry)) ?: null;
         }
         return null;
     }
