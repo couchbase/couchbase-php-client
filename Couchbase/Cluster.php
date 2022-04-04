@@ -74,7 +74,7 @@ class Cluster
     {
         $result = Extension\query($this->core, $statement, QueryOptions::export($options));
 
-        return new QueryResult($result);
+        return new QueryResult($result, QueryOptions::getTranscoder($options));
     }
 
     /**

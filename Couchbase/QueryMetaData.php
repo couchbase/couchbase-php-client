@@ -32,7 +32,7 @@ class QueryMetaData
     private ?string $profile = null;
     private array $warnings;
     private array $errors;
-    private ?array $metrics;
+    private ?array $metrics = null;
 
     /**
      * @private
@@ -63,6 +63,17 @@ class QueryMetaData
         }
         if (array_key_exists("metrics", $meta)) {
             $this->metrics = $meta["metrics"];
+        } else {
+            $this->metrics = [
+                "errorCount" => 0,
+                "mutationCount" => 0,
+                "resultCount" => 0,
+                "resultSize" => 0,
+                "sortCount" => 0,
+                "warningCount" => 0,
+                "elapsedTime" => 0,
+                "executionTime" => 0,
+            ];
         }
     }
 

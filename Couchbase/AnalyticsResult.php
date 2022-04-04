@@ -25,7 +25,6 @@ namespace Couchbase;
  */
 class AnalyticsResult
 {
-    private Transcoder $transcoder;
     private AnalyticsMetaData $meta;
     private array $rows;
 
@@ -41,7 +40,6 @@ class AnalyticsResult
         foreach ($result["rows"] as $row) {
             $this->rows[] = $transcoder->decode($row, 0);
         }
-        $this->transcode = $transcoder;
     }
 
     /**

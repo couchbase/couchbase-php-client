@@ -54,5 +54,17 @@ class MutationState
 
     public function export(): array
     {
+        $state = [];
+        /** @var MutationToken $token */
+        foreach ($this->tokens as $token) {
+            $state[] = [
+                "partitionId" => $token->partitionId(),
+                "partitionUuid" => hexdec($token->partitionUuid()),
+                "sequenceNumber" => hexdec($token->sequenceNumber()),
+                "bucketName" => $token->bucketName(),
+            ];
+        }
+
+        return $state;
     }
 }

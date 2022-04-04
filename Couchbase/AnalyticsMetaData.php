@@ -52,6 +52,16 @@ class AnalyticsMetaData
         }
         if (array_key_exists("metrics", $meta)) {
             $this->metrics = $meta["metrics"];
+        } else {
+            $this->metrics = [
+                "errorCount" => 0,
+                "processedObjects" => 0,
+                "resultCount" => 0,
+                "resultSize" => 0,
+                "warningCount" => 0,
+                "elapsedTime" => 0,
+                "executionTime" => 0,
+            ];
         }
     }
 

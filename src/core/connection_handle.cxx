@@ -1947,16 +1947,16 @@ connection_handle::query(const zend_string* statement, const zval* options)
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
             couchbase::mutation_token token{};
-            if (auto e = cb_assign_integer(token.partition_id, options, "partitionId"); e.ec) {
+            if (auto e = cb_assign_integer(token.partition_id, item, "partitionId"); e.ec) {
                 return { nullptr, e };
             }
-            if (auto e = cb_assign_integer(token.partition_uuid, options, "partitionUuid"); e.ec) {
+            if (auto e = cb_assign_integer(token.partition_uuid, item, "partitionUuid"); e.ec) {
                 return { nullptr, e };
             }
-            if (auto e = cb_assign_integer(token.sequence_number, options, "sequenceNumber"); e.ec) {
+            if (auto e = cb_assign_integer(token.sequence_number, item, "sequenceNumber"); e.ec) {
                 return { nullptr, e };
             }
-            if (auto e = cb_assign_string(token.bucket_name, options, "bucketName"); e.ec) {
+            if (auto e = cb_assign_string(token.bucket_name, item, "bucketName"); e.ec) {
                 return { nullptr, e };
             }
             vectors.emplace_back(token);
@@ -2018,10 +2018,10 @@ connection_handle::query(const zend_string* statement, const zval* options)
         add_assoc_long(&metrics, "sortCount", resp.meta.metrics.value().sort_count);
         add_assoc_long(&metrics, "warningCount", resp.meta.metrics.value().warning_count);
         add_assoc_long(&metrics,
-                       "elapsedTimeMilliseconds",
+                       "elapsedTime",
                        std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().elapsed_time).count());
         add_assoc_long(&metrics,
-                       "executionTimeMilliseconds",
+                       "executionTime",
                        std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().execution_time).count());
 
         add_assoc_zval(&meta, "metrics", &metrics);
@@ -2192,10 +2192,10 @@ connection_handle::analytics_query(const zend_string* statement, const zval* opt
             add_assoc_long(&metrics, "resultSize", resp.meta.metrics.result_size);
             add_assoc_long(&metrics, "warningCount", resp.meta.metrics.warning_count);
             add_assoc_long(&metrics,
-                           "elapsedTimeMilliseconds",
+                           "elapsedTime",
                            std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.elapsed_time).count());
             add_assoc_long(&metrics,
-                           "executionTimeMilliseconds",
+                           "executionTime",
                            std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.execution_time).count());
 
             add_assoc_zval(&meta, "metrics", &metrics);

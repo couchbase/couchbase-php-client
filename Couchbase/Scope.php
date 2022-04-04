@@ -69,7 +69,9 @@ class Scope
      */
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
-        throw new UnsupportedOperationException();
+        $result = Extension\query($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
+
+        return new QueryResult($result, QueryOptions::getTranscoder($options));
     }
 
     /**

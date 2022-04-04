@@ -32,10 +32,14 @@ class QueryResult
      * @private
      * @param array $result
      */
-    public function __construct(array $result)
+    public function __construct(array $result, Transcoder $transcoder)
     {
         $this->meta = new QueryMetaData($result["meta"]);
-        $this->rows = $result["rows"];
+
+        $this->rows = [];
+        foreach ($result["rows"] as $row) {
+            $this->rows[] = $transcoder->decode($row, 0);
+        }
     }
 
     /**

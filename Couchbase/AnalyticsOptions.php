@@ -153,7 +153,7 @@ class AnalyticsOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
-     * @return LookupInOptions
+     * @return AnalyticsOptions
      * @since 4.0.0
      */
     public function transcoder(Transcoder $transcoder): AnalyticsOptions

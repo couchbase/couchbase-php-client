@@ -22,7 +22,8 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     {
         try {
             $this->cluster->analyticsQuery("ALTER COLLECTION `$bucketName`.`$scopeName`.`$collectionName` ENABLE ANALYTICS");
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
     }
 
     function testScopeAnalyticsQuery()

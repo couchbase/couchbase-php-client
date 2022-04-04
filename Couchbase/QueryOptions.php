@@ -41,6 +41,15 @@ class QueryOptions
     private ?bool $preserveExpiry = null;
     private ?string $scopeName = null;
     private ?string $scopeQualifier = null;
+    private Transcoder $transcoder;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
 
     /**
      * Sets the operation timeout in milliseconds.
@@ -303,6 +312,34 @@ class QueryOptions
     {
         $this->preserveExpiry = $preserve;
         return $this;
+    }
+
+    /**
+     * Associate custom transcoder with the request.
+     *
+     * @param Transcoder $transcoder
+     * @return QueryOptions
+     * @since 4.0.0
+     */
+    public function transcoder(Transcoder $transcoder): QueryOptions
+    {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param QueryOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?QueryOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
     }
 
     public static function export(?QueryOptions $options, string $scopeName = null, string $bucketName = null): array

@@ -143,4 +143,47 @@ class CouchbaseTestCase extends TestCase
             );
         }
     }
+
+    function wrapException($cb, $type = null, $code = null, $message = null)
+    {
+        $exOut = null;
+        try {
+            $cb();
+        } catch (Exception $ex) {
+            $exOut = $ex;
+        }
+
+        if ($type !== null) {
+            $this->assertErrorType($type, $exOut);
+        }
+        if ($code !== null) {
+            $this->assertErrorCode($code, $exOut);
+        }
+        if ($message !== null) {
+            $this->assertErrorMessage($message, $exOut);
+        }
+
+        return $exOut;
+    }
+
+    function assertError($type, $code, $ex)
+    {
+        $this->assertErrorType($type, $ex);
+        $this->assertErrorCode($code, $ex);
+    }
+
+    function assertErrorType($type, $ex)
+    {
+        $this->assertInstanceOf($type, $ex);
+    }
+
+    function assertErrorMessage($msg, $ex)
+    {
+        $this->assertRegexp($msg, $ex->getMessage());
+    }
+
+    function assertErrorCode($code, $ex)
+    {
+        $this->assertEquals($code, $ex->getCode(), "Exception code does not match: {$ex->getCode()} != {$code}, exception message: '{$ex->getMessage()}'");
+    }
 }
