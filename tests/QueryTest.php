@@ -87,7 +87,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
                 $this->cluster->query("SELECT * FROM `$bucketName` USE KEYS $key", $options);
             },
             '\Couchbase\Exception\ParsingFailureException',
-            3000,
+            8,
             '/Ambiguous reference to field/'
         );
     }

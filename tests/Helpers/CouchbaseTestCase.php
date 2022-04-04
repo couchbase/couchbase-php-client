@@ -179,7 +179,7 @@ class CouchbaseTestCase extends TestCase
 
     function assertErrorMessage($msg, $ex)
     {
-        $this->assertRegexp($msg, $ex->getMessage());
+        $this->assertMatchesRegularExpression($msg, $ex->getMessage());
     }
 
     function assertErrorCode($code, $ex)
