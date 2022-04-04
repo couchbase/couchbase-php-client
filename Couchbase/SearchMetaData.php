@@ -46,7 +46,10 @@ class SearchMetaData
         $metrics = $metadata['metrics'];
         $this->successCount = $metrics['successPartitionCount'];
         $this->errorCount = $metrics['errorPartitionCount'];
-        $this->took = $metrics['tookMilliseconds'];
+        $took =  $metrics['tookNanoseconds'];
+        if ($took > 0) {
+            $this->took = intval($took / 1000);
+        }
         $this->totalHits = $metrics['totalRows'];
         $this->maxScore = $metrics['maxScore'];
         $this->metrics = $metrics;

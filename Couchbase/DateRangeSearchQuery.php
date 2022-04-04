@@ -31,8 +31,8 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
 {
     private ?float $boost = null;
     private ?string $field = null;
-    private ?string $start = null;
-    private ?string $end = null;
+    private $start = null;
+    private $end = null;
     private ?bool $inclusiveStart = null;
     private ?bool $inclusiveEnd = null;
     private ?string $datetimeParser = null;
@@ -84,8 +84,18 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      */
     public function start($start, bool $inclusive = false): DateRangeSearchQuery
     {
-        $this->start = $start;
-        $this->inclusiveStart = $inclusive;
+        switch (gettype($start)) {
+            case "integer":
+                $this->start = date(DATE_RFC3339, $start);
+                break;
+            case "string":
+                $this->start = $start;
+                break;
+            default:
+                throw new InvalidArgumentException();
+        }
+
+        $this ->inclusiveStart = $inclusive;
         return $this;
     }
 
@@ -101,8 +111,18 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      */
     public function end($end, bool $inclusive = false): DateRangeSearchQuery
     {
-        $this->end = $end;
-        $this->inclusiveEnd = $inclusive;
+        switch (gettype($end)) {
+            case "integer":
+                $this->end = date(DATE_RFC3339, $end);
+                break;
+            case "string":
+                $this->end = $end;
+                break;
+            default:
+                throw new InvalidArgumentException();
+        }
+
+        $this ->inclusiveEnd = $inclusive;
         return $this;
     }
 

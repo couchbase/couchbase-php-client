@@ -36,7 +36,18 @@ class SearchResult
     public function __construct(array $result)
     {
         $this->metadata = new SearchMetaData($result['meta']);
-        $this->rows = $result['rows'];
+        $this->rows = [];
+        foreach ($result['rows'] as $row) {
+            $this->rows[] = [
+                'id' => $row['id'],
+                'index' => $row['index'],
+                'score' => $row['score'],
+                'explanation' => (array) json_decode($row['explanation']),
+                'locations' => $row['locations'],
+                'fragments' => $row['fragments'],
+                'fields' => (array) json_decode($row['fields']),
+            ];
+        }
         $this->facets = [];
         foreach ($result['facets'] as $facet) {
             $this->facets[$facet['name']] = new SearchFacetResult($facet);

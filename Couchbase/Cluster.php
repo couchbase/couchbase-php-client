@@ -178,12 +178,4 @@ class Cluster
     {
         return Extension\clusterVersion($this->core, $bucketName);
     }
-
-    /**
-     * @private
-     */
-    public function core()
-    {
-        return $this->core;
-    }
 }

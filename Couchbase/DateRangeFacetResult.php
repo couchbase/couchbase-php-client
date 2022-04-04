@@ -38,9 +38,13 @@ class DateRangeFacetResult
     public function __construct(array $range)
     {
         $this->name = $range['name'];
-        $this->start = $range['start'];
-        $this->end = $range['end'];
         $this->count = $range['count'];
+        if (array_key_exists('start', $range)) {
+            $this->start = $range['start'];
+        }
+        if (array_key_exists('end', $range)) {
+            $this->end = $range['end'];
+        }
     }
 
     /**

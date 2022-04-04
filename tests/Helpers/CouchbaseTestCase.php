@@ -99,6 +99,9 @@ class CouchbaseTestCase extends TestCase
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function retryFor(int $failAfterSecs, int $sleepMillis, callable $fn)
     {
         $deadline = time() + $failAfterSecs;
@@ -109,6 +112,7 @@ class CouchbaseTestCase extends TestCase
             try {
                 return $fn();
             } catch (Exception $ex) {
+                printf("Function returned exception, will retry: %s\n", $ex->getMessage());
                 $endException = $ex;
             }
 
@@ -118,13 +122,25 @@ class CouchbaseTestCase extends TestCase
         throw $endException;
     }
 
-    public function createSearchDocs(Cluster $cluster, int $num, string $service)
+    public function upsertDocs(Cluster $cluster, int $num, string $service)
     {
         $collection = $cluster->bucket($this->env()->bucketName())->defaultCollection();
         $idBase = $this->uniqueId();
 
         for ($i = 0; $i < $num; $i++) {
-            $collection->upsert(sprintf("%d_%s_%d", $i, $idBase, $service), ["answer" => 42, "service" => $service]);
+            $collection->upsert(
+                sprintf("%d_%s_%d", $i, $idBase, $service),
+                [
+                "answer" => 42,
+                "service" => $service,
+                "city" => "London",
+                "geo" => [
+                    "accuracy" => "ROOFTOP",
+                    "lat" => 37.7825,
+                    "lon" => -122.393
+                ]
+                ]
+            );
         }
     }
 }

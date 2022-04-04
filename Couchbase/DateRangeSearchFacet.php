@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use JsonSerializable;
 
 /**
@@ -28,8 +29,8 @@ use JsonSerializable;
 class DateRangeSearchFacet implements JsonSerializable, SearchFacet
 {
     private string $field;
-    private int $limit;
-    private array $ranges;
+    private int $size;
+    private array $ranges = [];
 
     public function jsonSerialize(): mixed
     {
@@ -39,7 +40,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     public function __construct(string $field, int $limit)
     {
         $this->field = $field;
-        $this->limit = $limit;
+        $this->size = $limit;
     }
 
     /**
@@ -47,24 +48,39 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
      * @param int|string $start
      * @param int|string $end
      * @return DateRangeSearchFacet
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function addRange(string $name, $start = null, $end = null): DateRangeSearchFacet
     {
-        if ($this->ranges == null) {
-            $this->ranges = [];
-        }
-
         $range = [
             'name' => $name
         ];
 
         if ($start != null) {
-            $range['start'] = $start;
+            switch (gettype($start)) {
+                case "integer":
+                    $range['start'] = date(DATE_RFC3339, $start);
+                    break;
+                case "string":
+                    $range['start'] = $start;
+                    break;
+                default:
+                    throw new InvalidArgumentException();
+            }
         }
 
         if ($end != null) {
-            $range['end'] = $end;
+            switch (gettype($end)) {
+                case "integer":
+                    $range['end'] = date(DATE_RFC3339, $end);
+                    break;
+                case "string":
+                    $range['end'] = $end;
+                    break;
+                default:
+                    throw new InvalidArgumentException();
+            }
         }
 
         $this->ranges[] = $range;
@@ -76,7 +92,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     {
         return [
             'field' => $facet->field,
-            'limit' => $facet->limit,
+            'size' => $facet->size,
             'date_ranges' => $facet->ranges,
         ];
     }

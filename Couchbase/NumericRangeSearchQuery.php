@@ -31,8 +31,8 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
 {
     private ?float $boost = null;
     private ?string $field = null;
-    private ?int $min = null;
-    private ?int $max = null;
+    private ?float $min = null;
+    private ?float $max = null;
     private ?bool $inclusiveMin = null;
     private ?bool $inclusiveMax = null;
 
@@ -74,12 +74,12 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     /**
      * Sets the lower boundary of the range, inclusive or not depending on the second parameter.
      *
-     * @param int $min the lower boundary of the range.
+     * @param float $min the lower boundary of the range.
      * @param bool $inclusive whether the lower boundary should be inclusive.
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */
-    public function min(int $min, bool $inclusive = true): NumericRangeSearchQuery
+    public function min(float $min, bool $inclusive = true): NumericRangeSearchQuery
     {
         $this->min = $min;
         $this->inclusiveMin = $inclusive;
@@ -89,12 +89,12 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     /**
      * Sets the upper boundary of the range, inclusive or not depending on the second parameter.
      *
-     * @param int $max the upper boundary of the range.
+     * @param float $max the upper boundary of the range.
      * @param bool $inclusive whether the upper boundary should be inclusive.
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */
-    public function max(int $max, bool $inclusive = false): NumericRangeSearchQuery
+    public function max(float $max, bool $inclusive = false): NumericRangeSearchQuery
     {
         $this->max = $max;
         $this->inclusiveMax = $inclusive;

@@ -2357,7 +2357,7 @@ connection_handle::search_query(const zend_string* index_name, const zend_string
         add_assoc_string(&z_row, "id", row.id.c_str());
         add_assoc_string(&z_row, "fields", row.fields.c_str());
         add_assoc_string(&z_row, "explanation", row.explanation.c_str());
-        add_assoc_long(&z_row, "score", row.score);
+        add_assoc_double(&z_row, "score", row.score);
 
         zval z_locations;
         array_init(&z_locations);
@@ -2383,6 +2383,20 @@ connection_handle::search_query(const zend_string* index_name, const zend_string
         }
         add_assoc_zval(&z_row, "locations", &z_locations);
 
+        zval fragments;
+        array_init(&fragments);
+        for (auto const& fragment : row.fragments) {
+            zval z_fragment_values;
+            array_init(&z_fragment_values);
+
+            for(const auto& fragment_value: fragment.second) {
+                add_next_index_string(&z_fragment_values, fragment_value.c_str());
+            }
+
+            add_assoc_zval(&fragments, fragment.first.c_str(), &z_fragment_values);
+        }
+        add_assoc_zval(&z_row, "fragments", &fragments);
+
         add_next_index_zval(&rows, &z_row);
     }
     add_assoc_zval(&retval, "rows", &rows);
@@ -2393,7 +2407,7 @@ connection_handle::search_query(const zend_string* index_name, const zend_string
 
     zval metrics;
     array_init(&metrics);
-    add_assoc_long(&metrics, "tookMilliseconds", std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.took).count());
+    add_assoc_long(&metrics, "tookNanoseconds",resp.meta.metrics.took.count());
     add_assoc_long(&metrics, "totalRows", resp.meta.metrics.total_rows);
     add_assoc_double(&metrics, "maxScore", resp.meta.metrics.max_score);
     add_assoc_long(&metrics, "successPartitionCount", resp.meta.metrics.success_partition_count);

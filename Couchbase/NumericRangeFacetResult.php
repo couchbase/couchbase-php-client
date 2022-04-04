@@ -38,9 +38,13 @@ class NumericRangeFacetResult
     public function __construct(array $range)
     {
         $this->name = $range['name'];
-        $this->min = $range['min'];
-        $this->max = $range['max'];
         $this->count = $range['count'];
+        if (array_key_exists('min', $range)) {
+            $this->min = $range['min'];
+        }
+        if (array_key_exists('max', $range)) {
+            $this->max = $range['max'];
+        }
     }
 
     /**

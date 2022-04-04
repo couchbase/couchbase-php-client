@@ -19,7 +19,16 @@
 declare(strict_types=1);
 
 use Couchbase\Cluster;
-use Couchbase\Extension;
+use Couchbase\ConjunctionSearchQuery;
+use Couchbase\DateRangeSearchFacet;
+use Couchbase\DateRangeSearchQuery;
+use Couchbase\DisjunctionSearchQuery;
+use Couchbase\MatchPhraseSearchQuery;
+use Couchbase\MatchSearchQuery;
+use Couchbase\MutationState;
+use Couchbase\NumericRangeSearchFacet;
+use Couchbase\NumericRangeSearchQuery;
+use Couchbase\SearchHighlightMode;
 use Couchbase\SearchOptions;
 use Couchbase\TermSearchFacet;
 use Couchbase\TermSearchQuery;
@@ -28,79 +37,405 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class SearchTest extends Helpers\CouchbaseTestCase
 {
-    function createSearchIndex(Cluster $cluster, string $indexName, string $bucketName)
+    private Cluster $cluster;
+
+    public function setUp(): void
     {
-        Extension\searchIndexUpsert(
-            $cluster->core(),
-            [
-                'name' => $indexName,
-                'type' => 'fulltext-index',
-                'sourceType' => 'couchbase',
-                'sourceName' => $bucketName
-            ]
-        );
+        parent::setUp();
+
+        $this->cluster = $this->connectCluster();
     }
 
-    function testSearchReturnsResultsAndFacets()
+    public function tearDown(): void
+    {
+        parent::tearDown();
+
+        // close cluster here?
+    }
+
+    public function testSearchWithLimit()
     {
         $this->skipIfCaves();
 
-        $cluster = $this->connectCluster();
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options = new SearchOptions();
+        $options->limit(3);
 
-        $num = 5;
-        $name = sprintf("test_%s", $this->uniqueId());
-        $service = sprintf("search_%s", $this->uniqueId());
-        $this->createSearchDocs($cluster, $num, $service);
-        $this->createSearchIndex($cluster, $name, $this->env()->bucketName());
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
-        $query = new TermSearchQuery($service);
-        $query = $query->field('service');
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertCount(2, $result->rows());
+        $this->assertEquals(2, $result->metaData()->totalHits());
 
-        $facets = [
-            'type' => new TermSearchFacet('service', 5)
-        ];
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertGreaterThan(0, $hit['score']);
+        }
+    }
 
-        $opts = new SearchOptions();
-        $opts = $opts->includeLocations(true)->facets($facets);
+    function testSearchWithNoHits()
+    {
+        $query = new MatchPhraseSearchQuery("doesnotexistintheindex");
+        $options = new SearchOptions();
+        $options->limit(3);
 
-        /** @var \Couchbase\SearchResult $result */
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertEmpty($result->rows());
+        $this->assertEquals(0, $result->metaData()->totalHits());
+    }
+
+    function testSearchWithConsistency()
+    {
+        $id = uniqid('testSearchWithConsistency');
+        $query = new MatchPhraseSearchQuery($id);
+        $options = new SearchOptions();
+        $options->limit(3);
+
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertEmpty($result->rows());
+        $this->assertEquals(0, $result->metaData()->totalHits());
+
+        $collection = $this->cluster->bucket('beer-sample')->defaultCollection();
+        $result = $collection->upsert($id, ["type" => "beer", "name" => $id]);
+        $mutationState = new MutationState();
+        $mutationState->add($result);
+
+        $options->consistentWith("beer-search", $mutationState);
+
+        // Eventual consistency for consistent with...
         $result = $this->retryFor(
-            30,
-            250,
-            function () use ($cluster, $name, $query, $opts, $num) {
-                $result = $cluster->searchQuery($name, $query, $opts);
-                if (count($result->rows()) < $num) {
-                    throw new Exception(sprintf("Expected %d rows but was %d", $num, count($result->rows())));
+            5,
+            50,
+            function () use ($query, $options) {
+                $result = $this->cluster->searchQuery("beer-search", $query, $options);
+                if (count($result->rows()) == 0) {
+                    throw new Exception("Excepted rows to not to be empty");
                 }
 
                 return $result;
             }
         );
 
-        $this->assertCount($num, $result->rows());
-        $meta = $result->metadata();
-        $this->assertNotEmpty($meta->clientContextId());
-        $this->assertEquals(5, $meta->totalHits());
-        $this->assertEquals(0, $meta->errorCount());
-        $this->assertNotEmpty($meta->maxScore());
-        $this->assertNotEmpty($meta->took());
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertEquals(1, $result->metaData()->totalHits());
+        $this->assertEquals($id, $result->rows()[0]['id']);
+    }
 
-        $facets = $result->facets();
-        $this->assertArrayHasKey('type', $facets);
+    function testSearchWithFields()
+    {
+        $nameField = "name";
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options = new SearchOptions();
+        $options->limit(3)->fields([$nameField]);
 
-        /** @var \Couchbase\SearchFacetResult $facet */
-        $facet = $facets['type'];
-        $this->assertEquals('service', $facet->field());
-        $this->assertEquals(0, $facet->missing());
-        $this->assertEquals(5, $facet->total());
-        $this->assertEquals(0, $facet->other());
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
-        /** @var []\Couchbase\TermFacetResult $facet */
-        $terms = $facet->terms();
-        $this->assertCount(1, $terms);
-        /** @var \Couchbase\TermFacetResult $term */
-        $term = $terms[0];
-        $this->assertEquals($service, $term->term());
-        $this->assertEquals(5, $term->count());
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertCount(2, $result->rows());
+        $this->assertEquals(2, $result->metaData()->totalHits());
+
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertGreaterThan(0, $hit['score']);
+            $this->assertNotEmpty($hit['fields']);
+            $this->assertNotNull($hit['fields']['name']);
+        }
+    }
+
+    function testSearchWithRanges()
+    {
+        $query = (new NumericRangeSearchQuery())->field("abv")->min(2.0)->max(3.2);
+        $options = new SearchOptions();
+        $options->fields(["abv"]);
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertEquals(count($result->rows()), $result->metaData()->totalHits());
+
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertGreaterThan(0, $hit['score']);
+            $this->assertNotEmpty($hit['fields']);
+            $this->assertNotNull($hit['fields']['abv']);
+            $this->assertGreaterThanOrEqual(2.0, $hit['fields']['abv']);
+            $this->assertLessThan(3.3, $hit['fields']['abv']);
+        }
+
+        $startDate = new DateTime('2010-11-01 10:00:00');
+        $startStr = $startDate->format(DATE_RFC3339);
+        $query = new ConjunctionSearchQuery(
+            [
+            (new TermSearchQuery("beer"))->field("type"),
+            (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010))
+            ]
+        );
+        $options = new SearchOptions();
+        $options->fields(["updated", "type"]);
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertEquals(count($result->rows()), $result->metaData()->totalHits());
+
+        $endDate = new DateTime('2010-12-01 20:00:00');
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertGreaterThan(0, $hit['score']);
+            $this->assertNotEmpty($hit['fields']);
+            $this->assertNotNull($hit['fields']['updated']);
+            $hitDate = new DateTime($hit['fields']['updated']);
+            $diff = $startDate->diff($hitDate);
+            $this->assertEquals(0, $diff->invert, "The hit->update date ({$hitDate->format(DATE_RFC3339)}) should go after start date ({$startDate->format(DATE_RFC3339)})");
+            $diff = $endDate->diff($hitDate);
+            $this->assertEquals(1, $diff->invert, "The hit->update date ({$hitDate->format(DATE_RFC3339)}) should go before or equals to end date ({$startDate->format(DATE_RFC3339)})");
+        }
+    }
+
+    function testCompoundSearchQueries()
+    {
+        $nameQuery = (new MatchSearchQuery("green"))->field("name")->boost(3.4);
+        $descriptionQuery = (new MatchSearchQuery("hop"))->field("description")->fuzziness(1);
+
+        $disjunctionQuery = new DisjunctionSearchQuery([$nameQuery, $descriptionQuery]);
+        $options = new SearchOptions();
+        $options->fields(["type", "name", "description"]);
+        $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
+        $this->assertGreaterThan(1000, $result->metaData()->totalHits());
+        $this->assertNotEmpty($result->rows());
+        $this->assertMatchesRegularExpression('/green/i', $result->rows()[0]['fields']['name']);
+        $this->assertDoesNotMatchRegularExpression('/hop/i', $result->rows()[0]['fields']['name']);
+        $this->assertMatchesRegularExpression('/hop/i', $result->rows()[0]['fields']['description']);
+        $this->assertDoesNotMatchRegularExpression('/green/i', $result->rows()[0]['fields']['description']);
+
+        $disjunctionQuery->min(2);
+        $options = new SearchOptions();
+        $options->fields(["type", "name", "description"]);
+        $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
+        $this->assertNotEmpty($result->rows());
+        $this->assertLessThan(10, $result->metaData()->totalHits());
+        $disjunction2Result = $result;
+
+        $conjunctionQuery = new ConjunctionSearchQuery([$nameQuery, $descriptionQuery]);
+        $options = new SearchOptions();
+        $options->fields(["type", "name", "description"]);
+        $result = $this->cluster->searchQuery("beer-search", $conjunctionQuery, $options);
+        $this->assertNotEmpty($result->rows());
+        $this->assertEquals(count($disjunction2Result->rows()), count($result->rows()));
+        $this->assertEquals(
+            $disjunction2Result->rows()[0]['fields']['name'],
+            $result->rows()[0]['fields']['name']
+        );
+        $this->assertEquals(
+            $disjunction2Result->rows()[0]['fields']['description'],
+            $result->rows()[0]['fields']['description']
+        );
+    }
+
+    function testSearchWithFragments()
+    {
+        $query = new MatchSearchQuery("hop beer");
+        $options = new SearchOptions();
+        $options->limit(3)->highlight(SearchHighlightMode::HTML, ["name"]);
+
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $this->assertNotEmpty($result->rows());
+
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertNotEmpty($hit['fragments']);
+            $this->assertNotNull($hit['fragments']['name']);
+            foreach ($hit['fragments']['name'] as $fragment) {
+                $this->assertMatchesRegularExpression('/<mark>/', $fragment);
+            }
+        }
+    }
+
+    function testSearchWithFacets()
+    {
+        $query = (new TermSearchQuery("beer"))->field("type");
+        $options = new SearchOptions();
+        $options->facets(
+            [
+            "foo" => new TermSearchFacet("name", 3),
+            "bar" => (new DateRangeSearchFacet("updated", 1))
+                ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
+            "baz" => (new NumericRangeSearchFacet("abv", 2))
+                ->addRange("strong", 4.9, null)
+                ->addRange("light", null, 4.89)
+            ]
+        );
+
+        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotEmpty($result->rows());
+        $this->assertNotEmpty($result->facets());
+
+        $this->assertNotNull($result->facets()['foo']);
+        $this->assertEquals('name', $result->facets()['foo']->field());
+        $this->assertEquals('ale', $result->facets()['foo']->terms()[0]->term());
+        $this->assertGreaterThan(1000, $result->facets()['foo']->terms()[0]->count());
+
+        $this->assertNotNull($result->facets()['bar']);
+        $this->assertEquals('updated', $result->facets()['bar']->field());
+        $this->assertEquals('old', $result->facets()['bar']->dateRanges()[0]->name());
+        $this->assertGreaterThan(5000, $result->facets()['bar']->dateRanges()[0]->count());
+
+        $this->assertNotNull($result->facets()['baz']);
+        $this->assertEquals('abv', $result->facets()['baz']->field());
+        $this->assertEquals('light', $result->facets()['baz']->numericRanges()[0]->name());
+        $this->assertGreaterThan(0, $result->facets()['baz']->numericRanges()[0]->max());
+        $this->assertGreaterThan(100, $result->facets()['baz']->numericRanges()[0]->count());
     }
 }
+
+/*
+curl -XPUT -H "Content-Type: application/json" \
+-u Administrator:password http://localhost:8094/api/index/beer-search -d \
+'{
+  "type": "fulltext-index",
+  "name": "beer-search",
+  "sourceType": "couchbase",
+  "sourceName": "beer-sample",
+  "planParams": {
+    "maxPartitionsPerPIndex": 171,
+    "indexPartitions": 6
+  },
+  "params": {
+    "doc_config": {
+      "docid_prefix_delim": "",
+      "docid_regexp": "",
+      "mode": "type_field",
+      "type_field": "type"
+    },
+    "mapping": {
+      "analysis": {},
+      "default_analyzer": "standard",
+      "default_datetime_parser": "dateTimeOptional",
+      "default_field": "_all",
+      "default_mapping": {
+        "dynamic": true,
+        "enabled": true
+      },
+      "default_type": "_default",
+      "docvalues_dynamic": true,
+      "index_dynamic": true,
+      "store_dynamic": false,
+      "type_field": "_type",
+      "types": {
+        "beer": {
+          "dynamic": true,
+          "enabled": true,
+          "properties": {
+            "abv": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "abv",
+                  "store": true,
+                  "type": "number"
+                }
+              ]
+            },
+            "category": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "category",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
+            "description": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "description",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
+            "name": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "name",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
+            "style": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "style",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
+            "updated": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "docvalues": true,
+                  "include_in_all": true,
+                  "include_term_vectors": true,
+                  "index": true,
+                  "name": "updated",
+                  "store": true,
+                  "type": "datetime"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "store": {
+      "indexType": "scorch"
+    }
+  },
+  "sourceParams": {}
+}'
+*/

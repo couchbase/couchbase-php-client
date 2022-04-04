@@ -29,8 +29,8 @@ use JsonSerializable;
 class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
 {
     private string $field;
-    private int $limit;
-    private array $ranges;
+    private int $size;
+    private array $ranges = [];
 
     /**
      * @throws InvalidArgumentException
@@ -43,7 +43,7 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
     public function __construct(string $field, int $limit)
     {
         $this->field = $field;
-        $this->limit = $limit;
+        $this->size = $limit;
     }
 
     /**
@@ -55,10 +55,6 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
      */
     public function addRange(string $name, float $min = null, float $max = null): NumericRangeSearchFacet
     {
-        if ($this->ranges == null) {
-            $this->ranges = [];
-        }
-
         $range = [
             'name' => $name
         ];
@@ -88,7 +84,7 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
 
         return [
             'field' => $facet->field,
-            'limit' => $facet->limit,
+            'size' => $facet->size,
             'numeric_ranges' => $facet->ranges,
         ];
     }
