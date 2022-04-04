@@ -42,4 +42,23 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->assertNotEmpty($res->rows());
         $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
     }
+
+    function testClusterAnalyticsQuery()
+    {
+        $this->skipIfCaves();
+
+        $this->maybeCreateAnalyticsIndex("beer-sample");
+
+        $id = $this->uniqueId();
+        $bucket = $this->cluster->bucket('beer-sample');
+        $collection = $bucket->defaultCollection();
+        $collection->upsert($id, ["bar" => 42]);
+
+        $options = (new \Couchbase\AnalyticsOptions())
+            ->scanConsistency(AnalyticsScanConsistency::REQUEST_PLUS)
+            ->positionalParameters([$id]);
+        $res = $this->cluster->analyticsQuery("SELECT * FROM `beer-sample`.`_default`.`_default` where meta().id = \$1", $options);
+        $this->assertNotEmpty($res->rows());
+        $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
+    }
 }
