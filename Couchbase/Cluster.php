@@ -90,7 +90,7 @@ class Cluster
     {
         $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options));
 
-        return new AnalyticsResult($result);
+        return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
     }
 
     /**

@@ -25,6 +25,7 @@ namespace Couchbase;
  */
 class AnalyticsOptions
 {
+    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?array $namedParameters = null;
     private ?array $positionalParameters = null;
@@ -33,6 +34,14 @@ class AnalyticsOptions
     private ?bool $priority = null;
     private ?bool $readonly = null;
     private ?int $scanConsistency = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
 
     /**
      * Sets the operation timeout in milliseconds.
@@ -138,6 +147,34 @@ class AnalyticsOptions
     {
         $this->scanConsistency = $consistencyLevel;
         return $this;
+    }
+
+    /**
+     * Associate custom transcoder with the request.
+     *
+     * @param Transcoder $transcoder
+     * @return LookupInOptions
+     * @since 4.0.0
+     */
+    public function transcoder(Transcoder $transcoder): AnalyticsOptions
+    {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param AnalyticsOptions|null $options
+     * @return Transcoder
+     * @since 4.0.0
+     */
+    public static function getTranscoder(?AnalyticsOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
     }
 
     public static function export(?AnalyticsOptions $options, string $scopeName = null, string $bucketName = null): array

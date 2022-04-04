@@ -83,6 +83,6 @@ class Scope
     {
         $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
 
-        return new AnalyticsResult($result);
+        return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
     }
 }
