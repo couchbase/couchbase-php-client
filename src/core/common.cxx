@@ -356,7 +356,7 @@ create_exception(zval* return_value, const core_error_info& error_info)
         message << ": \"" << error_info.message << "\"";
     }
     if (!enhanced_error_message.empty()) {
-        message << ", " << enhanced_error_message << "\"";
+        message << ", " << enhanced_error_message;
     }
     if (!error_info.location.function_name.empty()) {
         message << " in '" << error_info.location.function_name << "'";
