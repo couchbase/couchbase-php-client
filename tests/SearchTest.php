@@ -90,7 +90,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
     function testSearchWithConsistency()
     {
-        $id = uniqid('testSearchWithConsistency');
+        $id = $this->uniqueId();
         $query = new MatchPhraseSearchQuery($id);
         $options = new SearchOptions();
         $options->limit(3);

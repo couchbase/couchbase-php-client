@@ -78,10 +78,11 @@ class Scope
      * @param string $statement the analytics query statement to execute
      * @param AnalyticsOptions|null $options the options to use when executing the query
      * @return AnalyticsResult
-     * @throws UnsupportedOperationException
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
-        throw new UnsupportedOperationException();
+        $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
+
+        return new AnalyticsResult($result);
     }
 }

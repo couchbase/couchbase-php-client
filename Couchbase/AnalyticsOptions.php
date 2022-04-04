@@ -32,7 +32,7 @@ class AnalyticsOptions
     private ?string $clientContextId = null;
     private ?bool $priority = null;
     private ?bool $readonly = null;
-    private ?string $scanConsistency = null;
+    private ?int $scanConsistency = null;
 
     /**
      * Sets the operation timeout in milliseconds.
@@ -130,9 +130,11 @@ class AnalyticsOptions
      * Sets the scan consistency.
      *
      * @param string $consistencyLevel the scan consistency level
+     * @see AnalyticsScanConsistency
      * @return AnalyticsOptions
+     * @since 4.0.0
      */
-    public function scanConsistency(string $consistencyLevel): AnalyticsOptions
+    public function scanConsistency(int $consistencyLevel): AnalyticsOptions
     {
         $this->scanConsistency = $consistencyLevel;
         return $this;

@@ -35,7 +35,10 @@ class AnalyticsResult
     public function __construct(array $result)
     {
         $this->meta = new AnalyticsMetaData($result["meta"]);
-        $this->rows = $result["rows"];
+        $this->rows = [];
+        foreach ($result["rows"] as $row) {
+            $this->rows[] = (array) json_decode($row, true);
+        }
     }
 
     /**
