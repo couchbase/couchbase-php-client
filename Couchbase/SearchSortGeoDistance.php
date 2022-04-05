@@ -20,17 +20,29 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * Sort by a location and unit in the hits.
  */
 class SearchSortGeoDistance implements JsonSerializable, SearchSort
 {
-    public function jsonSerialize()
+    private string $field;
+    private float $longitude;
+    private float $latitude;
+    private ?bool $descending = null;
+    private ?string $unit = null;
+
+    public function jsonSerialize(): mixed
     {
+        return SearchSortGeoDistance::export($this);
     }
 
-    public function __construct(string $field, float $logitude, float $latitude)
+    public function __construct(string $field, float $longitude, float $latitude)
     {
+        $this->field = $field;
+        $this->longitude = $longitude;
+        $this->latitude = $latitude;
     }
 
     /**
@@ -39,9 +51,12 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
      * @param bool $descending
      *
      * @return SearchSortGeoDistance
+     * @since 4.0.0
      */
     public function descending(bool $descending): SearchSortGeoDistance
     {
+        $this->descending = $descending;
+        return $this;
     }
 
     /**
@@ -50,8 +65,32 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
      * @param string $unit
      *
      * @return SearchSortGeoDistance
+     * @since 4.0.0
      */
     public function unit(string $unit): SearchSortGeoDistance
     {
+        $this->unit = $unit;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(SearchSortGeoDistance $sort): array
+    {
+        $json = [
+            'by' => 'geo_distance',
+            'field' => $sort->field,
+            'location' => [$sort->longitude, $sort->latitude]
+        ];
+
+        if ($sort->descending != null) {
+            $json['desc'] = $sort->descending;
+        }
+        if ($sort->unit != null) {
+            $json['unit'] = $sort->unit;
+        }
+
+        return $json;
     }
 }

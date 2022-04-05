@@ -20,13 +20,18 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * Sort by the hit score.
  */
 class SearchSortScore implements JsonSerializable, SearchSort
 {
-    public function jsonSerialize()
+    private ?bool $descending = null;
+
+    public function jsonSerialize(): mixed
     {
+        return SearchSortScore::export($this);
     }
 
     public function __construct()
@@ -39,8 +44,27 @@ class SearchSortScore implements JsonSerializable, SearchSort
      * @param bool $descending
      *
      * @return SearchSortScore
+     * @since 4.0.0
      */
     public function descending(bool $descending): SearchSortScore
     {
+        $this->descending = $descending;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(SearchSortScore $sort): array
+    {
+        $json = [
+            'by' => 'score'
+        ];
+
+        if ($sort->descending != null) {
+            $json['desc'] = $sort->descending;
+        }
+
+        return $json;
     }
 }

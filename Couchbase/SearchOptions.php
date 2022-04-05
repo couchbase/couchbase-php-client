@@ -20,7 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-class SearchOptions
+use JsonSerializable;
+
+class SearchOptions implements \JsonSerializable
 {
     private ?int $timeoutMilliseconds = null;
     private ?int $limit = null;
@@ -35,6 +37,11 @@ class SearchOptions
     private ?array $collectionNames = null;
     private ?array $raw;
     private ?bool $includeLocations = null;
+
+    public function jsonSerialize(): mixed
+    {
+        return SearchOptions::export($this);
+    }
 
     /**
      * Sets the server side timeout in milliseconds
@@ -282,7 +289,13 @@ class SearchOptions
         if ($options->highlight != null) {
             $highlightFields = $options->highlight['fields'];
         }
-
+        $sort = null;
+        if ($options->sort != null) {
+            $sort = [];
+            foreach ($options->sort as $s) {
+                $sort[] = json_encode($s);
+            }
+        }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'limit' => $options->limit,
@@ -290,7 +303,7 @@ class SearchOptions
             'explain' => $options->explain,
             'disableScoring' => $options->disableScoring,
             'fields' => $options->fields,
-            'sortSpecs' => $options->sort,
+            'sortSpecs' => $sort,
             'consistentWith' => $options->consistentWith,
             'facets' => $options->facets,
             'highlightStyle' => $highlightStyle,

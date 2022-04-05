@@ -20,14 +20,20 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * Sort by the document identifier.
  */
 class SearchSortId implements JsonSerializable, SearchSort
 {
-    public function jsonSerialize()
+    private ?bool $descending = null;
+
+    public function jsonSerialize(): mixed
     {
+        return SearchSortId::export($this);
     }
+
 
     public function __construct()
     {
@@ -39,8 +45,27 @@ class SearchSortId implements JsonSerializable, SearchSort
      * @param bool $descending
      *
      * @return SearchSortId
+     * @since 4.0.0
      */
     public function descending(bool $descending): SearchSortId
     {
+        $this->descending = $descending;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(SearchSortId $sort): array
+    {
+        $json = [
+            'by' => 'id'
+        ];
+
+        if ($sort->descending != null) {
+            $json['desc'] = $sort->descending;
+        }
+
+        return $json;
     }
 }

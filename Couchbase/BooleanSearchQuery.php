@@ -66,7 +66,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      */
     public function must(ConjunctionSearchQuery $query): BooleanSearchQuery
     {
-        $this->must->and($query);
+        $this->must->and(...$query->childQueries());
         return $this;
     }
 
@@ -79,7 +79,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      */
     public function mustNot(DisjunctionSearchQuery $query): BooleanSearchQuery
     {
-        $this->mustNot->or($query);
+        $this->mustNot->or(...$query->childQueries());
         return $this;
     }
 
@@ -92,7 +92,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      */
     public function should(DisjunctionSearchQuery $query): BooleanSearchQuery
     {
-        $this->should->or($query);
+        $this->should->or(...$query->childQueries());
         return $this;
     }
 

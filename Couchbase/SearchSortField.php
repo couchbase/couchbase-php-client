@@ -20,17 +20,27 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * Sort by a field in the hits.
  */
 class SearchSortField implements JsonSerializable, SearchSort
 {
-    public function jsonSerialize()
+    private ?bool $descending = null;
+    private ?string $type = null;
+    private ?string $mode = null;
+    private ?string $missing = null;
+    private string $field;
+
+    public function jsonSerialize(): mixed
     {
+        return SearchSortField::export($this);
     }
 
     public function __construct(string $field)
     {
+        $this->field = $field;
     }
 
     /**
@@ -39,9 +49,12 @@ class SearchSortField implements JsonSerializable, SearchSort
      * @param bool $descending
      *
      * @return SearchSortField
+     * @since 4.0.0
      */
     public function descending(bool $descending): SearchSortField
     {
+        $this->descending = $descending;
+        return $this;
     }
 
     /**
@@ -53,9 +66,12 @@ class SearchSortField implements JsonSerializable, SearchSort
      * @see SearchSortType::STRING
      * @see SearchSortType::NUMBER
      * @see SearchSortType::DATE
+     * @since 4.0.0
      */
     public function type(string $type): SearchSortField
     {
+        $this->type = $type;
+        return $this;
     }
 
     /**
@@ -65,9 +81,12 @@ class SearchSortField implements JsonSerializable, SearchSort
      *
      * @see SearchSortMode::MIN
      * @see SearchSortMode::MAX
+     * @since 4.0.0
      */
     public function mode(string $mode): SearchSortField
     {
+        $this->mode = $mode;
+        return $this;
     }
 
     /**
@@ -77,8 +96,37 @@ class SearchSortField implements JsonSerializable, SearchSort
      *
      * @see SearchSortMissing::FIRST
      * @see SearchSortMissing::LAST
+     * @since 4.0.0
      */
     public function missing(string $missing): SearchSortField
     {
+        $this->missing = $missing;
+        return $this;
+    }
+
+    /**
+     * @private
+     */
+    public static function export(SearchSortField $sort): array
+    {
+        $json = [
+            'by' => 'field',
+            'field' => $sort->field
+        ];
+
+        if ($sort->descending != null) {
+            $json['desc'] = $sort->descending;
+        }
+        if ($sort->type != null) {
+            $json['type'] = $sort->type;
+        }
+        if ($sort->mode != null) {
+            $json['mode'] = $sort->mode;
+        }
+        if ($sort->missing != null) {
+            $json['missing'] = $sort->missing;
+        }
+
+        return $json;
     }
 }

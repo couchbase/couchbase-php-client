@@ -108,7 +108,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     public static function export(NumericRangeSearchQuery $query): array
     {
         if ($query->min == null && $query->max == null) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException('Either max or min must be specified for numeric range query');
         }
 
         $json = [

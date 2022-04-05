@@ -111,7 +111,7 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
     public static function export(TermRangeSearchQuery $query): array
     {
         if ($query->min == null && $query->max == null) {
-            throw new InvalidArgumentException();
+            throw new InvalidArgumentException("Either max or min must be set for term range query");
         }
 
         $json = [
