@@ -79,7 +79,10 @@ unless File.exists?(couchbase_ext)
   end
 end
 
+tests = ARGV.to_a
+tests << File.join(project_root, "tests") if tests.empty?
+
 php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
 Dir.chdir(project_root) do 
-  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{File.join(project_root, "tests").shellescape}")
+  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')}")
 end
