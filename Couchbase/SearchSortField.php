@@ -33,11 +33,9 @@ class SearchSortField implements JsonSerializable, SearchSort
     private ?string $missing = null;
     private string $field;
 
-    public function jsonSerialize(): mixed
-    {
-        return SearchSortField::export($this);
-    }
-
+    /**
+     * @param string $field
+     */
     public function __construct(string $field)
     {
         $this->field = $field;
@@ -102,6 +100,15 @@ class SearchSortField implements JsonSerializable, SearchSort
     {
         $this->missing = $missing;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize(): mixed
+    {
+        return SearchSortField::export($this);
     }
 
     /**

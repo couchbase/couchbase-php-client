@@ -35,11 +35,6 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     private ?int $fuzziness = null;
     private ?string $analyzer = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return MatchSearchQuery::export($this);
-    }
-
     public function __construct(string $match)
     {
         $this->match = $match;
@@ -109,6 +104,15 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->fuzziness = $fuzziness;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return MatchSearchQuery::export($this);
     }
 
     /**

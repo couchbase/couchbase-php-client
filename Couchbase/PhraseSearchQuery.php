@@ -34,11 +34,9 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private ?string $field = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return PhraseSearchQuery::export($this);
-    }
-
+    /**
+     * @param string ...$terms
+     */
     public function __construct(string ...$terms)
     {
         $this->terms = $terms;
@@ -68,6 +66,15 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return PhraseSearchQuery::export($this);
     }
 
     /**

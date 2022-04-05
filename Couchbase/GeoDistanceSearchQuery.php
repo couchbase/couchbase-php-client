@@ -35,11 +35,12 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private ?string $field = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return GeoDistanceSearchQuery::export($this);
-    }
-
+    /**
+     * @param float $longitude
+     * @param float $latitude
+     * @param string|null $distance
+     * @since 4.0.0
+     */
     public function __construct(float $longitude, float $latitude, string $distance = null)
     {
         $this->longitude = $longitude;
@@ -71,6 +72,15 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return GeoDistanceSearchQuery::export($this);
     }
 
     /**

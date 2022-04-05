@@ -31,15 +31,10 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private ?string $field = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return GeoPolygonQuery::export($this);
-    }
-
     /**
      * @param array $coordinates list of objects of type Coordinate
-     *
      * @see Coordinate
+     * @since 4.0.0
      */
     public function __construct(array $coordinates)
     {
@@ -70,6 +65,15 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return GeoPolygonQuery::export($this);
     }
 
     /**

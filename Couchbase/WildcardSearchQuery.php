@@ -31,11 +31,9 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private ?string $field = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return WildcardSearchQuery::export($this);
-    }
-
+    /**
+     * @param string $wildcard
+     */
     public function __construct(string $wildcard)
     {
         $this->wildcard = $wildcard;
@@ -65,6 +63,15 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return WildcardSearchQuery::export($this);
     }
 
     /**

@@ -31,11 +31,6 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private array $queries;
 
-    public function jsonSerialize(): mixed
-    {
-        return ConjunctionSearchQuery::export($this);
-    }
-
     public function __construct(array $queries)
     {
         $this->queries = $queries;
@@ -87,6 +82,16 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     public function childQueries(): array
     {
         return $this->queries;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     * @throws InvalidArgumentException
+     */
+    public function jsonSerialize()
+    {
+        return ConjunctionSearchQuery::export($this);
     }
 
     /**

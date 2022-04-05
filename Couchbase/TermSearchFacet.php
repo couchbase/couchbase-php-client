@@ -30,17 +30,30 @@ class TermSearchFacet implements JsonSerializable, SearchFacet
     private string $field;
     private int $limit;
 
-    public function jsonSerialize(): mixed
-    {
-        return TermSearchFacet::export($this);
-    }
-
+    /**
+     * @param string $field
+     * @param int $limit
+     */
     public function __construct(string $field, int $limit)
     {
         $this->field = $field;
         $this->limit = $limit;
     }
 
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return TermSearchFacet::export($this);
+    }
+
+    /**
+     * @private
+     * @param TermSearchFacet $facet
+     * @return array
+     */
     public static function export(TermSearchFacet $facet): array
     {
         return [

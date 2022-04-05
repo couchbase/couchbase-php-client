@@ -37,18 +37,6 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
     private ?bool $inclusiveMax = null;
 
     /**
-     * @throws InvalidArgumentException
-     */
-    public function jsonSerialize(): mixed
-    {
-        return TermRangeSearchQuery::export($this);
-    }
-
-    public function __construct()
-    {
-    }
-
-    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
@@ -102,6 +90,15 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
         $this->max = $max;
         $this->inclusiveMax = $inclusive;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return TermRangeSearchQuery::export($this);
     }
 
     /**

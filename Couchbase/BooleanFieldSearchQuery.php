@@ -31,11 +31,6 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
     private ?string $field = null;
     private bool $value;
 
-    public function jsonSerialize(): mixed
-    {
-        return BooleanFieldSearchQuery::export($this);
-    }
-
     public function __construct(bool $value)
     {
         $this->value = $value;
@@ -65,6 +60,15 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return BooleanFieldSearchQuery::export($this);
     }
 
     /**

@@ -29,16 +29,6 @@ class SearchSortId implements JsonSerializable, SearchSort
 {
     private ?bool $descending = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return SearchSortId::export($this);
-    }
-
-
-    public function __construct()
-    {
-    }
-
     /**
      * Direction of the sort
      *
@@ -51,6 +41,15 @@ class SearchSortId implements JsonSerializable, SearchSort
     {
         $this->descending = $descending;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return SearchSortId::export($this);
     }
 
     /**

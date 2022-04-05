@@ -29,15 +29,6 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
 {
     private ?float $boost = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return MatchAllSearchQuery::export($this);
-    }
-
-    public function __construct()
-    {
-    }
-
     /**
      * Sets the boost for this query.
      *
@@ -49,6 +40,15 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->boost = $boost;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return MatchAllSearchQuery::export($this);
     }
 
     /**

@@ -36,15 +36,6 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     private ?bool $inclusiveMin = null;
     private ?bool $inclusiveMax = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return NumericRangeSearchQuery::export($this);
-    }
-
-    public function __construct()
-    {
-    }
-
     /**
      * Sets the boost for this query.
      *
@@ -99,6 +90,15 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
         $this->max = $max;
         $this->inclusiveMax = $inclusive;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return NumericRangeSearchQuery::export($this);
     }
 
     /**

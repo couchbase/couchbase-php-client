@@ -31,11 +31,9 @@ class PrefixSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost;
     private ?string $field;
 
-    public function jsonSerialize(): mixed
-    {
-        return PrefixSearchQuery::export($this);
-    }
-
+    /**
+     * @param string $prefix
+     */
     public function __construct(string $prefix)
     {
         $this->prefix = $prefix;
@@ -65,6 +63,15 @@ class PrefixSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return PrefixSearchQuery::export($this);
     }
 
     /**

@@ -33,11 +33,9 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
     private ?int $prefixLength = null;
     private ?int $fuzziness = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return TermSearchQuery::export($this);
-    }
-
+    /**
+     * @param string $term
+     */
     public function __construct(string $term)
     {
         $this->term = $term;
@@ -94,6 +92,15 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->fuzziness = $fuzziness;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return TermSearchQuery::export($this);
     }
 
     /**

@@ -30,11 +30,9 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     private string $queryString;
     private ?float $boost = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return QueryStringSearchQuery::export($this);
-    }
-
+    /**
+     * @param string $queryString
+     */
     public function __construct(string $queryString)
     {
         $this->queryString = $queryString;
@@ -51,6 +49,15 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->boost = $boost;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return QueryStringSearchQuery::export($this);
     }
 
     /**

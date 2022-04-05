@@ -38,11 +38,6 @@ class SearchOptions implements \JsonSerializable
     private ?array $raw;
     private ?bool $includeLocations = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return SearchOptions::export($this);
-    }
-
     /**
      * Sets the server side timeout in milliseconds
      *
@@ -267,8 +262,17 @@ class SearchOptions implements \JsonSerializable
 
     /**
      * @private
+     * @return mixed
      */
-    public static function export(SearchOptions $options): array
+    public function jsonSerialize()
+    {
+        return SearchOptions::export($this);
+    }
+
+    /**
+     * @private
+     */
+    public static function export(?SearchOptions $options): array
     {
         if ($options == null) {
             return [];

@@ -32,11 +32,6 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     private DisjunctionSearchQuery $mustNot;
     private DisjunctionSearchQuery $should;
 
-    public function jsonSerialize(): mixed
-    {
-        return BooleanSearchQuery::export($this);
-    }
-
     public function __construct()
     {
         $this->must = new ConjunctionSearchQuery([]);
@@ -97,9 +92,9 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * Sets the minimum value before the should query will boost.
+     * Sets the minimum value before that should query will boost.
      *
-     * @param int $minForShould the minimum value before the should query will boost
+     * @param int $minForShould the minimum value before that should query will boost
      * @return BooleanSearchQuery
      * @since 4.0.0
      */
@@ -107,6 +102,15 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->should->min($minForShould);
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return BooleanSearchQuery::export($this);
     }
 
     /**

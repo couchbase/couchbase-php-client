@@ -33,11 +33,9 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
     private array $queries;
     private ?int $min = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return DisjunctionSearchQuery::export($this);
-    }
-
+    /**
+     * @param array $queries
+     */
     public function __construct(array $queries)
     {
         $this->queries = $queries;
@@ -100,6 +98,15 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
     public function childQueries(): array
     {
         return $this->queries;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return DisjunctionSearchQuery::export($this);
     }
 
     /**

@@ -33,11 +33,6 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
     private ?string $field = null;
     private ?string $analyzer = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return MatchPhraseSearchQuery::export($this);
-    }
-
     public function __construct(string $phrase)
     {
         $this->matchPhrase = $phrase;
@@ -80,6 +75,15 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->analyzer = $analyzer;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return MatchPhraseSearchQuery::export($this);
     }
 
     /**

@@ -33,11 +33,11 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
     private ?bool $descending = null;
     private ?string $unit = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return SearchSortGeoDistance::export($this);
-    }
-
+    /**
+     * @param string $field
+     * @param float $longitude
+     * @param float $latitude
+     */
     public function __construct(string $field, float $longitude, float $latitude)
     {
         $this->field = $field;
@@ -71,6 +71,15 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
     {
         $this->unit = $unit;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return SearchSortGeoDistance::export($this);
     }
 
     /**

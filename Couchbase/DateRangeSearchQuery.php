@@ -31,20 +31,11 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
 {
     private ?float $boost = null;
     private ?string $field = null;
-    private $start = null;
-    private $end = null;
+    private ?string $start = null;
+    private ?string $end = null;
     private ?bool $inclusiveStart = null;
     private ?bool $inclusiveEnd = null;
     private ?string $datetimeParser = null;
-
-    public function jsonSerialize(): mixed
-    {
-        return DateRangeSearchQuery::export($this);
-    }
-
-    public function __construct()
-    {
-    }
 
     /**
      * Sets the boost for this query.
@@ -80,6 +71,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      *      strings.
      * @param bool $inclusive
      * @return DateRangeSearchQuery
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function start($start, bool $inclusive = false): DateRangeSearchQuery
@@ -95,7 +87,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
                 throw new InvalidArgumentException();
         }
 
-        $this ->inclusiveStart = $inclusive;
+        $this->inclusiveStart = $inclusive;
         return $this;
     }
 
@@ -107,6 +99,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      *      strings.
      * @param bool $inclusive
      * @return DateRangeSearchQuery
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function end($end, bool $inclusive = false): DateRangeSearchQuery
@@ -122,7 +115,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
                 throw new InvalidArgumentException();
         }
 
-        $this ->inclusiveEnd = $inclusive;
+        $this->inclusiveEnd = $inclusive;
         return $this;
     }
 
@@ -131,13 +124,22 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the name of the date/time parser to use to interpret start/end.
      *
      * @param string $parser the name of the parser.
-     * @return DateRangeSearchFacet
+     * @return DateRangeSearchQuery
      * @since 4.0.0
      */
     public function datetimeParser(string $parser): DateRangeSearchQuery
     {
         $this->datetimeParser = $parser;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return DateRangeSearchQuery::export($this);
     }
 
     /**

@@ -34,11 +34,13 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
     private ?string $field = null;
 
-    public function jsonSerialize(): mixed
-    {
-        return GeoBoundingBoxSearchQuery::export($this);
-    }
-
+    /**
+     * @param float $topLeftLongitude
+     * @param float $topLeftLatitude
+     * @param float $bottomRightLongitude
+     * @param float $bottomRightLatitude
+     * @since 4.0.0
+     */
     public function __construct(float $topLeftLongitude, float $topLeftLatitude, float $bottomRightLongitude, float $bottomRightLatitude)
     {
         $this->topLeftLongitude = $topLeftLongitude;
@@ -71,6 +73,15 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
     {
         $this->field = $field;
         return $this;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return GeoBoundingBoxSearchQuery::export($this);
     }
 
     /**

@@ -27,21 +27,26 @@ class Coordinate implements JsonSerializable
     private float $longitude;
     private float $latitude;
 
-    public function jsonSerialize(): mixed
-    {
-        return Coordinate::export($this);
-    }
-
     /**
      * @param float $longitude
      * @param float $latitude
      *
      * @see GeoPolygonQuery
+     * @since 4.0.0
      */
     public function __construct(float $longitude, float $latitude)
     {
         $this->longitude = $longitude;
         $this->latitude = $latitude;
+    }
+
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return Coordinate::export($this);
     }
 
     /**

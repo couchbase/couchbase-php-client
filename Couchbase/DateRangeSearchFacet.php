@@ -32,11 +32,6 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     private int $size;
     private array $ranges = [];
 
-    public function jsonSerialize(): mixed
-    {
-        return DateRangeSearchFacet::export($this);
-    }
-
     public function __construct(string $field, int $limit)
     {
         $this->field = $field;
@@ -88,6 +83,20 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
         return $this;
     }
 
+    /**
+     * @private
+     * @return mixed
+     */
+    public function jsonSerialize()
+    {
+        return DateRangeSearchFacet::export($this);
+    }
+
+    /**
+     * @private
+     * @param DateRangeSearchFacet $facet
+     * @return array
+     */
     public static function export(DateRangeSearchFacet $facet): array
     {
         return [
