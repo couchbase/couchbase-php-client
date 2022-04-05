@@ -50,6 +50,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $options = new ViewOptions();
         $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
+        $options->reduce(false);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals($key, $res->rows()[0]->id());
@@ -62,7 +63,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $ddocName = $this->uniqueId();
         $view = [
             'name' => 'test',
-            'map' => "function(doc, meta) { if (doc && doc.ddoc == \"{$ddocName}\") emit([doc.country, doc.city]); }",
+            'map' => "function(doc, meta) { if (doc && doc.ddoc == \"$ddocName\") emit([doc.country, doc.city]); }",
             'reduce' => '_count'
         ];
 
@@ -84,6 +85,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'New York', 'name' => 'Jane Doe']);
         $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'Miami', 'name' => 'Bill Brown']);
         $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'France', 'city' => 'Paris', 'name' => 'Jean Bon']);
+        sleep(1); // give docs time to propagate
 
         $options = new ViewOptions();
         $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
@@ -91,7 +93,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->assertCount(1, $res->rows());
         $this->assertEquals(4, $res->rows()[0]->value());
 
-        $options = new \Couchbase\ViewOptions();
+        $options = new ViewOptions();
         $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
         $options->groupLevel(1);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
@@ -101,7 +103,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(["USA"], $res->rows()[1]->key());
         $this->assertEquals(3, $res->rows()[1]->value());
 
-        $options = new \Couchbase\ViewOptions();
+        $options = new ViewOptions();
         $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
         $options->group(true);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
