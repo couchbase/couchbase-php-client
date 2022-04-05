@@ -125,7 +125,7 @@ PHP_METHOD(Exception, getContext)
     }
 
     zval *prop, rv;
-    prop = zend_read_property(couchbase_exception_ce, Z_OBJ_P(getThis()), ZEND_STRL("context"), 0, &rv);
+    prop = couchbase_read_property(couchbase_exception_ce, getThis(), "context", 0, &rv);
     ZVAL_COPY_DEREF(return_value, prop);
 }
 

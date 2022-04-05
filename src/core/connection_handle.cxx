@@ -16,7 +16,6 @@
 
 #include "connection_handle.hxx"
 #include "common.hxx"
-#include "persistent_connections_cache.hxx"
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>

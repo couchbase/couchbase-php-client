@@ -21,6 +21,7 @@
 #endif
 
 #include "core_error_info.hxx"
+#include "php_7_api_layer.hxx"
 
 #include <Zend/zend_API.h>
 
