@@ -20,16 +20,28 @@
 namespace couchbase::php
 {
 
-int persistent_connection_destructor_id{ 0 };
+static int persistent_connection_destructor_id_{ 0 };
+
+void
+set_persistent_connection_destructor_id(int id)
+{
+    persistent_connection_destructor_id_ = id;
+}
+
+int
+get_persistent_connection_destructor_id()
+{
+    return persistent_connection_destructor_id_;
+}
 
 int
 check_persistent_connection(zval* zv)
 {
-    zend_resource* le = Z_RES_P(zv);
+    zend_resource* res = Z_RES_P(zv);
     auto now = std::chrono::steady_clock::now();
 
-    if (le->type == persistent_connection_destructor_id) {
-        auto const* connection = static_cast<connection_handle*>(le->ptr);
+    if (res->type == persistent_connection_destructor_id_) {
+        auto const* connection = static_cast<connection_handle*>(res->ptr);
         if (COUCHBASE_G(persistent_timeout) != -1 && connection->is_expired(now)) {
             /* connection has timed out */
             return ZEND_HASH_APPLY_REMOVE;
@@ -38,21 +50,21 @@ check_persistent_connection(zval* zv)
     return ZEND_HASH_APPLY_KEEP;
 }
 
-std::pair<connection_handle*, core_error_info>
+std::pair<zend_resource*, core_error_info>
 create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options)
 {
     connection_handle* handle = nullptr;
     bool found = false;
 
     if (zval* entry = zend_hash_find(&EG(persistent_list), connection_hash); entry != nullptr) {
-        zend_resource* le = Z_RES_P(entry);
+        zend_resource* res = Z_RES_P(entry);
         found = true;
-        if (le->type == persistent_connection_destructor_id) {
-            handle = static_cast<connection_handle*>(le->ptr);
+        if (res->type == persistent_connection_destructor_id_) {
+            handle = static_cast<connection_handle*>(res->ptr);
         }
     }
     if (handle != nullptr) {
-        return { handle, {} };
+        return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
     }
     if (found) {
         /* found something, which is not our resource */
@@ -76,18 +88,19 @@ create_persistent_connection(zend_string* connection_hash, zend_string* connecti
         delete handle;
         return { nullptr, rc };
     }
-    zend_register_persistent_resource_ex(connection_hash, handle, persistent_connection_destructor_id);
+    zend_register_persistent_resource_ex(connection_hash, handle, persistent_connection_destructor_id_);
     ++COUCHBASE_G(num_persistent);
-    return { handle, {} };
+    return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
 }
 
 void
 destroy_persistent_connection(zend_resource* res)
 {
-    if (res->type == persistent_connection_destructor_id && res->ptr != nullptr) {
+    if (res->type == persistent_connection_destructor_id_ && res->ptr != nullptr) {
         auto* handle = static_cast<connection_handle*>(res->ptr);
         delete handle;
         res->ptr = nullptr;
+        --COUCHBASE_G(num_persistent);
     }
 }
 

@@ -586,9 +586,9 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 
 connection_handle::connection_handle(couchbase::origin origin, std::chrono::steady_clock::time_point idle_expiry)
   : idle_expiry_{ idle_expiry }
-  , id_{ zend_register_resource(this, persistent_connection_destructor_id) }
   , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
 {
+
     impl_->start();
 }
 
@@ -2985,6 +2985,12 @@ connection_handle::view_index_upsert(const zend_string* bucket_name, const zval*
     array_init(&retval);
 
     return { &retval, {} };
+}
+
+bool
+connection_handle::is_expired(std::chrono::steady_clock::time_point now) const
+{
+    return idle_expiry_ < now;
 }
 
 #define ASSIGN_DURATION_OPTION(name, field, key, value)                                                                                    \

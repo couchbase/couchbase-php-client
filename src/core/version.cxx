@@ -20,22 +20,19 @@
 
 namespace couchbase::php
 {
-zval
-core_version()
+void
+core_version(zval* return_value)
 {
-    zval version;
-    array_init(&version);
+    array_init(return_value);
 
     for (const auto& [name, value] : couchbase::meta::sdk_build_info()) {
         if (name == "version_major" || name == "version_minor" || name == "version_patch" || name == "version_build") {
-            add_assoc_long_ex(&version, name.c_str(), name.size(), std::stoi(value));
+            add_assoc_long_ex(return_value, name.c_str(), name.size(), std::stoi(value));
         } else if (name == "snapshot" || name == "static_stdlib" || name == "static_openssl") {
-            add_assoc_bool_ex(&version, name.c_str(), name.size(), value == "true");
+            add_assoc_bool_ex(return_value, name.c_str(), name.size(), value == "true");
         } else {
-            add_assoc_stringl_ex(&version, name.c_str(), name.size(), value.c_str(), value.size());
+            add_assoc_stringl_ex(return_value, name.c_str(), name.size(), value.c_str(), value.size());
         }
     }
-
-    return version;
 }
 } // namespace couchbase::php

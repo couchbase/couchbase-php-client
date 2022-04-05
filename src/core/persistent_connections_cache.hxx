@@ -23,14 +23,18 @@
 namespace couchbase::php
 {
 
-extern int persistent_connection_destructor_id;
+void
+set_persistent_connection_destructor_id(int id);
 
-std::pair<connection_handle*, core_error_info>
+[[nodiscard]] int
+get_persistent_connection_destructor_id();
+
+[[nodiscard]] std::pair<zend_resource*, core_error_info>
 create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options);
 
 void
 destroy_persistent_connection(zend_resource* res);
 
-int
+[[nodiscard]] int
 check_persistent_connection(zval* zv);
 } // namespace couchbase::php

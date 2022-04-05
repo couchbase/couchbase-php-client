@@ -20,6 +20,6 @@
 
 namespace couchbase::php
 {
-zval
-core_version();
-}
+void
+core_version(zval* return_value);
+} // namespace couchbase::php
