@@ -1021,6 +1021,37 @@ PHP_FUNCTION(searchIndexUpsert)
     RETURN_ZVAL(res, 1, 0);
 }
 
+PHP_FUNCTION(viewIndexUpsert)
+{
+    zval* connection = nullptr;
+    zend_string* bucketName = nullptr;
+    zval* index = nullptr;
+    zend_long nameSpace = 0;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+            Z_PARAM_RESOURCE(connection)
+            Z_PARAM_STR(bucketName)
+            Z_PARAM_ARRAY(index)
+            Z_PARAM_LONG(nameSpace)
+            Z_PARAM_OPTIONAL
+            Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = static_cast<couchbase::php::connection_handle*>(
+            zend_fetch_resource(Z_RES_P(connection), "couchbase_persistent_connection", couchbase::php::persistent_connection_destructor_id));
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [res, e] = handle->view_index_upsert(bucketName, index, nameSpace, options);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+
+    RETURN_ZVAL(res, 1, 0);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -1235,6 +1266,14 @@ ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_viewIndexUpsert, 0, 0, 4)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, nameSpace, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -1262,6 +1301,7 @@ static zend_function_entry couchbase_functions[] = {
     ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)
     ZEND_NS_FE("Couchbase\\Extension", searchQuery, ai_CouchbaseExtension_searchQuery)
     ZEND_NS_FE("Couchbase\\Extension", searchIndexUpsert, ai_CouchbaseExtension_searchIndexUpsert)
+    ZEND_NS_FE("Couchbase\\Extension", viewIndexUpsert, ai_CouchbaseExtension_viewIndexUpsert)
     PHP_FE_END
 };
 

@@ -188,6 +188,11 @@ class connection_handle
 
     [[nodiscard]] std::pair<zval*, core_error_info> search_index_upsert(const zval* index, const zval* options);
 
+    [[nodiscard]] std::pair<zval*, core_error_info> view_index_upsert(const zend_string* bucket_name,
+                                                                      const zval* design_document,
+                                                                      zend_long name_space,
+                                                                      const zval* options);
+
   private:
     class impl;
 

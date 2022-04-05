@@ -22,6 +22,8 @@
 #include <couchbase/operations/management/cluster_describe.hxx>
 #include <couchbase/operations/management/search_index.hxx>
 #include <couchbase/operations/management/search_index_upsert.hxx>
+#include <couchbase/operations/management/design_document.hxx>
+#include <couchbase/operations/management/view_index_upsert.hxx>
 #include <couchbase/protocol/mutation_token.hxx>
 
 #include <fmt/core.h>
@@ -551,6 +553,25 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to upsert search index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::view_index_upsert_response> view_index_upsert(
+            couchbase::operations::management::view_index_upsert_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::view_index_upsert_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::view_index_upsert_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                             { __LINE__, __FILE__, __func__ },
+                             fmt::format("unable to upsert view index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                             build_http_error_context(resp.ctx) },
                      {} };
         }
         return { {}, std::move(resp) };
@@ -2724,6 +2745,75 @@ connection_handle::search_index_upsert(const zval* index, const zval* options)
     array_init(&retval);
     add_assoc_string(&retval, "status", resp.status.c_str());
     add_assoc_string(&retval, "error", resp.error.c_str());
+
+    return { &retval, {} };
+}
+
+std::pair<zval*, core_error_info>
+connection_handle::view_index_upsert(const zend_string* bucket_name, const zval* design_document, zend_long name_space, const zval* options)
+{
+    couchbase::operations::design_document idx{};
+    if (auto e = cb_assign_string(idx.name, design_document, "name"); e.ec) {
+        return { nullptr, e };
+    }
+    if (auto e = cb_assign_string(idx.rev, design_document, "rev"); e.ec) {
+        return { nullptr, e };
+    }
+    switch (name_space) {
+        case 1:
+            idx.ns = couchbase::operations::design_document::name_space::development;
+            break;
+
+        case 2:
+            idx.ns = couchbase::operations::design_document::name_space::production;
+            break;
+
+        default:
+            return { nullptr,
+                     { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for namespace: {}", name_space) } };
+    }
+
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(design_document), ZEND_STRL("views"));
+            value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, couchbase::operations::design_document::view> views{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+                {
+                    couchbase::operations::design_document::view view{};
+                    if (auto e = cb_assign_string(view.name, item, "name"); e.ec) {
+                        return { nullptr, e };
+                    }
+                    if (auto e = cb_assign_string(view.map, item, "map"); e.ec) {
+                        return { nullptr, e };
+                    }
+                    if (auto e = cb_assign_string(view.reduce, item, "reduce"); e.ec) {
+                        return { nullptr, e };
+                    }
+
+                    views[cb_string_new(key)] = view;
+                }
+        ZEND_HASH_FOREACH_END();
+
+        idx.views = views;
+    }
+
+    couchbase::operations::management::view_index_upsert_request request{ cb_string_new(bucket_name), idx };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { nullptr, e };
+    }
+
+    auto [err, resp] = impl_->view_index_upsert(std::move(request));
+    if (err.ec) {
+        return { nullptr, err };
+    }
+
+    zval retval;
+    array_init(&retval);
 
     return { &retval, {} };
 }
