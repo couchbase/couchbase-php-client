@@ -22,54 +22,95 @@ namespace Couchbase;
 
 class DecrementOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+    private int $delta = 1;
+    private ?int $initialValue = null;
+
     /**
-     * Sets the operation timeout in milliseconds.
+     * Static helper to keep code more readable
      *
-     * @param int $arg the operation timeout to apply
      * @return DecrementOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): DecrementOptions
+    public static function build(): DecrementOptions
     {
+        return new DecrementOptions();
     }
 
     /**
-     * Sets the expiry time for the document.
+     * Sets the value to increment the counter by.
      *
-     * @param int|DateTimeInterface $arg the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int $decrement the value to increment by
      * @return DecrementOptions
+     * @since 4.0.0
      */
-    public function expiry(mixed $arg): DecrementOptions
+    public function delta(int $decrement): DecrementOptions
     {
-    }
-
-    /**
-     * Sets the durability level to enforce when writing the document.
-     *
-     * @param int $arg the durability level to enforce
-     * @return DecrementOptions
-     */
-    public function durabilityLevel(int $arg): DecrementOptions
-    {
-    }
-
-    /**
-     * Sets the value to decrement the counter by.
-     *
-     * @param int $arg the value to decrement by
-     * @return DecrementOptions
-     */
-    public function delta(int $arg): DecrementOptions
-    {
+        $this->delta = $decrement;
+        return $this;
     }
 
     /**
      * Sets the value to initialize the counter to if the document does
      * not exist.
      *
-     * @param int $arg the initial value to use if counter does not exist
+     * @param int $initialValue the initial value to use if counter does not exist
      * @return DecrementOptions
+     * @since 4.0.0
      */
-    public function initial(int $arg): DecrementOptions
+    public function initial(int $initialValue): DecrementOptions
     {
+        $this->initialValue = $initialValue;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     * @return DecrementOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): DecrementOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the durability level to enforce when writing the document.
+     *
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
+     * @return DecrementOptions
+     * @since 4.0.0
+     */
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): DecrementOptions
+    {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param DecrementOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?DecrementOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'delta' => $options->delta,
+            'initialValue' => $options->initialValue,
+        ];
     }
 }

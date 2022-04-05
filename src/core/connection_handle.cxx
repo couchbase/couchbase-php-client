@@ -1168,6 +1168,100 @@ connection_handle::document_prepend(zval* return_value,
 }
 
 core_error_info
+connection_handle::document_increment(zval* return_value,
+                                      const zend_string* bucket,
+                                      const zend_string* scope,
+                                      const zend_string* collection,
+                                      const zend_string* id,
+                                      const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+    couchbase::operations::increment_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_durability(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.delta, options, "delta"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.initial_value, options, "initialValue"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_long(return_value, "value", resp.content);
+    auto value_str = fmt::format("{}", resp.content);
+    add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    if (is_mutation_token_valid(resp.token)) {
+        zval token_val;
+        mutation_token_to_zval(resp.token, &token_val);
+        add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
+}
+
+core_error_info
+connection_handle::document_decrement(zval* return_value,
+                                      const zend_string* bucket,
+                                      const zend_string* scope,
+                                      const zend_string* collection,
+                                      const zend_string* id,
+                                      const zval* options)
+{
+    couchbase::document_id doc_id{
+        cb_string_new(bucket),
+        cb_string_new(scope),
+        cb_string_new(collection),
+        cb_string_new(id),
+    };
+    couchbase::operations::decrement_request request{ doc_id };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_durability(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.delta, options, "delta"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.initial_value, options, "initialValue"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+    array_init(return_value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_long(return_value, "value", resp.content);
+    auto value_str = fmt::format("{}", resp.content);
+    add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
+    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    if (is_mutation_token_valid(resp.token)) {
+        zval token_val;
+        mutation_token_to_zval(resp.token, &token_val);
+        add_assoc_zval(return_value, "mutationToken", &token_val);
+    }
+    return {};
+}
+
+core_error_info
 connection_handle::document_get(zval* return_value,
                                 const zend_string* bucket,
                                 const zend_string* scope,

@@ -23,12 +23,31 @@ namespace Couchbase;
 /**
  * Interface for results created by the counter operation.
  */
-interface CounterResult extends MutationResult
+class CounterResult extends MutationResult
 {
+    private int $value = 0;
+
+    /**
+     * @private
+     * @param array $response
+     * @since 4.0.0
+     */
+    public function __construct(array $response)
+    {
+        parent::__construct($response);
+        if (array_key_exists('value', $response)) {
+            $this->value = $response['value'];
+        }
+    }
+
     /**
      * Returns the new value of the counter
      *
      * @return int
+     * @since 4.0.0
      */
-    public function content(): int;
+    public function content(): int
+    {
+        return $this->value;
+    }
 }

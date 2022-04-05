@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
-
 /**
  * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with binary documents.
  */
@@ -30,6 +28,9 @@ class BinaryCollection
     private string $bucketName;
     private string $scopeName;
     private string $name;
+    /**
+     * @var resource
+     */
     private $core;
 
     /**
@@ -94,12 +95,12 @@ class BinaryCollection
      * @param string $id the key of the document
      * @param IncrementOptions|null $options the options to use for the operation
      * @return CounterResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function increment(string $id, IncrementOptions $options = null): CounterResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentIncrement($this->core, $this->bucketName, $this->scopeName, $this->name, $id, IncrementOptions::export($options));
+        return new CounterResult($response);
     }
 
     /**
@@ -108,11 +109,11 @@ class BinaryCollection
      * @param string $id the key of the document
      * @param DecrementOptions|null $options the options to use for the operation
      * @return CounterResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function decrement(string $id, DecrementOptions $options = null): CounterResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentDecrement($this->core, $this->bucketName, $this->scopeName, $this->name, $id, DecrementOptions::export($options));
+        return new CounterResult($response);
     }
 }

@@ -37,6 +37,9 @@ use Couchbase\Management\UserManager;
 class Cluster
 {
     private string $connectionHash;
+    /**
+     * @var resource
+     */
     private $core;
 
     /**

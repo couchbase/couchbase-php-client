@@ -22,54 +22,95 @@ namespace Couchbase;
 
 class IncrementOptions
 {
-    /**
-     * Sets the operation timeout in milliseconds.
-     *
-     * @param int $arg the operation timeout to apply
-     * @return IncrementOptions
-     */
-    public function timeout(int $arg): IncrementOptions
-    {
-    }
+    private ?int $timeoutMilliseconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+    private int $delta = 1;
+    private ?int $initialValue = null;
 
     /**
-     * Sets the expiry time for the document.
+     * Static helper to keep code more readable
      *
-     * @param int|DateTimeInterface $arg the relative expiry time in seconds or DateTimeInterface object for absolute point in time
      * @return IncrementOptions
+     * @since 4.0.0
      */
-    public function expiry(mixed $arg): IncrementOptions
+    public static function build(): IncrementOptions
     {
-    }
-
-    /**
-     * Sets the durability level to enforce when writing the document.
-     *
-     * @param int $arg the durability level to enforce
-     * @return IncrementOptions
-     */
-    public function durabilityLevel(int $arg): IncrementOptions
-    {
+        return new IncrementOptions();
     }
 
     /**
      * Sets the value to increment the counter by.
      *
-     * @param int $arg the value to increment by
+     * @param int $increment the value to increment by
      * @return IncrementOptions
+     * @since 4.0.0
      */
-    public function delta(int $arg): IncrementOptions
+    public function delta(int $increment): IncrementOptions
     {
+        $this->delta = $increment;
+        return $this;
     }
 
     /**
      * Sets the value to initialize the counter to if the document does
      * not exist.
      *
-     * @param int $arg the initial value to use if counter does not exist
+     * @param int $initialValue the initial value to use if counter does not exist
      * @return IncrementOptions
+     * @since 4.0.0
      */
-    public function initial(int $arg): IncrementOptions
+    public function initial(int $initialValue): IncrementOptions
     {
+        $this->initialValue = $initialValue;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     * @return IncrementOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): IncrementOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the durability level to enforce when writing the document.
+     *
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
+     * @return IncrementOptions
+     * @since 4.0.0
+     */
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): IncrementOptions
+    {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param IncrementOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?IncrementOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'delta' => $options->delta,
+            'initialValue' => $options->initialValue,
+        ];
     }
 }

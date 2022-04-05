@@ -32,6 +32,9 @@ class Collection
     private string $bucketName;
     private string $scopeName;
     private string $name;
+    /**
+     * @var resource
+     */
     private $core;
 
     /**
@@ -40,6 +43,7 @@ class Collection
      * @param string $scopeName
      * @param string $bucketName
      * @param $core
+     * @since 4.0.0
      */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
     {

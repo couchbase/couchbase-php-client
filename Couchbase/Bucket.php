@@ -33,8 +33,17 @@ use Couchbase\Management\ViewIndexManager;
 class Bucket
 {
     private string $name;
+    /**
+     * @var resource
+     */
     private $core;
 
+    /**
+     * @private
+     * @param string $name
+     * @param $core
+     * @since 4.0.0
+     */
     public function __construct(string $name, $core)
     {
         $this->name = $name;
@@ -44,7 +53,6 @@ class Bucket
 
     /**
      * Returns a new Scope object representing the default scope.
-     *
      *
      * @return Scope
      * @since 4.0.0
@@ -56,7 +64,6 @@ class Bucket
 
     /**
      * Returns a new Collection object representing the default collection.
-     *
      *
      * @return Collection
      * @since 4.0.0

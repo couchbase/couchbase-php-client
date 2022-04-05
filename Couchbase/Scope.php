@@ -29,8 +29,18 @@ class Scope
 {
     private string $bucketName;
     private string $name;
+    /**
+     * @var resource
+     */
     private $core;
 
+    /**
+     * @private
+     * @param string $name
+     * @param string $bucketName
+     * @param $core
+     * @since 4.0.0
+     */
     public function __construct(string $name, string $bucketName, $core)
     {
         $this->name = $name;
@@ -42,6 +52,7 @@ class Scope
      * Returns the name of the scope.
      *
      * @return string
+     * @since 4.0.0
      */
     public function name(): string
     {
@@ -53,6 +64,7 @@ class Scope
      *
      * @param string $name the name of the collection
      * @return Collection
+     * @since 4.0.0
      */
     public function collection(string $name): Collection
     {
@@ -65,7 +77,7 @@ class Scope
      * @param string $statement the N1QL query statement to execute
      * @param QueryOptions|null $options the options to use when executing the query
      * @return QueryResult
-     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
@@ -80,6 +92,7 @@ class Scope
      * @param string $statement the analytics query statement to execute
      * @param AnalyticsOptions|null $options the options to use when executing the query
      * @return AnalyticsResult
+     * @since 4.0.0
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
