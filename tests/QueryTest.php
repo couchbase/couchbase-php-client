@@ -1,10 +1,12 @@
 <?php
 
 use Couchbase\Cluster;
+use Couchbase\GetOptions;
 use Couchbase\JsonTranscoder;
 use Couchbase\MutationState;
 use Couchbase\QueryOptions;
 use Couchbase\QueryScanConsistency;
+use Couchbase\UpsertOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -19,12 +21,17 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->cluster = $this->connectCluster();
     }
 
-    function maybeCreateIndex(string $bucketName, string $scopeName = "_default", string $collectionName = "_default")
+    function maybeCreateIndex(string $nameSpace)
     {
         try {
-            $this->cluster->query("CREATE PRIMARY INDEX ON `$bucketName`.`$scopeName`.`$collectionName`;");
+            $this->cluster->query("CREATE PRIMARY INDEX ON $nameSpace;");
         } catch (Exception $e) {
         }
+    }
+
+    function nameSpace(string $bucketName, string $scopeName = "_default", string $collectionName = "_default"): string
+    {
+        return "`$bucketName`.`$scopeName`.`$collectionName`";
     }
 
     function testResponseProperties()
@@ -32,15 +39,15 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
 
-        $key = $this->uniqueId();
-        $bucketName = $this->env()->bucketName();
+        $key = $this->uniqueId('a');
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
         $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
-        $res = $this->cluster->query("SELECT * FROM `{$bucketName}` USE KEYS \"$key\"", $options);
+        $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \"$key\"", $options);
 
         $meta = $res->metaData();
         $this->assertNotEmpty($meta);
@@ -50,7 +57,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($meta->signature());
         $rows = $res->rows();
         $this->assertNotEmpty($rows);
-        $this->assertEquals(42, $res->rows()[0][$bucketName]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
     }
 
     function testParameters()
@@ -58,33 +65,35 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
 
-        $key = $this->uniqueId();
+        // USE KEYS doesn't like a number as first character.
+        $key = $this->uniqueId('a');
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
         $options = (new QueryOptions())
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$key]);
-        $res = $this->cluster->query("SELECT * FROM `$bucketName` USE KEYS \$1", $options);
+        $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$1", $options);
         $this->assertNotEmpty($res->rows());
-        $this->assertEquals(42, $res->rows()[0][$bucketName]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
 
         $options = (new QueryOptions())
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->namedParameters(["key" => $key]);
-        $res = $this->cluster->query("SELECT * FROM `$bucketName` USE KEYS \$key", $options);
+        $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$key", $options);
         $this->assertNotEmpty($res->rows());
-        $this->assertEquals(42, $res->rows()[0][$bucketName]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
 
         // it will use PHP interpolation, and actually breaks query
         $this->wrapException(
-            function () use ($bucketName, $key) {
+            function () use ($bucketName, $key, $nameSpace) {
                 $options = (new QueryOptions())
                 ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
                 ->namedParameters(["key" => $key]);
-                $this->cluster->query("SELECT * FROM `$bucketName` USE KEYS $key", $options);
+                $this->cluster->query("SELECT * FROM $nameSpace USE KEYS $key", $options);
             },
             '\Couchbase\Exception\ParsingFailureException',
             8,
@@ -97,7 +106,8 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
 
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $key = $this->uniqueId();
@@ -114,10 +124,11 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $mutationState = new MutationState();
         $mutationState->add($result);
 
+        $collectionName = $collection->name();
         $options = (new QueryOptions())
             ->consistentWith($mutationState)
             ->positionalParameters(['Brass']);
-        $result = $this->cluster->query("SELECT name, random, META($bucketName).id FROM `$bucketName` WHERE \$1 IN name", $options);
+        $result = $this->cluster->query("SELECT name, random, META($collectionName).id FROM $nameSpace WHERE \$1 IN name", $options);
         $found = false;
         foreach ($result->rows() as $row) {
             if ($row['random'] == $random) {
@@ -130,9 +141,6 @@ class QueryTest extends Helpers\CouchbaseTestCase
     function testRowsShapeAssociative()
     {
         $this->skipIfCaves();
-
-        $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
 
         $opts = new QueryOptions();
         $opts = $opts->transcoder(new JsonTranscoder(true));
@@ -147,9 +155,6 @@ class QueryTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
-
         $opts = new QueryOptions();
         $opts = $opts->transcoder(new JsonTranscoder(false));
         $result = $this->cluster->query("SELECT 'Hello, PHP!' AS message", $opts);
@@ -163,13 +168,78 @@ class QueryTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $bucketName = $this->env()->bucketName();
-        $this->maybeCreateIndex($bucketName);
-
         $result = $this->cluster->query("SELECT 'Hello, PHP!' AS message");
         $this->assertNotEmpty($result->rows());
         $row = $result->rows()[0];
         $this->assertIsArray($row);
         $this->assertEquals("Hello, PHP!", $row["message"]);
+    }
+
+    function testPreserveExpiry()
+    {
+        $this->skipIfCaves();
+
+        $bucketName = $this->env()->bucketName();
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
+
+        $key = $this->uniqueId('a');
+        $collection = $this->cluster->bucket($bucketName)->defaultCollection();
+        $collection->upsert($key, ["bar" => 42], (new UpsertOptions())->expiry(15));
+
+        $this->cluster->query("UPDATE $nameSpace AS d USE KEYS \"$key\" SET d.bar = 45", (new QueryOptions())->preserveExpiry(true));
+
+        $result = $collection->get($key, (new GetOptions())->withExpiry(true));
+        $val = $result->content();
+        $this->assertEquals(["bar" => 45], $val);
+        $expiry = $result->expiryTime();
+        $this->assertNotNull($expiry);
+    }
+
+    function testPrepared()
+    {
+        $this->skipIfCaves();
+
+        $bucketName = $this->env()->bucketName();
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
+
+        $key = $this->uniqueId('a');
+        $collection = $this->cluster->bucket($bucketName)->defaultCollection();
+        $collection->upsert($key, ["bar" => 42]);
+
+        $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS)->adhoc(false);
+        $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \"$key\"", $options);
+
+        $rows = $res->rows();
+        $this->assertNotEmpty($rows);
+        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+    }
+
+    function testScope()
+    {
+        $this->skipIfCaves();
+
+        $bucketName = $this->env()->bucketName();
+        $nameSpace = $this->nameSpace($bucketName);
+        $this->maybeCreateIndex($nameSpace);
+
+        $key = $this->uniqueId('a');
+        $bucket = $this->cluster->bucket($bucketName);
+        $collection = $bucket->defaultCollection();
+        $collection->upsert($key, ["bar" => 42]);
+
+        $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
+        $res = $bucket->scope("_default")->query("SELECT * FROM `_default` USE KEYS \"$key\"", $options);
+
+        $meta = $res->metaData();
+        $this->assertNotEmpty($meta);
+        $this->assertEquals("success", $meta->status());
+        $this->assertNotNull($meta->requestId());
+        $this->assertNotNull($meta->metrics());
+        $this->assertNotNull($meta->signature());
+        $rows = $res->rows();
+        $this->assertNotEmpty($rows);
+        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
     }
 }
