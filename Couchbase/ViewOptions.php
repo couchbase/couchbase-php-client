@@ -193,15 +193,15 @@ class ViewOptions
      * @return ViewOptions
      * @since 4.0.0
      */
-    public function raw(string $key, $value): ViewOptions
-    {
-        if ($this->raw == null) {
-            $this->raw = array();
-        }
-
-        $this->raw[$key] = $value;
-        return $this;
-    }
+//    public function raw(string $key, $value): ViewOptions
+//    {
+//        if ($this->raw == null) {
+//            $this->raw = array();
+//        }
+//
+//        $this->raw[$key] = $value;
+//        return $this;
+//    }
 
     /**
      * Sets the key to skip to before beginning to return results.
