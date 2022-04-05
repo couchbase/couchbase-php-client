@@ -72,7 +72,7 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return PhraseSearchQuery::export($this);
     }

@@ -71,7 +71,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return GeoPolygonQuery::export($this);
     }

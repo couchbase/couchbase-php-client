@@ -77,7 +77,7 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return SearchSortGeoDistance::export($this);
     }

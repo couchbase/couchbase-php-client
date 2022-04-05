@@ -46,7 +46,7 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return MatchAllSearchQuery::export($this);
     }

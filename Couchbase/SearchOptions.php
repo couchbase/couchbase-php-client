@@ -264,7 +264,7 @@ class SearchOptions implements \JsonSerializable
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return SearchOptions::export($this);
     }

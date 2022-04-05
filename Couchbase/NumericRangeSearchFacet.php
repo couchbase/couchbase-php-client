@@ -32,14 +32,6 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
     private int $size;
     private array $ranges = [];
 
-    /**
-     * @throws InvalidArgumentException
-     */
-    public function jsonSerialize()
-    {
-        return NumericRangeSearchFacet::export($this);
-    }
-
     public function __construct(string $field, int $limit)
     {
         $this->field = $field;
@@ -70,6 +62,14 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
         $this->ranges[] = $range;
 
         return $this;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function jsonSerialize(): mixed
+    {
+        return NumericRangeSearchFacet::export($this);
     }
 
     /**

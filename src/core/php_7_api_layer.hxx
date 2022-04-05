@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <php_version.h>
+
 #if PHP_VERSION_ID < 80000
 
 #define couchbase_update_property_string(scope, object, name, value)                                                                       \

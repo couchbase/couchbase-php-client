@@ -55,7 +55,7 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
      * @private
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return QueryStringSearchQuery::export($this);
     }
