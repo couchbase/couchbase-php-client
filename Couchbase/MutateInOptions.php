@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use DateTimeInterface;
 
 class MutateInOptions
@@ -131,15 +132,36 @@ class MutateInOptions
     /**
      * Sets the document level action to use when performing the operation.
      *
-     * @param string $semantics the store semantic to use
+     * @param int|string $semantics the store semantic to use, int parameter is now @deprecated
      * @return MutateInOptions
-     * @see STORE_SEMANTICS_INSERT
+     * @throws InvalidArgumentException
      * @see STORE_SEMANTICS_UPSERT
      * @see STORE_SEMANTICS_REPLACE
+     * @see STORE_SEMANTICS_INSERT
      * @since 4.0.0
      */
-    public function storeSemantics(string $semantics): MutateInOptions
+    public function storeSemantics($semantics): MutateInOptions
     {
+        if (gettype($semantics) == "integer") {
+            trigger_error(
+                'Method ' . __METHOD__ . ' is deprecated with integer parameter, use string parameter instead',
+                E_USER_DEPRECATED
+            );
+
+            switch ($semantics) {
+                case 0:
+                    $semantics = self::STORE_SEMANTICS_REPLACE;
+                    break;
+                case 1:
+                    $semantics = self::STORE_SEMANTICS_UPSERT;
+                    break;
+                case 2:
+                    $semantics = self::STORE_SEMANTICS_INSERT;
+                    break;
+                default:
+                    throw new InvalidArgumentException("Integer value for store semantics must be one of  0, 1, 2");
+            }
+        }
         $this->storeSemantics = $semantics;
         return $this;
     }
