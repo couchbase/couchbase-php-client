@@ -22,23 +22,64 @@ namespace Couchbase;
 
 class AppendOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return AppendOptions
+     * @since 4.0.0
+     */
+    public static function build(): AppendOptions
+    {
+        return new AppendOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return AppendOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): AppendOptions
+    public function timeout(int $milliseconds): AppendOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param int $arg the durability level to enforce
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
      * @return AppendOptions
+     * @since 4.0.0
      */
-    public function durabilityLevel(int $arg): AppendOptions
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): AppendOptions
     {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param AppendOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?AppendOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+        ];
     }
 }

@@ -65,12 +65,12 @@ class BinaryCollection
      * @param string $value the value to append
      * @param AppendOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function append(string $id, string $value, AppendOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentAppend($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $value, AppendOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**
@@ -80,12 +80,12 @@ class BinaryCollection
      * @param string $value the value to prepend
      * @param PrependOptions|null $options the options to use for the operation
      * @return MutationResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentPrepend($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $value, PrependOptions::export($options));
+        return new MutationResult($response);
     }
 
     /**

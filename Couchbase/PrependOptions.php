@@ -22,23 +22,64 @@ namespace Couchbase;
 
 class PrependOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?string $durabilityLevel = null;
+    private ?int $durabilityTimeoutSeconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return PrependOptions
+     * @since 4.0.0
+     */
+    public static function build(): PrependOptions
+    {
+        return new PrependOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      * @return PrependOptions
+     * @since 4.0.0
      */
-    public function timeout(int $arg): PrependOptions
+    public function timeout(int $milliseconds): PrependOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param int $arg the durability level to enforce
+     * @param string $level the durability level to enforce
+     * @param int|null $timeoutSeconds
      * @return PrependOptions
+     * @since 4.0.0
      */
-    public function durabilityLevel(int $arg): PrependOptions
+    public function durabilityLevel(string $level, ?int $timeoutSeconds): PrependOptions
     {
+        $this->durabilityLevel = $level;
+        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * @private
+     * @param PrependOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?PrependOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'durabilityLevel' => $options->durabilityLevel,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+        ];
     }
 }
