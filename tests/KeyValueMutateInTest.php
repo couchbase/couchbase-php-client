@@ -18,6 +18,9 @@
 
 declare(strict_types=1);
 
+use Couchbase\MutateArrayAppendSpec;
+use Couchbase\MutateArrayInsertSpec;
+use Couchbase\MutateArrayPrependSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateUpsertSpec;
 
@@ -43,5 +46,32 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($id);
         $this->assertEquals($cas, $res->cas());
         $this->assertEquals(["foo" => "bar"], $res->content());
+    }
+
+    function testArrayOperationsFlattenArguments()
+    {
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["foo" => [1, 2, 3]]);
+
+        $collection->mutateIn($id, [MutateArrayAppendSpec::build("foo", [4])]);
+        $res = $collection->get($id);
+        $this->assertEquals(["foo" => [1, 2, 3, 4]], $res->content());
+
+        $collection->mutateIn($id, [MutateArrayPrependSpec::build("foo", [0])]);
+        $res = $collection->get($id);
+        $this->assertEquals(["foo" => [0, 1, 2, 3, 4]], $res->content());
+
+        $collection->mutateIn($id, [MutateArrayInsertSpec::build("foo[4]", [3.14])]);
+        $res = $collection->get($id);
+        $this->assertEquals(["foo" => [0, 1, 2, 3, 3.14, 4]], $res->content());
+    }
+
+
+    function testArrayOperationsExpectsArrayAsValueArgument()
+    {
+        $this->expectException(TypeError::class);
+        MutateArrayAppendSpec::build("foo", 4);
     }
 }

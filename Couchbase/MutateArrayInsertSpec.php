@@ -29,37 +29,37 @@ class MutateArrayInsertSpec implements MutateInSpec
     private bool $createParents;
     private bool $expandMacros;
     private string $path;
-    private $value;
+    private array $values;
 
     /**
      * @param string $path
-     * @param mixed $value
+     * @param array $values
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
      * @since 4.0.0
      */
-    public function __construct(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
+    public function __construct(string $path, array $values, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
     {
         $this->isXattr = $isXattr;
         $this->createParents = $createParents;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
-        $this->value = $value;
+        $this->values = $values;
     }
 
     /**
      * @param string $path
-     * @param mixed $value
+     * @param array $values
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
      * @return MutateArrayInsertSpec
      * @since 4.0.0
      */
-    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateArrayInsertSpec
+    public static function build(string $path, array $values, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateArrayInsertSpec
     {
-        return new MutateArrayInsertSpec($path, $value, $isXattr, $createParents, $expandMacros);
+        return new MutateArrayInsertSpec($path, $values, $isXattr, $createParents, $expandMacros);
     }
 
     /**
@@ -109,7 +109,9 @@ class MutateArrayInsertSpec implements MutateInSpec
             'createParents' => $this->createParents,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
-            'value' => MutateInOptions::encodeValue($options, $this->value),
+            'value' => join(",", array_map(function ($value) use ($options) {
+                return MutateInOptions::encodeValue($options, $value);
+            }, $this->values)),
         ];
     }
 }
