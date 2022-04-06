@@ -303,7 +303,6 @@ class Collection
         );
         $response = Extension\documentMutateIn($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded, MutateInOptions::export($options));
         $result = new MutateInResult($response);
-        var_dump($result);
         $error = $result->error();
         if ($error != null) {
             throw $error;
