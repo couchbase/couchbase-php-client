@@ -109,7 +109,7 @@ class MutateReplaceSpec implements MutateInSpec
             'createParents' => $this->createParents,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
-            'value' => $this->value,
+            'value' => MutateInOptions::encodeValue($options, $this->value),
         ];
     }
 }

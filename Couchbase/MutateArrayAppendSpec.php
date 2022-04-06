@@ -111,9 +111,15 @@ class MutateArrayAppendSpec implements MutateInSpec
             'createParents' => $this->createParents,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
-            'value' => join(",", array_map(function ($value) use ($options) {
-                return MutateInOptions::encodeValue($options, $value);
-            }, $this->values)),
+            'value' => join(
+                ",",
+                array_map(
+                    function ($value) use ($options) {
+                        return MutateInOptions::encodeValue($options, $value);
+                    },
+                    $this->values
+                )
+            ),
         ];
     }
 }

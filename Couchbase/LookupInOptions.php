@@ -83,6 +83,9 @@ class LookupInOptions
      */
     public function needToFetchExpiry(): bool
     {
+        if ($this->withExpiry == null) {
+            return false;
+        }
         return $this->withExpiry;
     }
 

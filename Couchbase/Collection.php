@@ -268,7 +268,6 @@ class Collection
      * @param array<LookupInSpec> $specs the array of selectors to query against the document
      * @param LookupInOptions|null $options the options to use for the operation
      * @return LookupInResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
