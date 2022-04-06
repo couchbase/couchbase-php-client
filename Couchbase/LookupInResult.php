@@ -20,8 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\Exception;
 use DateTimeImmutable;
 use DateTimeInterface;
+use OutOfBoundsException;
 
 /**
  * Interface for results created by the lookupIn operation.
@@ -47,29 +49,39 @@ class LookupInResult extends Result
      * Returns the value located at the index specified
      *
      * @param int $index the index to retrieve content from
-     * @return mixed|null
+     * @return mixed
+     * @throws OutOfBoundsException
+     * @since 4.0.0
      */
     public function content(int $index)
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->transcoder->decode($this->fields[$index]['value'], 0);
+            $field = $this->fields[$index];
+            if (array_key_exists('error', $field)) {
+                throw $field['error'];
+            }
+            return $this->transcoder->decode($field['value'], 0);
         }
-        return null;
+        throw new OutOfBoundsException(sprintf("LookupIn result index is out of bounds: %d", $index));
     }
 
     /**
      * @param string $path
-     * @return mixed|null
+     * @return mixed
+     * @throws OutOfBoundsException
      * @since 4.0.0
      */
     public function contentByPath(string $path)
     {
         foreach ($this->fields as $field) {
             if ($field['path'] == $path) {
+                if (array_key_exists('error', $field)) {
+                    throw $field['error'];
+                }
                 return $this->transcoder->decode($field['value'], 0);
             }
         }
-        return null;
+        throw new OutOfBoundsException(sprintf("LookupIn result does not have entry for path: %s", $path));
     }
 
     /**
@@ -77,6 +89,7 @@ class LookupInResult extends Result
      *
      * @param int $index the index to check for existence
      * @return bool
+     * @since 4.0.0
      */
     public function exists(int $index): bool
     {
@@ -116,42 +129,19 @@ class LookupInResult extends Result
 
     /**
      * @param int $index
-     * @return int|null
+     * @return Exception|null
      * @since 4.0.0
      */
-    public function errorCode(int $index): ?int
+    public function errorCode(int $index): ?Exception
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['errorCode'];
+            $field = $this->fields[$index];
+            if (array_key_exists('error', $field)) {
+                return $field['error'];
+            }
+            return null;
         }
-        return null;
-    }
-
-    /**
-     * @param int $index
-     * @return string|null
-     * @since 4.0.0
-     */
-    public function errorMessage(int $index): ?string
-    {
-        if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['errorMessage'];
-        }
-        return null;
-    }
-
-    /**
-     * Returns any error code for the path at the index specified
-     *
-     * @param int $index the index to retrieve the error code for
-     * @return ?int
-     */
-    public function status(int $index): ?int
-    {
-        if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['status'];
-        }
-        return null;
+        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
 
     /**
@@ -163,9 +153,13 @@ class LookupInResult extends Result
      */
     public function expiryTime(): ?DateTimeInterface
     {
-        $expiry = $this->contentByPath('$document.exptime');
-        if ($expiry != null) {
-            return DateTimeImmutable::createFromFormat("U", sprintf("%d", $expiry)) ?: null;
+        try {
+            $expiry = $this->contentByPath('$document.exptime');
+            if ($expiry != null) {
+                return DateTimeImmutable::createFromFormat("U", sprintf("%d", $expiry)) ?: null;
+            }
+        } catch (OutOfBoundsException) {
+            return null;
         }
         return null;
     }

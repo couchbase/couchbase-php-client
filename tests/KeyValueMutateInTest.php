@@ -18,6 +18,8 @@
 
 declare(strict_types=1);
 
+use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\PathNotFoundException;
 use Couchbase\MutateArrayAppendSpec;
 use Couchbase\MutateArrayInsertSpec;
 use Couchbase\MutateArrayPrependSpec;
@@ -73,5 +75,22 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
     {
         $this->expectException(TypeError::class);
         MutateArrayAppendSpec::build("foo", 4);
+    }
+
+    function testSubdocumentMutateRaisesExceptions()
+    {
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["foo" => ["value" => 3.14]]);
+        $this->expectException(PathNotFoundException::class);
+        $collection->mutateIn($id, [MutateUpsertSpec::build("foo.bar.baz", 42)]);
+    }
+
+    function testSubdocumentMutateRaisesExceptionIfDocumentDoesNotExist()
+    {
+        $collection = $this->defaultCollection();
+        $this->expectException(DocumentNotFoundException::class);
+        $collection->mutateIn($this->uniqueId("foo"), [MutateUpsertSpec::build("foo", 42)]);
     }
 }

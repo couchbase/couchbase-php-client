@@ -18,7 +18,9 @@
 
 declare(strict_types=1);
 
+use Couchbase\Exception\PathNotFoundException;
 use Couchbase\LookupGetFullSpec;
+use Couchbase\LookupGetSpec;
 use Couchbase\LookupInOptions;
 use Couchbase\UpsertOptions;
 
@@ -58,4 +60,22 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         );
         $this->assertEquals($birthday, $res->expiryTime());
     }
+
+    function testSubdocumentLookupRaisesExceptionsOnlyOnAccessResultFields()
+    {
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["foo" => ["value" => 3.14]]);
+
+        $res = $collection->lookupIn($id, [
+            LookupGetSpec::build("foo.value"),
+            LookupGetSpec::build("foo.bar"),
+        ]);
+        $this->assertEquals(3.14, $res->content(0));
+        $this->assertEquals(3.14, $res->contentByPath("foo.value"));
+        $this->expectException(PathNotFoundException::class);
+        $this->assertEquals(3.14, $res->content(1));
+    }
+
 }

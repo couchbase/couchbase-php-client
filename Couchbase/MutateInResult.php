@@ -20,6 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\Exception;
+use OutOfBoundsException;
+
 /**
  * Results created by the mutateIn operation.
  */
@@ -38,12 +41,16 @@ class MutateInResult extends MutationResult
     {
         parent::__construct($response);
         $this->deleted = $response['deleted'];
+        $this->fields = $response['fields'];
         if (array_key_exists('firstErrorIndex', $response)) {
             $this->firstErrorIndex = $response['firstErrorIndex'];
         }
-        $this->fields = $response['fields'];
     }
 
+    /**
+     * @return bool
+     * @since 4.0.0
+     */
     public function isDeleted(): bool
     {
         return $this->deleted;
@@ -54,38 +61,50 @@ class MutateInResult extends MutationResult
      *
      * @param int $index the index to retrieve content from
      * @return mixed
+     * @throws OutOfBoundsException
      * @since 4.0.0
      */
     public function content(int $index)
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['value'];
+            $field = $this->fields[$index];
+            if (array_key_exists('error', $field)) {
+                throw $field['error'];
+            }
+            return $field['value'];
         }
-        return null;
+        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
 
     /**
      * @param string $path
-     * @return mixed|null
+     * @return mixed
+     * @throws OutOfBoundsException
      * @since 4.0.0
      */
     public function contentByPath(string $path)
     {
         foreach ($this->fields as $field) {
             if ($field['path'] == $path) {
+                if (array_key_exists('error', $field)) {
+                    throw $field['error'];
+                }
                 return $field['value'];
             }
         }
-        return null;
+        throw new OutOfBoundsException(sprintf("MutateIn result does not have entry for path: %s", $path));
     }
 
     /**
-     * @return int|null
-     * @since 4.0.0
+     * Returns first error for the mutation or null
+     * @return Exception|null
      */
-    public function firstErrorIndex(): ?int
+    public function error(): ?Exception
     {
-        return $this->firstErrorIndex;
+        if ($this->firstErrorIndex != null) {
+            return $this->fields[$this->firstErrorIndex]['error'];
+        }
+        return null;
     }
 
     /**
@@ -98,32 +117,23 @@ class MutateInResult extends MutationResult
         if (array_key_exists($index, $this->fields)) {
             return $this->fields[$index]['path'];
         }
-        return null;
+        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
 
     /**
      * @param int $index
-     * @return int|null
+     * @return Exception|null
      * @since 4.0.0
      */
-    public function errorCode(int $index): ?int
+    public function errorCode(int $index): ?Exception
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['errorCode'];
+            $field = $this->fields[$index];
+            if (array_key_exists('error', $field)) {
+                return $field['error'];
+            }
+            return null;
         }
-        return null;
-    }
-
-    /**
-     * @param int $index
-     * @return string|null
-     * @since 4.0.0
-     */
-    public function errorMessage(int $index): ?string
-    {
-        if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['errorMessage'];
-        }
-        return null;
+        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
 }

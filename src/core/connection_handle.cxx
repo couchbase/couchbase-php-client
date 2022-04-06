@@ -1639,7 +1639,7 @@ connection_handle::document_mutate_in(zval* return_value,
     }
 
     auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec && resp.ctx.ec != error::key_value_errc::document_not_found) {
+    if (err.ec) {
         return err;
     }
     array_init(return_value);
@@ -1665,8 +1665,21 @@ connection_handle::document_mutate_in(zval* return_value,
         add_assoc_stringl(&entry, "value", field.value.data(), field.value.size());
         add_assoc_string(&entry, "opcode", subdoc_opcode_to_string(field.opcode));
         add_assoc_long(&entry, "status", std::uint16_t(field.status));
-        add_assoc_long(&entry, "errorCode", field.ec.value());
-        add_assoc_string(&entry, "errorMessage", field.ec.message().c_str());
+        if (field.ec) {
+            zval ex;
+            create_exception(&ex,
+                             { field.ec,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: ec={} ({}), status={}, index={})",
+                                           subdoc_opcode_to_string(field.opcode),
+                                           field.path,
+                                           field.ec.value(),
+                                           field.ec.message(),
+                                           field.status,
+                                           field.original_index),
+                               build_error_context(resp.ctx) });
+            add_assoc_zval(&entry, "error", &ex);
+        }
         add_next_index_zval(&fields, &entry);
     }
     add_assoc_zval(return_value, "fields", &fields);
@@ -1740,8 +1753,21 @@ connection_handle::document_lookup_in(zval* return_value,
         add_assoc_bool(&entry, "exists", field.exists);
         add_assoc_string(&entry, "opcode", subdoc_opcode_to_string(field.opcode));
         add_assoc_long(&entry, "status", std::uint16_t(field.status));
-        add_assoc_long(&entry, "errorCode", field.ec.value());
-        add_assoc_string(&entry, "errorMessage", field.ec.message().c_str());
+        if (field.ec) {
+            zval ex;
+            create_exception(&ex,
+                             { field.ec,
+                               { __LINE__, __FILE__, __func__ },
+                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: ec={} ({}), status={}, index={})",
+                                           subdoc_opcode_to_string(field.opcode),
+                                           field.path,
+                                           field.ec.value(),
+                                           field.ec.message(),
+                                           field.status,
+                                           field.original_index),
+                               build_error_context(resp.ctx) });
+            add_assoc_zval(&entry, "error", &ex);
+        }
         add_next_index_zval(&fields, &entry);
     }
     add_assoc_zval(return_value, "fields", &fields);
