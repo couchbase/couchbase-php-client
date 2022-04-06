@@ -1024,13 +1024,10 @@ PHP_FUNCTION(query)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->query(statement, options);
-    if (e.ec) {
+    if (auto e = handle->query(return_value, statement, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 PHP_FUNCTION(analyticsQuery)
@@ -1050,30 +1047,28 @@ PHP_FUNCTION(analyticsQuery)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->analytics_query(statement, options);
-    if (e.ec) {
+
+    if (auto e = handle->analytics_query(return_value, statement, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 PHP_FUNCTION(viewQuery)
 {
     zval* connection = nullptr;
-    zend_string* bucketName = nullptr;
-    zend_string* designDocumentName = nullptr;
-    zend_string* viewName = nullptr;
-    zend_long nameSpace = 0;
+    zend_string* bucket_name = nullptr;
+    zend_string* design_document_name = nullptr;
+    zend_string* view_name = nullptr;
+    zend_long name_space = 0;
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(5, 6)
     Z_PARAM_RESOURCE(connection)
-    Z_PARAM_STR(bucketName)
-    Z_PARAM_STR(designDocumentName)
-    Z_PARAM_STR(viewName)
-    Z_PARAM_LONG(nameSpace)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(design_document_name)
+    Z_PARAM_STR(view_name)
+    Z_PARAM_LONG(name_space)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -1082,25 +1077,23 @@ PHP_FUNCTION(viewQuery)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->view_query(bucketName, designDocumentName, viewName, nameSpace, options);
-    if (e.ec) {
+
+    if (auto e = handle->view_query(return_value, bucket_name, design_document_name, view_name, name_space, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 PHP_FUNCTION(searchQuery)
 {
     zval* connection = nullptr;
-    zend_string* indexName = nullptr;
+    zend_string* index_name = nullptr;
     zend_string* query = nullptr;
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(3, 4)
     Z_PARAM_RESOURCE(connection)
-    Z_PARAM_STR(indexName)
+    Z_PARAM_STR(index_name)
     Z_PARAM_STR(query)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY(options)
@@ -1110,13 +1103,10 @@ PHP_FUNCTION(searchQuery)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->search_query(indexName, query, options);
-    if (e.ec) {
+    if (auto e = handle->search_query(return_value, index_name, query, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 PHP_FUNCTION(searchIndexUpsert)
@@ -1136,28 +1126,26 @@ PHP_FUNCTION(searchIndexUpsert)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->search_index_upsert(index, options);
-    if (e.ec) {
+
+    if (auto e = handle->search_index_upsert(return_value, index, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 PHP_FUNCTION(viewIndexUpsert)
 {
     zval* connection = nullptr;
-    zend_string* bucketName = nullptr;
+    zend_string* bucket_name = nullptr;
     zval* index = nullptr;
-    zend_long nameSpace = 0;
+    zend_long name_space = 0;
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(4, 5)
     Z_PARAM_RESOURCE(connection)
-    Z_PARAM_STR(bucketName)
+    Z_PARAM_STR(bucket_name)
     Z_PARAM_ARRAY(index)
-    Z_PARAM_LONG(nameSpace)
+    Z_PARAM_LONG(name_space)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -1166,13 +1154,10 @@ PHP_FUNCTION(viewIndexUpsert)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    auto [res, e] = handle->view_index_upsert(bucketName, index, nameSpace, options);
-    if (e.ec) {
+    if (auto e = handle->view_index_upsert(return_value, bucket_name, index, name_space, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
-
-    RETURN_ZVAL(res, 1, 0);
 }
 
 static PHP_MINFO_FUNCTION(couchbase)

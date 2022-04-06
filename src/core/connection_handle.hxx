@@ -194,26 +194,29 @@ class connection_handle
                                                         const zval* entries,
                                                         const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> query(const zend_string* statement, const zval* options);
+    [[nodiscard]] core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> analytics_query(const zend_string* statement, const zval* options);
+    [[nodiscard]] core_error_info analytics_query(zval* return_value, const zend_string* statement, const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> search_query(const zend_string* index_name,
-                                                                 const zend_string* query,
-                                                                 const zval* options);
+    [[nodiscard]] core_error_info search_query(zval* return_value,
+                                               const zend_string* index_name,
+                                               const zend_string* query,
+                                               const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> view_query(const zend_string* bucket_name,
-                                                               const zend_string* design_document_name,
-                                                               const zend_string* view_name,
-                                                               zend_long name_space,
-                                                               const zval* options);
+    [[nodiscard]] core_error_info view_query(zval* return_value,
+                                             const zend_string* bucket_name,
+                                             const zend_string* design_document_name,
+                                             const zend_string* view_name,
+                                             zend_long name_space,
+                                             const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> search_index_upsert(const zval* index, const zval* options);
+    [[nodiscard]] core_error_info search_index_upsert(zval* return_value, const zval* index, const zval* options);
 
-    [[nodiscard]] std::pair<zval*, core_error_info> view_index_upsert(const zend_string* bucket_name,
-                                                                      const zval* design_document,
-                                                                      zend_long name_space,
-                                                                      const zval* options);
+    [[nodiscard]] core_error_info view_index_upsert(zval* return_value,
+                                                    const zend_string* bucket_name,
+                                                    const zval* design_document,
+                                                    zend_long name_space,
+                                                    const zval* options);
 
   private:
     class impl;

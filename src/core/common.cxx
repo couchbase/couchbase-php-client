@@ -366,5 +366,6 @@ create_exception(zval* return_value, const core_error_info& error_info)
     couchbase_update_property_long(ex_ce, return_value, "line", error_info.location.line);
     couchbase_update_property_long(ex_ce, return_value, "code", error_info.ec.value());
     couchbase_update_property(couchbase_exception_ce, return_value, "context", &context);
+    Z_DELREF(context);
 }
 } // namespace couchbase::php
