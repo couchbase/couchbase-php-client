@@ -46,7 +46,7 @@ build_root = File.join(project_root, "build")
 
 caves_binary = File.join(build_root, "gocaves")
 unless File.file?(caves_binary)
-  caves_version = "v0.0.1-71"
+  caves_version = "v0.0.1-72"
   basename = 
     case RbConfig::CONFIG["target_os"]
     when /darwin/

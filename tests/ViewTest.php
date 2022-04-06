@@ -60,6 +60,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
     function testGrouping()
     {
+        $this->skipIfCaves();
+
         $ddocName = $this->uniqueId();
         $view = [
             'name' => 'test',
