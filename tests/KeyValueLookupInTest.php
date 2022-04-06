@@ -68,14 +68,16 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
 
         $collection->upsert($id, ["foo" => ["value" => 3.14]]);
 
-        $res = $collection->lookupIn($id, [
+        $res = $collection->lookupIn(
+            $id,
+            [
             LookupGetSpec::build("foo.value"),
             LookupGetSpec::build("foo.bar"),
-        ]);
+            ]
+        );
         $this->assertEquals(3.14, $res->content(0));
         $this->assertEquals(3.14, $res->contentByPath("foo.value"));
         $this->expectException(PathNotFoundException::class);
         $this->assertEquals(3.14, $res->content(1));
     }
-
 }

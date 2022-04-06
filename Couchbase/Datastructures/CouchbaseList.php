@@ -79,6 +79,9 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
                 [new LookupCountSpec("")],
                 $this->options->lookupInOptions()
             );
+            if (!$result->exists(0)) {
+                return 0;
+            }
             return (int)$result->content(0);
         } catch (DocumentNotFoundException $ex) {
             return 0;

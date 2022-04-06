@@ -74,6 +74,9 @@ class CouchbaseQueue implements Countable, IteratorAggregate
                 [new LookupCountSpec("")],
                 $this->options->lookupInOptions()
             );
+            if (!$result->exists(0)) {
+                return 0;
+            }
             return (int)$result->content(0);
         } catch (DocumentNotFoundException $ex) {
             return 0;
@@ -102,6 +105,9 @@ class CouchbaseQueue implements Countable, IteratorAggregate
                 [new LookupGetSpec("[-1]", false)],
                 $this->options->lookupInOptions()
             );
+            if (!$result->exists(0)) {
+                return null;
+            }
             $value = $result->content(0);
             $options = clone $this->options->mutateInOptions();
             $options->cas($result->cas());
