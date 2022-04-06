@@ -173,6 +173,21 @@ class Cluster
     }
 
     /**
+     * Returns diagnostics information about connections that the SDK has to the cluster. This does not perform
+     * any operations.
+     *
+     * @param string|null $reportId a name which will be included within the ping result
+     * @since 4.0.0
+     */
+    public function diagnostics(string $reportId = null)
+    {
+        if ($reportId == null) {
+            $reportId = uniqid();
+        }
+        return Extension\diagnostics($this->core, $reportId);
+    }
+
+    /**
      * @private
      * @param string $bucketName
      * @return string|null

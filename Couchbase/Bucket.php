@@ -171,11 +171,14 @@ class Bucket
      * any operations.
      *
      * @param string|null $reportId a name which will be included within the ping result
-     * @throws UnsupportedOperationException
+     * @deprecated - see cluster->diagnostics
      * @since 4.0.0
      */
     public function diagnostics(string $reportId = null)
     {
-        throw new UnsupportedOperationException();
+        if ($reportId == null) {
+            $reportId = uniqid();
+        }
+        return Extension\diagnostics($this->core, $reportId);
     }
 }

@@ -538,6 +538,16 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
+    std::pair<core_error_info, couchbase::diag::diagnostics_result> diagnostics(std::string report_id)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::diag::diagnostics_result>>();
+        auto f = barrier->get_future();
+        cluster_->diagnostics(report_id,
+                          [barrier](couchbase::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        return { {}, std::move(resp) };
+    }
+
     std::pair<core_error_info, couchbase::operations::management::search_index_upsert_response> search_index_upsert(
       couchbase::operations::management::search_index_upsert_request request)
     {
@@ -927,6 +937,36 @@ cb_get_integer(const zval* options, std::string_view name)
     }
 
     return { {}, Z_LVAL_P(value) };
+}
+
+template<typename String>
+static std::pair<core_error_info, String>
+cb_get_string(const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return { { error::common_errc::invalid_argument,
+                             { __LINE__, __FILE__, __func__ },
+                             fmt::format("expected {} to be a integer value in the options", name) },
+                     {} };
+    }
+
+    return { {}, { Z_STRVAL_P(value), Z_STRLEN_P(value) } };
 }
 
 static inline void
@@ -2202,7 +2242,6 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
         return err;
     }
 
-    zval retval;
     array_init(return_value);
     add_assoc_string(return_value, "servedByNode", resp.served_by_node.c_str());
 
@@ -2378,7 +2417,6 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         return err;
     }
 
-    zval retval;
     array_init(return_value);
 
     zval rows;
@@ -2882,6 +2920,86 @@ connection_handle::view_query(zval* return_value,
 
         add_assoc_zval(&meta, "meta", &meta);
     }
+
+    return {};
+}
+
+core_error_info
+connection_handle::diagnostics(zval* return_value, const zend_string* report_id, const zval* options)
+{
+    auto [err, resp] = impl_->diagnostics(cb_string_new(report_id));
+    if (err.ec) {
+        return { err };
+    }
+
+    array_init(return_value);
+    add_assoc_string(return_value, "id", resp.id.c_str());
+    add_assoc_string(return_value, "sdk", resp.sdk.c_str());
+    add_assoc_long(return_value, "version", resp.version);
+
+    zval services;
+    array_init(&services);
+    for (const auto& [service_type, service_infos] : resp.services) {
+        std::string type_str;
+        switch (service_type) {
+            case couchbase::service_type::key_value:
+                type_str = "kv";
+                break;
+            case couchbase::service_type::query:
+                type_str = "query";
+                break;
+            case couchbase::service_type::analytics:
+                type_str = "analytics";
+                break;
+            case couchbase::service_type::search:
+                type_str = "search";
+                break;
+            case couchbase::service_type::view:
+                type_str = "views";
+                break;
+            case couchbase::service_type::management:
+                type_str = "mgmt";
+                break;
+            case couchbase::service_type::eventing:
+                type_str = "eventing";
+                break;
+        }
+
+        zval endpoints;
+        array_init(&endpoints);
+        for (const auto& svc : service_infos) {
+            zval endpoint;
+            array_init(&endpoint);
+            if (svc.last_activity) {
+                add_assoc_long(&endpoint, "lastActivityUs", svc.last_activity->count());
+            }
+            add_assoc_string(&endpoint, "id", svc.id.c_str());
+            add_assoc_string(&endpoint, "remote", svc.remote.c_str());
+            add_assoc_string(&endpoint, "local", svc.local.c_str());
+            std::string state;
+            switch (svc.state) {
+                case couchbase::diag::endpoint_state::disconnected:
+                    state = "disconnected";
+                    break;
+                case couchbase::diag::endpoint_state::connecting:
+                    state = "connecting";
+                    break;
+                case couchbase::diag::endpoint_state::connected:
+                    state = "connected";
+                    break;
+                case couchbase::diag::endpoint_state::disconnecting:
+                    state = "disconnecting";
+                    break;
+            }
+            add_assoc_string(&endpoint, "state", state.c_str());
+            if (svc.details) {
+                add_assoc_string(&endpoint, "details", svc.details->c_str());
+            }
+            add_next_index_zval(&endpoints, &endpoint);
+        }
+        add_assoc_zval(&services, type_str.c_str(), &endpoints);
+    }
+    add_assoc_zval(return_value, "services", &services);
 
     return {};
 }
