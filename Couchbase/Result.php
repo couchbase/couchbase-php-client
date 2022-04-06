@@ -70,7 +70,7 @@ class Result
     }
 
     /**
-     * Returns the error (populated for multi-opoerations)
+     * Returns the error (populated for multi-operations)
      *
      * @return Exception|null
      * @since 4.0.0

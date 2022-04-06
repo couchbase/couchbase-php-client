@@ -54,6 +54,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
      * @param Options\CouchbaseList|null $options
+     * @since 4.0.0
      */
     public function __construct(string $id, Collection $collection, ?Options\CouchbaseList $options = null)
     {
@@ -68,6 +69,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @return int number of elements in the list
+     * @since 4.0.0
      */
     public function count(): int
     {
@@ -85,6 +87,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @return bool true if the list is empty
+     * @since 4.0.0
      */
     public function empty(): bool
     {
@@ -95,6 +98,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Retrieves array value for given offset.
      * @param int $offset
      * @return mixed the value or null
+     * @since 4.0.0
      */
     public function at(int $offset)
     {
@@ -114,6 +118,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Replace entry by the given value.
      * @param int $offset offset of the entry to be replaced
      * @param mixed $value new value
+     * @since 4.0.0
      */
     public function replaceAt(int $offset, $value): void
     {
@@ -128,6 +133,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Remove entry by its offset.
      * @param int $offset offset of the entry to remove
      * @throws OutOfBoundsException if the index does not exist
+     * @since 4.0.0
      */
     public function deleteAt(int $offset): void
     {
@@ -146,6 +152,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Inserts new entry at given offset. It expands the list shifting all entries after offset to the right.
      * @param int $offset offset where to insert new value
      * @param mixed ...$values the values to insert
+     * @since 4.0.0
      */
     public function insertAt(int $offset, ...$values): void
     {
@@ -163,6 +170,8 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Inserts new entries in the end of the list.
      * @param mixed ...$values new values to prepend
+     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @since 4.0.0
      */
     public function append(...$values): void
     {
@@ -178,6 +187,8 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Inserts new entries in the beginning of the list.
      * @param mixed ...$values new value to prepend
+     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @since 4.0.0
      */
     public function prepend(...$values): void
     {
@@ -211,6 +222,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Clears the list. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * @since 4.0.0
      */
     public function clear(): void
     {
@@ -226,6 +238,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $offset offset of the entry to check
      * @return bool true if there is an entry associated with the offset
+     * @since 4.0.0
      */
     public function offsetExists($offset): bool
     {
@@ -237,6 +250,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $offset offset of the entry to get
      * @return mixed the value or null
+     * @since 4.0.0
      */
     public function offsetGet($offset): mixed
     {
@@ -249,6 +263,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * @param mixed $offset offset of the entry to replace
      * @param mixed $value new value
      * @throws OutOfBoundsException if the index does not exist
+     * @since 4.0.0
      */
     public function offsetSet($offset, $value): void
     {
@@ -260,6 +275,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $offset offset of the entry to remove
      * @throws OutOfBoundsException if the index does not exist
+     * @since 4.0.0
      */
     public function offsetUnset($offset): void
     {
@@ -270,6 +286,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * Create new iterator to walk through the list.
      * Implementation of {@link IteratorAggregate}
      * @return Traversable iterator to enumerate elements of the list
+     * @since 4.0.0
      */
     public function getIterator(): Traversable
     {

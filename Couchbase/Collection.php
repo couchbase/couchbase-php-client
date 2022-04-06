@@ -75,7 +75,6 @@ class Collection
      * @param string $id the key of the document to fetch
      * @param GetOptions|null $options the options to use for the operation
      * @return GetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function get(string $id, GetOptions $options = null): GetResult

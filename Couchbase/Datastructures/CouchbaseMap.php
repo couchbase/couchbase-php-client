@@ -51,6 +51,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
      * @param Options\CouchbaseMap|null $options
+     * @since 4.0.0
      */
     public function __construct(string $id, Collection $collection, ?Options\CouchbaseMap $options = null)
     {
@@ -65,6 +66,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @return int number of elements in the map
+     * @since 4.0.0
      */
     public function count(): int
     {
@@ -82,6 +84,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * @return bool true if the map is empty
+     * @since 4.0.0
      */
     public function empty(): bool
     {
@@ -92,6 +95,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Retrieves array value for given offset.
      * @param string $key key of the entry to be retrieved
      * @return mixed the value or null
+     * @since 4.0.0
      */
     public function get(string $key)
     {
@@ -112,6 +116,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * @param string $key key of the entry to be inserted/updated
      * @param mixed $value new value
      * @throws \Couchbase\Exception\InvalidArgumentException
+     * @since 4.0.0
      */
     public function set(string $key, $value): void
     {
@@ -128,6 +133,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Remove entry by its key.
      * @param string $key key of the entry to remove
      * @throws OutOfBoundsException if the index does not exist
+     * @since 4.0.0
      */
     public function delete(string $key): void
     {
@@ -137,7 +143,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
                 [new MutateRemoveSpec($key, false)],
                 $this->options->mutateInOptions()
             );
-        }catch (PathMismatchException $ex) {
+        } catch (PathMismatchException $ex) {
             throw new OutOfBoundsException(sprintf("Key %s does not exist", $key));
         }
     }
@@ -146,6 +152,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Checks whether a key exists.
      * @param string $key key of the entry to check
      * @return bool true if there is an entry associated with the offset
+     * @since 4.0.0
      */
     public function existsAt(string $key): bool
     {
@@ -163,6 +170,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Clears the map. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * @since 4.0.0
      */
     public function clear(): void
     {
@@ -178,6 +186,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $key key of the entry to check
      * @return bool true if there is an entry associated with the offset
+     * @since 4.0.0
      */
     public function offsetExists($key): bool
     {
@@ -189,6 +198,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $offset offset of the entry to get
      * @return mixed the value or null
+     * @since 4.0.0
      */
     public function offsetGet($key): mixed
     {
@@ -200,6 +210,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $key key of the entry to assign
      * @param mixed $value new value
+     * @since 4.0.0
      */
     public function offsetSet($key, $value): void
     {
@@ -211,6 +222,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Implementation of {@link ArrayAccess}.
      * @param mixed $key key of the entry to remove
      * @throws OutOfBoundsException if the index does not exist
+     * @since 4.0.0
      */
     public function offsetUnset($key): void
     {
@@ -221,6 +233,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Create new iterator to walk through the list.
      * Implementation of {@link IteratorAggregate}
      * @return Traversable iterator to enumerate elements of the list
+     * @since 4.0.0
      */
     public function getIterator(): Traversable
     {
