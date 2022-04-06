@@ -46,7 +46,7 @@ class SearchMetaData
         $metrics = $metadata['metrics'];
         $this->successCount = $metrics['successPartitionCount'];
         $this->errorCount = $metrics['errorPartitionCount'];
-        $took =  $metrics['tookNanoseconds'];
+        $took = $metrics['tookNanoseconds'];
         if ($took > 0) {
             $this->took = intval($took / 1000);
         }

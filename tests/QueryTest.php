@@ -91,8 +91,8 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->wrapException(
             function () use ($bucketName, $key, $nameSpace) {
                 $options = (new QueryOptions())
-                ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
-                ->namedParameters(["key" => $key]);
+                    ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
+                    ->namedParameters(["key" => $key]);
                 $this->cluster->query("SELECT * FROM $nameSpace USE KEYS $key", $options);
             },
             '\Couchbase\Exception\ParsingFailureException',
@@ -115,9 +115,9 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $result = $collection->upsert(
             $key,
             [
-            "name" => ["Brass", "Doorknob"],
-            "email" => "brass.doorknob@example.com",
-            "random" => $random
+                "name" => ["Brass", "Doorknob"],
+                "email" => "brass.doorknob@example.com",
+                "random" => $random
             ]
         );
         // construct mutation state from the list of mutation results

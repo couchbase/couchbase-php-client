@@ -42,10 +42,10 @@ class SearchResult
                 'id' => $row['id'],
                 'index' => $row['index'],
                 'score' => $row['score'],
-                'explanation' => (array) json_decode($row['explanation']),
+                'explanation' => (array)json_decode($row['explanation']),
                 'locations' => $row['locations'],
                 'fragments' => $row['fragments'],
-                'fields' => (array) json_decode($row['fields']),
+                'fields' => (array)json_decode($row['fields']),
             ];
         }
         $this->facets = [];

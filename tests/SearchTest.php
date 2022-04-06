@@ -165,13 +165,13 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options = new SearchOptions();
         $options->limit(3)->sort(
             [
-            'hello',
-            (new \Couchbase\SearchSortId())->descending(true),
-            new \Couchbase\SearchSortScore(),
-            new \Couchbase\SearchSortGeoDistance("foo", 27.4395527, 53.8835622),
-            (new \Couchbase\SearchSortField("bar"))
-                ->type(\Couchbase\SearchSortType::NUMBER)
-                ->missing(\Couchbase\SearchSortMissing::FIRST)
+                'hello',
+                (new \Couchbase\SearchSortId())->descending(true),
+                new \Couchbase\SearchSortScore(),
+                new \Couchbase\SearchSortGeoDistance("foo", 27.4395527, 53.8835622),
+                (new \Couchbase\SearchSortField("bar"))
+                    ->type(\Couchbase\SearchSortType::NUMBER)
+                    ->missing(\Couchbase\SearchSortMissing::FIRST)
             ]
         );
 
@@ -216,8 +216,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $startStr = $startDate->format(DATE_RFC3339);
         $query = new ConjunctionSearchQuery(
             [
-            (new TermSearchQuery("beer"))->field("type"),
-            (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010))
+                (new TermSearchQuery("beer"))->field("type"),
+                (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010))
             ]
         );
         $options = new SearchOptions();
@@ -314,12 +314,12 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options = new SearchOptions();
         $options->facets(
             [
-            "foo" => new TermSearchFacet("name", 3),
-            "bar" => (new DateRangeSearchFacet("updated", 1))
-                ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
-            "baz" => (new NumericRangeSearchFacet("abv", 2))
-                ->addRange("strong", 4.9, null)
-                ->addRange("light", null, 4.89)
+                "foo" => new TermSearchFacet("name", 3),
+                "bar" => (new DateRangeSearchFacet("updated", 1))
+                    ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
+                "baz" => (new NumericRangeSearchFacet("abv", 2))
+                    ->addRange("strong", 4.9, null)
+                    ->addRange("light", null, 4.89)
             ]
         );
 
@@ -357,8 +357,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
             ->must(
                 (new \Couchbase\ConjunctionSearchQuery(
                     [
-                    (new \Couchbase\DocIdSearchQuery())->docIds('bar', 'baz'),
-                    new \Couchbase\MatchSearchQuery('hello world')
+                        (new \Couchbase\DocIdSearchQuery())->docIds('bar', 'baz'),
+                        new \Couchbase\MatchSearchQuery('hello world')
                     ]
                 ))
                     ->and(new \Couchbase\MatchAllSearchQuery())
@@ -366,11 +366,11 @@ class SearchTest extends Helpers\CouchbaseTestCase
             ->should(
                 (new \Couchbase\DisjunctionSearchQuery(
                     [
-                    new \Couchbase\MatchNoneSearchQuery(),
-                    (new \Couchbase\DateRangeSearchQuery())->start('2010-11-01T10:00:00+00:00')->end('2010-12-01T10:00:00+00:00'),
-                    (new \Couchbase\TermRangeSearchQuery())->min('hello')->max('world'),
-                    new \Couchbase\GeoDistanceSearchQuery(1.0, 3.0, "10mi"),
-                    new \Couchbase\GeoBoundingBoxSearchQuery(1.0, 3.0, 4.0, 5.0),
+                        new \Couchbase\MatchNoneSearchQuery(),
+                        (new \Couchbase\DateRangeSearchQuery())->start('2010-11-01T10:00:00+00:00')->end('2010-12-01T10:00:00+00:00'),
+                        (new \Couchbase\TermRangeSearchQuery())->min('hello')->max('world'),
+                        new \Couchbase\GeoDistanceSearchQuery(1.0, 3.0, "10mi"),
+                        new \Couchbase\GeoBoundingBoxSearchQuery(1.0, 3.0, 4.0, 5.0),
                     ]
                 ))
                     ->or((new \Couchbase\NumericRangeSearchQuery())->min(3)->max(42.5))
@@ -379,8 +379,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
             ->mustNot(
                 new \Couchbase\DisjunctionSearchQuery(
                     [
-                    (new \Couchbase\PhraseSearchQuery('foo', 'bar', 'baz'))->field('description'),
-                    (new \Couchbase\RegexpSearchQuery('user.*'))->field('_class_name')
+                        (new \Couchbase\PhraseSearchQuery('foo', 'bar', 'baz'))->field('description'),
+                        (new \Couchbase\RegexpSearchQuery('user.*'))->field('_class_name')
                     ]
                 )
             );
@@ -393,9 +393,9 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options->highlight(\Couchbase\SearchHighlightMode::SIMPLE, ["foo", "bar", "baz"]);
         $options->facets(
             [
-            "foo" => new \Couchbase\TermSearchFacet("name", 3),
-            "bar" => (new \Couchbase\DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
-            "baz" => (new \Couchbase\NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9, null)->addRange("light", null, 4.89)
+                "foo" => new \Couchbase\TermSearchFacet("name", 3),
+                "bar" => (new \Couchbase\DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
+                "baz" => (new \Couchbase\NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9, null)->addRange("light", null, 4.89)
             ]
         );
         $result = json_encode($options);

@@ -41,7 +41,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
         sleep(1); // give design document a second to settle
 
-        $key =  $this->uniqueId($ddocName);
+        $key = $this->uniqueId($ddocName);
         $bucket = $this->cluster->bucket($bucketName);
         $bucket->defaultCollection()->upsert($key, ['foo' => 42]);
 

@@ -71,8 +71,8 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $res = $collection->lookupIn(
             $id,
             [
-            LookupGetSpec::build("foo.value"),
-            LookupGetSpec::build("foo.bar"),
+                LookupGetSpec::build("foo.value"),
+                LookupGetSpec::build("foo.bar"),
             ]
         );
         $this->assertEquals(3.14, $res->content(0));

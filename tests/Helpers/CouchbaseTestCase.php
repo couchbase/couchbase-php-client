@@ -131,14 +131,14 @@ class CouchbaseTestCase extends TestCase
             $collection->upsert(
                 sprintf("%d_%s_%d", $i, $idBase, $service),
                 [
-                "answer" => 42,
-                "service" => $service,
-                "city" => "London",
-                "geo" => [
-                    "accuracy" => "ROOFTOP",
-                    "lat" => 37.7825,
-                    "lon" => -122.393
-                ]
+                    "answer" => 42,
+                    "service" => $service,
+                    "city" => "London",
+                    "geo" => [
+                        "accuracy" => "ROOFTOP",
+                        "lat" => 37.7825,
+                        "lon" => -122.393
+                    ]
                 ]
             );
         }

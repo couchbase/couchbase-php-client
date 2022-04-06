@@ -139,8 +139,8 @@ class AnalyticsOptions
      * Sets the scan consistency.
      *
      * @param string $consistencyLevel the scan consistency level
-     * @see AnalyticsScanConsistency
      * @return AnalyticsOptions
+     * @see AnalyticsScanConsistency
      * @since 4.0.0
      */
     public function scanConsistency(int $consistencyLevel): AnalyticsOptions
