@@ -31,6 +31,7 @@ class QueryResult
     /**
      * @private
      * @param array $result
+     * @param Transcoder $transcoder
      */
     public function __construct(array $result, Transcoder $transcoder)
     {
