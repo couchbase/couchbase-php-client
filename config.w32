@@ -1,0 +1,37 @@
+// vim:ft=javascript
+ARG_ENABLE("couchbase", "weather to enable Couchbase support", "no");
+if (PHP_COUCHBASE != "no") {
+	var CMAKE = PATH_PROG("cmake");
+	if (!CMAKE) {
+		ERROR("cmake is required");
+	}
+	STDOUT.WriteLine("  Detected cmake version: " + probe_binary(CMAKE, "longversion"));
+
+	DEFINE("COUCHBASE_CMAKE_SOURCE_DIRECTORY", FSO.GetAbsolutePathName(configure_module_dirname + "\\src"));
+	DEFINE("COUCHBASE_CMAKE_BUILD_DIRECTORY", get_define("BUILD_DIR") + "\\cmake-build");
+
+	STDOUT.WriteLine("Couchbase Variables:");
+	var couchbase_variables = [
+		"COUCHBASE_CMAKE_SOURCE_DIRECTORY", 
+		"COUCHBASE_CMAKE_BUILD_DIRECTORY"
+	];
+	var table = [
+		["CMAKE", CMAKE]
+	]
+	for (var i in couchbase_variables) {
+		table.push([couchbase_variables[i], get_define(couchbase_variables[i])]);
+	}
+	output_as_table(["Name", "Value"], table);
+
+	ADD_FLAG("CFLAGS", "/std:c++17");
+	EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
+
+	cmake_command = 'cmd /c ' + CMAKE + 
+		' -S ' + get_define("COUCHBASE_CMAKE_SOURCE_DIRECTORY") +
+		' -B ' + get_define("COUCHBASE_CMAKE_BUILD_DIRECTORY") +
+		' -G ' + '"NMake Makefiles"' +
+		' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF 2>&1';
+	STDOUT.WriteLine(cmake_command);
+	cmake_output = execute(cmake_command);
+	STDOUT.WriteLine(cmake_output);
+}
