@@ -542,8 +542,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     {
         auto barrier = std::make_shared<std::promise<couchbase::diag::diagnostics_result>>();
         auto f = barrier->get_future();
-        cluster_->diagnostics(report_id,
-                          [barrier](couchbase::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
+        cluster_->diagnostics(report_id, [barrier](couchbase::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         return { {}, std::move(resp) };
     }
@@ -961,8 +960,8 @@ cb_get_string(const zval* options, std::string_view name)
             break;
         default:
             return { { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("expected {} to be a integer value in the options", name) },
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("expected {} to be a integer value in the options", name) },
                      {} };
     }
 

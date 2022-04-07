@@ -1116,10 +1116,10 @@ PHP_FUNCTION(diagnostics)
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(2, 3)
-            Z_PARAM_RESOURCE(connection)
-            Z_PARAM_STR(reportId)
-            Z_PARAM_OPTIONAL
-            Z_PARAM_ARRAY(options)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(reportId)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
