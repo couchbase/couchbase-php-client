@@ -28,12 +28,16 @@ use JsonSerializable;
  */
 class MatchSearchQuery implements JsonSerializable, SearchQuery
 {
+    const OPERATOR_OR = "or";
+    const OPERATOR_AND = "and";
+
     private string $match;
     private ?float $boost = null;
     private ?string $field = null;
     private ?int $prefixLength = null;
     private ?int $fuzziness = null;
     private ?string $analyzer = null;
+    private ?string $operator = null;
 
     public function __construct(string $match)
     {
@@ -107,6 +111,22 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     *
+     * Set the operator for this query.
+     *
+     * @param string $operator the operator to use.
+     * @return MatchSearchQuery
+     * @see MatchSearchQuery::OPERATOR_OR
+     * @see MatchSearchQuery::OPERATOR_AND
+     * @since 4.0.0
+     */
+    public function operator(string $operator): MatchSearchQuery
+    {
+        $this->operator = $operator;
+        return $this;
+    }
+
+    /**
      * @private
      * @return mixed
      */
@@ -137,6 +157,9 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
         }
         if ($query->analyzer != null) {
             $json['analyzer'] = $query->analyzer;
+        }
+        if ($query->operator != null) {
+            $json['operator'] = $query->operator;
         }
 
         return $json;
