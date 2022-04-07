@@ -173,6 +173,33 @@ class Cluster
     }
 
     /**
+     * Executes a ping for each service against each node in the cluster. This can be used for determining
+     * the current health of the cluster.
+     *
+     * @param mixed|null $services the services to ping against
+     * @param mixed|null $reportId a name which will be included within the ping result
+     * @see ServiceType::KEY_VALUE
+     * @see ServiceType::QUERY
+     * @see ServiceType::ANALYTICS
+     * @see ServiceType::SEARCH
+     * @see ServiceType::VIEWS
+     * @see ServiceType::MANAGEMENT
+     * @see ServiceType::EVENTING
+     * @since 4.0.0
+     */
+    public function ping($services = null, $reportId = null)
+    {
+        $options = [];
+        if ($services != null) {
+            $options['serviceTypes'] = $services;
+        }
+        if ($reportId != null) {
+            $options['reportId'] = $reportId;
+        }
+        return Extension\ping($this->core, $options);
+    }
+
+    /**
      * Returns diagnostics information about connections that the SDK has to the cluster. This does not perform
      * any operations.
      *

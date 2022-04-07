@@ -538,6 +538,18 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
+    std::pair<core_error_info, couchbase::diag::ping_result> ping(std::optional<std::string> report_id,
+                                                                  std::optional<std::string> bucket_name,
+                                                                  std::set<couchbase::service_type> services)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::diag::ping_result>>();
+        auto f = barrier->get_future();
+        cluster_->ping(report_id, bucket_name, services,
+                              [barrier](couchbase::diag::ping_result&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        return { {}, std::move(resp) };
+    }
+
     std::pair<core_error_info, couchbase::diag::diagnostics_result> diagnostics(std::string report_id)
     {
         auto barrier = std::make_shared<std::promise<couchbase::diag::diagnostics_result>>();
@@ -938,8 +950,7 @@ cb_get_integer(const zval* options, std::string_view name)
     return { {}, Z_LVAL_P(value) };
 }
 
-template<typename String>
-static std::pair<core_error_info, String>
+static std::pair<core_error_info, std::string>
 cb_get_string(const zval* options, std::string_view name)
 {
     if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
@@ -2919,6 +2930,122 @@ connection_handle::view_query(zval* return_value,
 
         add_assoc_zval(&meta, "meta", &meta);
     }
+
+    return {};
+}
+
+core_error_info
+connection_handle::ping(zval* return_value, const zval* options)
+{
+    std::optional<std::string> report_id;
+    if (auto e = cb_assign_string(report_id, options, "reportId"); e.ec) {
+        return e;
+    }
+    std::optional<std::string> bucket_name;
+    if (auto e = cb_assign_string(bucket_name, options, "bucketName"); e.ec) {
+        return e;
+    }
+    std::vector<std::string> service_types;
+    if (auto e = cb_assign_vector_of_strings(service_types, options, "serviceTypes"); e.ec) {
+        return e;
+    }
+    std::set<couchbase::service_type> cb_services{};
+    if (!service_types.empty()) {
+        for (const auto& service_type : service_types) {
+            if (service_type == "kv") {
+                cb_services.emplace(couchbase::service_type::key_value);
+            } else if (service_type == "query") {
+                cb_services.emplace(couchbase::service_type::query);
+            } else if (service_type == "analytics") {
+                cb_services.emplace(couchbase::service_type::analytics);
+            } else if (service_type == "search") {
+                cb_services.emplace(couchbase::service_type::search);
+            } else if (service_type == "views") {
+                cb_services.emplace(couchbase::service_type::view);
+            } else if (service_type == "mgmt") {
+                cb_services.emplace(couchbase::service_type::management);
+            } else if (service_type == "eventing") {
+                cb_services.emplace(couchbase::service_type::eventing);
+            } else {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("invalid value used for service type: {}", service_type) };
+            }
+
+        }
+    }
+
+    auto [err, resp] = impl_->ping(report_id, bucket_name, cb_services);
+    if (err.ec) {
+        return { err };
+    }
+
+    array_init(return_value);
+    add_assoc_string(return_value, "id", resp.id.c_str());
+    add_assoc_string(return_value, "sdk", resp.sdk.c_str());
+    add_assoc_long(return_value, "version", resp.version);
+
+    zval services;
+    array_init(&services);
+    for (const auto& [service_type, service_infos] : resp.services) {
+        std::string type_str;
+        switch (service_type) {
+            case couchbase::service_type::key_value:
+                type_str = "kv";
+                break;
+            case couchbase::service_type::query:
+                type_str = "query";
+                break;
+            case couchbase::service_type::analytics:
+                type_str = "analytics";
+                break;
+            case couchbase::service_type::search:
+                type_str = "search";
+                break;
+            case couchbase::service_type::view:
+                type_str = "views";
+                break;
+            case couchbase::service_type::management:
+                type_str = "mgmt";
+                break;
+            case couchbase::service_type::eventing:
+                type_str = "eventing";
+                break;
+        }
+
+        zval endpoints;
+        array_init(&endpoints);
+        for (const auto& svc : service_infos) {
+            zval endpoint;
+            array_init(&endpoint);
+            add_assoc_string(&endpoint, "id", svc.id.c_str());
+            add_assoc_string(&endpoint, "remote", svc.remote.c_str());
+            add_assoc_string(&endpoint, "local", svc.local.c_str());
+            add_assoc_long(&endpoint, "latencyUs", svc.latency.count());
+            std::string state;
+            switch (svc.state) {
+                case couchbase::diag::ping_state::ok:
+                    state = "ok";
+                    break;
+                case couchbase::diag::ping_state::timeout:
+                    state = "timeout";
+                    break;
+                case couchbase::diag::ping_state::error:
+                    state = "error";
+                    break;
+            }
+            add_assoc_string(&endpoint, "state", state.c_str());
+            if (svc.bucket) {
+                add_assoc_string(&endpoint, "bucket", svc.bucket->c_str());
+            }
+            if (svc.error) {
+                add_assoc_string(&endpoint, "error", svc.error->c_str());
+            }
+            add_next_index_zval(&endpoints, &endpoint);
+        }
+        add_assoc_zval(&services, type_str.c_str(), &endpoints);
+    }
+    add_assoc_zval(return_value, "services", &services);
 
     return {};
 }

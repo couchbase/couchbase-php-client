@@ -210,6 +210,8 @@ class connection_handle
                                              zend_long name_space,
                                              const zval* options);
 
+    [[nodiscard]] core_error_info ping(zval* return_value, const zval* options);
+
     [[nodiscard]] core_error_info diagnostics(zval* return_value, const zend_string* report_id, const zval* options);
 
     [[nodiscard]] core_error_info search_index_upsert(zval* return_value, const zval* index, const zval* options);
