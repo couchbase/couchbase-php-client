@@ -74,8 +74,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = new MatchPhraseSearchQuery("hop beer");
-        $options = new SearchOptions();
-        $options->limit(3);
+        $options = SearchOptions::build()->limit(3);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -96,8 +95,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = new MatchPhraseSearchQuery("doesnotexistintheindex");
-        $options = new SearchOptions();
-        $options->limit(3);
+        $options = SearchOptions::build()->limit(3);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -112,8 +110,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $id = $this->uniqueId();
         $query = new MatchPhraseSearchQuery($id);
-        $options = new SearchOptions();
-        $options->limit(3);
+        $options = SearchOptions::build()->limit(3);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -154,8 +151,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $nameField = "name";
         $query = new MatchPhraseSearchQuery("hop beer");
-        $options = new SearchOptions();
-        $options->limit(3)->fields([$nameField]);
+        $options = SearchOptions::build()->limit(3)->fields([$nameField]);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -178,9 +174,10 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = new MatchPhraseSearchQuery("hop beer");
-        $options = new SearchOptions();
-        $options->limit(3)->sort(
-            [
+        $options = SearchOptions::build()
+            ->limit(3)
+            ->sort(
+                [
                 'hello',
                 (new SearchSortId())->descending(true),
                 new SearchSortScore(),
@@ -188,8 +185,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 (new SearchSortField("bar"))
                     ->type(SearchSortType::NUMBER)
                     ->missing(SearchSortMissing::FIRST),
-            ]
-        );
+                ]
+            );
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -213,8 +210,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = (new NumericRangeSearchQuery())->field("abv")->min(2.0)->max(3.2);
-        $options = new SearchOptions();
-        $options->fields(["abv"]);
+        $options = SearchOptions::build()->fields(["abv"]);
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
         $this->assertNotNull($result);
@@ -239,8 +235,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010)),
             ]
         );
-        $options = new SearchOptions();
-        $options->fields(["updated", "type"]);
+        $options = SearchOptions::build()->fields(["updated", "type"]);
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
         $this->assertNotNull($result);
@@ -286,8 +281,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $descriptionQuery = (new MatchSearchQuery("hop"))->field("description")->fuzziness(1);
 
         $disjunctionQuery = new DisjunctionSearchQuery([$nameQuery, $descriptionQuery]);
-        $options = new SearchOptions();
-        $options->fields(["type", "name", "description"]);
+        $options = SearchOptions::build()->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
         $this->assertGreaterThan(1000, $result->metaData()->totalHits());
         $this->assertNotEmpty($result->rows());
@@ -297,16 +291,14 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertDoesNotMatchRegularExpression('/green/i', $result->rows()[0]['fields']['description']);
 
         $disjunctionQuery->min(2);
-        $options = new SearchOptions();
-        $options->fields(["type", "name", "description"]);
+        $options = SearchOptions::build()->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
         $this->assertLessThan(10, $result->metaData()->totalHits());
         $disjunctionResult = $result;
 
         $conjunctionQuery = new ConjunctionSearchQuery([$nameQuery, $descriptionQuery]);
-        $options = new SearchOptions();
-        $options->fields(["type", "name", "description"]);
+        $options = SearchOptions::build()->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $conjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
         $this->assertSameSize($disjunctionResult->rows(), $result->rows());
@@ -325,8 +317,9 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = new MatchSearchQuery("hop beer");
-        $options = new SearchOptions();
-        $options->limit(3)->highlight(SearchHighlightMode::HTML, ["name"]);
+        $options = SearchOptions::build()
+            ->limit(3)
+            ->highlight(SearchHighlightMode::HTML, ["name"]);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
         $this->assertNotEmpty($result->rows());
@@ -346,17 +339,17 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $query = (new TermSearchQuery("beer"))->field("type");
-        $options = new SearchOptions();
-        $options->facets(
-            [
-                "foo" => new TermSearchFacet("name", 3),
-                "bar" => (new DateRangeSearchFacet("updated", 1))
-                    ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
-                "baz" => (new NumericRangeSearchFacet("abv", 2))
-                    ->addRange("strong", 4.9)
-                    ->addRange("light", null, 4.89),
-            ]
-        );
+        $options = SearchOptions::build()
+            ->facets(
+                [
+                    "foo" => new TermSearchFacet("name", 3),
+                    "bar" => (new DateRangeSearchFacet("updated", 1))
+                        ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
+                    "baz" => (new NumericRangeSearchFacet("abv", 2))
+                        ->addRange("strong", 4.9)
+                        ->addRange("light", null, 4.89),
+                ]
+            );
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -423,16 +416,16 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($result);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
 
-        $options = new SearchOptions();
-        $options->fields(["foo", "bar", "baz"]);
-        $options->highlight(SearchHighlightMode::SIMPLE, ["foo", "bar", "baz"]);
-        $options->facets(
-            [
-                "foo" => new TermSearchFacet("name", 3),
-                "bar" => (new DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
-                "baz" => (new NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9)->addRange("light", null, 4.89),
-            ]
-        );
+        $options = SearchOptions::build()
+            ->fields(["foo", "bar", "baz"])
+            ->highlight(SearchHighlightMode::SIMPLE, ["foo", "bar", "baz"])
+            ->facets(
+                [
+                    "foo" => new TermSearchFacet("name", 3),
+                    "bar" => (new DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
+                    "baz" => (new NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9)->addRange("light", null, 4.89),
+                ]
+            );
         $result = json_encode($options);
         $this->assertNotNull($result);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());

@@ -47,6 +47,17 @@ class ViewOptions
     private ?int $namespace = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return ViewOptions
+     * @since 4.0.0
+     */
+    public static function build(): ViewOptions
+    {
+        return new ViewOptions();
+    }
+
+    /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply

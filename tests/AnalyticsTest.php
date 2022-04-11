@@ -38,7 +38,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $scope = $bucket->scope("_default");
         $collection->upsert($id, ["bar" => 42]);
 
-        $options = (new AnalyticsOptions())
+        $options = AnalyticsOptions::build()
             ->scanConsistency(AnalyticsScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$id]);
         $res = $scope->analyticsQuery("SELECT * FROM `_default` where meta().id = \$1", $options);
@@ -57,7 +57,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $collection = $bucket->defaultCollection();
         $collection->upsert($id, ["bar" => 42]);
 
-        $options = (new AnalyticsOptions())
+        $options = AnalyticsOptions::build()
             ->scanConsistency(AnalyticsScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$id]);
         $res = $this->cluster->analyticsQuery("SELECT * FROM `beer-sample`.`_default`.`_default` where meta().id = \$1", $options);
@@ -71,8 +71,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
 
         $this->maybeCreateAnalyticsIndex("beer-sample");
 
-        $opts = new AnalyticsOptions();
-        $opts = $opts->transcoder(new JsonTranscoder(true));
+        $opts = AnalyticsOptions::build()->transcoder(new JsonTranscoder(true));
         $result = $this->cluster->analyticsQuery("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
         $row = $result->rows()[0];
@@ -86,8 +85,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
 
         $this->maybeCreateAnalyticsIndex("beer-sample");
 
-        $opts = new AnalyticsOptions();
-        $opts = $opts->transcoder(new JsonTranscoder(false));
+        $opts = AnalyticsOptions::build()->transcoder(new JsonTranscoder(false));
         $result = $this->cluster->analyticsQuery("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
         $row = $result->rows()[0];

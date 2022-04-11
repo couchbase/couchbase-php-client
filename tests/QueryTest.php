@@ -46,7 +46,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
-        $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
+        $options = QueryOptions::build()->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \"$key\"", $options);
 
         $meta = $res->metaData();
@@ -73,14 +73,14 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
-        $options = (new QueryOptions())
+        $options = QueryOptions::build()
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$key]);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$1", $options);
         $this->assertNotEmpty($res->rows());
         $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
 
-        $options = (new QueryOptions())
+        $options = QueryOptions::build()
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->namedParameters(["key" => $key]);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$key", $options);
@@ -90,7 +90,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         // it will use PHP interpolation, and actually breaks query
         $this->wrapException(
             function () use ($bucketName, $key, $nameSpace) {
-                $options = (new QueryOptions())
+                $options = QueryOptions::build()
                     ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
                     ->namedParameters(["key" => $key]);
                 $this->cluster->query("SELECT * FROM $nameSpace USE KEYS $key", $options);
@@ -125,7 +125,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $mutationState->add($result);
 
         $collectionName = $collection->name();
-        $options = (new QueryOptions())
+        $options = QueryOptions::build()
             ->consistentWith($mutationState)
             ->positionalParameters(['Brass']);
         $result = $this->cluster->query("SELECT name, random, META($collectionName).id FROM $nameSpace WHERE \$1 IN name", $options);
@@ -142,8 +142,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $opts = new QueryOptions();
-        $opts = $opts->transcoder(new JsonTranscoder(true));
+        $opts = QueryOptions::build()->transcoder(new JsonTranscoder(true));
         $result = $this->cluster->query("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
         $row = $result->rows()[0];
@@ -155,8 +154,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $opts = new QueryOptions();
-        $opts = $opts->transcoder(new JsonTranscoder(false));
+        $opts = QueryOptions::build()->transcoder(new JsonTranscoder(false));
         $result = $this->cluster->query("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
         $row = $result->rows()[0];
@@ -187,7 +185,10 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42], (new UpsertOptions())->expiry(15));
 
-        $this->cluster->query("UPDATE $nameSpace AS d USE KEYS \"$key\" SET d.bar = 45", (new QueryOptions())->preserveExpiry(true));
+        $this->cluster->query(
+            "UPDATE $nameSpace AS d USE KEYS \"$key\" SET d.bar = 45",
+            QueryOptions::build()->preserveExpiry(true)
+        );
 
         $result = $collection->get($key, (new GetOptions())->withExpiry(true));
         $val = $result->content();
@@ -208,7 +209,9 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
-        $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS)->adhoc(false);
+        $options = QueryOptions::build()
+            ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
+            ->adhoc(false);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \"$key\"", $options);
 
         $rows = $res->rows();
@@ -229,7 +232,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $bucket->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
-        $options = (new QueryOptions())->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
+        $options = QueryOptions::build()->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
         $res = $bucket->scope("_default")->query("SELECT * FROM `_default` USE KEYS \"$key\"", $options);
 
         $meta = $res->metaData();

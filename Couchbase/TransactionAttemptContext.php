@@ -109,20 +109,23 @@ class TransactionAttemptContext
      * @internal
      * @return void
      */
-    public function newAttempt() {
+    public function newAttempt()
+    {
     }
 
     /**
      * @internal
      * @return void
      */
-    public function rollback() {
+    public function rollback()
+    {
     }
 
     /**
      * @internal
      * @return void
      */
-    public function commit() {
+    public function commit()
+    {
     }
 }

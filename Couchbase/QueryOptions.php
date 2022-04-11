@@ -56,6 +56,17 @@ class QueryOptions
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return QueryOptions
+     * @since 4.0.0
+     */
+    public static function build(): QueryOptions
+    {
+        return new QueryOptions();
+    }
+
+    /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply

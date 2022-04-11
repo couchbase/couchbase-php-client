@@ -48,9 +48,9 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $res = $bucket->viewQuery($ddocName, 'test');
         $this->assertEmpty($res->rows());
 
-        $options = new ViewOptions();
-        $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
-        $options->reduce(false);
+        $options = ViewOptions::build()
+            ->scanConsistency(ViewConsistency::REQUEST_PLUS)
+            ->reduce(false);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals($key, $res->rows()[0]->id());
@@ -101,15 +101,14 @@ class ViewTest extends Helpers\CouchbaseTestCase
         );
         sleep(1); // give docs time to propagate
 
-        $options = new ViewOptions();
-        $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
+        $options = ViewOptions::build()->scanConsistency(ViewConsistency::REQUEST_PLUS);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals(4, $res->rows()[0]->value());
 
-        $options = new ViewOptions();
-        $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
-        $options->groupLevel(1);
+        $options = ViewOptions::build()
+            ->scanConsistency(ViewConsistency::REQUEST_PLUS)
+            ->groupLevel(1);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(2, $res->rows());
         $this->assertEquals(["France"], $res->rows()[0]->key());
@@ -117,9 +116,9 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(["USA"], $res->rows()[1]->key());
         $this->assertEquals(3, $res->rows()[1]->value());
 
-        $options = new ViewOptions();
-        $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
-        $options->group(true);
+        $options = ViewOptions::build()
+            ->scanConsistency(ViewConsistency::REQUEST_PLUS)
+            ->group(true);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(3, $res->rows());
         $this->assertEquals(["France", "Paris"], $res->rows()[0]->key());
@@ -129,9 +128,11 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(["USA", "New York"], $res->rows()[2]->key());
         $this->assertEquals(2, $res->rows()[2]->value());
 
-        $options = new ViewOptions();
-        $options->scanConsistency(ViewConsistency::REQUEST_PLUS);
-        $options->group(true)->reduce(true)->keys(array_values([['USA', 'New York']]));
+        $options = ViewOptions::build()
+            ->scanConsistency(ViewConsistency::REQUEST_PLUS)
+            ->group(true)
+            ->reduce(true)
+            ->keys(array_values([['USA', 'New York']]));
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals(["USA", "New York"], $res->rows()[0]->key());

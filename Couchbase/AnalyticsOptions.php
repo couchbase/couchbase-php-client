@@ -46,6 +46,17 @@ class AnalyticsOptions
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return AnalyticsOptions
+     * @since 4.0.0
+     */
+    public static function build(): AnalyticsOptions
+    {
+        return new AnalyticsOptions();
+    }
+
+    /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply

@@ -22,7 +22,7 @@ namespace Couchbase;
 
 use JsonSerializable;
 
-class SearchOptions implements \JsonSerializable
+class SearchOptions implements JsonSerializable
 {
     private ?int $timeoutMilliseconds = null;
     private ?int $limit = null;
@@ -37,6 +37,17 @@ class SearchOptions implements \JsonSerializable
     private ?array $collectionNames = null;
     private ?array $raw;
     private ?bool $includeLocations = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return SearchOptions
+     * @since 4.0.0
+     */
+    public static function build(): SearchOptions
+    {
+        return new SearchOptions();
+    }
 
     /**
      * Sets the server side timeout in milliseconds
@@ -274,8 +285,8 @@ class SearchOptions implements \JsonSerializable
     }
 
     /**
-     * @internal
      * @return mixed
+     * @internal
      */
     public function jsonSerialize(): mixed
     {
