@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when a macro has been requested which is not recognised by the server.
  */
-class XattrUnknownMacroException extends Exception
+class XattrUnknownMacroException extends CouchbaseException
 {
 }

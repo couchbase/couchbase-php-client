@@ -18,23 +18,16 @@
 
 declare(strict_types=1);
 
-namespace Couchbase\Exception;
+namespace Couchbase;
 
-/**
- *  Base exception for exceptions that are thrown originating from Couchbase operations.
- */
-class Exception extends \Exception
+class LookupInMacro
 {
-    private ?array $context = null;
-
-    /**
-     * Returns error details.
-     *
-     * @return array|null
-     * @since 4.0.0
-     */
-    public function getContext(): ?array
-    {
-        return $this->context;
-    }
+    public const DOCUMENT = '$document';
+    public const EXPIRY_TIME = '$document.exptime';
+    public const CAS = '$document.CAS';
+    public const SEQUENCE_NUMBER = '$document.seqno';
+    public const LAST_MODIFIED = '$document.last_modified';
+    public const DELETED = '$document.deleted';
+    public const VALUE_SIZE_BYTES = '$document.value_bytes';
+    public const REVISION_ID = '$document.revid';
 }

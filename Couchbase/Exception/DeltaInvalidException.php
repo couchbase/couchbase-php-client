@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when the delta in an arithmetic operation (eg counter) is invalid. In this SDK, this
  * is equivalent to saying that the delta is zero.
@@ -29,6 +27,6 @@ use Couchbase\Exception\Exception;
  * Note that the server also returns the corresponding error code when the delta value itself is too big, or not a
  * number, but since the SDK enforces deltas to be of type long, these cases shouldn't come up.
  */
-class DeltaInvalidException extends Exception
+class DeltaInvalidException extends CouchbaseException
 {
 }

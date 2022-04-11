@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Raised when provided content could not be successfully decoded.
  */
-class DecodingFailureException extends Exception
+class DecodingFailureException extends CouchbaseException
 {
 }

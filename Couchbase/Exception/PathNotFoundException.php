@@ -20,12 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when a path does not exist in the document. The exact meaning of path existence
  * depends on the operation and inputs.
  */
-class PathNotFoundException extends Exception
+class PathNotFoundException extends CouchbaseException
 {
 }

@@ -20,12 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The synchronous replication durability work can return an ambiguous error (or we timeout waiting for the response,
  * which is effectively the same).  Here we know the change is on a majority of replicas, or it's on none.
  */
-class DurabilityAmbiguousException extends Exception
+class DurabilityAmbiguousException extends CouchbaseException
 {
 }

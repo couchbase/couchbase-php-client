@@ -89,7 +89,7 @@ class Caves
 
     /**
      * @param string $clusterId
-     * @param int    $durationMilliseconds
+     * @param int $durationMilliseconds
      *
      * @return void
      */

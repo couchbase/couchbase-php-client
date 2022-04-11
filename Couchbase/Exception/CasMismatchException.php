@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an optimistic locking failure.
  *
@@ -31,6 +29,6 @@ use Couchbase\Exception\Exception;
  * The application should usually respond by fetching a fresh version of the document and repeating the failed
  * operation.
  */
-class CasMismatchException extends Exception
+class CasMismatchException extends CouchbaseException
 {
 }

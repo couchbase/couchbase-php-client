@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The requested key has a SyncWrite which is being re-committed.
  */
-class DurableWriteReCommitInProgressException extends Exception
+class DurableWriteReCommitInProgressException extends CouchbaseException
 {
 }

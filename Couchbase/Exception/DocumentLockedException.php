@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Thrown when the server reports a temporary failure that is very likely to be lock-related (like an already locked
  * key or a bad cas used for unlock).
@@ -29,6 +27,6 @@ use Couchbase\Exception\Exception;
  * See https://issues.couchbase.com/browse/MB-13087 for an explanation of why this is only _likely_ to be
  * lock-related.
  */
-class DocumentLockedException extends Exception
+class DocumentLockedException extends CouchbaseException
 {
 }

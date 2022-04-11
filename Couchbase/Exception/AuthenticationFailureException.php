@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Every exception that has to do with authentication problems should either instantiate or subclass from this type
  */
-class AuthenticationFailureException extends Exception
+class AuthenticationFailureException extends CouchbaseException
 {
 }

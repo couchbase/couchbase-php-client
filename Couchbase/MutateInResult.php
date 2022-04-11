@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\Exception;
+use Couchbase\Exception\CouchbaseException;
 use OutOfBoundsException;
 
 /**
@@ -101,9 +101,9 @@ class MutateInResult extends MutationResult
 
     /**
      * Returns first error for the mutation or null
-     * @return Exception|null
+     * @return CouchbaseException|null
      */
-    public function error(): ?Exception
+    public function error(): ?CouchbaseException
     {
         if ($this->firstErrorIndex != null) {
             return $this->fields[$this->firstErrorIndex]['error'];
@@ -128,10 +128,10 @@ class MutateInResult extends MutationResult
     /**
      * @param int $index
      *
-     * @return Exception|null
+     * @return CouchbaseException|null
      * @since 4.0.0
      */
-    public function errorCode(int $index): ?Exception
+    public function errorCode(int $index): ?CouchbaseException
     {
         if (array_key_exists($index, $this->fields)) {
             $field = $this->fields[$index];

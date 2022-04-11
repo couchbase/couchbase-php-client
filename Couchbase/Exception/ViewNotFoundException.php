@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The queried view is not found on the server
  */
-class ViewNotFoundException extends Exception
+class ViewNotFoundException extends CouchbaseException
 {
 }

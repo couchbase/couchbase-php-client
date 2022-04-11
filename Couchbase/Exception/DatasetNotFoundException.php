@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The queried dataset is not found on the server.
  */
-class DatasetNotFoundException extends Exception
+class DatasetNotFoundException extends CouchbaseException
 {
 }

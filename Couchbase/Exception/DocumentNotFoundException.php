@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an operation failed because the key does not exist.
  */
-class DocumentNotFoundException extends Exception
+class DocumentNotFoundException extends CouchbaseException
 {
 }

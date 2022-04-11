@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when proposed value would make the document too deep to parse.
  *
@@ -29,6 +27,6 @@ use Couchbase\Exception\Exception;
  * server). This error is similar to other TooDeep errors, which all relate to various validation stages to ensure
  * the server does not consume too much memory when parsing a single document.
  */
-class ValueTooDeepException extends Exception
+class ValueTooDeepException extends CouchbaseException
 {
 }

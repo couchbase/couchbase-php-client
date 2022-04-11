@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
-class DataverseNotFoundException extends Exception
+class DataverseNotFoundException extends CouchbaseException
 {
 }

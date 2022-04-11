@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when a path already exists and it shouldn't
  */
-class PathExistsException extends Exception
+class PathExistsException extends CouchbaseException
 {
 }

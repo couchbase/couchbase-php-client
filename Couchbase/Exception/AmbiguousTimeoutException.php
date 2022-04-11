@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\TimeoutException;
-
 /**
  * This is a special case of the timeout exception, signaling that the timeout happened with an ambiguous cause.
  */

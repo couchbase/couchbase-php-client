@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when the targeted enclosing document itself is not JSON.
  */
-class DocumentNotJsonException extends Exception
+class DocumentNotJsonException extends CouchbaseException
 {
 }

@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when more than one xattr key has been requested.
  */
-class XattrInvalidKeyComboException extends Exception
+class XattrInvalidKeyComboException extends CouchbaseException
 {
 }

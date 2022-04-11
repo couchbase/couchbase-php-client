@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an operation failed because there has been an issue with the query planner or similar.
  */
-class IndexFailureException extends Exception
+class IndexFailureException extends CouchbaseException
 {
 }

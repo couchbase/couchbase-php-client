@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The analytics query failed to compile
  */
-class CompilationFailureException extends Exception
+class CompilationFailureException extends CouchbaseException
 {
 }

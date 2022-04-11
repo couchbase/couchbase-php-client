@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The {Timeout} signals that an operation timed out before it could be completed.
  *
@@ -40,6 +38,6 @@ use Couchbase\Exception\Exception;
  *   idempotent operations. For non-idempotent operations it depends on the state the operation was in at the time of
  *   cancellation.
  */
-class TimeoutException extends Exception
+class TimeoutException extends CouchbaseException
 {
 }

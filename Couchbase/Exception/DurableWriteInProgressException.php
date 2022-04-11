@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Returned if an attempt is made to mutate a key which already has a durable write pending.
  */
-class DurableWriteInProgressException extends Exception
+class DurableWriteInProgressException extends CouchbaseException
 {
 }

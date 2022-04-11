@@ -20,7 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\CasMismatchException;
+use Couchbase\Exception\DocumentExistsException;
+use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
 use DateTimeInterface;
 
@@ -78,6 +83,9 @@ class Collection
      * @param GetOptions|null $options the options to use for the operation
      *
      * @return GetResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function get(string $id, GetOptions $options = null): GetResult
@@ -100,6 +108,8 @@ class Collection
      * @param ExistsOptions|null $options the options to use for the operation
      *
      * @return ExistsResult
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function exists(string $id, ExistsOptions $options = null): ExistsResult
@@ -124,6 +134,9 @@ class Collection
      * @param GetAndLockOptions|null $options the options to use for the operation
      *
      * @return GetResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function getAndLock(string $id, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
@@ -148,6 +161,9 @@ class Collection
      * @param GetAndTouchOptions|null $options the options to use for the operation
      *
      * @return GetResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function getAndTouch(string $id, $expiry, GetAndTouchOptions $options = null): GetResult
@@ -177,6 +193,8 @@ class Collection
      *
      * @return GetReplicaResult
      * @throws UnsupportedOperationException
+     * @throws CouchbaseException
+     * @throws TimeoutException
      * @since 4.0.0
      */
     public function getAnyReplica(string $id, GetAnyReplicaOptions $options = null): GetReplicaResult
@@ -193,6 +211,8 @@ class Collection
      *
      * @return array
      * @throws UnsupportedOperationException
+     * @throws CouchbaseException
+     * @throws TimeoutException
      * @since 4.0.0
      */
     public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
@@ -208,6 +228,8 @@ class Collection
      * @param UpsertOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult
@@ -234,6 +256,9 @@ class Collection
      * @param InsertOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws DocumentExistsException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function insert(string $id, $value, InsertOptions $options = null): MutationResult
@@ -260,6 +285,10 @@ class Collection
      * @param ReplaceOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws DocumentNotFoundException
+     * @throws CasMismatchException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult
@@ -285,6 +314,10 @@ class Collection
      * @param RemoveOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws CasMismatchException
+     * @throws TimeoutException
+     * @throws CouchbaseException
+     * @throws DocumentNotFoundException
      * @since 4.0.0
      */
     public function remove(string $id, RemoveOptions $options = null): MutationResult
@@ -309,6 +342,10 @@ class Collection
      * @param UnlockOptions|null $options the options to use for the operation
      *
      * @return Result
+     * @throws DocumentNotFoundException
+     * @throws CasMismatchException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function unlock(string $id, string $cas, UnlockOptions $options = null): Result
@@ -333,6 +370,9 @@ class Collection
      * @param TouchOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function touch(string $id, $expiry, TouchOptions $options = null): MutationResult
@@ -362,6 +402,9 @@ class Collection
      * @param LookupInOptions|null $options the options to use for the operation
      *
      * @return LookupInResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
@@ -373,7 +416,7 @@ class Collection
             $specs
         );
         if ($options != null && $options->needToFetchExpiry()) {
-            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => '$document.exptime'];
+            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
         }
         $response = Extension\documentLookupIn(
             $this->core,
@@ -395,6 +438,10 @@ class Collection
      * @param MutateInOptions|null $options the options to use for the operation
      *
      * @return MutateInResult
+     * @throws DocumentNotFoundException
+     * @throws DocumentExistsException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult

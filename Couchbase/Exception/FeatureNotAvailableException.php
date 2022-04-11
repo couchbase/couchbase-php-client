@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Exception which states that the feature is not available.
  */
-class FeatureNotAvailableException extends Exception
+class FeatureNotAvailableException extends CouchbaseException
 {
 }

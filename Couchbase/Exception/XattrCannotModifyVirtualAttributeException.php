@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when the virtual attribute cannot be modified.
  */
-class XattrCannotModifyVirtualAttributeException extends Exception
+class XattrCannotModifyVirtualAttributeException extends CouchbaseException
 {
 }

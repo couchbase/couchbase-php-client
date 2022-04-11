@@ -20,13 +20,11 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when existing number value in document is too big.
  *
  * The value is interpreted as 64 bit on the server side.
  */
-class NumberTooBigException extends Exception
+class NumberTooBigException extends CouchbaseException
 {
 }

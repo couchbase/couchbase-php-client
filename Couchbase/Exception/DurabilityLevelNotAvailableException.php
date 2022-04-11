@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * This exception is raised when a durability level has been requested that is not available on the server.
  */
-class DurabilityLevelNotAvailableException extends Exception
+class DurabilityLevelNotAvailableException extends CouchbaseException
 {
 }

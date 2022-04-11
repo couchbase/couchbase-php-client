@@ -20,6 +20,23 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-class ServiceNotAvailableException extends CouchbaseException
+use Exception;
+
+/**
+ *  Base exception for exceptions that are thrown originating from Couchbase operations.
+ */
+class CouchbaseException extends Exception
 {
+    private ?array $context = null;
+
+    /**
+     * Returns error details.
+     *
+     * @return array|null
+     * @since 4.0.0
+     */
+    public function getContext(): ?array
+    {
+        return $this->context;
+    }
 }

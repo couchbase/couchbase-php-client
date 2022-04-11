@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Thrown when the request is too big for some reason.
  */
-class ValueTooLargeException extends Exception
+class ValueTooLargeException extends CouchbaseException
 {
 }

@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an operation failed because there has been an issue with query prepared statements.
  */
-class PreparedStatementFailureException extends Exception
+class PreparedStatementFailureException extends CouchbaseException
 {
 }

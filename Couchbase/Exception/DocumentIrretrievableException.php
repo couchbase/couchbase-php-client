@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an operation completed but no successful document was retrievable
  */
-class DocumentIrretrievableException extends Exception
+class DocumentIrretrievableException extends CouchbaseException
 {
 }

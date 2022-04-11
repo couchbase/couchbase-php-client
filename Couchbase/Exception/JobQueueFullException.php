@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates the analytics server job queue is full
  */
-class JobQueueFullException extends Exception
+class JobQueueFullException extends CouchbaseException
 {
 }

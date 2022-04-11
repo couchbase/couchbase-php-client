@@ -20,7 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\AnalyticsIndexManager;
 use Couchbase\Management\BucketManager;
@@ -76,6 +78,8 @@ class Cluster
      *
      * @return QueryResult
      * @throws InvalidArgumentException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
@@ -93,6 +97,8 @@ class Cluster
      * @param AnalyticsOptions|null $options the options to use when executing the query
      *
      * @return AnalyticsResult
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult

@@ -20,12 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * The given durability requirements are currently impossible to achieve, as not enough configured replicas are
  * currently available.
  */
-class DurabilityImpossibleException extends Exception
+class DurabilityImpossibleException extends CouchbaseException
 {
 }

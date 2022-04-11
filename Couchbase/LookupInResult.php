@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\Exception;
+use Couchbase\Exception\CouchbaseException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OutOfBoundsException;
@@ -137,10 +137,10 @@ class LookupInResult extends Result
     /**
      * @param int $index
      *
-     * @return Exception|null
+     * @return CouchbaseException|null
      * @since 4.0.0
      */
-    public function errorCode(int $index): ?Exception
+    public function errorCode(int $index): ?CouchbaseException
     {
         if (array_key_exists($index, $this->fields)) {
             $field = $this->fields[$index];
@@ -162,11 +162,11 @@ class LookupInResult extends Result
     public function expiryTime(): ?DateTimeInterface
     {
         try {
-            $expiry = $this->contentByPath('$document.exptime');
+            $expiry = $this->contentByPath(LookupInMacro::EXPIRY_TIME);
             if ($expiry != null) {
                 return DateTimeImmutable::createFromFormat("U", sprintf("%d", $expiry)) ?: null;
             }
-        } catch (OutOfBoundsException) {
+        } catch (OutOfBoundsException $e) {
             return null;
         }
         return null;

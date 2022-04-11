@@ -20,7 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\TimeoutException;
 
 /**
  * Scope is an object for providing access to collections.
@@ -81,6 +82,8 @@ class Scope
      * @param QueryOptions|null $options the options to use when executing the query
      *
      * @return QueryResult
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function query(string $statement, QueryOptions $options = null): QueryResult
@@ -97,6 +100,8 @@ class Scope
      * @param AnalyticsOptions|null $options the options to use when executing the query
      *
      * @return AnalyticsResult
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult

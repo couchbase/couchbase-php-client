@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  *
  * Subdocument exception thrown when the provided value cannot be inserted at the given path.
@@ -29,6 +27,6 @@ use Couchbase\Exception\Exception;
  * It is actually thrown when the delta in an counter operation is valid, but applying that delta would
  * result in an out-of-range number (server interprets numbers as 64-bit integers).
  */
-class ValueInvalidException extends Exception
+class ValueInvalidException extends CouchbaseException
 {
 }

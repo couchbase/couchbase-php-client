@@ -20,12 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when path has a syntax error, or path syntax is incorrect for the operation (for
  * example, if operation requires an array index).
  */
-class PathInvalidException extends Exception
+class PathInvalidException extends CouchbaseException
 {
 }

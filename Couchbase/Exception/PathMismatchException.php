@@ -20,12 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Subdocument exception thrown when the path structure conflicts with the document structure (for example, if a
  * path mentions foo.bar[0].baz, but foo.bar is actually a JSON object).
  */
-class PathMismatchException extends Exception
+class PathMismatchException extends CouchbaseException
 {
 }

@@ -144,7 +144,7 @@ PHP_MINIT_FUNCTION(couchbase)
       couchbase_destroy_connection, couchbase_destroy_persistent_connection, "couchbase_persistent_connection", module_number));
 
     zend_class_entry ce;
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "Exception", exception_functions);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CouchbaseException", exception_functions);
     couchbase_exception_ce = zend_register_internal_class_ex(&ce, zend_ce_exception);
     zend_declare_property_null(couchbase_exception_ce, ZEND_STRL("context"), ZEND_ACC_PRIVATE);
 

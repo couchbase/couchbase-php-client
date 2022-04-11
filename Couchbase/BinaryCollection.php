@@ -20,6 +20,10 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\TimeoutException;
+
 /**
  * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with
  * binary documents.
@@ -69,6 +73,9 @@ class BinaryCollection
      * @param AppendOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function append(string $id, string $value, AppendOptions $options = null): MutationResult
@@ -93,6 +100,9 @@ class BinaryCollection
      * @param PrependOptions|null $options the options to use for the operation
      *
      * @return MutationResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
@@ -116,6 +126,9 @@ class BinaryCollection
      * @param IncrementOptions|null $options the options to use for the operation
      *
      * @return CounterResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function increment(string $id, IncrementOptions $options = null): CounterResult
@@ -138,6 +151,9 @@ class BinaryCollection
      * @param DecrementOptions|null $options the options to use for the operation
      *
      * @return CounterResult
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
      * @since 4.0.0
      */
     public function decrement(string $id, DecrementOptions $options = null): CounterResult

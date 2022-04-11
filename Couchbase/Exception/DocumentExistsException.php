@@ -20,11 +20,9 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-use Couchbase\Exception\Exception;
-
 /**
  * Indicates an operation failed because the key already exists.
  */
-class DocumentExistsException extends Exception
+class DocumentExistsException extends CouchbaseException
 {
 }
