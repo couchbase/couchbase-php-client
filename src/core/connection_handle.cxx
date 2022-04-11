@@ -544,8 +544,8 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     {
         auto barrier = std::make_shared<std::promise<couchbase::diag::ping_result>>();
         auto f = barrier->get_future();
-        cluster_->ping(report_id, bucket_name, services,
-                              [barrier](couchbase::diag::ping_result&& resp) { barrier->set_value(std::move(resp)); });
+        cluster_->ping(
+          report_id, bucket_name, services, [barrier](couchbase::diag::ping_result&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         return { {}, std::move(resp) };
     }
@@ -2097,22 +2097,15 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
-    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
-        switch (scan_consistency) {
-            case 1:
-                request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
-                break;
-
-            case 2:
-                request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
-                break;
-
-            default:
-                if (scan_consistency > 0) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-                }
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+        if (scan_consistency == "not_bounded") {
+            request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
+        } else if (scan_consistency == "request_plus") {
+            request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
+        } else {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
         }
     } else {
         return e;
@@ -2971,7 +2964,6 @@ connection_handle::ping(zval* return_value, const zval* options)
                          { __LINE__, __FILE__, __func__ },
                          fmt::format("invalid value used for service type: {}", service_type) };
             }
-
         }
     }
 

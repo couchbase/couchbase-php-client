@@ -37,6 +37,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies how often orphaned spans should be logged.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function orphanedEmitInterval(int $milliseconds): ThresholdLoggingOptions
     {
@@ -46,6 +50,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the number of orphaned spans which should be kept between each logging interval.
+     *
+     * @param int $numberOfSamples
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function orphanedSampleSize(int $numberOfSamples): ThresholdLoggingOptions
     {
@@ -56,6 +64,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies how often aggregated trace information should be logged.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function thresholdEmitInterval(int $milliseconds): ThresholdLoggingOptions
     {
@@ -65,6 +77,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the number of entries which should be kept between each logging interval.
+     *
+     * @param int $numberOfSamples
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function thresholdSampleSize(int $numberOfSamples): ThresholdLoggingOptions
     {
@@ -74,6 +90,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the threshold for when a kv request should be included in the aggregated metrics.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function keyValueThreshold(int $milliseconds): ThresholdLoggingOptions
     {
@@ -83,6 +103,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the threshold for when a query request should be included in the aggregated metrics.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function queryThreshold(int $milliseconds): ThresholdLoggingOptions
     {
@@ -92,6 +116,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the threshold for when a views request should be included in the aggregated metrics.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function viewThreshold(int $milliseconds): ThresholdLoggingOptions
     {
@@ -101,6 +129,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the threshold for when a search request should be included in the aggregated metrics.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function searchThreshold(int $milliseconds): ThresholdLoggingOptions
     {
@@ -110,6 +142,10 @@ class ThresholdLoggingOptions
 
     /**
      * Specifies the threshold for when an analytics request should be included in the aggregated metrics.
+     *
+     * @param int $milliseconds
+     * @return ThresholdLoggingOptions
+     * @since 4.0.0
      */
     public function analyticsThreshold(int $milliseconds): ThresholdLoggingOptions
     {
@@ -117,6 +153,10 @@ class ThresholdLoggingOptions
         return $this;
     }
 
+    /**
+     * @private
+     * @return array
+     */
     public function export(): array
     {
         return [

@@ -20,31 +20,35 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-class LoggingMeterOptions
+class TransactionResult
 {
-    private ?int $flushIntervalMilliseconds = null;
-
-    /**
-     * @param int $milliseconds duration in milliseconds how often the metrics should be flushed in the log.
-     *
-     * @return LoggingMeterOptions
-     * @since 4.0.0
-     */
-    public function flushInterval(int $milliseconds): LoggingMeterOptions
-    {
-        $this->flushIntervalMilliseconds = $milliseconds;
-        return $this;
-    }
+    private string $transactionId;
+    private bool $unstagingComplete;
 
     /**
      * @private
-     * @return array
      * @since 4.0.0
      */
-    public function export(): array
+    public function __construct(string $transactionId, bool $unstagingComplete)
     {
-        return [
-            'flushInterval' => $this->flushIntervalMilliseconds,
-        ];
+        $this->transactionId = $transactionId;
+        $this->unstagingComplete = $unstagingComplete;
+    }
+
+    /**
+     * The ID of the completed transaction.
+     */
+    public function transactionId(): string
+    {
+        return $this->transactionId;
+    }
+
+    /**
+     * Whether all documents were successfully unstaged and are now available
+     * for non-transactional operations to see.
+     */
+    public function unstagingComplete(): bool
+    {
+        return $this->unstagingComplete;
     }
 }

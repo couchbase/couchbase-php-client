@@ -22,16 +22,26 @@ namespace Couchbase;
 
 /**
  * Set of values for the scan consistency level of a query.
+ *
+ * @deprecated
+ * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
+ * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
  */
 interface QueryScanConsistency
 {
     /**
      * Set scan consistency to not bounded
+     *
+     * @deprecated use QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
+     * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
      */
     public const NOT_BOUNDED = 1;
 
     /**
      * Set scan consistency to not request plus
+     *
+     * @deprecated use QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
+     * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
      */
     public const REQUEST_PLUS = 2;
 }

@@ -20,13 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\InvalidArgumentException;
-
-class QueryOptions
+class TransactionQueryOptions
 {
-    const SCAN_CONSISTENCY_NOT_BOUNDED = "not_bounded";
-    const SCAN_CONSISTENCY_REQUEST_PLUS = "request_plus";
-
     private ?int $timeoutMilliseconds = null;
     private ?MutationState $consistentWith = null;
     private ?string $scanConsistency = null;
@@ -37,14 +32,12 @@ class QueryOptions
     private ?int $profile = null;
     private ?int $scanWaitMilliseconds = null;
     private ?bool $readonly = null;
-    private ?bool $flexIndex = null;
     private ?bool $adHoc = null;
     private ?array $namedParameters = null;
     private ?array $positionalParameters = null;
     private ?array $raw = null;
     private ?string $clientContextId = null;
     private ?bool $metrics = null;
-    private ?bool $preserveExpiry = null;
     private ?string $scopeName = null;
     private ?string $scopeQualifier = null;
     private Transcoder $transcoder;
@@ -61,11 +54,10 @@ class QueryOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function timeout(int $milliseconds): QueryOptions
+    public function timeout(int $milliseconds): TransactionQueryOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
@@ -75,11 +67,10 @@ class QueryOptions
      * Sets the mutation state to achieve consistency with for read your own writes (RYOW).
      *
      * @param MutationState $state the mutation state to achieve consistency with
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function consistentWith(MutationState $state): QueryOptions
+    public function consistentWith(MutationState $state): TransactionQueryOptions
     {
         $this->consistentWith = $state;
         return $this;
@@ -88,33 +79,14 @@ class QueryOptions
     /**
      * Sets the scan consistency.
      *
-     * @param string|int $consistencyLevel the scan consistency level.
-     *
-     * @return QueryOptions
-     * @throws InvalidArgumentException
-     * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
-     * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
+     * @param string $consistencyLevel the scan consistency level.
+     * @return TransactionQueryOptions
+     * @see TransactionQueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
+     * @see TransactionQueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
      * @since 4.0.0
      */
-    public function scanConsistency($consistencyLevel): QueryOptions
+    public function scanConsistency(string $consistencyLevel): TransactionQueryOptions
     {
-        if (gettype($consistencyLevel) == "integer") {
-            trigger_error(
-                'Method ' . __METHOD__ . ' is deprecated with integer parameter, use string parameter instead',
-                E_USER_DEPRECATED
-            );
-
-            switch ($consistencyLevel) {
-                case 0:
-                    $consistencyLevel = self::SCAN_CONSISTENCY_NOT_BOUNDED;
-                    break;
-                case 1:
-                    $consistencyLevel = self::SCAN_CONSISTENCY_REQUEST_PLUS;
-                    break;
-                default:
-                    throw new InvalidArgumentException("Integer value for store semantics must be one of  0, 1");
-            }
-        }
         $this->scanConsistency = $consistencyLevel;
         return $this;
     }
@@ -123,11 +95,10 @@ class QueryOptions
      * Sets the maximum buffered channel size between the indexer client and the query service for index scans.
      *
      * @param int $cap the maximum buffered channel size
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function scanCap(int $cap): QueryOptions
+    public function scanCap(int $cap): TransactionQueryOptions
     {
         $this->scanCap = $cap;
         return $this;
@@ -138,11 +109,10 @@ class QueryOptions
      * information on the proper use and tuning of this option.
      *
      * @param int $milliseconds
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function scanWait(int $milliseconds): QueryOptions
+    public function scanWait(int $milliseconds): TransactionQueryOptions
     {
         $this->scanWaitMilliseconds = $milliseconds;
         return $this;
@@ -152,11 +122,10 @@ class QueryOptions
      * Sets the maximum number of items each execution operator can buffer between various operators.
      *
      * @param int $cap the maximum number of items each execution operation can buffer
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function pipelineCap(int $cap): QueryOptions
+    public function pipelineCap(int $cap): TransactionQueryOptions
     {
         $this->pipelineCap = $cap;
         return $this;
@@ -166,11 +135,10 @@ class QueryOptions
      * Sets the number of items execution operators can batch for fetch from the KV service.
      *
      * @param int $batchSize the pipeline batch size
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function pipelineBatch(int $batchSize): QueryOptions
+    public function pipelineBatch(int $batchSize): TransactionQueryOptions
     {
         $this->pipelineBatch = $batchSize;
         return $this;
@@ -180,10 +148,9 @@ class QueryOptions
      * Sets the maximum number of index partitions, for computing aggregation in parallel.
      *
      * @param int $max the number of index partitions
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      */
-    public function maxParallelism(int $max): QueryOptions
+    public function maxParallelism(int $max): TransactionQueryOptions
     {
         $this->maxParallelism = $max;
         return $this;
@@ -193,11 +160,10 @@ class QueryOptions
      * Sets the query profile mode to use.
      *
      * @param int $mode the query profile mode
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function profile(int $mode): QueryOptions
+    public function profile(int $mode): TransactionQueryOptions
     {
         $this->profile = $mode;
         return $this;
@@ -207,27 +173,12 @@ class QueryOptions
      * Sets whether this query is readonly.
      *
      * @param bool $readonly whether the query is readonly
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function readonly(bool $readonly): QueryOptions
+    public function readonly(bool $readonly): TransactionQueryOptions
     {
         $this->readonly = $readonly;
-        return $this;
-    }
-
-    /**
-     * Sets whether this query allowed to use FlexIndex (full text search integration).
-     *
-     * @param bool $enabled whether the FlexIndex allowed
-     *
-     * @return QueryOptions
-     * @since 4.0.0
-     */
-    public function flexIndex(bool $enabled): QueryOptions
-    {
-        $this->flexIndex = $enabled;
         return $this;
     }
 
@@ -235,11 +186,10 @@ class QueryOptions
      * Sets whether this query is adhoc.
      *
      * @param bool $enabled whether the query is adhoc
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function adhoc(bool $enabled): QueryOptions
+    public function adhoc(bool $enabled): TransactionQueryOptions
     {
         $this->adHoc = $enabled;
         return $this;
@@ -249,11 +199,10 @@ class QueryOptions
      * Sets the named parameters for this query.
      *
      * @param array $pairs the associative array of parameters
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function namedParameters(array $pairs): QueryOptions
+    public function namedParameters(array $pairs): TransactionQueryOptions
     {
         $this->namedParameters = $pairs;
         return $this;
@@ -263,11 +212,10 @@ class QueryOptions
      * Sets the positional parameters for this query.
      *
      * @param array $params the array of parameters
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function positionalParameters(array $params): QueryOptions
+    public function positionalParameters(array $params): TransactionQueryOptions
     {
         $this->positionalParameters = $params;
         return $this;
@@ -278,14 +226,13 @@ class QueryOptions
      *
      * @param string $key the name of the parameter
      * @param string $value the value of the parameter
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
     public function raw(string $key, $value): ViewOptions
     {
         if ($this->raw == null) {
-            $this->raw = [];
+            $this->raw = array();
         }
 
         $this->raw[$key] = $value;
@@ -296,25 +243,23 @@ class QueryOptions
      * Sets the client context id for this query.
      *
      * @param string $id the client context id
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function clientContextId(string $id): QueryOptions
+    public function clientContextId(string $id): TransactionQueryOptions
     {
         $this->clientContextId = $id;
         return $this;
     }
 
     /**
-     * Sets whether or not to return metrics with the query.
+     * Sets whether to return metrics with the query.
      *
      * @param bool $enabled whether to return metrics
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function metrics(bool $enabled): QueryOptions
+    public function metrics(bool $enabled): TransactionQueryOptions
     {
         $this->metrics = $enabled;
         return $this;
@@ -324,12 +269,11 @@ class QueryOptions
      * Associate scope name with query
      *
      * @param string $name the name of the scope
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @deprecated
      * @since 4.0.0
      */
-    public function scopeName(string $name): QueryOptions
+    public function scopeName(string $name): TransactionQueryOptions
     {
         trigger_error(
             'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
@@ -345,12 +289,11 @@ class QueryOptions
      * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
      *
      * @param string $qualifier the scope qualifier
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @deprecated
      * @since 4.0.0
      */
-    public function scopeQualifier(string $qualifier): QueryOptions
+    public function scopeQualifier(string $qualifier): TransactionQueryOptions
     {
         trigger_error(
             'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
@@ -361,28 +304,13 @@ class QueryOptions
     }
 
     /**
-     * Sets whether to tell the query engine to preserve expiration values set on any documents modified by this query.
-     *
-     * @param bool $preserve whether to preserve expiration values.
-     *
-     * @return QueryOptions
-     * @since 4.0.0
-     */
-    public function preserveExpiry(bool $preserve): QueryOptions
-    {
-        $this->preserveExpiry = $preserve;
-        return $this;
-    }
-
-    /**
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
-     *
-     * @return QueryOptions
+     * @return TransactionQueryOptions
      * @since 4.0.0
      */
-    public function transcoder(Transcoder $transcoder): QueryOptions
+    public function transcoder(Transcoder $transcoder): TransactionQueryOptions
     {
         $this->transcoder = $transcoder;
         return $this;
@@ -391,12 +319,11 @@ class QueryOptions
     /**
      * Returns associated transcoder.
      *
-     * @param QueryOptions|null $options
-     *
+     * @param TransactionQueryOptions|null $options
      * @return Transcoder
      * @since 4.0.0
      */
-    public static function getTranscoder(?QueryOptions $options): Transcoder
+    public static function getTranscoder(?TransactionQueryOptions $options): Transcoder
     {
         if ($options == null) {
             return JsonTranscoder::getInstance();
@@ -404,12 +331,12 @@ class QueryOptions
         return $options->transcoder;
     }
 
-    public static function export(?QueryOptions $options, string $scopeName = null, string $bucketName = null): array
+    public static function export(?TransactionQueryOptions $options, string $scopeName = null, string $bucketName = null): array
     {
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'bucketName' => $bucketName,
+                'bucketName' => $bucketName
             ];
         }
 
@@ -447,17 +374,15 @@ class QueryOptions
             'maxParallelism' => $options->maxParallelism,
             'profile' => $options->profile,
             'readonly' => $options->readonly,
-            'flexIndex' => $options->flexIndex,
             'adHoc' => $options->adHoc,
             'namedParameters' => $namedParameters,
             'positionalParameters' => $positionalParameters,
             'raw' => $raw,
             'clientContextId' => $options->clientContextId,
             'metrics' => $options->metrics,
-            'preserveExpiry' => $options->preserveExpiry,
             'scopeName' => $scopeName,
             'bucketName' => $bucketName,
-            'scopeQualifier' => $options->scopeQualifier,
+            'scopeQualifier' => $options->scopeQualifier
         ];
     }
 }

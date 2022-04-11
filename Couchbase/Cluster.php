@@ -36,6 +36,8 @@ use Couchbase\Management\UserManager;
  */
 class Cluster
 {
+    private ClusterOptions $options;
+
     private string $connectionHash;
     /**
      * @var resource
@@ -49,6 +51,7 @@ class Cluster
     {
         $this->connectionHash = hash("sha256", sprintf("--%s--%s--", $connectionString, $options->authenticatorHash()));
         $this->core = Extension\createConnection($this->connectionHash, $connectionString, $options->export());
+        $this->options = $options;
     }
 
     /**
@@ -219,6 +222,18 @@ class Cluster
         }
         return Extension\diagnostics($this->core, $reportId);
     }
+
+    /**
+     * Creates a new bucket manager object for managing buckets.
+     *
+     * @return Transactions
+     * @since 4.0.0
+     */
+    public function transactions(): Transactions
+    {
+        return new Transactions($this->core, $this->options->getTransactionsOptions());
+    }
+
 
     /**
      * @private

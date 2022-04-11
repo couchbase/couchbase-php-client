@@ -20,19 +20,22 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-class LoggingMeterOptions
+class TransactionsQueryConfiguration
 {
-    private ?int $flushIntervalMilliseconds = null;
+    private ?string $scanConsistency = null;
 
     /**
-     * @param int $milliseconds duration in milliseconds how often the metrics should be flushed in the log.
+     * Specifies the default scan consistency level for queries.
      *
-     * @return LoggingMeterOptions
+     * @param string $level
+     * @return TransactionsQueryConfiguration
+     * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
+     * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
      * @since 4.0.0
      */
-    public function flushInterval(int $milliseconds): LoggingMeterOptions
+    public function scanConsistency(string $level): TransactionsQueryConfiguration
     {
-        $this->flushIntervalMilliseconds = $milliseconds;
+        $this->scanConsistency = $level;
         return $this;
     }
 
@@ -44,7 +47,7 @@ class LoggingMeterOptions
     public function export(): array
     {
         return [
-            'flushInterval' => $this->flushIntervalMilliseconds,
+            'scanConsistency' => $this->scanConsistency,
         ];
     }
 }
