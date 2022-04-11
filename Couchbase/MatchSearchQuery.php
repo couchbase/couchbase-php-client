@@ -28,8 +28,8 @@ use JsonSerializable;
  */
 class MatchSearchQuery implements JsonSerializable, SearchQuery
 {
-    const OPERATOR_OR = "or";
-    const OPERATOR_AND = "and";
+    public const OPERATOR_OR = "or";
+    public const OPERATOR_AND = "and";
 
     private string $match;
     private ?float $boost = null;
@@ -48,6 +48,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return MatchSearchQuery
      * @since 4.0.0
      */
@@ -61,6 +62,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return MatchSearchQuery
      * @since 4.0.0
      */
@@ -74,6 +76,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Sets the analytics for this query.
      *
      * @param string $analyzer the analyzer to use for this query.
+     *
      * @return MatchSearchQuery
      * @since 4.0.0
      */
@@ -87,6 +90,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Sets the prefix length for this query.
      *
      * @param int $prefixLength the prefix length to use.
+     *
      * @return MatchSearchQuery
      * @since 4.0.0
      */
@@ -101,6 +105,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Set the fuzziness for this query.
      *
      * @param int $fuzziness the fuzziness to use.
+     *
      * @return MatchSearchQuery
      * @since 4.0.0
      */
@@ -115,6 +120,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      * Set the operator for this query.
      *
      * @param string $operator the operator to use.
+     *
      * @return MatchSearchQuery
      * @see MatchSearchQuery::OPERATOR_OR
      * @see MatchSearchQuery::OPERATOR_AND

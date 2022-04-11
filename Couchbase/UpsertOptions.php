@@ -54,6 +54,7 @@ class UpsertOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return UpsertOptions
      * @since 4.0.0
      */
@@ -66,7 +67,9 @@ class UpsertOptions
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
      * @return UpsertOptions
      * @since 4.0.0
      */
@@ -84,6 +87,7 @@ class UpsertOptions
      * Sets whether the original expiration should be preserved (by default Replace operation updates expiration).
      *
      * @param bool $shouldPreserve if true, the expiration time will not be updated
+     *
      * @return UpsertOptions
      * @since 4.0.0
      */
@@ -98,6 +102,7 @@ class UpsertOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return UpsertOptions
      * @since 4.0.0
      */
@@ -112,6 +117,7 @@ class UpsertOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return UpsertOptions
      * @since 4.0.0
      */
@@ -125,7 +131,8 @@ class UpsertOptions
      * Delegates encoding of the document to associated transcoder
      *
      * @param UpsertOptions|null $options
-     * @param $document
+     * @param                    $document
+     *
      * @return array
      * @since 4.0.0
      */
@@ -139,7 +146,9 @@ class UpsertOptions
 
     /**
      * @private
+     *
      * @param UpsertOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

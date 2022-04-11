@@ -37,6 +37,7 @@ class CouchbaseMap
 
     /**
      * CouchbaseMap constructor.
+     *
      * @param GetOptions|null $get options for get operations
      * @param RemoveOptions|null $remove options for get remove operations
      * @param LookupInOptions|null $lookupIn options for lookupIn operations

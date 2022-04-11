@@ -28,7 +28,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
 {
-    function testSubdocumenLookupCanFetchExpiry()
+    public function testSubdocumenLookupCanFetchExpiry()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
@@ -39,7 +39,7 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $res = $collection->lookupIn(
             $id,
             [
-                LookupGetFullSpec::build()
+                LookupGetFullSpec::build(),
             ],
             LookupInOptions::build()->withExpiry(true)
         );
@@ -54,14 +54,14 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $res = $collection->lookupIn(
             $id,
             [
-                LookupGetFullSpec::build()
+                LookupGetFullSpec::build(),
             ],
             LookupInOptions::build()->withExpiry(true)
         );
         $this->assertEquals($birthday, $res->expiryTime());
     }
 
-    function testSubdocumentLookupRaisesExceptionsOnlyOnAccessResultFields()
+    public function testSubdocumentLookupRaisesExceptionsOnlyOnAccessResultFields()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();

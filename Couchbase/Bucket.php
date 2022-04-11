@@ -40,8 +40,10 @@ class Bucket
 
     /**
      * @private
+     *
      * @param string $name
-     * @param $core
+     * @param        $core
+     *
      * @since 4.0.0
      */
     public function __construct(string $name, $core)
@@ -77,6 +79,7 @@ class Bucket
      * Returns a new Scope object representing the given scope.
      *
      * @param string $name the name of the scope
+     *
      * @return Scope
      * @since 4.0.0
      */
@@ -90,6 +93,7 @@ class Bucket
      *
      * @param callable $encoder the encoder to use to encode data when sending data to the server
      * @param callable $decoder the decoder to use to decode data when retrieving data from the server
+     *
      * @throws UnsupportedOperationException
      * @since 4.0.0
      */
@@ -115,6 +119,7 @@ class Bucket
      * @param string $designDoc the design document to use for the query
      * @param string $viewName the view to use for the query
      * @param ViewOptions|null $options the options to use when executing the query
+     *
      * @return ViewResult
      * @since 4.0.0
      */
@@ -158,6 +163,7 @@ class Bucket
      *
      * @param mixed|null $services the services to ping against
      * @param mixed|null $reportId a name which will be included within the ping result
+     *
      * @see ServiceType::KEY_VALUE
      * @see ServiceType::QUERY
      * @see ServiceType::ANALYTICS
@@ -170,7 +176,7 @@ class Bucket
     public function ping($services = null, $reportId = null)
     {
         $options = [
-            'bucketName' => $this->name
+            'bucketName' => $this->name,
         ];
         if ($services != null) {
             $options['serviceTypes'] = $services;
@@ -186,6 +192,7 @@ class Bucket
      * any operations.
      *
      * @param string|null $reportId a name which will be included within the ping result
+     *
      * @deprecated - see cluster->diagnostics
      * @since 4.0.0
      */

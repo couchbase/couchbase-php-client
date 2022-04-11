@@ -42,6 +42,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
      * @param string $name
      * @param int|string $start
      * @param int|string $end
+     *
      * @return DateRangeSearchFacet
      * @throws InvalidArgumentException
      * @since 4.0.0
@@ -49,7 +50,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     public function addRange(string $name, $start = null, $end = null): DateRangeSearchFacet
     {
         $range = [
-            'name' => $name
+            'name' => $name,
         ];
 
         if ($start != null) {
@@ -94,7 +95,9 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
 
     /**
      * @private
+     *
      * @param DateRangeSearchFacet $facet
+     *
      * @return array
      */
     public static function export(DateRangeSearchFacet $facet): array

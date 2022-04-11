@@ -26,6 +26,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Sets name of the link
      *
      * @param string $name
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function name(string $name): CouchbaseRemoteAnalyticsLink
@@ -36,6 +37,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Sets dataverse this link belongs to
      *
      * @param string $dataverse
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function dataverse(string $dataverse): CouchbaseRemoteAnalyticsLink
@@ -46,6 +48,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Sets the hostname of the target Couchbase cluster
      *
      * @param string $hostname
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function hostname(string $hostname): CouchbaseRemoteAnalyticsLink
@@ -58,6 +61,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Optional if client-certificate authentication is being used.
      *
      * @param string $username
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function username(string $username): CouchbaseRemoteAnalyticsLink
@@ -70,6 +74,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Optional if client-certificate authentication is being used.
      *
      * @param string $password
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function password(string $password): CouchbaseRemoteAnalyticsLink
@@ -80,6 +85,7 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * Sets settings for connection encryption
      *
      * @param EncryptionSettings $settings
+     *
      * @return CouchbaseRemoteAnalyticsLink
      */
     public function encryption(EncryptionSettings $settings): CouchbaseRemoteAnalyticsLink

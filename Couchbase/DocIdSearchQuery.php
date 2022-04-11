@@ -40,6 +40,7 @@ class DocIdSearchQuery implements SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return DocIdSearchQuery
      * @since 4.0.0
      */
@@ -53,6 +54,7 @@ class DocIdSearchQuery implements SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return DocIdSearchQuery
      * @since 4.0.0
      */
@@ -66,6 +68,7 @@ class DocIdSearchQuery implements SearchQuery
      * Sets the document ids to restrict the search to.
      *
      * @param string ...$documentIds the document ids to restrict the search to.
+     *
      * @return DocIdSearchQuery
      * @since 4.0.0
      */

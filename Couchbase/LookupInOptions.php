@@ -49,6 +49,7 @@ class LookupInOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return LookupInOptions
      * @since 4.0.0
      */
@@ -67,6 +68,7 @@ class LookupInOptions
      * operation.
      *
      * @param bool $fetchExpiry whether to include document expiry
+     *
      * @return LookupInOptions
      * @since 4.0.0
      */
@@ -93,6 +95,7 @@ class LookupInOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return LookupInOptions
      * @since 4.0.0
      */
@@ -106,6 +109,7 @@ class LookupInOptions
      * Returns associated transcoder.
      *
      * @param LookupInOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -119,7 +123,9 @@ class LookupInOptions
 
     /**
      * @private
+     *
      * @param LookupInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

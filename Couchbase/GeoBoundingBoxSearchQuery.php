@@ -39,6 +39,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
      * @param float $topLeftLatitude
      * @param float $bottomRightLongitude
      * @param float $bottomRightLatitude
+     *
      * @since 4.0.0
      */
     public function __construct(float $topLeftLongitude, float $topLeftLatitude, float $bottomRightLongitude, float $bottomRightLatitude)
@@ -53,6 +54,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return GeoBoundingBoxSearchQuery
      * @since 4.0.0
      */
@@ -66,6 +68,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return GeoBoundingBoxSearchQuery
      * @since 4.0.0
      */

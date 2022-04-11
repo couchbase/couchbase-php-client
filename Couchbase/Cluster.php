@@ -55,6 +55,7 @@ class Cluster
      * Returns a new bucket object.
      *
      * @param string $name the name of the bucket
+     *
      * @return Bucket
      * @since 4.0.0
      */
@@ -69,6 +70,7 @@ class Cluster
      *
      * @param string $statement the N1QL query statement to execute
      * @param QueryOptions|null $options the options to use when executing the query
+     *
      * @return QueryResult
      * @throws InvalidArgumentException
      * @since 4.0.0
@@ -86,6 +88,7 @@ class Cluster
      *
      * @param string $statement the analytics query statement to execute
      * @param AnalyticsOptions|null $options the options to use when executing the query
+     *
      * @return AnalyticsResult
      * @since 4.0.0
      */
@@ -103,6 +106,7 @@ class Cluster
      * @param string $indexName the fts index to use for the query
      * @param SearchQuery $query the search query to execute
      * @param SearchOptions|null $options the options to use when executing the query
+     *
      * @return SearchResult
      * @since 4.0.0
      */
@@ -178,6 +182,7 @@ class Cluster
      *
      * @param mixed|null $services the services to ping against
      * @param mixed|null $reportId a name which will be included within the ping result
+     *
      * @see ServiceType::KEY_VALUE
      * @see ServiceType::QUERY
      * @see ServiceType::ANALYTICS
@@ -204,6 +209,7 @@ class Cluster
      * any operations.
      *
      * @param string|null $reportId a name which will be included within the ping result
+     *
      * @since 4.0.0
      */
     public function diagnostics(string $reportId = null)
@@ -216,7 +222,9 @@ class Cluster
 
     /**
      * @private
+     *
      * @param string $bucketName
+     *
      * @return string|null
      */
     public function version(string $bucketName): ?string

@@ -38,6 +38,7 @@ class RawJsonTranscoder implements Transcoder
      * Assumes that input value is a string that already contains JSON-encoded object
      *
      * @param string $value document
+     *
      * @return array tuple of encoded value with flags for network layer
      * @since 4.0.0
      */
@@ -45,7 +46,7 @@ class RawJsonTranscoder implements Transcoder
     {
         return [
             $value,
-            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode()
+            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode(),
         ];
     }
 
@@ -54,6 +55,7 @@ class RawJsonTranscoder implements Transcoder
      *
      * @param string $bytes encoded data
      * @param int $flags flags from network layer, that describes format of the encoded data
+     *
      * @return string decoded document
      * @since 4.0.0
      */

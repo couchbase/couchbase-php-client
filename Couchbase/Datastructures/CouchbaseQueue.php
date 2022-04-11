@@ -46,9 +46,11 @@ class CouchbaseQueue implements Countable, IteratorAggregate
 
     /**
      * CouchbaseQueue constructor.
+     *
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
      * @param Options\CouchbaseQueue|null $options
+     *
      * @since 4.0.0
      */
     public function __construct(string $id, Collection $collection, ?Options\CouchbaseQueue $options = null)
@@ -124,7 +126,9 @@ class CouchbaseQueue implements Countable, IteratorAggregate
 
     /**
      * Enqueue new value to the FIFO queue
+     *
      * @param mixed $value the value to insert
+     *
      * @throws \Couchbase\Exception\InvalidArgumentException
      * @since 4.0.0
      */
@@ -140,7 +144,8 @@ class CouchbaseQueue implements Countable, IteratorAggregate
     }
 
     /**
-     * Clears the queue. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * Clears the queue. Effectively it removes backing document, because missing document is an equivalent of the
+     * empty collection.
      * @since 4.0.0
      */
     public function clear(): void

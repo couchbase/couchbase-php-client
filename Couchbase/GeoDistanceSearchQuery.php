@@ -39,6 +39,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      * @param float $longitude
      * @param float $latitude
      * @param string|null $distance
+     *
      * @since 4.0.0
      */
     public function __construct(float $longitude, float $latitude, string $distance = null)
@@ -52,6 +53,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return GeoDistanceSearchQuery
      * @since 4.0.0
      */
@@ -65,6 +67,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return GeoDistanceSearchQuery
      * @since 4.0.0
      */
@@ -90,7 +93,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     {
         $json = [
             'location' => [$query->longitude, $query->latitude],
-            'distance' => $query->distance
+            'distance' => $query->distance,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

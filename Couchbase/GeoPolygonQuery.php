@@ -33,6 +33,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
 
     /**
      * @param array $coordinates list of objects of type Coordinate
+     *
      * @see Coordinate
      * @since 4.0.0
      */
@@ -45,6 +46,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return GeoPolygonQuery
      * @since 4.0.0
      */
@@ -58,6 +60,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return GeoPolygonQuery
      * @since 4.0.0
      */
@@ -81,13 +84,13 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      */
     public static function export(GeoPolygonQuery $query): array
     {
-        $coordinates = array();
+        $coordinates = [];
         foreach ($query->coordinates as $coordinate) {
             $coordinates[] = $coordinate;
         }
 
         $json = [
-            'polygon_points' => $coordinates
+            'polygon_points' => $coordinates,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

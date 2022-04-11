@@ -36,9 +36,11 @@ class Scope
 
     /**
      * @private
+     *
      * @param string $name
      * @param string $bucketName
-     * @param $core
+     * @param        $core
+     *
      * @since 4.0.0
      */
     public function __construct(string $name, string $bucketName, $core)
@@ -63,6 +65,7 @@ class Scope
      * Returns a new Collection object representing the collection specified.
      *
      * @param string $name the name of the collection
+     *
      * @return Collection
      * @since 4.0.0
      */
@@ -76,6 +79,7 @@ class Scope
      *
      * @param string $statement the N1QL query statement to execute
      * @param QueryOptions|null $options the options to use when executing the query
+     *
      * @return QueryResult
      * @since 4.0.0
      */
@@ -91,6 +95,7 @@ class Scope
      *
      * @param string $statement the analytics query statement to execute
      * @param AnalyticsOptions|null $options the options to use when executing the query
+     *
      * @return AnalyticsResult
      * @since 4.0.0
      */

@@ -33,6 +33,7 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return MatchAllSearchQuery
      * @since 4.0.0
      */
@@ -57,7 +58,7 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
     public static function export(MatchAllSearchQuery $query): array
     {
         $json = [
-            'match_all' => json_encode(null)
+            'match_all' => json_encode(null),
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

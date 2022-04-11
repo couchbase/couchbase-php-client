@@ -23,7 +23,7 @@ use Couchbase\Exception\DocumentNotFoundException;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class CouchbaseListTest extends Helpers\CouchbaseTestCase
+class CouchbaseLstTest extends Helpers\CouchbaseTestCase
 {
     /**
      * @covers CouchbaseList::count

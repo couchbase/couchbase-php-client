@@ -25,9 +25,9 @@ use DateTimeInterface;
 
 class MutateInOptions
 {
-    const STORE_SEMANTICS_REPLACE = "replace";
-    const STORE_SEMANTICS_INSERT = "insert";
-    const STORE_SEMANTICS_UPSERT = "upsert";
+    public const STORE_SEMANTICS_REPLACE = "replace";
+    public const STORE_SEMANTICS_INSERT = "insert";
+    public const STORE_SEMANTICS_UPSERT = "upsert";
 
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
@@ -62,6 +62,7 @@ class MutateInOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -75,6 +76,7 @@ class MutateInOptions
      * Sets the cas value to use when performing this operation.
      *
      * @param string $cas the CAS value to use
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -87,7 +89,9 @@ class MutateInOptions
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -105,6 +109,7 @@ class MutateInOptions
      * Sets whether the original expiration should be preserved (by default Replace operation updates expiration).
      *
      * @param bool $shouldPreserve if true, the expiration time will not be updated
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -119,6 +124,7 @@ class MutateInOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -133,6 +139,7 @@ class MutateInOptions
      * Sets the document level action to use when performing the operation.
      *
      * @param int|string $semantics the store semantic to use, int parameter is now @deprecated
+     *
      * @return MutateInOptions
      * @throws InvalidArgumentException
      * @see STORE_SEMANTICS_UPSERT
@@ -170,6 +177,7 @@ class MutateInOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return MutateInOptions
      * @since 4.0.0
      */
@@ -183,7 +191,8 @@ class MutateInOptions
      * Delegates encoding of the value to associated transcoder
      *
      * @param MutateInOptions|null $options
-     * @param $document
+     * @param                      $document
+     *
      * @return string
      * @since 4.0.0
      */
@@ -197,7 +206,9 @@ class MutateInOptions
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

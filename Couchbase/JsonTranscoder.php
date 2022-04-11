@@ -48,7 +48,13 @@ class JsonTranscoder implements Transcoder
      * @param int $encodeFlags passed as $flags to json_encode()
      * @param int $encodeDepth passed as $depth to json_encode()
      */
-    public function __construct(bool $decodeAssociative = true, int $decodeDepth = 512, int $decodeFlags = JSON_THROW_ON_ERROR, int $encodeFlags = JSON_THROW_ON_ERROR, int $encodeDepth = 512)
+    public function __construct(
+        bool $decodeAssociative = true,
+        int $decodeDepth = 512,
+        int $decodeFlags = JSON_THROW_ON_ERROR,
+        int $encodeFlags = JSON_THROW_ON_ERROR,
+        int $encodeDepth = 512
+    )
     {
         $this->decodeAssociative = $decodeAssociative;
         $this->decodeDepth = $decodeDepth;
@@ -61,6 +67,7 @@ class JsonTranscoder implements Transcoder
      * Encodes data using json_encode() from json extension
      *
      * @param mixed $value document
+     *
      * @return array tuple of encoded value with flags for network layer
      * @since 4.0.0
      */
@@ -68,7 +75,7 @@ class JsonTranscoder implements Transcoder
     {
         return [
             json_encode($value, $this->encodeFlags, $this->encodeDepth),
-            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode()
+            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_JSON))->encode(),
         ];
     }
 
@@ -77,6 +84,7 @@ class JsonTranscoder implements Transcoder
      *
      * @param string $bytes encoded data
      * @param int $flags flags from network layer, that describes format of the encoded data
+     *
      * @return mixed decoded document
      * @throws DecodingFailureException
      * @since 4.0.0

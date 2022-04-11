@@ -42,6 +42,7 @@ class SearchOptions implements \JsonSerializable
      * Sets the server side timeout in milliseconds
      *
      * @param int $ms the server side timeout to apply
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -55,6 +56,7 @@ class SearchOptions implements \JsonSerializable
      * Add a limit to the query on the number of hits it can return
      *
      * @param int $limit the maximum number of hits to return
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -68,6 +70,7 @@ class SearchOptions implements \JsonSerializable
      * Set the number of hits to skip (eg. for pagination).
      *
      * @param int $skip the number of results to skip
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -81,6 +84,7 @@ class SearchOptions implements \JsonSerializable
      * Activates the explanation of each result hit in the response
      *
      * @param bool $explain
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -94,6 +98,7 @@ class SearchOptions implements \JsonSerializable
      * If set to true, the server will not perform any scoring on the hits
      *
      * @param bool $disabled
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -110,6 +115,7 @@ class SearchOptions implements \JsonSerializable
      * This replaces any consistency tuning previously set.
      *
      * @param MutationState $state the mutation state information to work with
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -121,7 +127,7 @@ class SearchOptions implements \JsonSerializable
                 'partitionId' => $token->partitionId(),
                 'partitionUuid' => $token->partitionUuid(),
                 'sequenceNumber' => $token->sequenceNumber(),
-                'bucketName' => $token->bucketName()
+                'bucketName' => $token->bucketName(),
             ];
         }
         $this->consistentWith = $vectors;
@@ -135,6 +141,7 @@ class SearchOptions implements \JsonSerializable
      * Note that to be highlighted, the fields must be stored in the FTS index.
      *
      * @param string[] $fields
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -153,6 +160,7 @@ class SearchOptions implements \JsonSerializable
      * Note that to be faceted, a field's value must be stored in the FTS index.
      *
      * @param SearchFacet[] $facets
+     *
      * @return SearchOptions
      * @since 4.0.0
      *
@@ -186,6 +194,7 @@ class SearchOptions implements \JsonSerializable
      * order.
      *
      * @param array $specs sort the fields that should take part in the sorting.
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -202,6 +211,7 @@ class SearchOptions implements \JsonSerializable
      *   HIGHLIGHT_ANSI, HIGHLIGHT_SIMPLE.
      * @param string ...$fields the optional fields on which to highlight.
      *   If none, all fields where there is a match are highlighted.
+     *
      * @return SearchOptions
      * @since 4.0.0
      *
@@ -221,6 +231,7 @@ class SearchOptions implements \JsonSerializable
      * Configures the list of collections to use for restricting results.
      *
      * @param string[] $collectionNames
+     *
      * @return SearchOptions
      * @since 4.0.0
      */
@@ -235,12 +246,13 @@ class SearchOptions implements \JsonSerializable
      *
      * @param string $key the name of the parameter
      * @param mixed $value the value of the parameter
+     *
      * @return SearchOptions
      */
     public function raw(string $key, $value): SearchOptions
     {
         if ($this->raw == null) {
-            $this->raw = array();
+            $this->raw = [];
         }
 
         $this->raw[$key] = $value;
@@ -251,6 +263,7 @@ class SearchOptions implements \JsonSerializable
      * If set to true, the result will include search row locations.
      *
      * @param bool $enabled
+     *
      * @return SearchOptions
      * @since 4.0.0
      */

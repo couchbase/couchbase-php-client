@@ -27,7 +27,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
 {
-    function testAppendAddsBytesToTheEndOfTheDocument()
+    public function testAppendAddsBytesToTheEndOfTheDocument()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -44,7 +44,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("foobar", $res->content());
     }
 
-    function testPrependAddsBytesToTheBeginningOfTheDocument()
+    public function testPrependAddsBytesToTheBeginningOfTheDocument()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -61,7 +61,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("barfoo", $res->content());
     }
 
-    function testAppendThrowsExceptionIfDocumentDoesNotExist()
+    public function testAppendThrowsExceptionIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
@@ -69,7 +69,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
     }
 
 
-    function testPrependThrowsExceptionIfDocumentDoesNotExist()
+    public function testPrependThrowsExceptionIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);

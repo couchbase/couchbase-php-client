@@ -22,14 +22,14 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueExistsTest extends Helpers\CouchbaseTestCase
 {
-    function testExistsReturnsFalseForMissingDocuments()
+    public function testExistsReturnsFalseForMissingDocuments()
     {
         $collection = $this->defaultCollection();
         $res = $collection->exists($this->uniqueId("foo"));
         $this->assertFalse($res->exists(), "expected document to not exist");
     }
 
-    function testGetReturnsCorrectCas()
+    public function testGetReturnsCorrectCas()
     {
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();

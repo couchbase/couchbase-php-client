@@ -4,6 +4,6 @@ namespace Couchbase;
 
 final class DesignDocumentNamespace
 {
-    const DEVELOPMENT = 1;
-    const PRODUCTION = 2;
+    public const DEVELOPMENT = 1;
+    public const PRODUCTION = 2;
 }

@@ -31,6 +31,7 @@ class SearchResult
 
     /**
      * @private
+     *
      * @param array $result
      */
     public function __construct(array $result)

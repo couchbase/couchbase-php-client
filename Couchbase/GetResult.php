@@ -35,8 +35,10 @@ class GetResult extends Result
 
     /**
      * @private
+     *
      * @param array $response
      * @param Transcoder $transcoder
+     *
      * @since 4.0.0
      */
     public function __construct(array $response, Transcoder $transcoder)

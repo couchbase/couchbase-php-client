@@ -39,6 +39,7 @@ class ExistsOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return ExistsOptions
      * @since 4.0.0
      */
@@ -50,7 +51,9 @@ class ExistsOptions
 
     /**
      * @private
+     *
      * @param ExistsOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

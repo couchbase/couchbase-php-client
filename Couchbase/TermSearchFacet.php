@@ -51,14 +51,16 @@ class TermSearchFacet implements JsonSerializable, SearchFacet
 
     /**
      * @private
+     *
      * @param TermSearchFacet $facet
+     *
      * @return array
      */
     public static function export(TermSearchFacet $facet): array
     {
         return [
             'field' => $facet->field,
-            'size' => $facet->limit
+            'size' => $facet->limit,
         ];
     }
 }

@@ -46,6 +46,7 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return PhraseSearchQuery
      * @since 4.0.0
      */
@@ -59,6 +60,7 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return PhraseSearchQuery
      * @since 4.0.0
      */

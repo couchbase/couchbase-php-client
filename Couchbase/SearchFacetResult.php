@@ -37,6 +37,7 @@ class SearchFacetResult
 
     /**
      * @private
+     *
      * @param array $facet
      */
     public function __construct(array $facet)

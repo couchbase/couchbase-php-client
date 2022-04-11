@@ -41,6 +41,7 @@ class AppendOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return AppendOptions
      * @since 4.0.0
      */
@@ -55,6 +56,7 @@ class AppendOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return AppendOptions
      * @since 4.0.0
      */
@@ -67,7 +69,9 @@ class AppendOptions
 
     /**
      * @private
+     *
      * @param AppendOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

@@ -35,6 +35,7 @@ class SearchMetaData
 
     /**
      * @private
+     *
      * @param array $metadata
      */
     public function __construct(array $metadata)

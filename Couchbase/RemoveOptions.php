@@ -42,6 +42,7 @@ class RemoveOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return RemoveOptions
      * @since 4.0.0
      */
@@ -55,6 +56,7 @@ class RemoveOptions
      * Sets the cas value to use when performing this operation.
      *
      * @param string $cas the CAS value to use
+     *
      * @return RemoveOptions
      * @since 4.0.0
      */
@@ -66,7 +68,9 @@ class RemoveOptions
 
     /**
      * @private
+     *
      * @param RemoveOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

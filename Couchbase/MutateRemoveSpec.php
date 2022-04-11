@@ -35,9 +35,15 @@ class MutateRemoveSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @since 4.0.0
      */
-    public function __construct(string $path, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
+    public function __construct(
+        string $path,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    )
     {
         $this->isXattr = $isXattr;
         $this->createParents = $createParents;
@@ -50,16 +56,23 @@ class MutateRemoveSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @return MutateRemoveSpec
      * @since 4.0.0
      */
-    public static function build(string $path, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateRemoveSpec
+    public static function build(
+        string $path,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    ): MutateRemoveSpec
     {
         return new MutateRemoveSpec($path, $isXattr, $createParents, $expandMacros);
     }
 
     /**
      * @param bool $isXattr
+     *
      * @return MutateRemoveSpec
      * @since 4.0.0
      */
@@ -71,6 +84,7 @@ class MutateRemoveSpec implements MutateInSpec
 
     /**
      * @param bool $createParents
+     *
      * @return MutateRemoveSpec
      * @since 4.0.0
      */
@@ -82,6 +96,7 @@ class MutateRemoveSpec implements MutateInSpec
 
     /**
      * @param bool $expandMacros
+     *
      * @return MutateRemoveSpec
      * @since 4.0.0
      */
@@ -93,7 +108,9 @@ class MutateRemoveSpec implements MutateInSpec
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

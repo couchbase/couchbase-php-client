@@ -30,6 +30,7 @@ class QueryWarning
 
     /**
      * @private
+     *
      * @param array $warning
      */
     public function __construct(array $warning)

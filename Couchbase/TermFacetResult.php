@@ -31,6 +31,7 @@ class TermFacetResult
 
     /**
      * @private
+     *
      * @param array $term
      */
     public function __construct(array $term)

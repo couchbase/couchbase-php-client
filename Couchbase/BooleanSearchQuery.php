@@ -43,6 +43,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return BooleanSearchQuery
      * @since 4.0.0
      */
@@ -56,6 +57,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * Sets a query which must match.
      *
      * @param ConjunctionSearchQuery $query query which must match.
+     *
      * @return BooleanSearchQuery
      * @since 4.0.0
      */
@@ -69,6 +71,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * Sets a query which must not match.
      *
      * @param DisjunctionSearchQuery $query query which must not match.
+     *
      * @return BooleanSearchQuery
      * @since 4.0.0
      */
@@ -82,6 +85,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * Sets a query which must should match.
      *
      * @param DisjunctionSearchQuery $query query which should match.
+     *
      * @return BooleanSearchQuery
      * @since 4.0.0
      */
@@ -95,6 +99,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * Sets the minimum value before that should query will boost.
      *
      * @param int $minForShould the minimum value before that should query will boost
+     *
      * @return BooleanSearchQuery
      * @since 4.0.0
      */

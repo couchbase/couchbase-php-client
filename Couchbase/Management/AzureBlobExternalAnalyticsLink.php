@@ -26,6 +26,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets name of the link
      *
      * @param string $name
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function name(string $name): AzureBlobExternalAnalyticsLink
@@ -36,6 +37,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets dataverse this link belongs to
      *
      * @param string $dataverse
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function dataverse(string $dataverse): AzureBlobExternalAnalyticsLink
@@ -48,6 +50,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * (e.g. "AccountName=myAccountName;AccountKey=myAccountKey").
      *
      * @param string $connectionString
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function connectionString(string $connectionString): AzureBlobExternalAnalyticsLink
@@ -58,6 +61,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets Azure blob storage account name
      *
      * @param string $accountName
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function accountName(string $accountName): AzureBlobExternalAnalyticsLink
@@ -68,6 +72,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets Azure blob storage account key
      *
      * @param string $accountKey
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function accountKey(string $accountKey): AzureBlobExternalAnalyticsLink
@@ -78,6 +83,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets token that can be used for authentication
      *
      * @param string $signature
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function sharedAccessSignature(string $signature): AzureBlobExternalAnalyticsLink
@@ -88,6 +94,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets Azure blob storage endpoint
      *
      * @param string $blobEndpoint
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function blobEndpoint(string $blobEndpoint): AzureBlobExternalAnalyticsLink
@@ -98,6 +105,7 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      * Sets Azure blob endpoint suffix
      *
      * @param string $suffix
+     *
      * @return AzureBlobExternalAnalyticsLink
      */
     public function endpointSuffix(string $suffix): AzureBlobExternalAnalyticsLink

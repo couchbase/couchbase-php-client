@@ -36,6 +36,7 @@ class QueryMetaData
 
     /**
      * @private
+     *
      * @param array $meta
      */
     public function __construct(array $meta)
@@ -49,13 +50,13 @@ class QueryMetaData
         if (array_key_exists("profile", $meta)) {
             $this->profile = $meta["profile"];
         }
-        $this->warnings = array();
+        $this->warnings = [];
         if (array_key_exists("warnings", $meta)) {
             foreach ($meta["warnings"] as $warning) {
                 $this->warnings[] = new QueryWarning($warning);
             }
         }
-        $this->errors = array();
+        $this->errors = [];
         if (array_key_exists("errors", $meta)) {
             foreach ($meta["errors"] as $error) {
                 $this->errors[] = new QueryWarning($error);

@@ -31,6 +31,7 @@ class LookupCountSpec implements LookupInSpec
     /**
      * @param string $path
      * @param bool $isXattr
+     *
      * @since 4.0.0
      */
     public function __construct(string $path, bool $isXattr = false)
@@ -42,6 +43,7 @@ class LookupCountSpec implements LookupInSpec
     /**
      * @param string $path
      * @param bool $isXattr
+     *
      * @return LookupCountSpec
      * @since 4.0.0
      */

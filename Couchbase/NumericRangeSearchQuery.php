@@ -40,6 +40,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */
@@ -53,6 +54,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */
@@ -67,6 +69,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
      *
      * @param float $min the lower boundary of the range.
      * @param bool $inclusive whether the lower boundary should be inclusive.
+     *
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */
@@ -82,6 +85,7 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
      *
      * @param float $max the upper boundary of the range.
      * @param bool $inclusive whether the upper boundary should be inclusive.
+     *
      * @return NumericRangeSearchQuery
      * @since 4.0.0
      */

@@ -58,7 +58,7 @@ class SearchSortId implements JsonSerializable, SearchSort
     public static function export(SearchSortId $sort): array
     {
         $json = [
-            'by' => 'id'
+            'by' => 'id',
         ];
 
         if ($sort->descending != null) {

@@ -49,6 +49,7 @@ class ViewOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -72,6 +73,7 @@ class ViewOptions
      * Sets the specific key to fetch from the index.
      *
      * @param mixed $key the key to fetch from the index.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -85,6 +87,7 @@ class ViewOptions
      * Sets the specific set of keys to fetch from the index.
      *
      * @param array $keys the keys to fetch from the index.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -98,6 +101,7 @@ class ViewOptions
      * Sets the number of documents to limit the result to.
      *
      * @param int $limit the number of documents to limit to.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -111,6 +115,7 @@ class ViewOptions
      * Sets the number of documents to skip for the query.
      *
      * @param int $skip the number of documents to skip.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -124,6 +129,7 @@ class ViewOptions
      * Sets the scan consistency.
      *
      * @param int $consistencyLevel the scan consistency level
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -137,6 +143,7 @@ class ViewOptions
      * Sets the order of the results.
      *
      * @param int $order the order of the results.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -150,6 +157,7 @@ class ViewOptions
      * Whether to run the reduce function associated with the view index.
      *
      * @param bool $reduce whether to apply the reduce function.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -163,6 +171,7 @@ class ViewOptions
      * Whether to enable grouping of results.
      *
      * @param bool $enabled whether to enable grouping of results.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -176,6 +185,7 @@ class ViewOptions
      * Sets the depth within the key to group results.
      *
      * @param int $depth the depth within the key to group results.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -190,6 +200,7 @@ class ViewOptions
      *
      * @param string $key the name of the parameter
      * @param mixed $value the value of the parameter
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -207,6 +218,7 @@ class ViewOptions
      * Sets the key to skip to before beginning to return results.
      *
      * @param mixed $key the key to skip to before beginning to return results.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -220,6 +232,7 @@ class ViewOptions
      * Sets the key to stop returning results at.
      *
      * @param mixed $key the key to stop returning results at.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -234,6 +247,7 @@ class ViewOptions
      * entries within the index.
      *
      * @param string $key the key to use.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -248,6 +262,7 @@ class ViewOptions
      * entries within the index.
      *
      * @param string $key the key to use.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -261,6 +276,7 @@ class ViewOptions
      * Sets whether the endKey/endKeyDocId values should be inclusive or exclusive.
      *
      * @param bool $enabled whether the endKey/endKeyDocId values should be inclusive or exclusive.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -289,6 +305,7 @@ class ViewOptions
      * @param mixed $start the key to skip to before beginning to return results.
      * @param mixed $end the key to stop returning results at.
      * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
+     *
      * @return ViewOptions
      * @deprecated
      *
@@ -312,6 +329,7 @@ class ViewOptions
      * @param mixed $start the doc id to skip to before beginning to return results.
      * @param mixed $end the doc id to stop returning results at.
      * @param bool $inclusiveEnd whether the endKey values should be inclusive or exclusive.
+     *
      * @return ViewOptions
      * @deprecated
      *
@@ -333,6 +351,7 @@ class ViewOptions
      * Sets whether to return debug information as part of the view response.
      *
      * @param bool $enabled whether to return debug information as part of the view response.
+     *
      * @return ViewOptions
      * @since 4.0.0
      */
@@ -346,6 +365,7 @@ class ViewOptions
      * Sets whether the SDK should prefix the design document name with a "dev_" prefix.
      *
      * @param int $namespace whether the SDK should prefix the design document name with a "dev_" prefix..
+     *
      * @return ViewOptions
      * @since 4.0.0
      */

@@ -33,6 +33,7 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return MatchNoneSearchQuery
      * @since 4.0.0
      */
@@ -57,7 +58,7 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
     public static function export(MatchNoneSearchQuery $query): array
     {
         $json = [
-            'match_none' => json_encode(null)
+            'match_none' => json_encode(null),
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

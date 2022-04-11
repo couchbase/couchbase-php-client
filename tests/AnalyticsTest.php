@@ -18,7 +18,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->cluster = $this->connectCluster();
     }
 
-    function maybeCreateAnalyticsIndex(string $bucketName, string $scopeName = "_default", string $collectionName = "_default")
+    public function maybeCreateAnalyticsIndex(string $bucketName, string $scopeName = "_default", string $collectionName = "_default")
     {
         try {
             $this->cluster->analyticsQuery("ALTER COLLECTION `$bucketName`.`$scopeName`.`$collectionName` ENABLE ANALYTICS");
@@ -26,7 +26,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testScopeAnalyticsQuery()
+    public function testScopeAnalyticsQuery()
     {
         $this->skipIfCaves();
 
@@ -46,7 +46,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
     }
 
-    function testClusterAnalyticsQuery()
+    public function testClusterAnalyticsQuery()
     {
         $this->skipIfCaves();
 
@@ -65,7 +65,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
     }
 
-    function testRowsShapeAssociative()
+    public function testRowsShapeAssociative()
     {
         $this->skipIfCaves();
 
@@ -80,7 +80,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("Hello, PHP!", $row["message"]);
     }
 
-    function testRowsShapeNonAssociative()
+    public function testRowsShapeNonAssociative()
     {
         $this->skipIfCaves();
 
@@ -95,7 +95,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("Hello, PHP!", $row->message);
     }
 
-    function testRowsShapeDefault()
+    public function testRowsShapeDefault()
     {
         $this->skipIfCaves();
 

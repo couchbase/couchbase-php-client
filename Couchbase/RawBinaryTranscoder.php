@@ -36,6 +36,7 @@ class RawBinaryTranscoder implements Transcoder
      * Assumes that input value is just a binary string
      *
      * @param string $value document
+     *
      * @return array tuple of encoded value with flags for network layer
      * @since 4.0.0
      */
@@ -43,7 +44,7 @@ class RawBinaryTranscoder implements Transcoder
     {
         return [
             $value,
-            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_BINARY))->encode()
+            (new TranscoderFlags(TranscoderFlags::DATA_FORMAT_BINARY))->encode(),
         ];
     }
 
@@ -52,6 +53,7 @@ class RawBinaryTranscoder implements Transcoder
      *
      * @param string $bytes encoded data
      * @param int $flags flags from network layer, that describes format of the encoded data
+     *
      * @return string decoded document
      * @since 4.0.0
      */

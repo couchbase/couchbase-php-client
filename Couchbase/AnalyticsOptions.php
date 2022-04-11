@@ -47,6 +47,7 @@ class AnalyticsOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return AnalyticsOptions
      * @since 4.0.0
      */
@@ -60,6 +61,7 @@ class AnalyticsOptions
      * Sets the named parameters for this query.
      *
      * @param array $pairs the associative array of parameters
+     *
      * @return AnalyticsOptions
      */
     public function namedParameters(array $pairs): AnalyticsOptions
@@ -72,6 +74,7 @@ class AnalyticsOptions
      * Sets the positional parameters for this query.
      *
      * @param array $params the array of parameters
+     *
      * @return AnalyticsOptions
      */
     public function positionalParameters(array $params): AnalyticsOptions
@@ -85,12 +88,13 @@ class AnalyticsOptions
      *
      * @param string $key the name of the parameter
      * @param string $value the value of the parameter
+     *
      * @return AnalyticsOptions
      */
     public function raw(string $key, $value): ViewOptions
     {
         if ($this->raw == null) {
-            $this->raw = array();
+            $this->raw = [];
         }
 
         $this->raw[$key] = $value;
@@ -101,6 +105,7 @@ class AnalyticsOptions
      * Sets the client context id for this query.
      *
      * @param string $id the client context id
+     *
      * @return AnalyticsOptions
      */
     public function clientContextId(string $id): AnalyticsOptions
@@ -113,6 +118,7 @@ class AnalyticsOptions
      * Sets whether this query should be assigned as high priority by the analytics engine.
      *
      * @param bool $isPriority whether this query should be assiged as high priority.
+     *
      * @return AnalyticsOptions
      * @since 4.0.0
      */
@@ -126,6 +132,7 @@ class AnalyticsOptions
      * Sets whether this query should be readonly.
      *
      * @param bool $readonly whether this query should be readonly.
+     *
      * @return AnalyticsOptions
      * @since 4.0.0
      */
@@ -139,6 +146,7 @@ class AnalyticsOptions
      * Sets the scan consistency.
      *
      * @param string $consistencyLevel the scan consistency level
+     *
      * @return AnalyticsOptions
      * @see AnalyticsScanConsistency
      * @since 4.0.0
@@ -153,6 +161,7 @@ class AnalyticsOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return AnalyticsOptions
      * @since 4.0.0
      */
@@ -166,6 +175,7 @@ class AnalyticsOptions
      * Returns associated transcoder.
      *
      * @param AnalyticsOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -182,7 +192,7 @@ class AnalyticsOptions
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'bucketName' => $bucketName
+                'bucketName' => $bucketName,
             ];
         }
 

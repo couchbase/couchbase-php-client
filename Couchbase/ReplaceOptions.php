@@ -55,6 +55,7 @@ class ReplaceOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -67,7 +68,9 @@ class ReplaceOptions
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -85,6 +88,7 @@ class ReplaceOptions
      * Sets whether the original expiration should be preserved (by default Replace operation updates expiration).
      *
      * @param bool $shouldPreserve if true, the expiration time will not be updated
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -99,6 +103,7 @@ class ReplaceOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -113,6 +118,7 @@ class ReplaceOptions
      * Sets the cas value to use when performing this operation.
      *
      * @param string $cas the CAS value to use
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -126,6 +132,7 @@ class ReplaceOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return ReplaceOptions
      * @since 4.0.0
      */
@@ -139,7 +146,8 @@ class ReplaceOptions
      * Delegates encoding of the document to associated transcoder
      *
      * @param ReplaceOptions|null $options
-     * @param $document
+     * @param                     $document
+     *
      * @return array
      * @since 4.0.0
      */
@@ -153,7 +161,9 @@ class ReplaceOptions
 
     /**
      * @private
+     *
      * @param ReplaceOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

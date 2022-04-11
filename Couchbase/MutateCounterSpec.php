@@ -35,6 +35,7 @@ class MutateCounterSpec implements MutateInSpec
      * @param int $value
      * @param bool $isXattr
      * @param bool $createParents
+     *
      * @since 4.0.0
      */
     public function __construct(string $path, int $value, bool $isXattr = false, bool $createParents = false)
@@ -50,6 +51,7 @@ class MutateCounterSpec implements MutateInSpec
      * @param mixed $value
      * @param bool $isXattr
      * @param bool $createParents
+     *
      * @return MutateCounterSpec
      * @since 4.0.0
      */
@@ -60,6 +62,7 @@ class MutateCounterSpec implements MutateInSpec
 
     /**
      * @param bool $isXattr
+     *
      * @return MutateCounterSpec
      * @since 4.0.0
      */
@@ -71,6 +74,7 @@ class MutateCounterSpec implements MutateInSpec
 
     /**
      * @param bool $createParents
+     *
      * @return MutateCounterSpec
      * @since 4.0.0
      */
@@ -82,7 +86,9 @@ class MutateCounterSpec implements MutateInSpec
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

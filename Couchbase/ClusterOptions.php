@@ -69,6 +69,7 @@ class ClusterOptions
 
     /**
      * @param Authenticator $authenticator
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -81,6 +82,7 @@ class ClusterOptions
     /**
      * @param string $username
      * @param string $password
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -92,6 +94,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -103,6 +106,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -114,6 +118,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -125,6 +130,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -136,6 +142,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -147,6 +154,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -158,6 +166,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -169,6 +178,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -180,6 +190,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -191,6 +202,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -202,6 +214,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -213,6 +226,7 @@ class ClusterOptions
 
     /**
      * @param int $numberOfConnections
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -224,6 +238,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -235,6 +250,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -246,6 +262,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -257,6 +274,7 @@ class ClusterOptions
 
     /**
      * @param int $milliseconds
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -268,6 +286,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -279,6 +298,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -290,6 +310,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -301,6 +322,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -312,6 +334,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -323,6 +346,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -334,6 +358,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -345,6 +370,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -356,6 +382,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -367,6 +394,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -378,6 +406,7 @@ class ClusterOptions
 
     /**
      * @param bool $enable
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -389,6 +418,7 @@ class ClusterOptions
 
     /**
      * @param string $networkSelector
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -400,6 +430,7 @@ class ClusterOptions
 
     /**
      * @param string $certificatePath
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -411,6 +442,7 @@ class ClusterOptions
 
     /**
      * @param string $userAgentExtraString
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -422,6 +454,7 @@ class ClusterOptions
 
     /**
      * @param string $mode
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -433,6 +466,7 @@ class ClusterOptions
 
     /**
      * @param ThresholdLoggingOptions $options
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */
@@ -513,7 +547,8 @@ class ClusterOptions
 
             'tlsVerify' => $this->tlsVerifyMode,
 
-            'thresholdLoggingTracerOptions' => $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),
+            'thresholdLoggingTracerOptions' =>
+                $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),
             'loggingMeterOptions' => $this->loggingMeterOptions == null ? null : $this->loggingMeterOptions->export(),
         ];
     }

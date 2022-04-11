@@ -42,6 +42,7 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return MatchPhraseSearchQuery
      * @since 4.0.0
      */
@@ -55,6 +56,7 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return MatchPhraseSearchQuery
      * @since 4.0.0
      */
@@ -68,6 +70,7 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
      * Sets the analytics for this query.
      *
      * @param string $analyzer the analyzer to use for this query.
+     *
      * @return MatchPhraseSearchQuery
      * @since 4.0.0
      */

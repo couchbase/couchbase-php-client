@@ -30,6 +30,7 @@ class AnalyticsResult
 
     /**
      * @private
+     *
      * @param array $result
      * @param Transcoder $transcoder
      */

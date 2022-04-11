@@ -33,7 +33,9 @@ class Result
 
     /**
      * @private
+     *
      * @param array $response
+     *
      * @since 4.0.0
      */
     public function __construct(array $response)

@@ -41,6 +41,7 @@ class PrependOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return PrependOptions
      * @since 4.0.0
      */
@@ -55,6 +56,7 @@ class PrependOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return PrependOptions
      * @since 4.0.0
      */
@@ -67,7 +69,9 @@ class PrependOptions
 
     /**
      * @private
+     *
      * @param PrependOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

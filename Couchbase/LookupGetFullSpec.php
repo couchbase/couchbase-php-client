@@ -30,6 +30,7 @@ class LookupGetFullSpec implements LookupInSpec
     /**
      * @param string $path
      * @param bool $isXattr
+     *
      * @since 4.0.0
      */
     public function __construct(bool $isXattr = false)
@@ -39,6 +40,7 @@ class LookupGetFullSpec implements LookupInSpec
 
     /**
      * @param bool $isXattr
+     *
      * @return LookupGetFullSpec
      * @since 4.0.0
      */

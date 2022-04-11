@@ -90,7 +90,7 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
         $json = [
             'by' => 'geo_distance',
             'field' => $sort->field,
-            'location' => [$sort->longitude, $sort->latitude]
+            'location' => [$sort->longitude, $sort->latitude],
         ];
 
         if ($sort->descending != null) {

@@ -40,10 +40,17 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @throws InvalidArgumentException
      * @since 4.0.0
      */
-    public function __construct(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
+    public function __construct(
+        string $path,
+        $value,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    )
     {
         if (!is_int($value) && !is_float($value) && !is_bool($value) && !is_string($value) && !is_null($value)) {
             throw new InvalidArgumentException("value for add unique operation must be of primitive type");
@@ -61,17 +68,25 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @return MutateArrayAddUniqueSpec
      * @throws InvalidArgumentException
      * @since 4.0.0
      */
-    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateArrayAddUniqueSpec
+    public static function build(
+        string $path,
+        $value,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    ): MutateArrayAddUniqueSpec
     {
         return new MutateArrayAddUniqueSpec($path, $value, $isXattr, $createParents, $expandMacros);
     }
 
     /**
      * @param bool $isXattr
+     *
      * @return MutateArrayAddUniqueSpec
      * @since 4.0.0
      */
@@ -83,6 +98,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
 
     /**
      * @param bool $createParents
+     *
      * @return MutateArrayAddUniqueSpec
      * @since 4.0.0
      */
@@ -94,6 +110,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
 
     /**
      * @param bool $expandMacros
+     *
      * @return MutateArrayAddUniqueSpec
      * @since 4.0.0
      */
@@ -105,7 +122,9 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

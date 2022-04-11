@@ -34,6 +34,7 @@ class AnalyticsMetaData
 
     /**
      * @private
+     *
      * @param array $meta
      */
     public function __construct(array $meta)
@@ -44,7 +45,7 @@ class AnalyticsMetaData
         if (array_key_exists("signature", $meta)) {
             $this->signature = $meta["signature"];
         }
-        $this->warnings = array();
+        $this->warnings = [];
         if (array_key_exists("warnings", $meta)) {
             foreach ($meta["warnings"] as $warning) {
                 $this->warnings[] = new AnalyticsWarning($warning);

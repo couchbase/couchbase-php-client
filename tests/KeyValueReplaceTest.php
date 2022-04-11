@@ -24,7 +24,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
 {
-    function testInsertFailsIfDocumentDoesNotExist()
+    public function testInsertFailsIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -33,7 +33,7 @@ class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
         $collection->replace($id, ["answer" => "foo"]);
     }
 
-    function testInsertCompletesIfDocumentExists()
+    public function testInsertCompletesIfDocumentExists()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();

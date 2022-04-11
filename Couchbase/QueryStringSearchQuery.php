@@ -42,6 +42,7 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return QueryStringSearchQuery
      * @since 4.0.0
      */
@@ -66,7 +67,7 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     public static function export(QueryStringSearchQuery $query): array
     {
         $json = [
-            'query' => $query->queryString
+            'query' => $query->queryString,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

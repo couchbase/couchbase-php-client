@@ -21,7 +21,8 @@ declare(strict_types=1);
 namespace Couchbase;
 
 /**
- * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with binary documents.
+ * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with
+ * binary documents.
  */
 class BinaryCollection
 {
@@ -35,10 +36,11 @@ class BinaryCollection
 
     /**
      * @private
+     *
      * @param string $name
      * @param string $scopeName
      * @param string $bucketName
-     * @param $core
+     * @param        $core
      */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
     {
@@ -65,12 +67,21 @@ class BinaryCollection
      * @param string $id the key of the document
      * @param string $value the value to append
      * @param AppendOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function append(string $id, string $value, AppendOptions $options = null): MutationResult
     {
-        $response = Extension\documentAppend($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $value, AppendOptions::export($options));
+        $response = Extension\documentAppend(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $value,
+            AppendOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -80,12 +91,21 @@ class BinaryCollection
      * @param string $id the key of the document
      * @param string $value the value to prepend
      * @param PrependOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
     {
-        $response = Extension\documentPrepend($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $value, PrependOptions::export($options));
+        $response = Extension\documentPrepend(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $value,
+            PrependOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -94,12 +114,20 @@ class BinaryCollection
      *
      * @param string $id the key of the document
      * @param IncrementOptions|null $options the options to use for the operation
+     *
      * @return CounterResult
      * @since 4.0.0
      */
     public function increment(string $id, IncrementOptions $options = null): CounterResult
     {
-        $response = Extension\documentIncrement($this->core, $this->bucketName, $this->scopeName, $this->name, $id, IncrementOptions::export($options));
+        $response = Extension\documentIncrement(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            IncrementOptions::export($options)
+        );
         return new CounterResult($response);
     }
 
@@ -108,12 +136,20 @@ class BinaryCollection
      *
      * @param string $id the key of the document
      * @param DecrementOptions|null $options the options to use for the operation
+     *
      * @return CounterResult
      * @since 4.0.0
      */
     public function decrement(string $id, DecrementOptions $options = null): CounterResult
     {
-        $response = Extension\documentDecrement($this->core, $this->bucketName, $this->scopeName, $this->name, $id, DecrementOptions::export($options));
+        $response = Extension\documentDecrement(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            DecrementOptions::export($options)
+        );
         return new CounterResult($response);
     }
 }

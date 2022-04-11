@@ -28,14 +28,14 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueCounterTest extends Helpers\CouchbaseTestCase
 {
-    function testIncrementThrowsExceptionIfDocumentDoesNotExist()
+    public function testIncrementThrowsExceptionIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
         $collection->binary()->increment($this->uniqueId());
     }
 
-    function testIncrementInitializesValueIfRequested()
+    public function testIncrementInitializesValueIfRequested()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -57,7 +57,7 @@ class KeyValueCounterTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(43, $res->content());
     }
 
-    function testDecrementInitializesValueIfRequested()
+    public function testDecrementInitializesValueIfRequested()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -79,7 +79,7 @@ class KeyValueCounterTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(41, $res->content());
     }
 
-    function testIncrementAllowsToOverrideDeltaValue()
+    public function testIncrementAllowsToOverrideDeltaValue()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -93,7 +93,7 @@ class KeyValueCounterTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(52, $res->content());
     }
 
-    function testDecrementAllowsToOverrideDeltaValue()
+    public function testDecrementAllowsToOverrideDeltaValue()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();

@@ -39,6 +39,7 @@ class UnlockOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return UnlockOptions
      * @since 4.0.0
      */
@@ -50,7 +51,9 @@ class UnlockOptions
 
     /**
      * @private
+     *
      * @param UnlockOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

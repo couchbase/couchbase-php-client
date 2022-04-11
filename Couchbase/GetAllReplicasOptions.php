@@ -26,6 +26,7 @@ class GetAllReplicasOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $arg the operation timeout to apply
+     *
      * @return GetAllReplicasOptions
      */
     public function timeout(int $arg): GetAllReplicasOptions

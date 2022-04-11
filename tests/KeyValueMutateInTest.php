@@ -30,7 +30,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
 {
-    function testSubdocumentMutateCanCreateDocument()
+    public function testSubdocumentMutateCanCreateDocument()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
@@ -38,7 +38,7 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $res = $collection->mutateIn(
             $id,
             [
-                MutateUpsertSpec::build("foo", "bar")
+                MutateUpsertSpec::build("foo", "bar"),
             ],
             MutateInOptions::build()->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT)
         );
@@ -50,7 +50,7 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(["foo" => "bar"], $res->content());
     }
 
-    function testArrayOperationsFlattenArguments()
+    public function testArrayOperationsFlattenArguments()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
@@ -71,13 +71,13 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
     }
 
 
-    function testArrayOperationsExpectsArrayAsValueArgument()
+    public function testArrayOperationsExpectsArrayAsValueArgument()
     {
         $this->expectException(TypeError::class);
         MutateArrayAppendSpec::build("foo", 4);
     }
 
-    function testSubdocumentMutateRaisesExceptions()
+    public function testSubdocumentMutateRaisesExceptions()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
@@ -87,7 +87,7 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $collection->mutateIn($id, [MutateUpsertSpec::build("foo.bar.baz", 42)]);
     }
 
-    function testSubdocumentMutateRaisesExceptionIfDocumentDoesNotExist()
+    public function testSubdocumentMutateRaisesExceptionIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);

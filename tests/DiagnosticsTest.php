@@ -20,9 +20,9 @@ declare(strict_types=1);
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class DiagnosticsTest extends Helpers\CouchbaseTestCase
+class DiagnosticsTest extends Helpers
 {
-    function testDiagnostics()
+    public function testDiagnostics()
     {
         $cluster = $this->connectCluster();
         $result = $cluster->diagnostics();

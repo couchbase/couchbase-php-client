@@ -22,7 +22,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueUpsertTest extends Helpers\CouchbaseTestCase
 {
-    function testUpsertReturnsCas()
+    public function testUpsertReturnsCas()
     {
         $collection = $this->defaultCollection();
         $res = $collection->upsert($this->uniqueId("foo"), ["answer" => 42]);

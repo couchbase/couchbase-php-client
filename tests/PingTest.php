@@ -24,7 +24,7 @@ include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
 
 class PingTest extends Helpers\CouchbaseTestCase
 {
-    function testClusterPingNoParams()
+    public function testClusterPingNoParams()
     {
         $cluster = $this->connectCluster();
         $result = $cluster->ping();
@@ -48,7 +48,7 @@ class PingTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testBucketPingNoParams()
+    public function testBucketPingNoParams()
     {
         $cluster = $this->connectCluster();
         $bucketName = $this->env()->bucketName();
@@ -61,7 +61,7 @@ class PingTest extends Helpers\CouchbaseTestCase
         $this->verifyService(ServiceType::KEY_VALUE, $result['services'], $bucketName);
     }
 
-    function testClusterPingReportId()
+    public function testClusterPingReportId()
     {
         $cluster = $this->connectCluster();
         $result = $cluster->ping(null, 'myreport');
@@ -69,7 +69,7 @@ class PingTest extends Helpers\CouchbaseTestCase
         $this->assertEquals('myreport', $result['id']);
     }
 
-    function testBucketPingReportId()
+    public function testBucketPingReportId()
     {
         $cluster = $this->connectCluster();
         $bucketName = $this->env()->bucketName();
@@ -78,7 +78,7 @@ class PingTest extends Helpers\CouchbaseTestCase
         $this->assertEquals('myreport', $result['id']);
     }
 
-    function verifyService(string $service, $services, $bucketName = null)
+    public function verifyService(string $service, $services, $bucketName = null)
     {
         $this->assertArrayHasKey($service, $services);
         $this->assertNotEmpty($services[$service]);

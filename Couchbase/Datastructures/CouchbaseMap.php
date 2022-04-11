@@ -48,9 +48,11 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * CouchbaseList constructor.
+     *
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
      * @param Options\CouchbaseMap|null $options
+     *
      * @since 4.0.0
      */
     public function __construct(string $id, Collection $collection, ?Options\CouchbaseMap $options = null)
@@ -96,7 +98,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Retrieves array value for given offset.
+     *
      * @param string $key key of the entry to be retrieved
+     *
      * @return mixed the value or null
      * @since 4.0.0
      */
@@ -116,8 +120,10 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Insert or update given key with new value.
+     *
      * @param string $key key of the entry to be inserted/updated
      * @param mixed $value new value
+     *
      * @throws \Couchbase\Exception\InvalidArgumentException
      * @since 4.0.0
      */
@@ -134,7 +140,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Remove entry by its key.
+     *
      * @param string $key key of the entry to remove
+     *
      * @throws OutOfBoundsException if the index does not exist
      * @since 4.0.0
      */
@@ -153,7 +161,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
 
     /**
      * Checks whether a key exists.
+     *
      * @param string $key key of the entry to check
+     *
      * @return bool true if there is an entry associated with the offset
      * @since 4.0.0
      */
@@ -172,7 +182,8 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     }
 
     /**
-     * Clears the map. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * Clears the map. Effectively it removes backing document, because missing document is an equivalent of the empty
+     * collection.
      * @since 4.0.0
      */
     public function clear(): void
@@ -187,7 +198,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Checks whether an offset exists.
      * Implementation of {@link ArrayAccess}.
+     *
      * @param mixed $key key of the entry to check
+     *
      * @return bool true if there is an entry associated with the offset
      * @since 4.0.0
      */
@@ -199,7 +212,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Retrieves array value for given offset.
      * Implementation of {@link ArrayAccess}.
+     *
      * @param mixed $offset offset of the entry to get
+     *
      * @return mixed the value or null
      * @since 4.0.0
      */
@@ -211,8 +226,10 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Assign a value to the specified offset.
      * Implementation of {@link ArrayAccess}.
+     *
      * @param mixed $key key of the entry to assign
      * @param mixed $value new value
+     *
      * @since 4.0.0
      */
     public function offsetSet($key, $value): void
@@ -223,7 +240,9 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     /**
      * Unset an offset.
      * Implementation of {@link ArrayAccess}.
+     *
      * @param mixed $key key of the entry to remove
+     *
      * @throws OutOfBoundsException if the index does not exist
      * @since 4.0.0
      */

@@ -55,6 +55,7 @@ class QueryOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -68,6 +69,7 @@ class QueryOptions
      * Sets the mutation state to achieve consistency with for read your own writes (RYOW).
      *
      * @param MutationState $state the mutation state to achieve consistency with
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -81,6 +83,7 @@ class QueryOptions
      * Sets the scan consistency.
      *
      * @param int $consistencyLevel the scan consistency level.
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -94,6 +97,7 @@ class QueryOptions
      * Sets the maximum buffered channel size between the indexer client and the query service for index scans.
      *
      * @param int $cap the maximum buffered channel size
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -107,6 +111,7 @@ class QueryOptions
      * Sets the maximum number of items each execution operator can buffer between various operators.
      *
      * @param int $cap the maximum number of items each execution operation can buffer
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -120,6 +125,7 @@ class QueryOptions
      * Sets the number of items execution operators can batch for fetch from the KV service.
      *
      * @param int $batchSize the pipeline batch size
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -133,6 +139,7 @@ class QueryOptions
      * Sets the maximum number of index partitions, for computing aggregation in parallel.
      *
      * @param int $max the number of index partitions
+     *
      * @return QueryOptions
      */
     public function maxParallelism(int $max): QueryOptions
@@ -145,6 +152,7 @@ class QueryOptions
      * Sets the query profile mode to use.
      *
      * @param int $mode the query profile mode
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -158,6 +166,7 @@ class QueryOptions
      * Sets whether or not this query is readonly.
      *
      * @param bool $readonly whether the query is readonly
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -171,6 +180,7 @@ class QueryOptions
      * Sets whether or not this query allowed to use FlexIndex (full text search integration).
      *
      * @param bool $enabled whether the FlexIndex allowed
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -184,6 +194,7 @@ class QueryOptions
      * Sets whether this query is adhoc.
      *
      * @param bool $enabled whether the query is adhoc
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -197,6 +208,7 @@ class QueryOptions
      * Sets the named parameters for this query.
      *
      * @param array $pairs the associative array of parameters
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -210,6 +222,7 @@ class QueryOptions
      * Sets the positional parameters for this query.
      *
      * @param array $params the array of parameters
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -224,13 +237,14 @@ class QueryOptions
      *
      * @param string $key the name of the parameter
      * @param string $value the value of the parameter
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
     public function raw(string $key, $value): ViewOptions
     {
         if ($this->raw == null) {
-            $this->raw = array();
+            $this->raw = [];
         }
 
         $this->raw[$key] = $value;
@@ -241,6 +255,7 @@ class QueryOptions
      * Sets the client context id for this query.
      *
      * @param string $id the client context id
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -254,6 +269,7 @@ class QueryOptions
      * Sets whether or not to return metrics with the query.
      *
      * @param bool $enabled whether to return metrics
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -267,6 +283,7 @@ class QueryOptions
      * Associate scope name with query
      *
      * @param string $name the name of the scope
+     *
      * @return QueryOptions
      * @deprecated
      * @since 4.0.0
@@ -287,6 +304,7 @@ class QueryOptions
      * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
      *
      * @param string $qualifier the scope qualifier
+     *
      * @return QueryOptions
      * @deprecated
      * @since 4.0.0
@@ -305,6 +323,7 @@ class QueryOptions
      * Sets whether to tell the query engine to preserve expiration values set on any documents modified by this query.
      *
      * @param bool $preserve whether to preserve expiration values.
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -318,6 +337,7 @@ class QueryOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return QueryOptions
      * @since 4.0.0
      */
@@ -331,6 +351,7 @@ class QueryOptions
      * Returns associated transcoder.
      *
      * @param QueryOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -347,7 +368,7 @@ class QueryOptions
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'bucketName' => $bucketName
+                'bucketName' => $bucketName,
             ];
         }
 
@@ -394,7 +415,7 @@ class QueryOptions
             'preserveExpiry' => $options->preserveExpiry,
             'scopeName' => $scopeName,
             'bucketName' => $bucketName,
-            'scopeQualifier' => $options->scopeQualifier
+            'scopeQualifier' => $options->scopeQualifier,
         ];
     }
 }

@@ -43,6 +43,7 @@ class DecrementOptions
      * Sets the value to increment the counter by.
      *
      * @param int $decrement the value to increment by
+     *
      * @return DecrementOptions
      * @since 4.0.0
      */
@@ -57,6 +58,7 @@ class DecrementOptions
      * not exist.
      *
      * @param int $initialValue the initial value to use if counter does not exist
+     *
      * @return DecrementOptions
      * @since 4.0.0
      */
@@ -70,6 +72,7 @@ class DecrementOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return DecrementOptions
      * @since 4.0.0
      */
@@ -84,6 +87,7 @@ class DecrementOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return DecrementOptions
      * @since 4.0.0
      */
@@ -96,7 +100,9 @@ class DecrementOptions
 
     /**
      * @private
+     *
      * @param DecrementOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

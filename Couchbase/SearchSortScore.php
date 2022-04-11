@@ -58,7 +58,7 @@ class SearchSortScore implements JsonSerializable, SearchSort
     public static function export(SearchSortScore $sort): array
     {
         $json = [
-            'by' => 'score'
+            'by' => 'score',
         ];
 
         if ($sort->descending != null) {

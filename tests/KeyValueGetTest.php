@@ -24,14 +24,14 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueGetTest extends Helpers\CouchbaseTestCase
 {
-    function testGetThrowsDocumentNotFoundException()
+    public function testGetThrowsDocumentNotFoundException()
     {
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
         $collection->get($this->uniqueId("foo"));
     }
 
-    function testGetReturnsCorrectCas()
+    public function testGetReturnsCorrectCas()
     {
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();

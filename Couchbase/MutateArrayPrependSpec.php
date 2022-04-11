@@ -37,9 +37,16 @@ class MutateArrayPrependSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @since 4.0.0
      */
-    public function __construct(string $path, array $values, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
+    public function __construct(
+        string $path,
+        array $values,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    )
     {
         $this->isXattr = $isXattr;
         $this->createParents = $createParents;
@@ -54,16 +61,24 @@ class MutateArrayPrependSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @return MutateArrayPrependSpec
      * @since 4.0.0
      */
-    public static function build(string $path, array $values, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateArrayPrependSpec
+    public static function build(
+        string $path,
+        array $values,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    ): MutateArrayPrependSpec
     {
         return new MutateArrayPrependSpec($path, $values, $isXattr, $createParents, $expandMacros);
     }
 
     /**
      * @param bool $isXattr
+     *
      * @return MutateArrayPrependSpec
      * @since 4.0.0
      */
@@ -75,6 +90,7 @@ class MutateArrayPrependSpec implements MutateInSpec
 
     /**
      * @param bool $createParents
+     *
      * @return MutateArrayPrependSpec
      * @since 4.0.0
      */
@@ -86,6 +102,7 @@ class MutateArrayPrependSpec implements MutateInSpec
 
     /**
      * @param bool $expandMacros
+     *
      * @return MutateArrayPrependSpec
      * @since 4.0.0
      */
@@ -97,7 +114,9 @@ class MutateArrayPrependSpec implements MutateInSpec
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

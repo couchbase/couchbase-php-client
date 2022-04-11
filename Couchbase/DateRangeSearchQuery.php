@@ -41,6 +41,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return DateRangeSearchQuery
      * @since 4.0.0
      */
@@ -54,6 +55,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return DateRangeSearchQuery
      * @since 4.0.0
      */
@@ -70,6 +72,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      *      time formatter (see dateTimeParser). Integers interpreted as unix timestamps and represented as RFC3339
      *      strings.
      * @param bool $inclusive
+     *
      * @return DateRangeSearchQuery
      * @throws InvalidArgumentException
      * @since 4.0.0
@@ -98,6 +101,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      *      time formatter (see dateTimeParser). Integers interpreted as unix timestamps and represented as RFC3339
      *      strings.
      * @param bool $inclusive
+     *
      * @return DateRangeSearchQuery
      * @throws InvalidArgumentException
      * @since 4.0.0
@@ -124,6 +128,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      * Sets the name of the date/time parser to use to interpret start/end.
      *
      * @param string $parser the name of the parser.
+     *
      * @return DateRangeSearchQuery
      * @since 4.0.0
      */

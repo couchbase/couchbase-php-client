@@ -53,6 +53,7 @@ class InsertOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return InsertOptions
      * @since 4.0.0
      */
@@ -65,7 +66,9 @@ class InsertOptions
     /**
      * Sets the expiry time for the document.
      *
-     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for absolute point in time
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
      * @return InsertOptions
      * @since 4.0.0
      */
@@ -84,6 +87,7 @@ class InsertOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return InsertOptions
      * @since 4.0.0
      */
@@ -98,6 +102,7 @@ class InsertOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return InsertOptions
      * @since 4.0.0
      */
@@ -111,7 +116,8 @@ class InsertOptions
      * Delegates encoding of the document to associated transcoder
      *
      * @param InsertOptions|null $options
-     * @param $document
+     * @param                    $document
+     *
      * @return array
      * @since 4.0.0
      */
@@ -125,7 +131,9 @@ class InsertOptions
 
     /**
      * @private
+     *
      * @param InsertOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

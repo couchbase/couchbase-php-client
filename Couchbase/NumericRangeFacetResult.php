@@ -33,6 +33,7 @@ class NumericRangeFacetResult
 
     /**
      * @private
+     *
      * @param array $range
      */
     public function __construct(array $range)

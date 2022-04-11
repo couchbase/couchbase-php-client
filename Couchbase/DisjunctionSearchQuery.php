@@ -45,6 +45,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return DisjunctionSearchQuery
      * @since 4.0.0
      */
@@ -58,6 +59,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
      * Adds new predicate queries to this disjunction query.
      *
      * @param SearchQuery ...$queries the queries to add.
+     *
      * @return DisjunctionSearchQuery
      * @since 4.0.0
      */
@@ -69,6 +71,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
 
     /**
      * @param SearchQuery ...$queries
+     *
      * @return DisjunctionSearchQuery
      * @deprecated
      *
@@ -86,6 +89,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
 
     /**
      * @param int $min
+     *
      * @return DisjunctionSearchQuery
      * @since 4.0.0
      */
@@ -123,7 +127,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
         }
 
         $json = [
-            'disjuncts' => $query->queries
+            'disjuncts' => $query->queries,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

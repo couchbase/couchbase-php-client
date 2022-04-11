@@ -25,11 +25,12 @@ include_once __DIR__ . "/ServerVersion.php";
 
 use Couchbase\PasswordAuthenticator;
 use Exception;
+use RuntimeException;
 
 class TestEnvironment
 {
     private string $clusterId;
-    private ?string $connectionString = null;
+    private ?string $connectionString;
     private ?Caves $caves = null;
     private string $username;
     private string $password;
@@ -47,7 +48,13 @@ class TestEnvironment
                     $extension = $modulePath;
                 }
             }
-            throw new \RuntimeException("extension '" . $name . "' is not loaded. Check your INI file, or add '-d extension=" . $extension . "' to the interpreter arguments");
+            throw new RuntimeException(
+                sprintf(
+                    "extension '%s' is not loaded. Check your INI file, or add '-d extension=%s' to the interpreter arguments",
+                    $name,
+                    $extension
+                )
+            );
         }
     }
 

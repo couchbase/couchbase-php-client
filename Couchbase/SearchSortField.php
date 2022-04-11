@@ -118,7 +118,7 @@ class SearchSortField implements JsonSerializable, SearchSort
     {
         $json = [
             'by' => 'field',
-            'field' => $sort->field
+            'field' => $sort->field,
         ];
 
         if ($sort->descending != null) {

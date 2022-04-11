@@ -29,7 +29,9 @@ class MutationResult extends Result
 
     /**
      * @private
+     *
      * @param array $response raw response from the extension
+     *
      * @since 4.0.0
      */
     public function __construct(array $response)

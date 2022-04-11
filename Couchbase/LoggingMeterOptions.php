@@ -26,6 +26,7 @@ class LoggingMeterOptions
 
     /**
      * @param int $milliseconds duration in milliseconds how often the metrics should be flushed in the log.
+     *
      * @return LoggingMeterOptions
      */
     public function flushInterval(int $milliseconds): LoggingMeterOptions

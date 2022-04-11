@@ -26,7 +26,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueLockingTest extends Helpers\CouchbaseTestCase
 {
-    function testPessimisticLockingWorkflow()
+    public function testPessimisticLockingWorkflow()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();

@@ -22,8 +22,8 @@ namespace Helpers;
 
 class ServerVersion
 {
-    const EDITION_ENTERPRISE = "enterprise";
-    const EDITION_COMMUNITY = "community";
+    public const EDITION_ENTERPRISE = "enterprise";
+    public const EDITION_COMMUNITY = "community";
 
     private int $major;
     private int $minor;
@@ -32,7 +32,14 @@ class ServerVersion
     private string $edition;
     private bool $developerPreview;
 
-    public function __construct(int $major, int $minor, int $micro = 0, int $build = 0, string $edition = self::EDITION_ENTERPRISE, bool $developerPreview = false)
+    public function __construct(
+        int $major,
+        int $minor,
+        int $micro = 0,
+        int $build = 0,
+        string $edition = self::EDITION_ENTERPRISE,
+        bool $developerPreview = false
+    )
     {
         $this->major = $major;
         $this->minor = $minor;
@@ -252,6 +259,7 @@ class ServerVersion
 
     /**
      * @param bool $enabled
+     *
      * @return void
      */
     public function setDeveloperPreview(bool $enabled)

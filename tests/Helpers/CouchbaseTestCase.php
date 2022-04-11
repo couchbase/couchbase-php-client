@@ -95,7 +95,13 @@ class CouchbaseTestCase extends TestCase
     {
         if (self::env()->useCaves()) {
             $caller = debug_backtrace()[1];
-            $this->markTestSkipped(sprintf("%s::%s is not supported on Couchbase server (only for CAVES)", $caller["class"], $caller["function"]));
+            $this->markTestSkipped(
+                sprintf(
+                    "%s::%s is not supported on Couchbase server (only for CAVES)",
+                    $caller["class"],
+                    $caller["function"]
+                )
+            );
         }
     }
 
@@ -137,14 +143,14 @@ class CouchbaseTestCase extends TestCase
                     "geo" => [
                         "accuracy" => "ROOFTOP",
                         "lat" => 37.7825,
-                        "lon" => -122.393
-                    ]
+                        "lon" => -122.393,
+                    ],
                 ]
             );
         }
     }
 
-    function wrapException($cb, $type = null, $code = null, $message = null)
+    protected function wrapException($cb, $type = null, $code = null, $message = null): ?Exception
     {
         $exOut = null;
         try {
@@ -166,24 +172,33 @@ class CouchbaseTestCase extends TestCase
         return $exOut;
     }
 
-    function assertError($type, $code, $ex)
+    protected function assertError($type, $code, $ex)
     {
         $this->assertErrorType($type, $ex);
         $this->assertErrorCode($code, $ex);
     }
 
-    function assertErrorType($type, $ex)
+    protected function assertErrorType($type, $ex)
     {
         $this->assertInstanceOf($type, $ex);
     }
 
-    function assertErrorMessage($msg, $ex)
+    protected function assertErrorMessage($msg, $ex)
     {
         $this->assertMatchesRegularExpression($msg, $ex->getMessage());
     }
 
-    function assertErrorCode($code, $ex)
+    protected function assertErrorCode($code, $ex)
     {
-        $this->assertEquals($code, $ex->getCode(), "Exception code does not match: {$ex->getCode()} != {$code}, exception message: '{$ex->getMessage()}'");
+        $this->assertEquals(
+            $code,
+            $ex->getCode(),
+            sprintf(
+                "Exception code does not match: %d != %d, exception message: ''",
+                $ex->getCode(),
+                $code,
+                $ex->getMessage()
+            )
+        );
     }
 }

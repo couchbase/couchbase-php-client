@@ -40,6 +40,7 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return BooleanFieldSearchQuery
      * @since 4.0.0
      */
@@ -53,6 +54,7 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return BooleanFieldSearchQuery
      * @since 4.0.0
      */
@@ -77,7 +79,7 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
     public static function export(BooleanFieldSearchQuery $facet): array
     {
         $json = [
-            'bool' => $facet->value
+            'bool' => $facet->value,
         ];
         if ($facet->boost != null) {
             $json['boost'] = $facet->boost;

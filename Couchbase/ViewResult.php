@@ -35,7 +35,7 @@ class ViewResult
             $meta = $result["meta"];
         }
         $this->meta = new ViewMetaData($meta);
-        $this->rows = array();
+        $this->rows = [];
         foreach ($result["rows"] as $resultRow) {
             $this->rows[] = new ViewRow($resultRow);
         }

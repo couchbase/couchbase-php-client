@@ -40,6 +40,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return ConjunctionSearchQuery
      * @since 4.0.0
      */
@@ -53,6 +54,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
      * Adds new predicate queries to this conjunction query.
      *
      * @param SearchQuery ...$queries the queries to add.
+     *
      * @return ConjunctionSearchQuery
      * @since 4.0.0
      */
@@ -64,6 +66,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
 
     /**
      * @param SearchQuery ...$queries
+     *
      * @return ConjunctionSearchQuery
      * @deprecated
      *
@@ -105,7 +108,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
         }
 
         $json = [
-            'conjuncts' => $query->queries
+            'conjuncts' => $query->queries,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

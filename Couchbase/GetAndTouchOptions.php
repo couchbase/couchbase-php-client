@@ -48,6 +48,7 @@ class GetAndTouchOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return GetAndTouchOptions
      * @since 4.0.0
      */
@@ -61,6 +62,7 @@ class GetAndTouchOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return GetAndTouchOptions
      * @since 4.0.0
      */
@@ -74,6 +76,7 @@ class GetAndTouchOptions
      * Returns associated transcoder.
      *
      * @param GetAndTouchOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -87,7 +90,9 @@ class GetAndTouchOptions
 
     /**
      * @private
+     *
      * @param GetAndTouchOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

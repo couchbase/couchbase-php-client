@@ -24,7 +24,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
 {
-    function testGetMulti()
+    public function testGetMulti()
     {
         $collection = $this->defaultCollection();
 
@@ -53,7 +53,7 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals($resBar->cas(), $res[2]->cas());
     }
 
-    function testRemoveMulti()
+    public function testRemoveMulti()
     {
         $collection = $this->defaultCollection();
 
@@ -80,7 +80,7 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals($resBar->cas(), $res[2]->cas());
     }
 
-    function testUpsertMulti()
+    public function testUpsertMulti()
     {
         $collection = $this->defaultCollection();
 

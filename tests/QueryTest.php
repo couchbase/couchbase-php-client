@@ -21,7 +21,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->cluster = $this->connectCluster();
     }
 
-    function maybeCreateIndex(string $nameSpace)
+    public function maybeCreateIndex(string $nameSpace)
     {
         try {
             $this->cluster->query("CREATE PRIMARY INDEX ON $nameSpace;");
@@ -29,12 +29,12 @@ class QueryTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function nameSpace(string $bucketName, string $scopeName = "_default", string $collectionName = "_default"): string
+    public function nameSpace(string $bucketName, string $scopeName = "_default", string $collectionName = "_default"): string
     {
         return "`$bucketName`.`$scopeName`.`$collectionName`";
     }
 
-    function testResponseProperties()
+    public function testResponseProperties()
     {
         $this->skipIfCaves();
 
@@ -60,7 +60,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
     }
 
-    function testParameters()
+    public function testParameters()
     {
         $this->skipIfCaves();
 
@@ -101,7 +101,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         );
     }
 
-    function testAtPlus()
+    public function testAtPlus()
     {
         $this->skipIfCaves();
 
@@ -117,7 +117,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
             [
                 "name" => ["Brass", "Doorknob"],
                 "email" => "brass.doorknob@example.com",
-                "random" => $random
+                "random" => $random,
             ]
         );
         // construct mutation state from the list of mutation results
@@ -138,7 +138,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found, "The record \"$key\" is missing in the result set");
     }
 
-    function testRowsShapeAssociative()
+    public function testRowsShapeAssociative()
     {
         $this->skipIfCaves();
 
@@ -151,7 +151,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("Hello, PHP!", $row["message"]);
     }
 
-    function testRowsShapeNonAssociative()
+    public function testRowsShapeNonAssociative()
     {
         $this->skipIfCaves();
 
@@ -164,7 +164,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("Hello, PHP!", $row->message);
     }
 
-    function testRowsShapeDefault()
+    public function testRowsShapeDefault()
     {
         $this->skipIfCaves();
 
@@ -175,7 +175,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("Hello, PHP!", $row["message"]);
     }
 
-    function testPreserveExpiry()
+    public function testPreserveExpiry()
     {
         $this->skipIfCaves();
 
@@ -196,7 +196,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($expiry);
     }
 
-    function testPrepared()
+    public function testPrepared()
     {
         $this->skipIfCaves();
 
@@ -216,7 +216,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
     }
 
-    function testScope()
+    public function testScope()
     {
         $this->skipIfCaves();
 

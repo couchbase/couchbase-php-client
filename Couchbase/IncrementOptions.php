@@ -43,6 +43,7 @@ class IncrementOptions
      * Sets the value to increment the counter by.
      *
      * @param int $increment the value to increment by
+     *
      * @return IncrementOptions
      * @since 4.0.0
      */
@@ -57,6 +58,7 @@ class IncrementOptions
      * not exist.
      *
      * @param int $initialValue the initial value to use if counter does not exist
+     *
      * @return IncrementOptions
      * @since 4.0.0
      */
@@ -70,6 +72,7 @@ class IncrementOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return IncrementOptions
      * @since 4.0.0
      */
@@ -84,6 +87,7 @@ class IncrementOptions
      *
      * @param string $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return IncrementOptions
      * @since 4.0.0
      */
@@ -96,7 +100,9 @@ class IncrementOptions
 
     /**
      * @private
+     *
      * @param IncrementOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

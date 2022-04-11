@@ -39,10 +39,12 @@ class Collection
 
     /**
      * @private
+     *
      * @param string $name
      * @param string $scopeName
      * @param string $bucketName
-     * @param $core
+     * @param        $core
+     *
      * @since 4.0.0
      */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
@@ -74,12 +76,20 @@ class Collection
      *
      * @param string $id the key of the document to fetch
      * @param GetOptions|null $options the options to use for the operation
+     *
      * @return GetResult
      * @since 4.0.0
      */
     public function get(string $id, GetOptions $options = null): GetResult
     {
-        $response = Extension\documentGet($this->core, $this->bucketName, $this->scopeName, $this->name, $id, GetOptions::export($options));
+        $response = Extension\documentGet(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            GetOptions::export($options)
+        );
         return new GetResult($response, GetOptions::getTranscoder($options));
     }
 
@@ -88,12 +98,20 @@ class Collection
      *
      * @param string $id the key of the document to check if exists
      * @param ExistsOptions|null $options the options to use for the operation
+     *
      * @return ExistsResult
      * @since 4.0.0
      */
     public function exists(string $id, ExistsOptions $options = null): ExistsResult
     {
-        $response = Extension\documentExists($this->core, $this->bucketName, $this->scopeName, $this->name, $id, ExistsOptions::export($options));
+        $response = Extension\documentExists(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            ExistsOptions::export($options)
+        );
         return new ExistsResult($response);
     }
 
@@ -104,12 +122,21 @@ class Collection
      * @param string $id the key of the document to get
      * @param int $lockTimeSeconds the length of time to lock the document in seconds
      * @param GetAndLockOptions|null $options the options to use for the operation
+     *
      * @return GetResult
      * @since 4.0.0
      */
     public function getAndLock(string $id, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
     {
-        $response = Extension\documentGetAndLock($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $lockTimeSeconds, GetAndLockOptions::export($options));
+        $response = Extension\documentGetAndLock(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $lockTimeSeconds,
+            GetAndLockOptions::export($options)
+        );
         return new GetResult($response, GetAndLockOptions::getTranscoder($options));
     }
 
@@ -119,6 +146,7 @@ class Collection
      * @param string $id the key of the document
      * @param int|DateTimeInterface $expiry the length of time to update the expiry to in seconds, or epoch timestamp
      * @param GetAndTouchOptions|null $options the options to use for the operation
+     *
      * @return GetResult
      * @since 4.0.0
      */
@@ -129,7 +157,15 @@ class Collection
         } else {
             $expirySeconds = (int)$expiry;
         }
-        $response = Extension\documentGetAndTouch($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $expirySeconds, GetAndTouchOptions::export($options));
+        $response = Extension\documentGetAndTouch(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $expirySeconds,
+            GetAndTouchOptions::export($options)
+        );
         return new GetResult($response, GetAndTouchOptions::getTranscoder($options));
     }
 
@@ -138,6 +174,7 @@ class Collection
      *
      * @param string $id the key of the document
      * @param GetAnyReplicaOptions|null $options the options to use for the operation
+     *
      * @return GetReplicaResult
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -153,6 +190,7 @@ class Collection
      *
      * @param string $id the key of the document
      * @param GetAllReplicasOptions|null $options the options to use for the operation
+     *
      * @return array
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -168,13 +206,23 @@ class Collection
      * @param string $id the key of the document
      * @param mixed $value the value to use for the document
      * @param UpsertOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult
     {
         $encoded = UpsertOptions::encodeDocument($options, $value);
-        $response = Extension\documentUpsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], UpsertOptions::export($options));
+        $response = Extension\documentUpsert(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded[0],
+            $encoded[1],
+            UpsertOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -184,13 +232,23 @@ class Collection
      * @param string $id the key of the document
      * @param mixed $value the value to use for the document
      * @param InsertOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function insert(string $id, $value, InsertOptions $options = null): MutationResult
     {
         $encoded = InsertOptions::encodeDocument($options, $value);
-        $response = Extension\documentInsert($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], InsertOptions::export($options));
+        $response = Extension\documentInsert(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded[0],
+            $encoded[1],
+            InsertOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -200,13 +258,23 @@ class Collection
      * @param string $id the key of the document
      * @param mixed $value the value to use for the document
      * @param ReplaceOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult
     {
         $encoded = ReplaceOptions::encodeDocument($options, $value);
-        $response = Extension\documentReplace($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded[0], $encoded[1], ReplaceOptions::export($options));
+        $response = Extension\documentReplace(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded[0],
+            $encoded[1],
+            ReplaceOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -215,12 +283,20 @@ class Collection
      *
      * @param string $id the key of the document
      * @param RemoveOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
     public function remove(string $id, RemoveOptions $options = null): MutationResult
     {
-        $response = Extension\documentRemove($this->core, $this->bucketName, $this->scopeName, $this->name, $id, RemoveOptions::export($options));
+        $response = Extension\documentRemove(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            RemoveOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -231,12 +307,21 @@ class Collection
      * @param string $id the key of the document
      * @param string $cas the current cas value of the document
      * @param UnlockOptions|null $options the options to use for the operation
+     *
      * @return Result
      * @since 4.0.0
      */
     public function unlock(string $id, string $cas, UnlockOptions $options = null): Result
     {
-        $response = Extension\documentUnlock($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $cas, UnlockOptions::export($options));
+        $response = Extension\documentUnlock(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $cas,
+            UnlockOptions::export($options)
+        );
         return new Result($response);
     }
 
@@ -246,6 +331,7 @@ class Collection
      * @param string $id the key of the document
      * @param int|DateTimeInterface $expiry the expiry time for the document in ms
      * @param TouchOptions|null $options the options to use for the operation
+     *
      * @return MutationResult
      * @since 4.0.0
      */
@@ -256,7 +342,15 @@ class Collection
         } else {
             $expirySeconds = (int)$expiry;
         }
-        $response = Extension\documentTouch($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $expirySeconds, TouchOptions::export($options));
+        $response = Extension\documentTouch(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $expirySeconds,
+            TouchOptions::export($options)
+        );
         return new MutationResult($response);
     }
 
@@ -266,6 +360,7 @@ class Collection
      * @param string $id the key of the document
      * @param array<LookupInSpec> $specs the array of selectors to query against the document
      * @param LookupInOptions|null $options the options to use for the operation
+     *
      * @return LookupInResult
      * @since 4.0.0
      */
@@ -280,7 +375,15 @@ class Collection
         if ($options != null && $options->needToFetchExpiry()) {
             $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => '$document.exptime'];
         }
-        $response = Extension\documentLookupIn($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded, LookupInOptions::export($options));
+        $response = Extension\documentLookupIn(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded,
+            LookupInOptions::export($options)
+        );
         return new LookupInResult($response, LookupInOptions::getTranscoder($options));
     }
 
@@ -290,6 +393,7 @@ class Collection
      * @param string $id the key of the document
      * @param array<MutateInSpec> $specs the array of modifications to perform against the document
      * @param MutateInOptions|null $options the options to use for the operation
+     *
      * @return MutateInResult
      * @since 4.0.0
      */
@@ -301,7 +405,15 @@ class Collection
             },
             $specs
         );
-        $response = Extension\documentMutateIn($this->core, $this->bucketName, $this->scopeName, $this->name, $id, $encoded, MutateInOptions::export($options));
+        $response = Extension\documentMutateIn(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded,
+            MutateInOptions::export($options)
+        );
         $result = new MutateInResult($response);
         $error = $result->error();
         if ($error != null) {
@@ -316,12 +428,20 @@ class Collection
      *
      * @param array $ids array of IDs, organized like this ["key1", "key2", ...]
      * @param GetOptions|null $options the options to use for the operation
+     *
      * @return array<GetResult> array of GetResult, one for each of the entries
      * @since 4.0.0
      */
     public function getMulti(array $ids, GetOptions $options = null): array
     {
-        $responses = Extension\documentGetMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $ids, GetOptions::export($options));
+        $responses = Extension\documentGetMulti(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $ids,
+            GetOptions::export($options)
+        );
         return array_map(
             function (array $response) use ($options) {
                 return new GetResult($response, GetOptions::getTranscoder($options));
@@ -337,13 +457,21 @@ class Collection
      * @param array $entries array of arrays, organized like this
      *   [["key1", "encodedCas1"], ["key2", "encodedCas2"], ...] or ["key1", "key2", ...]
      * @param RemoveOptions|null $options the options to use for the operation
+     *
      * @return array<MutationResult> array of MutationResult, one for each of the entries
      * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function removeMulti(array $entries, RemoveOptions $options = null): array
     {
-        $responses = Extension\documentRemoveMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $entries, RemoveOptions::export($options));
+        $responses = Extension\documentRemoveMulti(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $entries,
+            RemoveOptions::export($options)
+        );
         return array_map(
             function (array $response) {
                 return new MutationResult($response);
@@ -355,8 +483,10 @@ class Collection
     /**
      * Creates a group of documents if they don't exist, otherwise updates them.
      *
-     * @param array $entries array of arrays, organized like this [["key1", $value1], ["key2", $value2], ...]
+     * @param array $entries array of arrays, organized like this [["key1", $value1], ["key2", $value2],
+     *     ...]
      * @param UpsertOptions|null $options the options to use for the operation
+     *
      * @return array<MutationResult> array of MutationResult, one for each of the entries
      * @throws InvalidArgumentException
      * @since 4.0.0
@@ -380,7 +510,14 @@ class Collection
             },
             $entries
         );
-        $responses = Extension\documentUpsertMulti($this->core, $this->bucketName, $this->scopeName, $this->name, $encodedEntries, UpsertOptions::export($options));
+        $responses = Extension\documentUpsertMulti(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $encodedEntries,
+            UpsertOptions::export($options)
+        );
         return array_map(
             function (array $response) {
                 return new MutationResult($response);

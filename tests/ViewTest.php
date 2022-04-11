@@ -19,7 +19,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->cluster = $this->connectCluster();
     }
 
-    function testConsistency()
+    public function testConsistency()
     {
         $this->skipIfCaves();
 
@@ -27,13 +27,13 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $view = [
             'name' => 'test',
             'map' => "function(doc, meta) { if (meta.id.startsWith(\"{$ddocName}\")) emit(meta.id); }",
-            'reduce' => '_count'
+            'reduce' => '_count',
         ];
 
         $ddoc = [
             'name' => $ddocName,
             'views' => [
-                'test' => $view
+                'test' => $view,
             ],
         ];
 
@@ -58,7 +58,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         // TODO: drop design doc.
     }
 
-    function testGrouping()
+    public function testGrouping()
     {
         $this->skipIfCaves();
 
@@ -66,13 +66,13 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $view = [
             'name' => 'test',
             'map' => "function(doc, meta) { if (doc && doc.ddoc == \"$ddocName\") emit([doc.country, doc.city]); }",
-            'reduce' => '_count'
+            'reduce' => '_count',
         ];
 
         $ddoc = [
             'name' => $ddocName,
             'views' => [
-                'test' => $view
+                'test' => $view,
             ],
         ];
 
@@ -83,10 +83,22 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $bucket = $this->cluster->bucket($bucketName);
         $collection = $bucket->defaultCollection();
 
-        $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'New York', 'name' => 'John Doe']);
-        $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'New York', 'name' => 'Jane Doe']);
-        $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'Miami', 'name' => 'Bill Brown']);
-        $collection->upsert($this->uniqueId($ddocName), ['ddoc' => $ddocName, 'country' => 'France', 'city' => 'Paris', 'name' => 'Jean Bon']);
+        $collection->upsert(
+            $this->uniqueId($ddocName),
+            ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'New York', 'name' => 'John Doe']
+        );
+        $collection->upsert(
+            $this->uniqueId($ddocName),
+            ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'New York', 'name' => 'Jane Doe']
+        );
+        $collection->upsert(
+            $this->uniqueId($ddocName),
+            ['ddoc' => $ddocName, 'country' => 'USA', 'city' => 'Miami', 'name' => 'Bill Brown']
+        );
+        $collection->upsert(
+            $this->uniqueId($ddocName),
+            ['ddoc' => $ddocName, 'country' => 'France', 'city' => 'Paris', 'name' => 'Jean Bon']
+        );
         sleep(1); // give docs time to propagate
 
         $options = new ViewOptions();

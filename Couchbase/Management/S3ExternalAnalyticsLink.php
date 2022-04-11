@@ -26,6 +26,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets name of the link
      *
      * @param string $name
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function name(string $name): S3ExternalAnalyticsLink
@@ -36,6 +37,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets dataverse this link belongs to
      *
      * @param string $dataverse
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function dataverse(string $dataverse): S3ExternalAnalyticsLink
@@ -46,6 +48,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets AWS S3 access key ID
      *
      * @param string $accessKeyId
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function accessKeyId(string $accessKeyId): S3ExternalAnalyticsLink
@@ -56,6 +59,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets AWS S3 secret key
      *
      * @param string $secretAccessKey
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function secretAccessKey(string $secretAccessKey): S3ExternalAnalyticsLink
@@ -66,6 +70,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets AWS S3 region
      *
      * @param string $region
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function region(string $region): S3ExternalAnalyticsLink
@@ -76,6 +81,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets AWS S3 token if temporary credentials are provided. Only available in 7.0+
      *
      * @param string $sessionToken
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function sessionToken(string $sessionToken): S3ExternalAnalyticsLink
@@ -86,6 +92,7 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * Sets AWS S3 service endpoint
      *
      * @param string $serviceEndpoint
+     *
      * @return S3ExternalAnalyticsLink
      */
     public function serviceEndpoint(string $serviceEndpoint): S3ExternalAnalyticsLink

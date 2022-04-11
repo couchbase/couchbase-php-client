@@ -45,6 +45,7 @@ class CouchbaseSet implements Countable, IteratorAggregate
 
     /**
      * CouchbaseSet constructor.
+     *
      * @param string $id identifier of the backing document.
      * @param Collection $collection collection instance, where the document will be stored
      * @param Options\CouchbaseSet|null $options
@@ -90,7 +91,9 @@ class CouchbaseSet implements Countable, IteratorAggregate
 
     /**
      * Remove entry from the set
+     *
      * @param mixed $value the value to remove (if exists in the Set)
+     *
      * @return bool true if the value has been removed
      */
     public function remove($value): bool
@@ -117,6 +120,7 @@ class CouchbaseSet implements Countable, IteratorAggregate
 
     /**
      * Adds new value to the set
+     *
      * @param mixed $value the value to insert
      */
     public function add($value): void
@@ -136,7 +140,9 @@ class CouchbaseSet implements Countable, IteratorAggregate
 
     /**
      * Checks whether an offset exists.
+     *
      * @param mixed $value the value to check for existence
+     *
      * @return bool true if there is an entry associated with the offset
      */
     public function contains($value): bool
@@ -155,7 +161,8 @@ class CouchbaseSet implements Countable, IteratorAggregate
     }
 
     /**
-     * Clears the set. Effectively it removes backing document, because missing document is an equivalent of the empty collection.
+     * Clears the set. Effectively it removes backing document, because missing document is an equivalent of the empty
+     * collection.
      */
     public function clear(): void
     {

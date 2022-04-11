@@ -35,7 +35,9 @@ class LookupInResult extends Result
 
     /**
      * @private
+     *
      * @param array $response raw response from the extension
+     *
      * @since 4.0.0
      */
     public function __construct(array $response, Transcoder $transcoder)
@@ -49,6 +51,7 @@ class LookupInResult extends Result
      * Returns the value located at the index specified
      *
      * @param int $index the index to retrieve content from
+     *
      * @return mixed
      * @throws OutOfBoundsException
      * @since 4.0.0
@@ -67,6 +70,7 @@ class LookupInResult extends Result
 
     /**
      * @param string $path
+     *
      * @return mixed
      * @throws OutOfBoundsException
      * @since 4.0.0
@@ -88,6 +92,7 @@ class LookupInResult extends Result
      * Returns whether the path at the index specified exists
      *
      * @param int $index the index to check for existence
+     *
      * @return bool
      * @since 4.0.0
      */
@@ -101,6 +106,7 @@ class LookupInResult extends Result
 
     /**
      * @param string $path
+     *
      * @return bool
      * @since 4.0.0
      */
@@ -116,6 +122,7 @@ class LookupInResult extends Result
 
     /**
      * @param int $index
+     *
      * @return string|null
      * @since 4.0.0
      */
@@ -129,6 +136,7 @@ class LookupInResult extends Result
 
     /**
      * @param int $index
+     *
      * @return Exception|null
      * @since 4.0.0
      */

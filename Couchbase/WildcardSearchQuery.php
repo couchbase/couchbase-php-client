@@ -43,6 +43,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return WildcardSearchQuery
      * @since 4.0.0
      */
@@ -56,6 +57,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return WildcardSearchQuery
      * @since 4.0.0
      */
@@ -80,7 +82,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     public static function export(WildcardSearchQuery $query): array
     {
         $json = [
-            'wildcard' => $query->wildcard
+            'wildcard' => $query->wildcard,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

@@ -26,7 +26,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
 {
-    function testRemoveThrowsCasMismatchForWrongCas()
+    public function testRemoveThrowsCasMismatchForWrongCas()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -37,7 +37,7 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
         $collection->remove($id, RemoveOptions::build()->cas("deadbeef"));
     }
 
-    function testRemoveThrowsDocumentNotFoundForUnknownId()
+    public function testRemoveThrowsDocumentNotFoundForUnknownId()
     {
         $collection = $this->defaultCollection();
 
@@ -46,7 +46,7 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
     }
 
 
-    function testRemoveChecksCas()
+    public function testRemoveChecksCas()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();

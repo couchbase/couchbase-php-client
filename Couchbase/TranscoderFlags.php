@@ -25,37 +25,37 @@ class TranscoderFlags
     /**
      * Reserved bit position to avoid zeroing out upper 8 bits
      */
-    const DATA_FORMAT_RESERVED = 0;
+    public const DATA_FORMAT_RESERVED = 0;
 
     /**
      * Used for SDK specific encodings
      */
-    const DATA_FORMAT_PRIVATE = 1;
+    public const DATA_FORMAT_PRIVATE = 1;
 
     /**
      * Encode as JSON
      */
-    const DATA_FORMAT_JSON = 2;
+    public const DATA_FORMAT_JSON = 2;
 
     /**
      * Store as raw binary format
      */
-    const DATA_FORMAT_BINARY = 3;
+    public const DATA_FORMAT_BINARY = 3;
 
     /**
      * Store as a UTF8 string
      */
-    const DATA_FORMAT_STRING = 4;
+    public const DATA_FORMAT_STRING = 4;
 
     /**
      * No compression is being used
      */
-    const COMPRESSION_NONE = 0;
+    public const COMPRESSION_NONE = 0;
 
     /**
      * No custom type is being associated
      */
-    const TYPE_CODE_NONE = 0;
+    public const TYPE_CODE_NONE = 0;
 
     private int $dataFormat;
     private int $compression;
@@ -65,6 +65,7 @@ class TranscoderFlags
      * @param int $dataFormat data format tag, portable across SDKs
      * @param int $compression compression tag, SDK-specific
      * @param int $typeCode type code, SDK-specific
+     *
      * @since 4.0.0
      */
     public function __construct(int $dataFormat, int $compression = self::COMPRESSION_NONE, int $typeCode = self::TYPE_CODE_NONE)
@@ -114,6 +115,7 @@ class TranscoderFlags
      * Parses network representation of the flags
      *
      * @param int $flags
+     *
      * @return TranscoderFlags
      * @since 4.0.0
      */

@@ -24,6 +24,7 @@ interface Transcoder
 {
     /**
      * @param mixed $value
+     *
      * @return array pair of string and int, that represents encoded value and flags
      * @since 4.0.0
      */
@@ -32,6 +33,7 @@ interface Transcoder
     /**
      * @param string $bytes
      * @param int $flags
+     *
      * @return mixed decoded value
      * @since 4.0.0
      */

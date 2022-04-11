@@ -24,7 +24,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueInsertTest extends Helpers\CouchbaseTestCase
 {
-    function testInsertFailsIfDocumentExistsAlready()
+    public function testInsertFailsIfDocumentExistsAlready()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();

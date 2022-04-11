@@ -34,7 +34,9 @@ class MutateInResult extends MutationResult
 
     /**
      * @private
+     *
      * @param array $response raw response from the extension
+     *
      * @since 4.0.0
      */
     public function __construct(array $response)
@@ -60,6 +62,7 @@ class MutateInResult extends MutationResult
      * Returns any value located at the index specified
      *
      * @param int $index the index to retrieve content from
+     *
      * @return mixed
      * @throws OutOfBoundsException
      * @since 4.0.0
@@ -78,6 +81,7 @@ class MutateInResult extends MutationResult
 
     /**
      * @param string $path
+     *
      * @return mixed
      * @throws OutOfBoundsException
      * @since 4.0.0
@@ -109,6 +113,7 @@ class MutateInResult extends MutationResult
 
     /**
      * @param int $index
+     *
      * @return string|null
      * @since 4.0.0
      */
@@ -122,6 +127,7 @@ class MutateInResult extends MutationResult
 
     /**
      * @param int $index
+     *
      * @return Exception|null
      * @since 4.0.0
      */

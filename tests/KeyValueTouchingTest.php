@@ -24,7 +24,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueTouchingTest extends Helpers\CouchbaseTestCase
 {
-    function testGetAndTouchChangesExpiry()
+    public function testGetAndTouchChangesExpiry()
     {
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();

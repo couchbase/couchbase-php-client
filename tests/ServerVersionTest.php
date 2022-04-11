@@ -19,13 +19,12 @@
 declare(strict_types=1);
 
 use Helpers\ServerVersion;
-use Couchbase\Extension;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class ServerVersionTest extends Helpers\CouchbaseTestCase
 {
-    function testSimpleServerVersion()
+    public function testSimpleServerVersion()
     {
         $version = ServerVersion::parse("7.0");
         $this->assertEquals(7, $version->major());
@@ -34,21 +33,21 @@ class ServerVersionTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("7.0.0-0-enterprise", "" . $version);
     }
 
-    function testVersionWithBuildNumber()
+    public function testVersionWithBuildNumber()
     {
         $version = ServerVersion::parse("7.1.2-9999");
         $this->assertTrue($version->isNeo());
         $this->assertEquals("7.1.2-9999-enterprise", "" . $version);
     }
 
-    function testFullVersion()
+    public function testFullVersion()
     {
         $version = ServerVersion::parse("6.6.2-8888-community");
         $this->assertTrue($version->isMadHatter());
         $this->assertEquals("6.6.2-8888-community", "" . $version);
     }
 
-    function testRuntimeVersion()
+    public function testRuntimeVersion()
     {
         $this->skipIfCaves();
 

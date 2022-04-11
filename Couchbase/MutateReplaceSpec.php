@@ -37,9 +37,16 @@ class MutateReplaceSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @since 4.0.0
      */
-    public function __construct(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false)
+    public function __construct(
+        string $path,
+        $value,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    )
     {
         $this->isXattr = $isXattr;
         $this->createParents = $createParents;
@@ -54,16 +61,24 @@ class MutateReplaceSpec implements MutateInSpec
      * @param bool $isXattr
      * @param bool $createParents
      * @param bool $expandMacros
+     *
      * @return MutateReplaceSpec
      * @since 4.0.0
      */
-    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false, bool $expandMacros = false): MutateReplaceSpec
+    public static function build(
+        string $path,
+        $value,
+        bool $isXattr = false,
+        bool $createParents = false,
+        bool $expandMacros = false
+    ): MutateReplaceSpec
     {
         return new MutateReplaceSpec($path, $value, $isXattr, $createParents, $expandMacros);
     }
 
     /**
      * @param bool $isXattr
+     *
      * @return MutateReplaceSpec
      * @since 4.0.0
      */
@@ -75,6 +90,7 @@ class MutateReplaceSpec implements MutateInSpec
 
     /**
      * @param bool $createParents
+     *
      * @return MutateReplaceSpec
      * @since 4.0.0
      */
@@ -86,6 +102,7 @@ class MutateReplaceSpec implements MutateInSpec
 
     /**
      * @param bool $expandMacros
+     *
      * @return MutateReplaceSpec
      * @since 4.0.0
      */
@@ -97,7 +114,9 @@ class MutateReplaceSpec implements MutateInSpec
 
     /**
      * @private
+     *
      * @param MutateInOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

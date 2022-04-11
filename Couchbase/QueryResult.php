@@ -30,6 +30,7 @@ class QueryResult
 
     /**
      * @private
+     *
      * @param array $result
      * @param Transcoder $transcoder
      */

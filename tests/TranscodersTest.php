@@ -26,7 +26,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class TranscodersTest extends Helpers\CouchbaseTestCase
 {
-    function testDefaultTranscoderUsesJson()
+    public function testDefaultTranscoderUsesJson()
     {
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
@@ -42,7 +42,7 @@ class TranscodersTest extends Helpers\CouchbaseTestCase
         $this->assertEquals('{"answer":42}', $property->getValue($res));
     }
 
-    function testRawJsonTranscoderDoesNotRecodeJsonOnEncode()
+    public function testRawJsonTranscoderDoesNotRecodeJsonOnEncode()
     {
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
@@ -52,7 +52,7 @@ class TranscodersTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(["answer" => 42], $res->content());
     }
 
-    function testRawJsonTranscoderReturnsRawDataOnDecode()
+    public function testRawJsonTranscoderReturnsRawDataOnDecode()
     {
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();

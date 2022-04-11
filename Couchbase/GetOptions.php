@@ -50,6 +50,7 @@ class GetOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return GetOptions
      * @since 4.0.0
      */
@@ -67,6 +68,7 @@ class GetOptions
      * fetch as well as the expiry.
      *
      * @param bool $fetchExpiry whether to include document expiry
+     *
      * @return GetOptions
      * @since 4.0.0
      */
@@ -85,6 +87,7 @@ class GetOptions
      * fields.
      *
      * @param array $projections the array of field names (array of strings)
+     *
      * @return GetOptions
      * @since 4.0.0
      */
@@ -98,6 +101,7 @@ class GetOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return GetOptions
      * @since 4.0.0
      */
@@ -111,6 +115,7 @@ class GetOptions
      * Returns associated transcoder.
      *
      * @param GetOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -124,7 +129,9 @@ class GetOptions
 
     /**
      * @private
+     *
      * @param GetOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

@@ -18,20 +18,36 @@
 
 declare(strict_types=1);
 
+use Couchbase\BooleanSearchQuery;
 use Couchbase\Cluster;
 use Couchbase\ConjunctionSearchQuery;
 use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
+use Couchbase\DocIdSearchQuery;
+use Couchbase\GeoBoundingBoxSearchQuery;
+use Couchbase\GeoDistanceSearchQuery;
+use Couchbase\MatchAllSearchQuery;
+use Couchbase\MatchNoneSearchQuery;
 use Couchbase\MatchPhraseSearchQuery;
 use Couchbase\MatchSearchQuery;
 use Couchbase\MutationState;
 use Couchbase\NumericRangeSearchFacet;
 use Couchbase\NumericRangeSearchQuery;
+use Couchbase\PhraseSearchQuery;
+use Couchbase\RegexpSearchQuery;
 use Couchbase\SearchHighlightMode;
 use Couchbase\SearchOptions;
+use Couchbase\SearchSortField;
+use Couchbase\SearchSortGeoDistance;
+use Couchbase\SearchSortId;
+use Couchbase\SearchSortMissing;
+use Couchbase\SearchSortScore;
+use Couchbase\SearchSortType;
+use Couchbase\TermRangeSearchQuery;
 use Couchbase\TermSearchFacet;
 use Couchbase\TermSearchQuery;
+use Couchbase\WildcardSearchQuery;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -75,7 +91,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testSearchWithNoHits()
+    public function testSearchWithNoHits()
     {
         $this->skipIfCaves();
 
@@ -90,7 +106,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(0, $result->metaData()->totalHits());
     }
 
-    function testSearchWithConsistency()
+    public function testSearchWithConsistency()
     {
         $this->skipIfCaves();
 
@@ -132,7 +148,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals($id, $result->rows()[0]['id']);
     }
 
-    function testSearchWithFields()
+    public function testSearchWithFields()
     {
         $this->skipIfCaves();
 
@@ -157,7 +173,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testSearchWithSort()
+    public function testSearchWithSort()
     {
         $this->skipIfCaves();
 
@@ -166,12 +182,12 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options->limit(3)->sort(
             [
                 'hello',
-                (new \Couchbase\SearchSortId())->descending(true),
-                new \Couchbase\SearchSortScore(),
-                new \Couchbase\SearchSortGeoDistance("foo", 27.4395527, 53.8835622),
-                (new \Couchbase\SearchSortField("bar"))
-                    ->type(\Couchbase\SearchSortType::NUMBER)
-                    ->missing(\Couchbase\SearchSortMissing::FIRST)
+                (new SearchSortId())->descending(true),
+                new SearchSortScore(),
+                new SearchSortGeoDistance("foo", 27.4395527, 53.8835622),
+                (new SearchSortField("bar"))
+                    ->type(SearchSortType::NUMBER)
+                    ->missing(SearchSortMissing::FIRST),
             ]
         );
 
@@ -189,7 +205,10 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testSearchWithRanges()
+    /**
+     * @throws \Couchbase\Exception\InvalidArgumentException
+     */
+    public function testSearchWithRanges()
     {
         $this->skipIfCaves();
 
@@ -217,7 +236,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $query = new ConjunctionSearchQuery(
             [
                 (new TermSearchQuery("beer"))->field("type"),
-                (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010))
+                (new DateRangeSearchQuery())->field("updated")->start($startStr)->end(mktime(20, 0, 0, 12, 1, 2010)),
             ]
         );
         $options = new SearchOptions();
@@ -237,13 +256,29 @@ class SearchTest extends Helpers\CouchbaseTestCase
             $this->assertNotNull($hit['fields']['updated']);
             $hitDate = new DateTime($hit['fields']['updated']);
             $diff = $startDate->diff($hitDate);
-            $this->assertEquals(0, $diff->invert, "The hit->update date ({$hitDate->format(DATE_RFC3339)}) should go after start date ({$startDate->format(DATE_RFC3339)})");
+            $this->assertEquals(
+                0,
+                $diff->invert,
+                sprintf(
+                    "The hit->update date (%s) should go after start date (%s)",
+                    $hitDate->format(DATE_RFC3339),
+                    $startDate->format(DATE_RFC3339)
+                )
+            );
             $diff = $endDate->diff($hitDate);
-            $this->assertEquals(1, $diff->invert, "The hit->update date ({$hitDate->format(DATE_RFC3339)}) should go before or equals to end date ({$startDate->format(DATE_RFC3339)})");
+            $this->assertEquals(
+                1,
+                $diff->invert,
+                sprintf(
+                    "The hit->update date (%s) should go before or equals to end date (%s)",
+                    $hitDate->format(DATE_RFC3339),
+                    $startDate->format(DATE_RFC3339)
+                )
+            );
         }
     }
 
-    function testCompoundSearchQueries()
+    public function testCompoundSearchQueries()
     {
         $this->skipIfCaves();
 
@@ -267,25 +302,25 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
         $this->assertLessThan(10, $result->metaData()->totalHits());
-        $disjunction2Result = $result;
+        $disjunctionResult = $result;
 
         $conjunctionQuery = new ConjunctionSearchQuery([$nameQuery, $descriptionQuery]);
         $options = new SearchOptions();
         $options->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $conjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
-        $this->assertEquals(count($disjunction2Result->rows()), count($result->rows()));
+        $this->assertSameSize($disjunctionResult->rows(), $result->rows());
         $this->assertEquals(
-            $disjunction2Result->rows()[0]['fields']['name'],
+            $disjunctionResult->rows()[0]['fields']['name'],
             $result->rows()[0]['fields']['name']
         );
         $this->assertEquals(
-            $disjunction2Result->rows()[0]['fields']['description'],
+            $disjunctionResult->rows()[0]['fields']['description'],
             $result->rows()[0]['fields']['description']
         );
     }
 
-    function testSearchWithFragments()
+    public function testSearchWithFragments()
     {
         $this->skipIfCaves();
 
@@ -306,7 +341,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function testSearchWithFacets()
+    public function testSearchWithFacets()
     {
         $this->skipIfCaves();
 
@@ -318,8 +353,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 "bar" => (new DateRangeSearchFacet("updated", 1))
                     ->addRange("old", null, mktime(0, 0, 0, 1, 1, 2014)), // "2014-01-01T00:00:00" also acceptable
                 "baz" => (new NumericRangeSearchFacet("abv", 2))
-                    ->addRange("strong", 4.9, null)
-                    ->addRange("light", null, 4.89)
+                    ->addRange("strong", 4.9)
+                    ->addRange("light", null, 4.89),
             ]
         );
 
@@ -345,42 +380,42 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertGreaterThan(100, $result->facets()['baz']->numericRanges()[0]->count());
     }
 
-    function testNullInNumericRangeFacet()
+    public function testNullInNumericRangeFacet()
     {
         $facet = (new NumericRangeSearchFacet("abv", 2))->addRange("light", null, 4.89)->addRange("staut", null, 7.89);
         $this->assertNotNull(json_encode($facet));
     }
 
-    function testSearchQuery()
+    public function testSearchQuery()
     {
-        $query = (new \Couchbase\BooleanSearchQuery())
+        $query = (new BooleanSearchQuery())
             ->must(
-                (new \Couchbase\ConjunctionSearchQuery(
+                (new ConjunctionSearchQuery(
                     [
-                        (new \Couchbase\DocIdSearchQuery())->docIds('bar', 'baz'),
-                        new \Couchbase\MatchSearchQuery('hello world')
+                        (new DocIdSearchQuery())->docIds('bar', 'baz'),
+                        new MatchSearchQuery('hello world'),
                     ]
                 ))
-                    ->and(new \Couchbase\MatchAllSearchQuery())
+                    ->and(new MatchAllSearchQuery())
             )
             ->should(
-                (new \Couchbase\DisjunctionSearchQuery(
+                (new DisjunctionSearchQuery(
                     [
-                        new \Couchbase\MatchNoneSearchQuery(),
-                        (new \Couchbase\DateRangeSearchQuery())->start('2010-11-01T10:00:00+00:00')->end('2010-12-01T10:00:00+00:00'),
-                        (new \Couchbase\TermRangeSearchQuery())->min('hello')->max('world'),
-                        new \Couchbase\GeoDistanceSearchQuery(1.0, 3.0, "10mi"),
-                        new \Couchbase\GeoBoundingBoxSearchQuery(1.0, 3.0, 4.0, 5.0),
+                        new MatchNoneSearchQuery(),
+                        (new DateRangeSearchQuery())->start('2010-11-01T10:00:00+00:00')->end('2010-12-01T10:00:00+00:00'),
+                        (new TermRangeSearchQuery())->min('hello')->max('world'),
+                        new GeoDistanceSearchQuery(1.0, 3.0, "10mi"),
+                        new GeoBoundingBoxSearchQuery(1.0, 3.0, 4.0, 5.0),
                     ]
                 ))
-                    ->or((new \Couchbase\NumericRangeSearchQuery())->min(3)->max(42.5))
-                    ->or((new \Couchbase\WildcardSearchQuery('user*'))->field('type'))
+                    ->or((new NumericRangeSearchQuery())->min(3)->max(42.5))
+                    ->or((new WildcardSearchQuery('user*'))->field('type'))
             )
             ->mustNot(
-                new \Couchbase\DisjunctionSearchQuery(
+                new DisjunctionSearchQuery(
                     [
-                        (new \Couchbase\PhraseSearchQuery('foo', 'bar', 'baz'))->field('description'),
-                        (new \Couchbase\RegexpSearchQuery('user.*'))->field('_class_name')
+                        (new PhraseSearchQuery('foo', 'bar', 'baz'))->field('description'),
+                        (new RegexpSearchQuery('user.*'))->field('_class_name'),
                     ]
                 )
             );
@@ -388,14 +423,14 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($result);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
 
-        $options = new \Couchbase\SearchOptions();
+        $options = new SearchOptions();
         $options->fields(["foo", "bar", "baz"]);
-        $options->highlight(\Couchbase\SearchHighlightMode::SIMPLE, ["foo", "bar", "baz"]);
+        $options->highlight(SearchHighlightMode::SIMPLE, ["foo", "bar", "baz"]);
         $options->facets(
             [
-                "foo" => new \Couchbase\TermSearchFacet("name", 3),
-                "bar" => (new \Couchbase\DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
-                "baz" => (new \Couchbase\NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9, null)->addRange("light", null, 4.89)
+                "foo" => new TermSearchFacet("name", 3),
+                "bar" => (new DateRangeSearchFacet("updated", 2))->addRange("old", null, "2014-01-01T00:00:00"),
+                "baz" => (new NumericRangeSearchFacet("abv", 2))->addRange("string", 4.9)->addRange("light", null, 4.89),
             ]
         );
         $result = json_encode($options);
@@ -403,14 +438,14 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
     }
 
-    function testBooleanSearchQuery()
+    public function testBooleanSearchQuery()
     {
-        $match_query = new \Couchbase\MatchSearchQuery('hello world');
+        $matchQuery = new MatchSearchQuery('hello world');
 
-        $disjunction_query = new \Couchbase\DisjunctionSearchQuery([$match_query]);
-        $bool_query = (new \Couchbase\BooleanSearchQuery())->mustNot($disjunction_query);
+        $disjunctionQuery = new DisjunctionSearchQuery([$matchQuery]);
+        $boolQuery = (new BooleanSearchQuery())->mustNot($disjunctionQuery);
 
-        $result = json_encode($bool_query);
+        $result = json_encode($boolQuery);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
         $this->assertEquals('{"must_not":{"disjuncts":[{"match":"hello world"}]}}', $result);
     }

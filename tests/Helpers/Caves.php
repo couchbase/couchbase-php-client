@@ -39,7 +39,7 @@ class Caves
             $proc = proc_open(
                 [
                     $this->executablePath(),
-                    sprintf("--control-port=%d", $this->controlPort())
+                    sprintf("--control-port=%d", $this->controlPort()),
                 ],
                 [
                     1 => ["file", sprintf("%s/%s.out.txt", $this->buildDirectory(), $this->logPrefix), "a"],
@@ -56,7 +56,12 @@ class Caves
             }
         }
         $this->cavesSocket = socket_accept($this->controlSocket);
-        printf("--- %s, control_port: %d, logs: %s\n", $this->executablePath(), $this->controlPort(), sprintf("%s/%s.{out,err}.txt", $this->buildDirectory(), $this->logPrefix));
+        printf(
+            "--- %s, control_port: %d, logs: %s\n",
+            $this->executablePath(),
+            $this->controlPort(),
+            sprintf("%s/%s.{out,err}.txt", $this->buildDirectory(), $this->logPrefix)
+        );
         $helloCommand = $this->readCommand();
         if ($helloCommand["type"] != "hello") {
             throw new UnexpectedValueException("CAVES didn't greet us, something happened: " . var_export($helloCommand));
@@ -73,6 +78,7 @@ class Caves
 
     /**
      * @param string $clusterId
+     *
      * @return string connection string
      */
     public function createCluster(string $clusterId): string
@@ -83,7 +89,8 @@ class Caves
 
     /**
      * @param string $clusterId
-     * @param int $durationMilliseconds
+     * @param int    $durationMilliseconds
+     *
      * @return void
      */
     public function timeTravelCluster(string $clusterId, int $durationMilliseconds)

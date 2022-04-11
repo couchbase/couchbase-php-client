@@ -38,14 +38,16 @@ class GetAnalyticsLinksOptions
     }
 
     /**
-     * @param string $dataverse restricts the results to a given dataverse, can be given in the form of "namepart" or "namepart1/namepart2".
+     * @param string $dataverse restricts the results to a given dataverse, can be given in the form of "namepart" or
+     *     "namepart1/namepart2".
      */
     public function dataverse(string $dataverse): DropAnalyticsLinkOptions
     {
     }
 
     /**
-     * @param string $name restricts the results to the link with the specified name. If set then dataverse must also be set.
+     * @param string $name restricts the results to the link with the specified name. If set then dataverse must also
+     *     be set.
      */
     public function name(string $name): DropAnalyticsLinkOptions
     {

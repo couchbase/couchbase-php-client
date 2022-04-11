@@ -38,6 +38,7 @@ class RegexpSearchQuery implements SearchQuery
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
+     *
      * @return RegexpSearchQuery
      * @since 4.0.0
      */
@@ -51,6 +52,7 @@ class RegexpSearchQuery implements SearchQuery
      * Sets the field for this query.
      *
      * @param string $field the field to use.
+     *
      * @return RegexpSearchQuery
      * @since 4.0.0
      */
@@ -66,7 +68,7 @@ class RegexpSearchQuery implements SearchQuery
     public static function export(RegexpSearchQuery $query): array
     {
         $json = [
-            'regexp' => $query->regexp
+            'regexp' => $query->regexp,
         ];
         if ($query->boost != null) {
             $json['boost'] = $query->boost;

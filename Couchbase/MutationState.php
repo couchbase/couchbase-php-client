@@ -35,6 +35,7 @@ class MutationState
      * Adds the result of a mutation operation to this mutation state.
      *
      * @param MutationResult $source the result object to add to this state
+     *
      * @return MutationState
      */
     public function add(MutationResult $source): MutationState

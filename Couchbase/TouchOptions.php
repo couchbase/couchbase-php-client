@@ -39,6 +39,7 @@ class TouchOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return TouchOptions
      * @since 4.0.0
      */
@@ -50,7 +51,9 @@ class TouchOptions
 
     /**
      * @private
+     *
      * @param TouchOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */
