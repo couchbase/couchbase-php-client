@@ -28,6 +28,7 @@ class TransactionsQueryConfiguration
      * Specifies the default scan consistency level for queries.
      *
      * @param string $level
+     *
      * @return TransactionsQueryConfiguration
      * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
      * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED

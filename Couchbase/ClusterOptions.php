@@ -479,6 +479,7 @@ class ClusterOptions
 
     /**
      * @param TransactionsConfiguration $options
+     *
      * @return ClusterOptions
      * @since 4.0.0
      */

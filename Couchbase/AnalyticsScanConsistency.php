@@ -28,10 +28,10 @@ interface AnalyticsScanConsistency
     /**
      * Set scan consistency to not bounded
      */
-    public const NOT_BOUNDED = 1;
+    public const NOT_BOUNDED = "notBounded";
 
     /**
      * Set scan consistency to not request plus
      */
-    public const REQUEST_PLUS = 2;
+    public const REQUEST_PLUS = "requestPlus";
 }

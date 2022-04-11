@@ -67,5 +67,4 @@ class TransactionGetResult extends Result
     {
         return $transcoder->decode($this->value, $overrideFlags == null ? $overrideFlags : $this->flags);
     }
-
 }

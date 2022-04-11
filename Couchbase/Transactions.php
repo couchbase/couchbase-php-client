@@ -33,8 +33,10 @@ class Transactions
 
     /**
      * @private
+     *
      * @param ?TransactionsConfiguration $options
      * @param $core
+     *
      * @since 4.0.0
      */
     public function __construct($core, ?TransactionsConfiguration $options = null)
@@ -48,6 +50,7 @@ class Transactions
      *
      * @param callable $logic The transaction closure to execute
      * @param TransactionOptions|null $options configuration options for the transaction
+     *
      * @return TransactionResult
      * @throws Exception
      */

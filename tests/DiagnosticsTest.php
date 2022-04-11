@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class DiagnosticsTest extends Helpers
+class DiagnosticsTest extends Helpers\CouchbaseTestCase
 {
     public function testDiagnostics()
     {

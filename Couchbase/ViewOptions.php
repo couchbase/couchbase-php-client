@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
 use JsonSerializable;
 
 class ViewOptions
@@ -128,13 +129,18 @@ class ViewOptions
     /**
      * Sets the scan consistency.
      *
-     * @param int $consistencyLevel the scan consistency level
+     * @param string|int $consistencyLevel the scan consistency level
      *
-     * @return QueryOptions
+     * @return ViewOptions
+     * @throws Exception\InvalidArgumentException
+     * @see ViewConsistency
      * @since 4.0.0
      */
-    public function scanConsistency(int $consistencyLevel): ViewOptions
+    public function scanConsistency($consistencyLevel): ViewOptions
     {
+        if (gettype($consistencyLevel) == "integer") {
+            $consistencyLevel = Deprecations::convertDeprecatedViewConsistency(__METHOD__, $consistencyLevel);
+        }
         $this->scanConsistency = $consistencyLevel;
         return $this;
     }

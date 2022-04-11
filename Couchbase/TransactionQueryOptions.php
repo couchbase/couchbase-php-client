@@ -54,6 +54,7 @@ class TransactionQueryOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -67,6 +68,7 @@ class TransactionQueryOptions
      * Sets the mutation state to achieve consistency with for read your own writes (RYOW).
      *
      * @param MutationState $state the mutation state to achieve consistency with
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -80,6 +82,7 @@ class TransactionQueryOptions
      * Sets the scan consistency.
      *
      * @param string $consistencyLevel the scan consistency level.
+     *
      * @return TransactionQueryOptions
      * @see TransactionQueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
      * @see TransactionQueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
@@ -95,6 +98,7 @@ class TransactionQueryOptions
      * Sets the maximum buffered channel size between the indexer client and the query service for index scans.
      *
      * @param int $cap the maximum buffered channel size
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -109,6 +113,7 @@ class TransactionQueryOptions
      * information on the proper use and tuning of this option.
      *
      * @param int $milliseconds
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -122,6 +127,7 @@ class TransactionQueryOptions
      * Sets the maximum number of items each execution operator can buffer between various operators.
      *
      * @param int $cap the maximum number of items each execution operation can buffer
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -135,6 +141,7 @@ class TransactionQueryOptions
      * Sets the number of items execution operators can batch for fetch from the KV service.
      *
      * @param int $batchSize the pipeline batch size
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -148,6 +155,7 @@ class TransactionQueryOptions
      * Sets the maximum number of index partitions, for computing aggregation in parallel.
      *
      * @param int $max the number of index partitions
+     *
      * @return TransactionQueryOptions
      */
     public function maxParallelism(int $max): TransactionQueryOptions
@@ -160,6 +168,7 @@ class TransactionQueryOptions
      * Sets the query profile mode to use.
      *
      * @param int $mode the query profile mode
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -173,6 +182,7 @@ class TransactionQueryOptions
      * Sets whether this query is readonly.
      *
      * @param bool $readonly whether the query is readonly
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -186,6 +196,7 @@ class TransactionQueryOptions
      * Sets whether this query is adhoc.
      *
      * @param bool $enabled whether the query is adhoc
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -199,6 +210,7 @@ class TransactionQueryOptions
      * Sets the named parameters for this query.
      *
      * @param array $pairs the associative array of parameters
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -212,6 +224,7 @@ class TransactionQueryOptions
      * Sets the positional parameters for this query.
      *
      * @param array $params the array of parameters
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -226,13 +239,14 @@ class TransactionQueryOptions
      *
      * @param string $key the name of the parameter
      * @param string $value the value of the parameter
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
     public function raw(string $key, $value): ViewOptions
     {
         if ($this->raw == null) {
-            $this->raw = array();
+            $this->raw = [];
         }
 
         $this->raw[$key] = $value;
@@ -243,6 +257,7 @@ class TransactionQueryOptions
      * Sets the client context id for this query.
      *
      * @param string $id the client context id
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -256,6 +271,7 @@ class TransactionQueryOptions
      * Sets whether to return metrics with the query.
      *
      * @param bool $enabled whether to return metrics
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -269,6 +285,7 @@ class TransactionQueryOptions
      * Associate scope name with query
      *
      * @param string $name the name of the scope
+     *
      * @return TransactionQueryOptions
      * @deprecated
      * @since 4.0.0
@@ -289,6 +306,7 @@ class TransactionQueryOptions
      * The qualifier must be in form `${bucketName}.${scopeName}` or `default:${bucketName}.${scopeName}`
      *
      * @param string $qualifier the scope qualifier
+     *
      * @return TransactionQueryOptions
      * @deprecated
      * @since 4.0.0
@@ -307,6 +325,7 @@ class TransactionQueryOptions
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
+     *
      * @return TransactionQueryOptions
      * @since 4.0.0
      */
@@ -320,6 +339,7 @@ class TransactionQueryOptions
      * Returns associated transcoder.
      *
      * @param TransactionQueryOptions|null $options
+     *
      * @return Transcoder
      * @since 4.0.0
      */
@@ -336,7 +356,7 @@ class TransactionQueryOptions
         if ($options == null) {
             return [
                 'scopeName' => $scopeName,
-                'bucketName' => $bucketName
+                'bucketName' => $bucketName,
             ];
         }
 
@@ -382,7 +402,7 @@ class TransactionQueryOptions
             'metrics' => $options->metrics,
             'scopeName' => $scopeName,
             'bucketName' => $bucketName,
-            'scopeQualifier' => $options->scopeQualifier
+            'scopeQualifier' => $options->scopeQualifier,
         ];
     }
 }

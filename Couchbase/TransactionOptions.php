@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
+
 class TransactionOptions
 {
     private ?string $durabilityLevel = null;
@@ -31,6 +33,7 @@ class TransactionOptions
      * Specifies the timeout for the transaction.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return TransactionOptions
      * @since 4.0.0
      */
@@ -43,13 +46,19 @@ class TransactionOptions
     /**
      * Specifies the level of synchronous durability level.
      *
-     * @param string $level the durability level to enforce
+     * @param string|int $level the durability level to enforce
      * @param int|null $timeoutSeconds
+     *
      * @return TransactionOptions
+     * @throws Exception\InvalidArgumentException
+     * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel(string $level, ?int $timeoutSeconds): TransactionOptions
+    public function durabilityLevel($level, ?int $timeoutSeconds): TransactionOptions
     {
+        if (gettype($level) == "integer") {
+            $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
+        }
         $this->durabilityLevel = $level;
         $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
@@ -57,7 +66,9 @@ class TransactionOptions
 
     /**
      * @private
+     *
      * @param TransactionOptions|null $options
+     *
      * @return array
      * @since 4.0.0
      */

@@ -30,6 +30,7 @@ class TransactionsCleanupConfiguration
      * Specifies the period of the cleanup system.
      *
      * @param int $milliseconds
+     *
      * @return TransactionsCleanupConfiguration
      * @since 4.0.0
      */
@@ -41,7 +42,9 @@ class TransactionsCleanupConfiguration
 
     /**
      * Specifies whether the cleanup system should clean lost attempts.
+     *
      * @param bool $disable
+     *
      * @return TransactionsCleanupConfiguration
      * @since 4.0.0
      */
@@ -53,7 +56,9 @@ class TransactionsCleanupConfiguration
 
     /**
      * Specifies whether the cleanup system should clean client attempts.
+     *
      * @param bool $disable
+     *
      * @return TransactionsCleanupConfiguration
      * @since 4.0.0
      */

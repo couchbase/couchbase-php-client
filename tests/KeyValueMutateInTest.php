@@ -25,6 +25,7 @@ use Couchbase\MutateArrayInsertSpec;
 use Couchbase\MutateArrayPrependSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateUpsertSpec;
+use Couchbase\StoreSemantics;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -40,7 +41,7 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
             [
                 MutateUpsertSpec::build("foo", "bar"),
             ],
-            MutateInOptions::build()->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT)
+            MutateInOptions::build()->storeSemantics(StoreSemantics::UPSERT)
         );
         $this->assertNotNull($res->cas());
         $cas = $res->cas();

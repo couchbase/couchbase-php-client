@@ -39,6 +39,7 @@ class ThresholdLoggingOptions
      * Specifies how often orphaned spans should be logged.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -52,6 +53,7 @@ class ThresholdLoggingOptions
      * Specifies the number of orphaned spans which should be kept between each logging interval.
      *
      * @param int $numberOfSamples
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -66,6 +68,7 @@ class ThresholdLoggingOptions
      * Specifies how often aggregated trace information should be logged.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -79,6 +82,7 @@ class ThresholdLoggingOptions
      * Specifies the number of entries which should be kept between each logging interval.
      *
      * @param int $numberOfSamples
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -92,6 +96,7 @@ class ThresholdLoggingOptions
      * Specifies the threshold for when a kv request should be included in the aggregated metrics.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -105,6 +110,7 @@ class ThresholdLoggingOptions
      * Specifies the threshold for when a query request should be included in the aggregated metrics.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -118,6 +124,7 @@ class ThresholdLoggingOptions
      * Specifies the threshold for when a views request should be included in the aggregated metrics.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -131,6 +138,7 @@ class ThresholdLoggingOptions
      * Specifies the threshold for when a search request should be included in the aggregated metrics.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */
@@ -144,6 +152,7 @@ class ThresholdLoggingOptions
      * Specifies the threshold for when an analytics request should be included in the aggregated metrics.
      *
      * @param int $milliseconds
+     *
      * @return ThresholdLoggingOptions
      * @since 4.0.0
      */

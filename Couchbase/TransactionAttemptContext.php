@@ -36,6 +36,7 @@ class TransactionAttemptContext
      *
      * @param Collection $collection The collection the document lives in.
      * @param string $id The document key to retrieve.
+     *
      * @return TransactionGetResult
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -51,6 +52,7 @@ class TransactionAttemptContext
      * @param Collection $collection The collection the document lives in.
      * @param string $id The document key to insert.
      * @param mixed $value the document content to insert
+     *
      * @return TransactionGetResult
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -65,6 +67,7 @@ class TransactionAttemptContext
      *
      * @param TransactionGetResult $document the document to replace
      * @param mixed $value the document content to replace
+     *
      * @return TransactionGetResult
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -78,6 +81,7 @@ class TransactionAttemptContext
      * Removes a document from a collection.
      *
      * @param TransactionGetResult $document
+     *
      * @return void
      * @throws UnsupportedOperationException
      * @since 4.0.0
@@ -92,6 +96,7 @@ class TransactionAttemptContext
      *
      * @param string $statement
      * @param TransactionQueryOptions|null $options
+     *
      * @return mixed
      * @throws UnsupportedOperationException
      */

@@ -22,7 +22,7 @@ namespace Couchbase;
 
 interface ViewConsistency
 {
-    public const NOT_BOUNDED = 1;
-    public const REQUEST_PLUS = 2;
-    public const UPDATE_AFTER = 3;
+    public const NOT_BOUNDED = "notBounded";
+    public const REQUEST_PLUS = "requestPlus";
+    public const UPDATE_AFTER = "updateAfter";
 }

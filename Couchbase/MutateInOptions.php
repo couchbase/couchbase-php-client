@@ -21,14 +21,11 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Utilities\Deprecations;
 use DateTimeInterface;
 
 class MutateInOptions
 {
-    public const STORE_SEMANTICS_REPLACE = "replace";
-    public const STORE_SEMANTICS_INSERT = "insert";
-    public const STORE_SEMANTICS_UPSERT = "upsert";
-
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
@@ -44,7 +41,7 @@ class MutateInOptions
     public function __construct()
     {
         $this->transcoder = JsonTranscoder::getInstance();
-        $this->storeSemantics = self::STORE_SEMANTICS_REPLACE;
+        $this->storeSemantics = StoreSemantics::REPLACE;
     }
 
     /**
@@ -122,14 +119,19 @@ class MutateInOptions
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param string $level the durability level to enforce
+     * @param string|int $level the durability level to enforce
      * @param int|null $timeoutSeconds
      *
      * @return MutateInOptions
+     * @throws InvalidArgumentException
+     * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel(string $level, ?int $timeoutSeconds): MutateInOptions
+    public function durabilityLevel($level, ?int $timeoutSeconds): MutateInOptions
     {
+        if (gettype($level) == "integer") {
+            $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
+        }
         $this->durabilityLevel = $level;
         $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
@@ -142,32 +144,13 @@ class MutateInOptions
      *
      * @return MutateInOptions
      * @throws InvalidArgumentException
-     * @see STORE_SEMANTICS_UPSERT
-     * @see STORE_SEMANTICS_REPLACE
-     * @see STORE_SEMANTICS_INSERT
+     * @see StoreSemantics
      * @since 4.0.0
      */
     public function storeSemantics($semantics): MutateInOptions
     {
         if (gettype($semantics) == "integer") {
-            trigger_error(
-                'Method ' . __METHOD__ . ' is deprecated with integer parameter, use string parameter instead',
-                E_USER_DEPRECATED
-            );
-
-            switch ($semantics) {
-                case 0:
-                    $semantics = self::STORE_SEMANTICS_REPLACE;
-                    break;
-                case 1:
-                    $semantics = self::STORE_SEMANTICS_UPSERT;
-                    break;
-                case 2:
-                    $semantics = self::STORE_SEMANTICS_INSERT;
-                    break;
-                default:
-                    throw new InvalidArgumentException("Integer value for store semantics must be one of  0, 1, 2");
-            }
+            $semantics = Deprecations::convertDeprecatedStoreSemantics(__METHOD__, $semantics);
         }
         $this->storeSemantics = $semantics;
         return $this;

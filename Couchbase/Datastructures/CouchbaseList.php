@@ -24,6 +24,7 @@ use ArrayAccess;
 use ArrayIterator;
 use Couchbase\Collection;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathMismatchException;
 use Couchbase\LookupCountSpec;
 use Couchbase\LookupExistsSpec;
@@ -31,9 +32,9 @@ use Couchbase\LookupGetSpec;
 use Couchbase\MutateArrayAppendSpec;
 use Couchbase\MutateArrayInsertSpec;
 use Couchbase\MutateArrayPrependSpec;
-use Couchbase\MutateInOptions;
 use Couchbase\MutateRemoveSpec;
 use Couchbase\MutateReplaceSpec;
+use Couchbase\StoreSemantics;
 use Countable;
 use EmptyIterator;
 use IteratorAggregate;
@@ -185,13 +186,13 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      *
      * @param mixed ...$values new values to prepend
      *
-     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function append(...$values): void
     {
         $options = clone $this->options->mutateInOptions();
-        $options->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT);
+        $options->storeSemantics(StoreSemantics::UPSERT);
         $this->collection->mutateIn(
             $this->id,
             [new MutateArrayAppendSpec("", $values, false, false, false)],
@@ -204,13 +205,13 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      *
      * @param mixed ...$values new value to prepend
      *
-     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function prepend(...$values): void
     {
         $options = clone $this->options->mutateInOptions();
-        $options->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT);
+        $options->storeSemantics(StoreSemantics::UPSERT);
         $this->collection->mutateIn(
             $this->id,
             [new MutateArrayPrependSpec("", $values, false, false, false)],
@@ -276,7 +277,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      * @return mixed the value or null
      * @since 4.0.0
      */
-    public function offsetGet($offset): mixed
+    public function offsetGet($offset)
     {
         return $this->at((int)$offset);
     }

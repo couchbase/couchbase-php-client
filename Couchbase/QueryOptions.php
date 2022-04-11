@@ -21,12 +21,10 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Utilities\Deprecations;
 
 class QueryOptions
 {
-    const SCAN_CONSISTENCY_NOT_BOUNDED = "not_bounded";
-    const SCAN_CONSISTENCY_REQUEST_PLUS = "request_plus";
-
     private ?int $timeoutMilliseconds = null;
     private ?MutationState $consistentWith = null;
     private ?string $scanConsistency = null;
@@ -92,28 +90,13 @@ class QueryOptions
      *
      * @return QueryOptions
      * @throws InvalidArgumentException
-     * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
-     * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
+     * @see QueryScanConsistency
      * @since 4.0.0
      */
     public function scanConsistency($consistencyLevel): QueryOptions
     {
         if (gettype($consistencyLevel) == "integer") {
-            trigger_error(
-                'Method ' . __METHOD__ . ' is deprecated with integer parameter, use string parameter instead',
-                E_USER_DEPRECATED
-            );
-
-            switch ($consistencyLevel) {
-                case 0:
-                    $consistencyLevel = self::SCAN_CONSISTENCY_NOT_BOUNDED;
-                    break;
-                case 1:
-                    $consistencyLevel = self::SCAN_CONSISTENCY_REQUEST_PLUS;
-                    break;
-                default:
-                    throw new InvalidArgumentException("Integer value for store semantics must be one of  0, 1");
-            }
+            $consistencyLevel = Deprecations::convertDeprecatedQueryScanConsistency(__METHOD__, $consistencyLevel);
         }
         $this->scanConsistency = $consistencyLevel;
         return $this;

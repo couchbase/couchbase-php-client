@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
+
 class TransactionsConfiguration
 {
     private ?string $durabilityLevel = null;
@@ -31,12 +33,18 @@ class TransactionsConfiguration
     /**
      * Specifies the level of synchronous durability level.
      *
-     * @param string $level
+     * @param string|int $level the durability level to enforce
+     *
      * @return TransactionsConfiguration
+     * @throws Exception\InvalidArgumentException
+     * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel(string $level): TransactionsConfiguration
+    public function durabilityLevel($level): TransactionsConfiguration
     {
+        if (gettype($level) == "integer") {
+            $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
+        }
         $this->durabilityLevel = $level;
         return $this;
     }
@@ -45,6 +53,7 @@ class TransactionsConfiguration
      * Specifies the default timeout for KV operations, specified in milliseconds.
      *
      * @param int $milliseconds
+     *
      * @return TransactionsConfiguration
      * @since 4.0.0
      */
@@ -58,6 +67,7 @@ class TransactionsConfiguration
      * Specifies the default timeout for transactions.
      *
      * @param int $milliseconds
+     *
      * @return TransactionsConfiguration
      * @since 4.0.0
      */
@@ -71,6 +81,7 @@ class TransactionsConfiguration
      * Specifies the configuration for queries.
      *
      * @param TransactionsQueryConfiguration $options
+     *
      * @return TransactionsConfiguration
      * @since 4.0.0
      */
@@ -84,6 +95,7 @@ class TransactionsConfiguration
      * Specifies the configuration for the cleanup system.
      *
      * @param TransactionsCleanupConfiguration $options
+     *
      * @return TransactionsConfiguration
      * @since 4.0.0
      */

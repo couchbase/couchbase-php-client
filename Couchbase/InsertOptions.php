@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
 use DateTimeInterface;
 
 class InsertOptions
@@ -85,14 +86,19 @@ class InsertOptions
     /**
      * Sets the durability level to enforce when writing the document.
      *
-     * @param string $level the durability level to enforce
+     * @param string|int $level the durability level to enforce
      * @param int|null $timeoutSeconds
      *
      * @return InsertOptions
+     * @throws Exception\InvalidArgumentException
+     * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel(string $level, ?int $timeoutSeconds): InsertOptions
+    public function durabilityLevel($level, ?int $timeoutSeconds): InsertOptions
     {
+        if (gettype($level) == "integer") {
+            $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
+        }
         $this->durabilityLevel = $level;
         $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;

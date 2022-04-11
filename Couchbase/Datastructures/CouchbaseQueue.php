@@ -20,16 +20,16 @@ declare(strict_types=1);
 
 namespace Couchbase\Datastructures;
 
-use ArrayAccess;
 use ArrayIterator;
 use Couchbase\Collection;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathNotFoundException;
 use Couchbase\LookupCountSpec;
 use Couchbase\LookupGetSpec;
 use Couchbase\MutateArrayPrependSpec;
-use Couchbase\MutateInOptions;
 use Couchbase\MutateRemoveSpec;
+use Couchbase\StoreSemantics;
 use Countable;
 use EmptyIterator;
 use IteratorAggregate;
@@ -129,13 +129,13 @@ class CouchbaseQueue implements Countable, IteratorAggregate
      *
      * @param mixed $value the value to insert
      *
-     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function push($value): void
     {
         $options = clone $this->options->mutateInOptions();
-        $options->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT);
+        $options->storeSemantics(StoreSemantics::UPSERT);
         $this->collection->mutateIn(
             $this->id,
             [new MutateArrayPrependSpec("", [$value], false, false, false)],

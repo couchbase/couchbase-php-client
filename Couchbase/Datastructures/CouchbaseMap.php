@@ -24,13 +24,14 @@ use ArrayAccess;
 use ArrayIterator;
 use Couchbase\Collection;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathMismatchException;
 use Couchbase\LookupCountSpec;
 use Couchbase\LookupExistsSpec;
 use Couchbase\LookupGetSpec;
-use Couchbase\MutateInOptions;
 use Couchbase\MutateRemoveSpec;
 use Couchbase\MutateUpsertSpec;
+use Couchbase\StoreSemantics;
 use Countable;
 use EmptyIterator;
 use IteratorAggregate;
@@ -124,13 +125,13 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * @param string $key key of the entry to be inserted/updated
      * @param mixed $value new value
      *
-     * @throws \Couchbase\Exception\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
     public function set(string $key, $value): void
     {
         $options = clone $this->options->mutateInOptions();
-        $options->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT);
+        $options->storeSemantics(StoreSemantics::UPSERT);
         $this->collection->mutateIn(
             $this->id,
             [new MutateUpsertSpec($key, $value, false, false, false)],
@@ -149,7 +150,7 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
     public function delete(string $key): void
     {
         try {
-            $result = $this->collection->mutateIn(
+            $this->collection->mutateIn(
                 $this->id,
                 [new MutateRemoveSpec($key, false)],
                 $this->options->mutateInOptions()
@@ -199,56 +200,57 @@ class CouchbaseMap implements Countable, IteratorAggregate, ArrayAccess
      * Checks whether an offset exists.
      * Implementation of {@link ArrayAccess}.
      *
-     * @param mixed $key key of the entry to check
+     * @param mixed $offset key of the entry to check
      *
      * @return bool true if there is an entry associated with the offset
      * @since 4.0.0
      */
-    public function offsetExists($key): bool
+    public function offsetExists($offset): bool
     {
-        return $this->existsAt((string)$key);
+        return $this->existsAt((string)$offset);
     }
 
     /**
      * Retrieves array value for given offset.
      * Implementation of {@link ArrayAccess}.
      *
-     * @param mixed $offset offset of the entry to get
+     * @param mixed $offset key of the entry to get
      *
      * @return mixed the value or null
      * @since 4.0.0
      */
-    public function offsetGet($key): mixed
+    public function offsetGet($offset)
     {
-        return $this->get((string)$key);
+        return $this->get((string)$offset);
     }
 
     /**
      * Assign a value to the specified offset.
      * Implementation of {@link ArrayAccess}.
      *
-     * @param mixed $key key of the entry to assign
+     * @param mixed $offset key of the entry to assign
      * @param mixed $value new value
      *
+     * @throws InvalidArgumentException
      * @since 4.0.0
      */
-    public function offsetSet($key, $value): void
+    public function offsetSet($offset, $value): void
     {
-        $this->set((string)$key, $value);
+        $this->set((string)$offset, $value);
     }
 
     /**
      * Unset an offset.
      * Implementation of {@link ArrayAccess}.
      *
-     * @param mixed $key key of the entry to remove
+     * @param mixed $offset key of the entry to remove
      *
      * @throws OutOfBoundsException if the index does not exist
      * @since 4.0.0
      */
-    public function offsetUnset($key): void
+    public function offsetUnset($offset): void
     {
-        $this->delete((string)$key);
+        $this->delete((string)$offset);
     }
 
     /**

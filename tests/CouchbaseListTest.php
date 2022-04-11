@@ -23,7 +23,7 @@ use Couchbase\Exception\DocumentNotFoundException;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
-class CouchbaseLstTest extends Helpers\CouchbaseTestCase
+class CouchbaseListTest extends Helpers\CouchbaseTestCase
 {
     /**
      * @covers CouchbaseList::count
@@ -49,7 +49,7 @@ class CouchbaseLstTest extends Helpers\CouchbaseTestCase
         foreach ($list as $value) {
             $values[] = $value;
         }
-        $this->assertEquals(0, count($values));
+        $this->assertCount(0, $values);
     }
 
     /**

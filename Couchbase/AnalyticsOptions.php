@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
+
 /**
  * @since 4.0.0
  */
@@ -145,14 +147,18 @@ class AnalyticsOptions
     /**
      * Sets the scan consistency.
      *
-     * @param string $consistencyLevel the scan consistency level
+     * @param string|int $consistencyLevel the scan consistency level
      *
      * @return AnalyticsOptions
+     * @throws Exception\InvalidArgumentException
      * @see AnalyticsScanConsistency
      * @since 4.0.0
      */
-    public function scanConsistency(int $consistencyLevel): AnalyticsOptions
+    public function scanConsistency($consistencyLevel): AnalyticsOptions
     {
+        if (gettype($consistencyLevel) == "integer") {
+            $consistencyLevel = Deprecations::convertDeprecatedAnalyticsScanConsistency(__METHOD__, $consistencyLevel);
+        }
         $this->scanConsistency = $consistencyLevel;
         return $this;
     }

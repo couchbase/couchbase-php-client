@@ -20,15 +20,15 @@ declare(strict_types=1);
 
 namespace Couchbase\Datastructures;
 
-use ArrayAccess;
 use ArrayIterator;
 use Couchbase\Collection;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathExistsException;
 use Couchbase\LookupCountSpec;
 use Couchbase\MutateArrayAddUniqueSpec;
-use Couchbase\MutateInOptions;
 use Couchbase\MutateRemoveSpec;
+use Couchbase\StoreSemantics;
 use Countable;
 use EmptyIterator;
 use IteratorAggregate;
@@ -122,11 +122,13 @@ class CouchbaseSet implements Countable, IteratorAggregate
      * Adds new value to the set
      *
      * @param mixed $value the value to insert
+     *
+     * @throws InvalidArgumentException
      */
     public function add($value): void
     {
         $options = clone $this->options->mutateInOptions();
-        $options->storeSemantics(MutateInOptions::STORE_SEMANTICS_UPSERT);
+        $options->storeSemantics(StoreSemantics::UPSERT);
         try {
             $this->collection->mutateIn(
                 $this->id,

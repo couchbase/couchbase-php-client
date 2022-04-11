@@ -2098,9 +2098,9 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
         return e;
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
-        if (scan_consistency == "not_bounded") {
+        if (scan_consistency == "notBounded") {
             request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
-        } else if (scan_consistency == "request_plus") {
+        } else if (scan_consistency == "requestPlus") {
             request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
         } else {
             return { error::common_errc::invalid_argument,
@@ -2337,22 +2337,15 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         return e;
     }
 
-    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
-        switch (scan_consistency) {
-            case 1:
-                request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::not_bounded;
-                break;
-
-            case 2:
-                request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::request_plus;
-                break;
-
-            default:
-                if (scan_consistency > 0) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-                }
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+        if (scan_consistency == "notBounded") {
+            request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::not_bounded;
+        } else if (scan_consistency == "requestPlus") {
+            request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::request_plus;
+        } else {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
         }
     } else {
         return e;
@@ -2750,8 +2743,7 @@ connection_handle::view_query(zval* return_value,
                               const zval* options)
 {
     couchbase::operations::design_document::name_space cxx_name_space;
-    auto name_space_val = std::uint32_t(name_space);
-    switch (name_space_val) {
+    switch (auto name_space_val = std::uint32_t(name_space); name_space_val) {
         case 1:
             cxx_name_space = couchbase::operations::design_document::name_space::development;
             break;
@@ -2775,26 +2767,17 @@ connection_handle::view_query(zval* return_value,
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
-    if (auto [e, scan_consistency] = cb_get_integer<uint64_t>(options, "scanConsistency"); !e.ec) {
-        switch (scan_consistency) {
-            case 1:
-                request.consistency = couchbase::operations::document_view_request::scan_consistency::not_bounded;
-                break;
-
-            case 2:
-                request.consistency = couchbase::operations::document_view_request::scan_consistency::request_plus;
-                break;
-
-            case 3:
-                request.consistency = couchbase::operations::document_view_request::scan_consistency::update_after;
-                break;
-
-            default:
-                if (scan_consistency > 0) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-                }
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+        if (scan_consistency == "notBounded") {
+            request.consistency = couchbase::operations::document_view_request::scan_consistency::not_bounded;
+        } else if (scan_consistency == "requestPlus") {
+            request.consistency = couchbase::operations::document_view_request::scan_consistency::request_plus;
+        } else if (scan_consistency == "updateAfter") {
+            request.consistency = couchbase::operations::document_view_request::scan_consistency::update_after;
+        } else {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
         }
     } else {
         return e;

@@ -29,24 +29,24 @@ interface DurabilityLevel
     /**
      * Apply no durability level.
      */
-    public const NONE = 0;
+    public const NONE = "none";
 
     /**
      * Apply a durability level where the document must be written to memory
      * on a majority of nodes in the cluster.
      */
-    public const MAJORITY = 1;
+    public const MAJORITY = "majority";
 
     /**
      * Apply a durability level where the document must be written to memory
      * on a majority of nodes in the cluster and written to disk on the
      * active node.
      */
-    public const MAJORITY_AND_PERSIST_TO_ACTIVE = 2;
+    public const MAJORITY_AND_PERSIST_TO_ACTIVE = "majorityAndPersistToActive";
 
     /**
      * Apply a durability level where the document must be written to disk
      * on a majority of nodes in the cluster.
      */
-    public const PERSIST_TO_MAJORITY = 3;
+    public const PERSIST_TO_MAJORITY = "persistToMajority";
 }
