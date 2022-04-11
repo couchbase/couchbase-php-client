@@ -52,7 +52,12 @@ unless File.file?(caves_binary)
     when /darwin/
       "gocaves-macos"
     when /linux/
-      "gocaves-linux-amd64"
+      case RbConfig::CONFIG["arch"]
+      when /aarch64-linux/
+        "gocaves-linux-arm64"
+      else
+        "gocaves-linux-amd64"
+      end
     else
       abort(format("unexpected architecture, please update \"%s\", your target_os=\"%s\", arch=\"%s\"",
                    File.realpath(__FILE__), RbConfig::CONFIG["target_os"], RbConfig::CONFIG["arch"]))
