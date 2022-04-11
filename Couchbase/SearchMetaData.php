@@ -34,7 +34,7 @@ class SearchMetaData
     private string $clientContextId;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $metadata
      */

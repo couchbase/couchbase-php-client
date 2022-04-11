@@ -29,7 +29,7 @@ class AnalyticsResult
     private array $rows;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $result
      * @param Transcoder $transcoder

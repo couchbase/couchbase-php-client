@@ -139,7 +139,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -148,7 +148,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @throws InvalidArgumentException
      */
     public static function export(DateRangeSearchQuery $query): array

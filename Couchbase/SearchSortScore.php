@@ -44,7 +44,7 @@ class SearchSortScore implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -53,7 +53,7 @@ class SearchSortScore implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(SearchSortScore $sort): array
     {

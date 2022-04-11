@@ -39,7 +39,7 @@ class BinaryCollection
     private $core;
 
     /**
-     * @private
+     * @internal
      *
      * @param string $name
      * @param string $scopeName

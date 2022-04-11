@@ -36,7 +36,7 @@ class SearchFacetResult
     private ?array $dateRanges = null;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $facet
      */

@@ -63,7 +63,7 @@ class RegexpSearchQuery implements SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(RegexpSearchQuery $query): array
     {

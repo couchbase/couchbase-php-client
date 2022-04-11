@@ -31,7 +31,7 @@ class MutationToken
     private string $sequenceNumber;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response
      */

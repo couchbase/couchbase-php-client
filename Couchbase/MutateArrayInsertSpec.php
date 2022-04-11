@@ -113,7 +113,7 @@ class MutateArrayInsertSpec implements MutateInSpec
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param MutateInOptions|null $options
      *

@@ -65,7 +65,7 @@ class TransactionOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param TransactionOptions|null $options
      *

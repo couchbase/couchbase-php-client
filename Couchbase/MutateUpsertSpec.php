@@ -113,7 +113,7 @@ class MutateUpsertSpec implements MutateInSpec
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param MutateInOptions|null $options
      *

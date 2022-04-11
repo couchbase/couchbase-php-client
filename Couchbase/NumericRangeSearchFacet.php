@@ -74,7 +74,7 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
     }
 
     /**
-     * @private
+     * @internal
      * @throws InvalidArgumentException
      */
     public static function export(NumericRangeSearchFacet $facet): array

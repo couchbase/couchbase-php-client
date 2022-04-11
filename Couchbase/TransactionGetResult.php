@@ -31,7 +31,7 @@ class TransactionGetResult extends Result
     private int $flags;
 
     /**
-     * @private
+     * @internal
      * @since 4.0.0
      */
     public function __construct(array $response, Transcoder $transcoder)

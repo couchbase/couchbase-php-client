@@ -133,7 +133,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -142,7 +142,7 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(MatchSearchQuery $query): array
     {

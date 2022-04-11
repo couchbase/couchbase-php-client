@@ -68,7 +68,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -77,7 +77,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(WildcardSearchQuery $query): array
     {

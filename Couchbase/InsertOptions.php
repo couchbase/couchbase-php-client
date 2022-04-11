@@ -136,7 +136,7 @@ class InsertOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param InsertOptions|null $options
      *

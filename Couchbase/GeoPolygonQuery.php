@@ -71,7 +71,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -80,7 +80,7 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(GeoPolygonQuery $query): array
     {

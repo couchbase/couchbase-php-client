@@ -99,7 +99,7 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -108,7 +108,7 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(TermSearchQuery $query): array
     {

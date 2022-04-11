@@ -53,7 +53,7 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -62,7 +62,7 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(QueryStringSearchQuery $query): array
     {

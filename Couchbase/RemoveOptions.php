@@ -67,7 +67,7 @@ class RemoveOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param RemoveOptions|null $options
      *

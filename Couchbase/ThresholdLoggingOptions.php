@@ -163,7 +163,7 @@ class ThresholdLoggingOptions
     }
 
     /**
-     * @private
+     * @internal
      * @return array
      */
     public function export(): array

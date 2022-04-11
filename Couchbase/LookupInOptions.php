@@ -79,7 +79,7 @@ class LookupInOptions
     }
 
     /**
-     * @private
+     * @internal
      * @return bool
      * @since 4.0.0
      */
@@ -122,7 +122,7 @@ class LookupInOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param LookupInOptions|null $options
      *

@@ -33,7 +33,7 @@ class AnalyticsMetaData
     private ?array $metrics;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $meta
      */

@@ -79,7 +79,7 @@ class DocIdSearchQuery implements SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @throws InvalidArgumentException
      */
     public static function export(DocIdSearchQuery $query): array

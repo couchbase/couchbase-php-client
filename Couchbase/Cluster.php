@@ -242,7 +242,7 @@ class Cluster
 
 
     /**
-     * @private
+     * @internal
      *
      * @param string $bucketName
      *
@@ -254,7 +254,7 @@ class Cluster
     }
 
     /**
-     * @private
+     * @internal
      */
     public function core()
     {

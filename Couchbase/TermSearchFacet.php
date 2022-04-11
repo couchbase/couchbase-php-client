@@ -41,7 +41,7 @@ class TermSearchFacet implements JsonSerializable, SearchFacet
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -50,7 +50,7 @@ class TermSearchFacet implements JsonSerializable, SearchFacet
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param TermSearchFacet $facet
      *

@@ -89,7 +89,7 @@ class GetAndTouchOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param GetAndTouchOptions|null $options
      *

@@ -50,7 +50,7 @@ class UnlockOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param UnlockOptions|null $options
      *

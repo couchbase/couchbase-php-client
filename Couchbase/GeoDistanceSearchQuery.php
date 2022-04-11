@@ -78,7 +78,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -87,7 +87,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(GeoDistanceSearchQuery $query): array
     {

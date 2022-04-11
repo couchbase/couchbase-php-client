@@ -71,7 +71,7 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -80,7 +80,7 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @throws InvalidArgumentException
      */
     public static function export(PhraseSearchQuery $query): array

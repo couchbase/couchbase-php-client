@@ -274,7 +274,7 @@ class SearchOptions implements \JsonSerializable
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -283,7 +283,7 @@ class SearchOptions implements \JsonSerializable
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(?SearchOptions $options): array
     {

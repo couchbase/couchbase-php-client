@@ -33,7 +33,7 @@ class MutateInResult extends MutationResult
     private array $fields;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response raw response from the extension
      *

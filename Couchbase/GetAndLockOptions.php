@@ -89,7 +89,7 @@ class GetAndLockOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param GetAndLockOptions|null $options
      *

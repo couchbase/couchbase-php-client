@@ -65,7 +65,7 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -74,7 +74,7 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(BooleanFieldSearchQuery $facet): array
     {

@@ -88,7 +88,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      * @throws InvalidArgumentException
      */
@@ -98,7 +98,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @throws InvalidArgumentException
      */
     public static function export(ConjunctionSearchQuery $query): array

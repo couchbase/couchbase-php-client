@@ -30,7 +30,7 @@ class SearchResult
     private ?array $rows = null;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $result
      */

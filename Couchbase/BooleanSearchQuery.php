@@ -110,7 +110,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -119,7 +119,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(BooleanSearchQuery $query): array
     {

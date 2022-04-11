@@ -32,7 +32,7 @@ class NumericRangeFacetResult
     private int $count;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $range
      */

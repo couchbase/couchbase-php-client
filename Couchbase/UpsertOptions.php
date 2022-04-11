@@ -151,7 +151,7 @@ class UpsertOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param UpsertOptions|null $options
      *

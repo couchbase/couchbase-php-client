@@ -28,7 +28,7 @@ class MutationResult extends Result
     private ?MutationToken $mutationToken = null;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response raw response from the extension
      *

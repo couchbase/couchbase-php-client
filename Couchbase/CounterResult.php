@@ -28,7 +28,7 @@ class CounterResult extends MutationResult
     private int $value = 0;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response
      *

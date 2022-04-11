@@ -106,7 +106,7 @@ class IncrementOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param IncrementOptions|null $options
      *

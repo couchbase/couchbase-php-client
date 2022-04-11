@@ -499,7 +499,7 @@ class ClusterOptions
     }
 
     /**
-     * @private
+     * @internal
      * @return string the string that uniquely identifies particular authenticator layout
      * @throws InvalidArgumentException
      */
@@ -519,7 +519,7 @@ class ClusterOptions
     }
 
     /**
-     * @private
+     * @internal
      * @return array
      * @throws InvalidArgumentException
      */

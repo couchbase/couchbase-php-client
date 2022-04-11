@@ -103,7 +103,7 @@ class SearchSortField implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -112,7 +112,7 @@ class SearchSortField implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(SearchSortField $sort): array
     {

@@ -30,7 +30,7 @@ class TermFacetResult
     private int $count;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $term
      */

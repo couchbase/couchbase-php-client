@@ -50,7 +50,7 @@ class TouchOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param TouchOptions|null $options
      *

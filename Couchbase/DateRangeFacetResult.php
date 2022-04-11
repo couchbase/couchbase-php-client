@@ -32,7 +32,7 @@ class DateRangeFacetResult
     private int $count;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $range
      */

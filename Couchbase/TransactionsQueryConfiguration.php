@@ -41,7 +41,7 @@ class TransactionsQueryConfiguration
     }
 
     /**
-     * @private
+     * @internal
      * @return array
      * @since 4.0.0
      */

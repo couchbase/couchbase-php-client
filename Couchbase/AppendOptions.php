@@ -75,7 +75,7 @@ class AppendOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param AppendOptions|null $options
      *

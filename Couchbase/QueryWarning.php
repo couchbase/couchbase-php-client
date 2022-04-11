@@ -29,7 +29,7 @@ class QueryWarning
     private string $message;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $warning
      */

@@ -79,7 +79,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -88,7 +88,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(GeoBoundingBoxSearchQuery $query): array
     {

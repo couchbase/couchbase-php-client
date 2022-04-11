@@ -35,7 +35,7 @@ class QueryMetaData
     private ?array $metrics = null;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $meta
      */

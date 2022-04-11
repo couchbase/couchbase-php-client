@@ -75,7 +75,7 @@ class PrependOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param PrependOptions|null $options
      *

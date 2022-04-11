@@ -26,7 +26,7 @@ namespace Couchbase;
 interface LookupInSpec
 {
     /**
-     * @private
+     * @internal
      * @return array
      * @since 4.0.0
      */

@@ -26,7 +26,7 @@ class TransactionResult
     private bool $unstagingComplete;
 
     /**
-     * @private
+     * @internal
      * @since 4.0.0
      */
     public function __construct(string $transactionId, bool $unstagingComplete)

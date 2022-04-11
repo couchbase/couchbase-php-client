@@ -34,7 +34,7 @@ class GetResult extends Result
     private int $flags;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response
      * @param Transcoder $transcoder

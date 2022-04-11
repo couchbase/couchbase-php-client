@@ -188,7 +188,7 @@ class MutateInOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param MutateInOptions|null $options
      *

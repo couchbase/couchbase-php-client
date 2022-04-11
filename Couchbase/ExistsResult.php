@@ -33,7 +33,7 @@ class ExistsResult extends Result
     private string $sequenceNumber;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response
      *

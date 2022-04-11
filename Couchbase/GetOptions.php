@@ -128,7 +128,7 @@ class GetOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param GetOptions|null $options
      *

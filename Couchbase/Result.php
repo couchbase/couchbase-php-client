@@ -32,7 +32,7 @@ class Result
     private ?CouchbaseException $error = null;
 
     /**
-     * @private
+     * @internal
      *
      * @param array $response
      *

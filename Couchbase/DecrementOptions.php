@@ -106,7 +106,7 @@ class DecrementOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param DecrementOptions|null $options
      *

@@ -41,7 +41,7 @@ class Coordinate implements JsonSerializable
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -50,7 +50,7 @@ class Coordinate implements JsonSerializable
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(Coordinate $coord): array
     {

@@ -44,7 +44,7 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -53,7 +53,7 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(MatchNoneSearchQuery $query): array
     {

@@ -85,7 +85,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -94,7 +94,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param DateRangeSearchFacet $facet
      *

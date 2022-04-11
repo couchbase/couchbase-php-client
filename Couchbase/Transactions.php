@@ -32,7 +32,7 @@ class Transactions
     private $core;
 
     /**
-     * @private
+     * @internal
      *
      * @param ?TransactionsConfiguration $options
      * @param $core

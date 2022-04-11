@@ -166,7 +166,7 @@ class ReplaceOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param ReplaceOptions|null $options
      *

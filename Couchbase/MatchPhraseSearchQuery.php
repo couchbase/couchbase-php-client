@@ -81,7 +81,7 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -90,7 +90,7 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(MatchPhraseSearchQuery $query): array
     {

@@ -50,7 +50,7 @@ class ExistsOptions
     }
 
     /**
-     * @private
+     * @internal
      *
      * @param ExistsOptions|null $options
      *

@@ -26,7 +26,7 @@ namespace Couchbase;
 interface MutateInSpec
 {
     /**
-     * @private
+     * @internal
      *
      * @param MutateInOptions|null $options
      *

@@ -74,7 +74,7 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      * @return mixed
      */
     public function jsonSerialize(): mixed
@@ -83,7 +83,7 @@ class SearchSortGeoDistance implements JsonSerializable, SearchSort
     }
 
     /**
-     * @private
+     * @internal
      */
     public static function export(SearchSortGeoDistance $sort): array
     {

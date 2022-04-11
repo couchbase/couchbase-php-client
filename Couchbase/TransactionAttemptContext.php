@@ -25,7 +25,7 @@ use Couchbase\Exception\UnsupportedOperationException;
 class TransactionAttemptContext
 {
     /**
-     * @private
+     * @internal
      */
     public function __construct(Transactions $transactions, ?TransactionOptions $options)
     {
@@ -103,5 +103,26 @@ class TransactionAttemptContext
     public function query(string $statement, ?TransactionQueryOptions $options = null)
     {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @internal
+     * @return void
+     */
+    public function newAttempt() {
+    }
+
+    /**
+     * @internal
+     * @return void
+     */
+    public function rollback() {
+    }
+
+    /**
+     * @internal
+     * @return void
+     */
+    public function commit() {
     }
 }
