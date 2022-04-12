@@ -20,11 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Utilities\Deprecations;
+
 class RemoveOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
     private ?string $cas = null;
 
     /**
@@ -67,6 +68,26 @@ class RemoveOptions
     }
 
     /**
+     * Sets the durability level to enforce when writing the document.
+     *
+     * @param string|int $level the durability level to enforce
+     * @param int|null $timeoutSeconds
+     *
+     * @return RemoveOptions
+     * @throws Exception\InvalidArgumentException
+     * @see DurabilityLevel
+     * @since 4.0.0
+     */
+    public function durabilityLevel($level): RemoveOptions
+    {
+        if (gettype($level) == "integer") {
+            $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
+        }
+        $this->durabilityLevel = $level;
+        return $this;
+    }
+
+    /**
      * @internal
      *
      * @param RemoveOptions|null $options
@@ -82,7 +103,6 @@ class RemoveOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
             'cas' => $options->cas,
         ];
     }

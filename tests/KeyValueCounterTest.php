@@ -19,8 +19,10 @@
 declare(strict_types=1);
 
 use Couchbase\DecrementOptions;
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\IncrementOptions;
+use Couchbase\RawBinaryTranscoder;
 use Couchbase\RawJsonTranscoder;
 use Couchbase\UpsertOptions;
 
@@ -106,4 +108,38 @@ class KeyValueCounterTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($id);
         $this->assertEquals(32, $res->content());
     }
+
+    // CXXCBC-167
+//    public function testIncrementDurabilityMajority()
+//    {
+//        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+//
+//        $key = $this->uniqueId("increment-durability-majority");
+//        $collection = $this->defaultCollection();
+//        $opts = IncrementOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY)->initial(42);
+//        $res = $collection->binary()->increment($key,  $opts);
+//        $this->assertNotNull($res->cas());
+//    }
+//
+//    public function testIncrementDurabilityMajorityAndPersist()
+//    {
+//        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+//
+//        $key = $this->uniqueId("increment-durability-majority-and-persist");
+//        $collection = $this->defaultCollection();
+//        $opts = IncrementOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE, 5)->initial(42);
+//        $res = $collection->binary()->increment($key,  $opts);
+//        $this->assertNotNull($res->cas());
+//    }
+//
+//    public function testIncrementDurabilityPersistToMajority()
+//    {
+//        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+//
+//        $key = $this->uniqueId("increment-durability-persist-majority");
+//        $collection = $this->defaultCollection();
+//        $opts = IncrementOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY)->initial(42);
+//        $res = $collection->binary()->increment($key,  $opts);
+//        $this->assertNotNull($res->cas());
+//    }
 }

@@ -30,7 +30,6 @@ class ReplaceOptions
     private ?int $expirySeconds = null;
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
     private ?string $cas = null;
 
     /**
@@ -110,13 +109,12 @@ class ReplaceOptions
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): ReplaceOptions
+    public function durabilityLevel($level): ReplaceOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
@@ -183,7 +181,6 @@ class ReplaceOptions
             'expirySeconds' => $options->expirySeconds,
             'preserveExpiry' => $options->preserveExpiry,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
             'cas' => $options->cas,
         ];
     }

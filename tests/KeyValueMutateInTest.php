@@ -18,6 +18,7 @@
 
 declare(strict_types=1);
 
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\PathNotFoundException;
 use Couchbase\MutateArrayAppendSpec;
@@ -93,5 +94,59 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
         $collection->mutateIn($this->uniqueId("foo"), [MutateUpsertSpec::build("foo", 42)]);
+    }
+
+    public function testMutateInDurabilityMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("mutatein-durability-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = MutateInOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY);
+        $res = $collection->mutateIn(
+            $key,
+            [
+                MutateUpsertSpec::build("foo", "bar"),
+            ],
+            $opts
+        );
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testMutateInDurabilityMajorityAndPersist()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("mutatein-durability-majority-and-persist");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = MutateInOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->mutateIn(
+            $key,
+            [
+                MutateUpsertSpec::build("foo", "bar"),
+            ],
+            $opts
+        );
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testMutateInDurabilityPersistToMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("mutatein-durability-persist-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = MutateInOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
+        $res = $collection->mutateIn(
+            $key,
+            [
+                MutateUpsertSpec::build("foo", "bar"),
+            ],
+            $opts
+        );
+        $this->assertNotNull($res->cas());
     }
 }

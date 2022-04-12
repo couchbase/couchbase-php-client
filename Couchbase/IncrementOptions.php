@@ -26,7 +26,6 @@ class IncrementOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
     private int $delta = 1;
     private ?int $initialValue = null;
 
@@ -95,13 +94,12 @@ class IncrementOptions
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): IncrementOptions
+    public function durabilityLevel($level): IncrementOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
@@ -121,7 +119,6 @@ class IncrementOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
             'delta' => $options->delta,
             'initialValue' => $options->initialValue,
         ];

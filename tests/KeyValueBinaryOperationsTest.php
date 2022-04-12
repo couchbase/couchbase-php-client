@@ -18,8 +18,11 @@
 
 declare(strict_types=1);
 
+use Couchbase\AppendOptions;
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\GetOptions;
+use Couchbase\PrependOptions;
 use Couchbase\RawBinaryTranscoder;
 use Couchbase\UpsertOptions;
 
@@ -74,5 +77,77 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
         $collection->binary()->append($this->uniqueId(), "foo");
+    }
+
+    public function testAppendDurabilityMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("append-durability-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = AppendOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY);
+        $res = $collection->binary()->append($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testAppendDurabilityMajorityAndPersist()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("append-durability-majority-and-persist");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = AppendOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE, 5);
+        $res = $collection->binary()->append($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testAppendDurabilityPersistToMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("append-durability-persist-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = AppendOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
+        $res = $collection->binary()->append($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testPrependDurabilityMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("prepend-durability-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = PrependOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY);
+        $res = $collection->binary()->prepend($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testPrependDurabilityMajorityAndPersist()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("prepend-durability-majority-and-persist");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = PrependOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->binary()->prepend($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testPrependDurabilityPersistToMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("prepend-durability-persist-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $opts = PrependOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
+        $res = $collection->binary()->prepend($key, "bar", $opts);
+        $this->assertNotNull($res->cas());
     }
 }

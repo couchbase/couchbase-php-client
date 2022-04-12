@@ -808,7 +808,6 @@ cb_assign_timeout(Request& req, const zval* options)
 
 struct durability_holder {
     protocol::durability_level durability_level{ protocol::durability_level::none };
-    std::optional<std::uint16_t> durability_timeout{};
 };
 
 template<typename Request>
@@ -848,23 +847,6 @@ cb_assign_durability(Request& req, const zval* options)
         return { error::common_errc::invalid_argument,
                  { __LINE__, __FILE__, __func__ },
                  fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
-    }
-    if (req.durability_level != couchbase::protocol::durability_level::none) {
-        const zval* timeout = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityTimeoutSeconds"));
-        if (timeout == nullptr) {
-            return {};
-        }
-        switch (Z_TYPE_P(timeout)) {
-            case IS_NULL:
-                return {};
-            case IS_LONG:
-                break;
-            default:
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         "expected durabilityTimeoutSeconds to be a number in the options" };
-        }
-        req.durability_timeout = std::chrono::seconds(Z_LVAL_P(timeout)).count();
     }
     return {};
 }
@@ -2043,7 +2025,6 @@ connection_handle::document_remove_multi(zval* return_value,
                 couchbase::operations::remove_request request{ doc_id };
                 request.timeout = timeout;
                 request.durability_level = durability.durability_level;
-                request.durability_timeout = durability.durability_timeout;
                 requests.emplace_back(request);
             } break;
             case IS_ARRAY: {
@@ -2073,7 +2054,6 @@ connection_handle::document_remove_multi(zval* return_value,
                 couchbase::operations::remove_request request{ doc_id };
                 request.timeout = timeout;
                 request.durability_level = durability.durability_level;
-                request.durability_timeout = durability.durability_timeout;
                 if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(cas), Z_STRLEN_P(cas)), request.cas); e.ec) {
                     return e;
                 }
@@ -2178,7 +2158,6 @@ connection_handle::document_upsert_multi(zval* return_value,
         request.timeout = timeout;
         request.flags = static_cast<std::uint32_t>(Z_LVAL_P(flags));
         request.durability_level = durability.durability_level;
-        request.durability_timeout = durability.durability_timeout;
         request.preserve_expiry = preserve_expiry;
         requests.emplace_back(request);
     }

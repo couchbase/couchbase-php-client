@@ -18,13 +18,15 @@
 
 declare(strict_types=1);
 
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\ReplaceOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
 {
-    public function testInsertFailsIfDocumentDoesNotExist()
+    public function testReplaceFailsIfDocumentDoesNotExist()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -33,7 +35,7 @@ class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
         $collection->replace($id, ["answer" => "foo"]);
     }
 
-    public function testInsertCompletesIfDocumentExists()
+    public function testReplaceCompletesIfDocumentExists()
     {
         $collection = $this->defaultCollection();
         $id = $this->uniqueId();
@@ -48,5 +50,41 @@ class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($id);
         $this->assertEquals($replacedCas, $res->cas());
         $this->assertEquals(["answer" => "foo"], $res->content());
+    }
+
+    public function testReplaceDurabilityMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("replace-durability-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = ReplaceOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY);
+        $res = $collection->replace($key, ["answer" => 42], $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testReplaceDurabilityMajorityAndPersist()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("replace-durability-majority-and-persist");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = ReplaceOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->replace($key, ["answer" => 45], $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testReplaceDurabilityPersistToMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("replace-durability-persist-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = ReplaceOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
+        $res = $collection->replace($key, ["answer" => 42], $opts);
+        $this->assertNotNull($res->cas());
     }
 }

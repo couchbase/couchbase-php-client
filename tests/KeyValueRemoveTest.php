@@ -18,6 +18,7 @@
 
 declare(strict_types=1);
 
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\CasMismatchException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\RemoveOptions;
@@ -45,7 +46,6 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
         $collection->remove($this->uniqueId());
     }
 
-
     public function testRemoveChecksCas()
     {
         $collection = $this->defaultCollection();
@@ -57,5 +57,41 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
 
         $res = $collection->remove($id, RemoveOptions::build()->cas($originalCas));
         $this->assertNotEquals($originalCas, $res->cas());
+    }
+
+    public function testRemoveDurabilityMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("remove-durability-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = RemoveOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY);
+        $res = $collection->remove($key, $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testRemoveDurabilityMajorityAndPersist()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("remove-durability-majority-and-persist");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = RemoveOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->remove($key, $opts);
+        $this->assertNotNull($res->cas());
+    }
+
+    public function testRemoveDurabilityPersistToMajority()
+    {
+        $this->skipIfUnsupported($this->version()->supportsEnhancedDurability());
+
+        $key = $this->uniqueId("remove-durability-persist-majority");
+        $collection = $this->defaultCollection();
+        $collection->upsert($key, ["answer" => 42]);
+        $opts = RemoveOptions::build()->durabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
+        $res = $collection->remove($key, $opts);
+        $this->assertNotNull($res->cas());
     }
 }

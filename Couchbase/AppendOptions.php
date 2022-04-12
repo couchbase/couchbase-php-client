@@ -26,7 +26,6 @@ class AppendOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
 
     /**
      * Static helper to keep code more readable
@@ -64,13 +63,12 @@ class AppendOptions
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): AppendOptions
+    public function durabilityLevel($level): AppendOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
@@ -90,7 +88,6 @@ class AppendOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
         ];
     }
 }

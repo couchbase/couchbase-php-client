@@ -29,7 +29,6 @@ class MutateInOptions
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
     private ?string $cas = null;
     private ?int $expirySeconds = null;
     private ?bool $preserveExpiry = null;
@@ -127,13 +126,12 @@ class MutateInOptions
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): MutateInOptions
+    public function durabilityLevel($level): MutateInOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
@@ -206,7 +204,6 @@ class MutateInOptions
             'preserveExpiry' => $options->preserveExpiry,
             'cas' => $options->cas,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
             'storeSemantics' => $options->storeSemantics,
         ];
     }

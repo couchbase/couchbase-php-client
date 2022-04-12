@@ -30,7 +30,6 @@ class UpsertOptions
     private ?int $expirySeconds = null;
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
 
     /**
      * @since 4.0.0
@@ -109,13 +108,12 @@ class UpsertOptions
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): UpsertOptions
+    public function durabilityLevel($level): UpsertOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
@@ -168,7 +166,6 @@ class UpsertOptions
             'expirySeconds' => $options->expirySeconds,
             'preserveExpiry' => $options->preserveExpiry,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
         ];
     }
 }
