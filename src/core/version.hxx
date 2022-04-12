@@ -22,4 +22,13 @@ namespace couchbase::php
 {
 void
 core_version(zval* return_value);
+
+const char*
+extension_revision();
+
+const char*
+cxx_client_revision();
+
+const char*
+cxx_transactions_revision();
 } // namespace couchbase::php

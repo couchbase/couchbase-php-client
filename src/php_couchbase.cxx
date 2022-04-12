@@ -1081,9 +1081,9 @@ PHP_FUNCTION (ping) {
     zval * options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(1, 2)
-            Z_PARAM_RESOURCE(connection)
-            Z_PARAM_OPTIONAL
-            Z_PARAM_ARRAY(options)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto *handle = fetch_couchbase_connection_from_resource(connection);
@@ -1303,7 +1303,10 @@ PHP_FUNCTION (bucketUpdate) {
 static PHP_MINFO_FUNCTION(couchbase) {
     php_info_print_table_start();
     php_info_print_table_row(2, "couchbase", "enabled");
-    php_info_print_table_row(2, "extension version", PHP_COUCHBASE_VERSION);
+    php_info_print_table_row(2, "couchbase_extension_version", PHP_COUCHBASE_VERSION);
+    php_info_print_table_row(2, "couchbase_extension_revision", couchbase::php::extension_revision());
+    php_info_print_table_row(2, "couchbase_client_revision", couchbase::php::cxx_client_revision());
+    php_info_print_table_row(2, "couchbase_transactions_revision", couchbase::php::cxx_transactions_revision());
     php_info_print_table_end();
     DISPLAY_INI_ENTRIES();
 }
