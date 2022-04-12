@@ -71,7 +71,7 @@ class GetResult extends Result
      */
     public function contentAs(Transcoder $transcoder, ?int $overrideFlags = null)
     {
-        return $transcoder->decode($this->value, $overrideFlags == null ? $overrideFlags : $this->flags);
+        return $transcoder->decode($this->value, $overrideFlags == null ? $this->flags : $overrideFlags);
     }
 
     /**
