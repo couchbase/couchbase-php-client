@@ -26,6 +26,7 @@ use Couchbase\Collection;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathMismatchException;
+use Couchbase\Exception\PathNotFoundException;
 use Couchbase\LookupCountSpec;
 use Couchbase\LookupExistsSpec;
 use Couchbase\LookupGetSpec;
@@ -132,11 +133,15 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
      */
     public function replaceAt(int $offset, $value): void
     {
-        $this->collection->mutateIn(
-            $this->id,
-            [new MutateReplaceSpec(sprintf("[%d]", $offset), $value, false)],
-            $this->options->mutateInOptions()
-        );
+        try {
+            $this->collection->mutateIn(
+                $this->id,
+                [new MutateReplaceSpec(sprintf("[%d]", $offset), $value, false)],
+                $this->options->mutateInOptions()
+            );
+        } catch (PathMismatchException | PathNotFoundException $ex) {
+            throw new OutOfBoundsException(sprintf("Index %d does not exist", $offset));
+        }
     }
 
     /**
@@ -155,7 +160,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
                 [new MutateRemoveSpec(sprintf("[%d]", (int)$offset), false)],
                 $this->options->mutateInOptions()
             );
-        } catch (PathMismatchException $ex) {
+        } catch (PathMismatchException | PathNotFoundException $ex) {
             throw new OutOfBoundsException(sprintf("Index %d does not exist", $offset));
         }
     }
@@ -176,7 +181,7 @@ class CouchbaseList implements Countable, IteratorAggregate, ArrayAccess
                 [new MutateArrayInsertSpec(sprintf("[%d]", $offset), $values, false, false, false)],
                 $this->options->mutateInOptions()
             );
-        } catch (PathMismatchException $ex) {
+        } catch (PathMismatchException | PathNotFoundException $ex) {
             throw new OutOfBoundsException(sprintf("Index %d does not exist", $offset));
         }
     }

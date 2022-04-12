@@ -127,15 +127,45 @@ class CouchbaseListTest extends Helpers\CouchbaseTestCase
      * @covers CouchbaseList::insertAt
      * @return void
      */
-    public function testInsertChecksBounds()
+    public function testInsertChecksBoundsInsertAt()
     {
-        $id = $this->uniqueId('insert_expand');
+        $id = $this->uniqueId('insert_at_bounds');
         $collection = $this->defaultCollection();
         $collection->upsert($id, [0, 1, 2]);
 
         $list = new CouchbaseList($id, $collection);
         $this->expectException(OutOfBoundsException::class);
         $list->insertAt(42, "foo");
+    }
+
+    /**
+     * @covers CouchbaseList::deleteAt
+     * @return void
+     */
+    public function testInsertChecksBoundsDeleteAt()
+    {
+        $id = $this->uniqueId('delete_at_bounds');
+        $collection = $this->defaultCollection();
+        $collection->upsert($id, [0, 1, 2]);
+
+        $list = new CouchbaseList($id, $collection);
+        $this->expectException(OutOfBoundsException::class);
+        $list->deleteAt(42, "foo");
+    }
+
+    /**
+     * @covers CouchbaseList::replaceAt
+     * @return void
+     */
+    public function testInsertChecksBoundsReplaceAt()
+    {
+        $id = $this->uniqueId('replace_at_bounds');
+        $collection = $this->defaultCollection();
+        $collection->upsert($id, [0, 1, 2]);
+
+        $list = new CouchbaseList($id, $collection);
+        $this->expectException(OutOfBoundsException::class);
+        $list->replaceAt(42, "foo");
     }
 
     /**
