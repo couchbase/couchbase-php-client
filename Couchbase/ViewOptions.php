@@ -31,7 +31,7 @@ class ViewOptions
     private ?array $keys = null;
     private ?int $limit = null;
     private ?int $skip = null;
-    private ?int $scanConsistency = null;
+    private ?string $scanConsistency = null;
     private ?int $order = null;
     private ?bool $reduce = null;
     private ?bool $group = null;

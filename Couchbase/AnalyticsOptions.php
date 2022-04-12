@@ -35,7 +35,7 @@ class AnalyticsOptions
     private ?string $clientContextId = null;
     private ?bool $priority = null;
     private ?bool $readonly = null;
-    private ?int $scanConsistency = null;
+    private ?string $scanConsistency = null;
 
     /**
      * @since 4.0.0

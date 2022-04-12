@@ -2225,9 +2225,11 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
         } else if (scan_consistency == "requestPlus") {
             request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
         } else {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            if (!scan_consistency.empty()) {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            }
         }
     } else {
         return e;
@@ -2465,9 +2467,11 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         } else if (scan_consistency == "requestPlus") {
             request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::request_plus;
         } else {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            if (!scan_consistency.empty()) {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            }
         }
     } else {
         return e;
@@ -2897,9 +2901,11 @@ connection_handle::view_query(zval* return_value,
         } else if (scan_consistency == "updateAfter") {
             request.consistency = couchbase::operations::document_view_request::scan_consistency::update_after;
         } else {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            if (!scan_consistency.empty()) {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
+            }
         }
     } else {
         return e;

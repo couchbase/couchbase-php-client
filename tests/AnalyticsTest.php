@@ -23,6 +23,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         try {
             $this->cluster->analyticsQuery("ALTER COLLECTION `$bucketName`.`$scopeName`.`$collectionName` ENABLE ANALYTICS");
         } catch (Exception $e) {
+            printf("Dataset setup failed %s", $e);
         }
     }
 
