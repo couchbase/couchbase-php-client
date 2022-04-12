@@ -70,10 +70,10 @@ class BucketSettings
     /**
      * Whether flush is enabled for the bucket.
      *
-     * @return bool
+     * @return bool|null
      * @since 4.0.0
      */
-    public function flushEnabled(): bool
+    public function flushEnabled(): ?bool
     {
         return $this->flushEnabled;
     }
@@ -81,10 +81,10 @@ class BucketSettings
     /**
      * Get the ram quota of the bucket.
      *
-     * @return int
+     * @return int|null
      * @since 4.0.0
      */
-    public function ramQuotaMb(): int
+    public function ramQuotaMb(): ?int
     {
         return $this->ramQuotaMb;
     }
@@ -92,10 +92,10 @@ class BucketSettings
     /**
      * Get the number of replicas for the bucket.
      *
-     * @return int
+     * @return int|null
      * @since 4.0.0
      */
-    public function numReplicas(): int
+    public function numReplicas(): ?int
     {
         return $this->numReplicas;
     }
@@ -103,10 +103,10 @@ class BucketSettings
     /**
      * Whether replicas are enabled for the bucket.
      *
-     * @return bool
+     * @return bool|null
      * @since 4.0.0
      */
-    public function replicaIndexes(): bool
+    public function replicaIndexes(): ?bool
     {
         return $this->replicaIndexes;
     }
@@ -114,14 +114,14 @@ class BucketSettings
     /**
      * Get the type of bucket that the bucket is.
      *
-     * @return string
+     * @return string|null
      *
      * @see \BucketType::COUCHBASE
      * @see \BucketType::MEMCACHED
      * @see \BucketType::EPHEMERAL
      * @since 4.0.0
      */
-    public function bucketType(): string
+    public function bucketType(): ?string
     {
         return $this->bucketType;
     }
@@ -129,7 +129,7 @@ class BucketSettings
     /**
      * Get the eviction policy used by the bucket.
      *
-     * @return string
+     * @return string|null
      *
      * @see \EvictionPolicy::FULL
      * @see \EvictionPolicy::VALUE_ONLY
@@ -137,7 +137,7 @@ class BucketSettings
      * @see \EvictionPolicy::NOT_RECENTLY_USED
      * @since 4.0.0
      */
-    public function evictionPolicy(): string
+    public function evictionPolicy(): ?string
     {
         return $this->evictionPolicy;
     }
@@ -145,13 +145,13 @@ class BucketSettings
     /**
      * Get the storage backend used by the bucket.
      *
-     * @return string
+     * @return string|null
      *
      * @see \StorageBackend::COUCHSTORE
      * @see \StorageBackend::MAGMA
      * @since 4.0.0
      */
-    public function storageBackend(): string
+    public function storageBackend(): ?string
     {
         return $this->storageBackend;
     }
@@ -159,11 +159,11 @@ class BucketSettings
     /**
      * Get the maximum expiry to set on documents created within the bucket.
      *
-     * @return int
+     * @return int|null
      * @deprecated see maxExpiry
      * @since 4.0.0
      */
-    public function maxTtl(): int
+    public function maxTtl(): ?int
     {
         return $this->maxExpiry();
     }
@@ -171,10 +171,10 @@ class BucketSettings
     /**
      * Get the maximum expiry to set on documents created within the bucket.
      *
-     * @return int
+     * @return int|null
      * @since 4.0.0
      */
-    public function maxExpiry(): int
+    public function maxExpiry(): ?int
     {
         return $this->maxExpiry;
     }
@@ -182,14 +182,14 @@ class BucketSettings
     /**
      * Get the compression mode used by the bucket.
      *
-     * @return string
+     * @return string|null
      *
      * @see \CompressionMode::OFF
      * @see \CompressionMode::ACTIVE
      * @see \CompressionMode::PASSIVE
      * @since 4.0.0
      */
-    public function compressionMode(): string
+    public function compressionMode(): ?string
     {
         return $this->compressionMode;
     }
@@ -197,7 +197,7 @@ class BucketSettings
     /**
      * Get the minimum durability level used by the bucket when modifying documents.
      *
-     * @return string
+     * @return string|null
      *
      * @see \DurabilityLevel::NONE
      * @see \DurabilityLevel::MAJORITY
@@ -205,7 +205,7 @@ class BucketSettings
      * @see \DurabilityLevel::PERSIST_TO_MAJORITY
      * @since 4.0.0
      */
-    public function minimumDurabilityLevel(): string
+    public function minimumDurabilityLevel(): ?string
     {
         return $this->minimumDurabilityLevel;
     }
@@ -213,14 +213,14 @@ class BucketSettings
     /**
      * Get the conflict resolution type used by the bucket.
      *
-     * @return string
+     * @return string|null
      *
      * @see \ConflictResolutionType::TIMESTAMP
      * @see \ConflictResolutionType::SEQUENCE_NUMBER
      * @see \ConflictResolutionType::CUSTOM
      * @since 4.0.0
      */
-    public function conflictResolutionType(): string
+    public function conflictResolutionType(): ?string
     {
         return $this->conflictResolutionType;
     }
