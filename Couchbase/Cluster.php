@@ -130,12 +130,11 @@ class Cluster
      * Creates a new bucket manager object for managing buckets.
      *
      * @return BucketManager
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function buckets(): BucketManager
     {
-        throw new UnsupportedOperationException();
+        return new BucketManager($this->core);
     }
 
     /**

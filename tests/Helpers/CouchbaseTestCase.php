@@ -105,6 +105,14 @@ class CouchbaseTestCase extends TestCase
         }
     }
 
+    public function skipIfUnsupported(bool $supported): void
+    {
+        if (!$supported) {
+            $caller = debug_backtrace()[1];
+            $this->markTestSkipped(sprintf("%s::%s is not supported on Couchbase server %s", $caller["class"], $caller["function"], $this->env()->version()));
+        }
+    }
+
     /**
      * @throws Exception
      */
@@ -148,6 +156,22 @@ class CouchbaseTestCase extends TestCase
                 ]
             );
         }
+    }
+
+    function version(): ServerVersion
+    {
+        if ($this->env()->version() != null) {
+            return $this->env()->version();
+        }
+        $versionString = null;
+        if ($this->env()->useCouchbase()) {
+            $versionString = $this->connectCluster()->version($this->env()->bucketName());
+        }
+        if ($versionString == null) {
+            $versionString = getenv("TEST_SERVER_VERSION") ?: "7.0";
+        }
+
+        return $this->env()->setVersion($versionString);
     }
 
     protected function wrapException($cb, $type = null, $code = null, $message = null): ?Exception

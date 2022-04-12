@@ -18,6 +18,11 @@
 #include "common.hxx"
 
 #include <couchbase/cluster.hxx>
+#include <couchbase/operations/management/bucket_drop.hxx>
+#include <couchbase/operations/management/bucket_flush.hxx>
+#include <couchbase/operations/management/bucket_get.hxx>
+#include <couchbase/operations/management/bucket_get_all.hxx>
+#include <couchbase/operations/management/bucket_update.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>
 #include <couchbase/operations/management/design_document.hxx>
 #include <couchbase/operations/management/search_index.hxx>
@@ -357,8 +362,11 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     }
 
     impl(impl&& other) = delete;
+
     impl(const impl& other) = delete;
+
     const impl& operator=(impl&& other) = delete;
+
     const impl& operator=(const impl& other) = delete;
 
     ~impl()
@@ -591,6 +599,120 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             return { { resp.ctx.ec,
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to upsert view index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_create_response> bucket_create(
+      couchbase::operations::management::bucket_create_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_create_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_create_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to create bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_update_response> bucket_update(
+      couchbase::operations::management::bucket_update_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_update_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_update_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to update bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_drop_response> bucket_drop(
+      couchbase::operations::management::bucket_drop_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_drop_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_drop_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to drop bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_get_response> bucket_get(
+      couchbase::operations::management::bucket_get_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_get_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_get_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_get_all_response> bucket_get_all(
+      couchbase::operations::management::bucket_get_all_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_get_all_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_get_all_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get all buckets: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::bucket_flush_response> bucket_flush(
+      couchbase::operations::management::bucket_flush_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_flush_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_flush_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to flush bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_http_error_context(resp.ctx) },
                      {} };
         }
@@ -3220,6 +3342,370 @@ connection_handle::view_index_upsert(zval* return_value,
 
     array_init(return_value);
 
+    return {};
+}
+
+static std::pair<core_error_info, couchbase::operations::management::bucket_settings>
+zval_to_bucket_settings(const zval* bucket_settings)
+{
+    couchbase::operations::management::bucket_settings bucket{};
+    if (auto e = cb_assign_string(bucket.name, bucket_settings, "name"); e.ec) {
+        return { e, {} };
+    }
+    if (auto [e, bucket_type] = cb_get_string(bucket_settings, "bucketType"); !e.ec) {
+        if (bucket_type == "couchbase") {
+            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::couchbase;
+        } else if (bucket_type == "ephemeral") {
+            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::ephemeral;
+        } else if (bucket_type == "memcached") {
+            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::memcached;
+        } else if (!bucket_type.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for bucket type: {}", bucket_type) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_integer(bucket.ram_quota_mb, bucket_settings, "ramQuotaMB"); e.ec) {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_integer(bucket.max_expiry, bucket_settings, "maxExpiry"); e.ec) {
+        return { e, {} };
+    }
+    if (auto [e, compression_mode] = cb_get_string(bucket_settings, "compressionMode"); !e.ec) {
+        if (compression_mode == "off") {
+            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::off;
+        } else if (compression_mode == "active") {
+            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::active;
+        } else if (compression_mode == "passive") {
+            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::passive;
+        } else if (!compression_mode.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for compression mode: {}", compression_mode) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+    if (auto [e, durability_level] = cb_get_string(bucket_settings, "minimumDurabilityLevel"); !e.ec) {
+        if (durability_level == "none") {
+            bucket.minimum_durability_level = couchbase::protocol::durability_level::none;
+        } else if (durability_level == "majority") {
+            bucket.minimum_durability_level = couchbase::protocol::durability_level::majority;
+        } else if (durability_level == "majorityAndPersistToActive") {
+            bucket.minimum_durability_level = couchbase::protocol::durability_level::majority_and_persist_to_active;
+        } else if (durability_level == "persistToMajority") {
+            bucket.minimum_durability_level = couchbase::protocol::durability_level::persist_to_majority;
+        } else if (!durability_level.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for durability level: {}", durability_level) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_integer(bucket.num_replicas, bucket_settings, "numReplicas"); e.ec) {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_boolean(bucket.replica_indexes, bucket_settings, "replicaIndexes"); e.ec) {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_boolean(bucket.flush_enabled, bucket_settings, "flushEnabled"); e.ec) {
+        return { e, {} };
+    }
+    if (auto [e, eviction_policy] = cb_get_string(bucket_settings, "evictionPolicy"); !e.ec) {
+        if (eviction_policy == "noEviction") {
+            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::no_eviction;
+        } else if (eviction_policy == "fullEviction") {
+            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::full;
+        } else if (eviction_policy == "valueOnly") {
+            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::value_only;
+        } else if (eviction_policy == "nruEviction") {
+            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::not_recently_used;
+        } else if (!eviction_policy.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for eviction policy: {}", eviction_policy) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+    if (auto [e, resolution_type] = cb_get_string(bucket_settings, "conflictResolutionType"); !e.ec) {
+        if (resolution_type == "sequenceNumber") {
+            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::sequence_number;
+        } else if (resolution_type == "timestamp") {
+            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::timestamp;
+        } else if (resolution_type == "custom") {
+            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::custom;
+        } else if (!resolution_type.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for custom resolution type: {}", resolution_type) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+    if (auto [e, storage_backend] = cb_get_string(bucket_settings, "storageBackend"); !e.ec) {
+        if (storage_backend == "couchstore") {
+            bucket.storage_backend = couchbase::operations::management::bucket_settings::storage_backend_type::couchstore;
+        } else if (storage_backend == "magma") {
+            bucket.storage_backend = couchbase::operations::management::bucket_settings::storage_backend_type::magma;
+        } else if (!storage_backend.empty()) {
+            return { { error::common_errc::invalid_argument,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("invalid value used for storage backend: {}", storage_backend) },
+                     {} };
+        }
+    } else {
+        return { e, {} };
+    }
+
+    return { {}, bucket };
+}
+
+core_error_info
+connection_handle::bucket_create(zval* return_value, const zval* bucket_settings, const zval* options)
+{
+    auto [e, bucket] = zval_to_bucket_settings(bucket_settings);
+    if (e.ec) {
+        return e;
+    }
+
+    couchbase::operations::management::bucket_create_request request{ bucket };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_create(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::bucket_update(zval* return_value, const zval* bucket_settings, const zval* options)
+{
+    auto [e, bucket] = zval_to_bucket_settings(bucket_settings);
+    if (e.ec) {
+        return e;
+    }
+
+    couchbase::operations::management::bucket_update_request request{ bucket };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_update(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::management::bucket_settings bucket_settings)
+{
+    array_init(return_value);
+
+    add_assoc_string(return_value, "name", bucket_settings.name.c_str());
+    add_assoc_string(return_value, "uuid", bucket_settings.uuid.c_str());
+    std::string bucket_type;
+    switch (bucket_settings.bucket_type) {
+        case couchbase::operations::management::bucket_settings::bucket_type::couchbase:
+            bucket_type = "couchbase";
+            break;
+        case couchbase::operations::management::bucket_settings::bucket_type::ephemeral:
+            bucket_type = "ephemeral";
+            break;
+        case couchbase::operations::management::bucket_settings::bucket_type::memcached:
+            bucket_type = "memcached";
+            break;
+        default:
+            bucket_type = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "bucketType", bucket_type.c_str());
+    add_assoc_long(return_value, "ramQuotaMB", bucket_settings.ram_quota_mb);
+    add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry);
+    std::string compression_mode;
+    switch (bucket_settings.compression_mode) {
+        case couchbase::operations::management::bucket_settings::compression_mode::off:
+            compression_mode = "off";
+            break;
+        case couchbase::operations::management::bucket_settings::compression_mode::active:
+            compression_mode = "active";
+            break;
+        case couchbase::operations::management::bucket_settings::compression_mode::passive:
+            compression_mode = "passive";
+            break;
+        default:
+            compression_mode = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "compressionMode", compression_mode.c_str());
+    if (bucket_settings.minimum_durability_level) {
+        std::string durability_level;
+        switch (*bucket_settings.minimum_durability_level) {
+            case couchbase::protocol::durability_level::none:
+                durability_level = "none";
+                break;
+            case couchbase::protocol::durability_level::majority:
+                durability_level = "majority";
+                break;
+            case couchbase::protocol::durability_level::majority_and_persist_to_active:
+                durability_level = "majorityAndPersistToActive";
+                break;
+            case couchbase::protocol::durability_level::persist_to_majority:
+                durability_level = "persistToMajority";
+                break;
+        }
+        add_assoc_string(return_value, "minimumDurabilityLevel", durability_level.c_str());
+    }
+    add_assoc_long(return_value, "numReplicas", bucket_settings.num_replicas);
+    add_assoc_bool(return_value, "replicaIndexes", bucket_settings.replica_indexes);
+    add_assoc_bool(return_value, "flushEnabled", bucket_settings.flush_enabled);
+    std::string eviction_policy;
+    switch (bucket_settings.eviction_policy) {
+        case couchbase::operations::management::bucket_settings::eviction_policy::no_eviction:
+            eviction_policy = "noEviction";
+            break;
+        case couchbase::operations::management::bucket_settings::eviction_policy::not_recently_used:
+            eviction_policy = "nruEviction";
+            break;
+        case couchbase::operations::management::bucket_settings::eviction_policy::value_only:
+            eviction_policy = "valueOnly";
+            break;
+        case couchbase::operations::management::bucket_settings::eviction_policy::full:
+            eviction_policy = "fullEviction";
+            break;
+        default:
+            eviction_policy = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "evictionPolicy", eviction_policy.c_str());
+    std::string conflict_resolution_type;
+    switch (bucket_settings.conflict_resolution_type) {
+        case couchbase::operations::management::bucket_settings::conflict_resolution_type::sequence_number:
+            conflict_resolution_type = "sequenceNumber";
+            break;
+        case couchbase::operations::management::bucket_settings::conflict_resolution_type::timestamp:
+            conflict_resolution_type = "timestamp";
+            break;
+        case couchbase::operations::management::bucket_settings::conflict_resolution_type::custom:
+            conflict_resolution_type = "custom";
+            break;
+        default:
+            conflict_resolution_type = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "conflictResolutionType", conflict_resolution_type.c_str());
+    std::string storage_backend;
+    switch (bucket_settings.storage_backend) {
+        case couchbase::operations::management::bucket_settings::storage_backend_type::couchstore:
+            storage_backend = "couchstore";
+            break;
+        case couchbase::operations::management::bucket_settings::storage_backend_type::magma:
+            storage_backend = "magma";
+            break;
+        default:
+            storage_backend = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "storageBackend", storage_backend.c_str());
+
+    return {};
+}
+
+core_error_info
+connection_handle::bucket_get(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::bucket_get_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_get(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    cb_bucket_settings_to_zval(return_value, resp.bucket);
+
+    return {};
+}
+
+core_error_info
+connection_handle::bucket_get_all(zval* return_value, const zval* options)
+{
+    couchbase::operations::management::bucket_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_get_all(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& bucket_settings : resp.buckets) {
+        zval this_settings;
+        cb_bucket_settings_to_zval(&this_settings, bucket_settings);
+
+        add_next_index_zval(return_value, &this_settings);
+    }
+
+    return {};
+}
+
+core_error_info
+connection_handle::bucket_drop(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::bucket_drop_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_drop(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::bucket_flush(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::bucket_flush_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->bucket_flush(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
     return {};
 }
 

@@ -112,18 +112,20 @@ class TestEnvironment
         return $this->connectionString;
     }
 
-    public function version(): ServerVersion
+    public function version(): ?ServerVersion
     {
         if (isset($this->version)) {
             return $this->version;
         }
-        $versionString = null;
-        if ($this->useCouchbase()) {
-            $versionString = $this->connectCluster()->version($this->bucketName);
+        return null;
+    }
+
+    public function setVersion(string $versionString): ServerVersion
+    {
+        if (isset($this->version)) {
+            return $this->version;
         }
-        if ($versionString == null) {
-            $versionString = getenv("TEST_SERVER_VERSION") ?: "7.0";
-        }
+
         $this->version = ServerVersion::parse($versionString);
         return $this->version;
     }

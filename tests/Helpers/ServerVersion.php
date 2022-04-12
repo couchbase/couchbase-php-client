@@ -209,6 +209,16 @@ class ServerVersion
         return ($this->major == 6 && $this->minor >= 6) || $this->major > 6;
     }
 
+    public function supportsCustomConflictResolutionType(): bool
+    {
+        return $this->isNeo() && $this->isDeveloperPreview();
+    }
+
+    public function supportsMagmaStorageBackend(): bool
+    {
+        return $this->isNeo();
+    }
+
     /**
      * @return int
      */
