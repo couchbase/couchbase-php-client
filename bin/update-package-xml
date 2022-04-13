@@ -65,6 +65,11 @@ files = [
     "src/deps/couchbase-cxx-client/third_party/spdlog/cmake/*",
     "src/deps/couchbase-cxx-client/third_party/spdlog/include/**/*",
     "src/deps/couchbase-cxx-client/third_party/spdlog/src/**/*",
+    "src/deps/couchbase-cxx-transactions/CMakeLists.txt",
+    "src/deps/couchbase-cxx-transactions/deps/json/CMakeLists.txt",
+    "src/deps/couchbase-cxx-transactions/deps/json/single_include/**/*",
+    "src/deps/couchbase-cxx-transactions/include/**/*",
+    "src/deps/couchbase-cxx-transactions/src/**/*",
 ].map do |glob|
   Dir.chdir(project_root) do
     Dir[glob].select { |path| File.file?(path) }

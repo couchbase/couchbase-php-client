@@ -29,6 +29,18 @@
     <contents>
         <dir name="/">
             <dir name="Couchbase">
+                <dir name="Datastructures">
+                    <dir name="Options">
+                        <file role="php" name="CouchbaseList.php"/>
+                        <file role="php" name="CouchbaseMap.php"/>
+                        <file role="php" name="CouchbaseQueue.php"/>
+                        <file role="php" name="CouchbaseSet.php"/>
+                    </dir>
+                    <file role="php" name="CouchbaseList.php"/>
+                    <file role="php" name="CouchbaseMap.php"/>
+                    <file role="php" name="CouchbaseQueue.php"/>
+                    <file role="php" name="CouchbaseSet.php"/>
+                </dir>
                 <dir name="Exception">
                     <file role="php" name="AmbiguousTimeoutException.php"/>
                     <file role="php" name="AuthenticationFailureException.php"/>
@@ -40,6 +52,7 @@
                     <file role="php" name="CollectionNotFoundException.php"/>
                     <file role="php" name="CompilationFailureException.php"/>
                     <file role="php" name="ConsistencyMismatchException.php"/>
+                    <file role="php" name="CouchbaseException.php"/>
                     <file role="php" name="DatasetExistsException.php"/>
                     <file role="php" name="DatasetNotFoundException.php"/>
                     <file role="php" name="DataverseExistsException.php"/>
@@ -58,7 +71,6 @@
                     <file role="php" name="DurableWriteInProgressException.php"/>
                     <file role="php" name="DurableWriteReCommitInProgressException.php"/>
                     <file role="php" name="EncodingFailureException.php"/>
-                    <file role="php" name="Exception.php"/>
                     <file role="php" name="FeatureNotAvailableException.php"/>
                     <file role="php" name="GroupNotFoundException.php"/>
                     <file role="php" name="IndexExistsException.php"/>
@@ -86,6 +98,8 @@
                     <file role="php" name="ServiceNotAvailableException.php"/>
                     <file role="php" name="TemporaryFailureException.php"/>
                     <file role="php" name="TimeoutException.php"/>
+                    <file role="php" name="TransactionException.php"/>
+                    <file role="php" name="TransactionOperationFailedException.php"/>
                     <file role="php" name="UnambiguousTimeoutException.php"/>
                     <file role="php" name="UnsupportedOperationException.php"/>
                     <file role="php" name="UserExistsException.php"/>
@@ -104,17 +118,22 @@
                     <file role="php" name="AnalyticsIndexManager.php"/>
                     <file role="php" name="AnalyticsLink.php"/>
                     <file role="php" name="AnalyticsLinkType.php"/>
+                    <file role="php" name="AuthDomain.php"/>
                     <file role="php" name="AzureBlobExternalAnalyticsLink.php"/>
                     <file role="php" name="BucketManager.php"/>
                     <file role="php" name="BucketSettings.php"/>
+                    <file role="php" name="BucketType.php"/>
                     <file role="php" name="CollectionManager.php"/>
                     <file role="php" name="CollectionSpec.php"/>
+                    <file role="php" name="CompressionMode.php"/>
+                    <file role="php" name="ConflictResolutionType.php"/>
                     <file role="php" name="ConnectAnalyticsLinkOptions.php"/>
                     <file role="php" name="CouchbaseRemoteAnalyticsLink.php"/>
                     <file role="php" name="CreateAnalyticsDatasetOptions.php"/>
                     <file role="php" name="CreateAnalyticsDataverseOptions.php"/>
                     <file role="php" name="CreateAnalyticsIndexOptions.php"/>
                     <file role="php" name="CreateAnalyticsLinkOptions.php"/>
+                    <file role="php" name="CreateBucketOptions.php"/>
                     <file role="php" name="CreateQueryPrimaryIndexOptions.php"/>
                     <file role="php" name="DesignDocument.php"/>
                     <file role="php" name="DisconnectAnalyticsLinkOptions.php"/>
@@ -122,13 +141,21 @@
                     <file role="php" name="DropAnalyticsDataverseOptions.php"/>
                     <file role="php" name="DropAnalyticsIndexOptions.php"/>
                     <file role="php" name="DropAnalyticsLinkOptions.php"/>
+                    <file role="php" name="DropBucketOptions.php"/>
+                    <file role="php" name="DropGroupOptions.php"/>
                     <file role="php" name="DropQueryIndexOptions.php"/>
                     <file role="php" name="DropQueryPrimaryIndexOptions.php"/>
                     <file role="php" name="DropUserOptions.php"/>
                     <file role="php" name="EncryptionSettings.php"/>
                     <file role="php" name="EvictionPolicy.php"/>
+                    <file role="php" name="FlushBucketOptions.php"/>
+                    <file role="php" name="GetAllBucketsOptions.php"/>
+                    <file role="php" name="GetAllGroupsOptions.php"/>
                     <file role="php" name="GetAllUsersOptions.php"/>
                     <file role="php" name="GetAnalyticsLinksOptions.php"/>
+                    <file role="php" name="GetBucketOptions.php"/>
+                    <file role="php" name="GetGroupOptions.php"/>
+                    <file role="php" name="GetRolesOptions.php"/>
                     <file role="php" name="GetUserOptions.php"/>
                     <file role="php" name="Group.php"/>
                     <file role="php" name="Origin.php"/>
@@ -144,6 +171,8 @@
                     <file role="php" name="SearchIndex.php"/>
                     <file role="php" name="SearchIndexManager.php"/>
                     <file role="php" name="StorageBackend.php"/>
+                    <file role="php" name="UpdateBucketOptions.php"/>
+                    <file role="php" name="UpsertGroupOptions.php"/>
                     <file role="php" name="UpsertUserOptions.php"/>
                     <file role="php" name="User.php"/>
                     <file role="php" name="UserAndMetadata.php"/>
@@ -151,6 +180,9 @@
                     <file role="php" name="View.php"/>
                     <file role="php" name="ViewIndexManager.php"/>
                     <file role="php" name="WatchQueryIndexesOptions.php"/>
+                </dir>
+                <dir name="Utilities">
+                    <file role="php" name="Deprecations.php"/>
                 </dir>
                 <file role="php" name="AnalyticsMetaData.php"/>
                 <file role="php" name="AnalyticsOptions.php"/>
@@ -199,6 +231,7 @@
                 <file role="php" name="LookupExistsSpec.php"/>
                 <file role="php" name="LookupGetFullSpec.php"/>
                 <file role="php" name="LookupGetSpec.php"/>
+                <file role="php" name="LookupInMacro.php"/>
                 <file role="php" name="LookupInOptions.php"/>
                 <file role="php" name="LookupInResult.php"/>
                 <file role="php" name="LookupInSpec.php"/>
@@ -238,7 +271,9 @@
                 <file role="php" name="QueryScanConsistency.php"/>
                 <file role="php" name="QueryStringSearchQuery.php"/>
                 <file role="php" name="QueryWarning.php"/>
+                <file role="php" name="RawBinaryTranscoder.php"/>
                 <file role="php" name="RawJsonTranscoder.php"/>
+                <file role="php" name="RawStringTranscoder.php"/>
                 <file role="php" name="RegexpSearchQuery.php"/>
                 <file role="php" name="RemoveOptions.php"/>
                 <file role="php" name="ReplaceOptions.php"/>
@@ -261,6 +296,7 @@
                 <file role="php" name="SearchSortMode.php"/>
                 <file role="php" name="SearchSortScore.php"/>
                 <file role="php" name="SearchSortType.php"/>
+                <file role="php" name="ServiceType.php"/>
                 <file role="php" name="StoreSemantics.php"/>
                 <file role="php" name="TermFacetResult.php"/>
                 <file role="php" name="TermRangeSearchQuery.php"/>
@@ -269,6 +305,16 @@
                 <file role="php" name="ThresholdLoggingOptions.php"/>
                 <file role="php" name="ThresholdLoggingTracer.php"/>
                 <file role="php" name="TouchOptions.php"/>
+                <file role="php" name="TransactionAttemptContext.php"/>
+                <file role="php" name="TransactionAttemptContextDetails.php"/>
+                <file role="php" name="TransactionGetResult.php"/>
+                <file role="php" name="TransactionOptions.php"/>
+                <file role="php" name="TransactionQueryOptions.php"/>
+                <file role="php" name="TransactionResult.php"/>
+                <file role="php" name="Transactions.php"/>
+                <file role="php" name="TransactionsCleanupConfiguration.php"/>
+                <file role="php" name="TransactionsConfiguration.php"/>
+                <file role="php" name="TransactionsQueryConfiguration.php"/>
                 <file role="php" name="Transcoder.php"/>
                 <file role="php" name="TranscoderFlags.php"/>
                 <file role="php" name="UnlockOptions.php"/>
@@ -297,6 +343,11 @@
                     <file role="src" name="core_error_info.hxx"/>
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>
+                    <file role="src" name="php_7_api_layer.hxx"/>
+                    <file role="src" name="transaction_context_resource.cxx"/>
+                    <file role="src" name="transaction_context_resource.hxx"/>
+                    <file role="src" name="transactions_resource.cxx"/>
+                    <file role="src" name="transactions_resource.hxx"/>
                     <file role="src" name="version.cxx"/>
                     <file role="src" name="version.hxx"/>
                 </dir>
@@ -2250,6 +2301,91 @@
                         </dir>
                         <file role="src" name="CMakeLists.txt"/>
                         <file role="src" name="LICENSE.txt"/>
+                    </dir>
+                    <dir name="couchbase-cxx-transactions">
+                        <dir name="deps">
+                            <dir name="json">
+                                <dir name="single_include">
+                                    <dir name="nlohmann">
+                                        <file role="src" name="json.hpp"/>
+                                    </dir>
+                                </dir>
+                                <file role="src" name="CMakeLists.txt"/>
+                            </dir>
+                        </dir>
+                        <dir name="include">
+                            <dir name="couchbase">
+                                <dir name="internal">
+                                    <dir name="nlohmann">
+                                        <file role="src" name="json.hpp"/>
+                                    </dir>
+                                </dir>
+                                <dir name="transactions">
+                                    <dir name="internal">
+                                        <file role="src" name="atr_cleanup_entry.hxx"/>
+                                        <file role="src" name="atr_entry.hxx"/>
+                                        <file role="src" name="client_record.hxx"/>
+                                        <file role="src" name="doc_record.hxx"/>
+                                        <file role="src" name="exceptions_internal.hxx"/>
+                                        <file role="src" name="logging.hxx"/>
+                                        <file role="src" name="transaction_attempt.hxx"/>
+                                        <file role="src" name="transaction_context.hxx"/>
+                                        <file role="src" name="transaction_fields.hxx"/>
+                                        <file role="src" name="transactions_cleanup.hxx"/>
+                                        <file role="src" name="utils.hxx"/>
+                                    </dir>
+                                    <file role="src" name="async_attempt_context.hxx"/>
+                                    <file role="src" name="attempt_context.hxx"/>
+                                    <file role="src" name="attempt_state.hxx"/>
+                                    <file role="src" name="document_metadata.hxx"/>
+                                    <file role="src" name="durability_level.hxx"/>
+                                    <file role="src" name="exceptions.hxx"/>
+                                    <file role="src" name="per_transaction_config.hxx"/>
+                                    <file role="src" name="transaction_config.hxx"/>
+                                    <file role="src" name="transaction_get_result.hxx"/>
+                                    <file role="src" name="transaction_links.hxx"/>
+                                    <file role="src" name="transaction_query_options.hxx"/>
+                                    <file role="src" name="transaction_result.hxx"/>
+                                    <file role="src" name="transcoder.hxx"/>
+                                </dir>
+                                <file role="src" name="support.hxx"/>
+                                <file role="src" name="support.hxx.in"/>
+                                <file role="src" name="transactions.hxx"/>
+                            </dir>
+                        </dir>
+                        <dir name="src">
+                            <dir name="transactions">
+                                <file role="src" name="active_transaction_record.cxx"/>
+                                <file role="src" name="active_transaction_record.hxx"/>
+                                <file role="src" name="atr_cleanup_entry.cxx"/>
+                                <file role="src" name="atr_ids.cxx"/>
+                                <file role="src" name="atr_ids.hxx"/>
+                                <file role="src" name="attempt_context_impl.cxx"/>
+                                <file role="src" name="attempt_context_impl.hxx"/>
+                                <file role="src" name="attempt_context_testing_hooks.hxx"/>
+                                <file role="src" name="cleanup_testing_hooks.hxx"/>
+                                <file role="src" name="error_list.hxx"/>
+                                <file role="src" name="exceptions.cxx"/>
+                                <file role="src" name="forward_compat.hxx"/>
+                                <file role="src" name="logging.cxx"/>
+                                <file role="src" name="result.cxx"/>
+                                <file role="src" name="result.hxx"/>
+                                <file role="src" name="staged_mutation.cxx"/>
+                                <file role="src" name="staged_mutation.hxx"/>
+                                <file role="src" name="transaction_attempt.cxx"/>
+                                <file role="src" name="transaction_config.cxx"/>
+                                <file role="src" name="transaction_context.cxx"/>
+                                <file role="src" name="transaction_get_result.cxx"/>
+                                <file role="src" name="transaction_links.cxx"/>
+                                <file role="src" name="transaction_query_options.cxx"/>
+                                <file role="src" name="transactions.cxx"/>
+                                <file role="src" name="transactions_cleanup.cxx"/>
+                                <file role="src" name="uid_generator.cxx"/>
+                                <file role="src" name="uid_generator.hxx"/>
+                                <file role="src" name="waitable_op_list.hxx"/>
+                            </dir>
+                        </dir>
+                        <file role="src" name="CMakeLists.txt"/>
                     </dir>
                 </dir>
                 <file role="src" name="CMakeLists.txt"/>
