@@ -48,9 +48,8 @@ DEFAULT_PHP_PREFIX =
 DEFAULT_CC="cc"
 DEFAULT_CXX="c++"
 if RbConfig::CONFIG["target_os"] =~ /darwin/
-  prefix = `brew --prefix gcc@10 2>/dev/null`.strip
-  DEFAULT_CC = File.join(prefix, "bin/gcc-10")
-  DEFAULT_CXX = File.join(prefix, "bin/g++-10")
+  DEFAULT_CC = "/usr/bin/gcc"
+  DEFAULT_CXX = "/usr/bin/g++"
 end
 
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
