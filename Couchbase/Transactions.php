@@ -45,8 +45,7 @@ class Transactions
     /**
      * Executes a transactions
      *
-     * @param callable<TransactionAttemptContext> $logic The transaction closure to execute. The callable receives single argument of type
-     *     {TransactionAttemptContext}.
+     * @param callable $logic The transaction closure to execute. The callable receives single argument of type {TransactionAttemptContext}.
      * @param TransactionOptions|null $options configuration options for the transaction
      *
      * @return TransactionResult
