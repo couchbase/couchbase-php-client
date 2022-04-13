@@ -383,6 +383,11 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         }
     }
 
+    [[nodiscard]] std::shared_ptr<couchbase::cluster> cluster() const
+    {
+        return cluster_;
+    }
+
     void start()
     {
         worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
@@ -890,9 +895,7 @@ cb_assign_cas(protocol::cas& cas, const zval* options)
         case IS_STRING:
             break;
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected durabilityLevel to be a string in the options" };
+            return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected CAS to be a string in the options" };
     }
     cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
     return {};
@@ -3698,6 +3701,12 @@ bool
 connection_handle::is_expired(std::chrono::steady_clock::time_point now) const
 {
     return idle_expiry_ < now;
+}
+
+std::shared_ptr<couchbase::cluster>
+connection_handle::cluster() const
+{
+    return impl_->cluster();
 }
 
 #define ASSIGN_DURATION_OPTION(name, field, key, value)                                                                                    \

@@ -16,6 +16,8 @@
 
 #include "core/common.hxx"
 #include "core/persistent_connections_cache.hxx"
+#include "core/transaction_context_resource.hxx"
+#include "core/transactions_resource.hxx"
 #include "core/version.hxx"
 
 #include "php_couchbase.hxx"
@@ -34,8 +36,14 @@ ZEND_RSRC_DTOR_FUNC(couchbase_destroy_persistent_connection)
     couchbase::php::destroy_persistent_connection(res);
 }
 
-ZEND_RSRC_DTOR_FUNC(couchbase_destroy_connection)
+ZEND_RSRC_DTOR_FUNC(couchbase_destroy_transactions)
 {
+    couchbase::php::destroy_transactions_resource(res);
+}
+
+ZEND_RSRC_DTOR_FUNC(couchbase_destroy_transaction_context)
+{
+    couchbase::php::destroy_transaction_context_resource(res);
 }
 
 PHP_RSHUTDOWN_FUNCTION(couchbase)
@@ -115,10 +123,13 @@ zend_class_entry* xattr_invalid_key_combo_exception_ce;
 zend_class_entry* xattr_unknown_macro_exception_ce;
 zend_class_entry* xattr_unknown_virtual_attribute_exception_ce;
 
+zend_class_entry* transaction_exception_ce;
+zend_class_entry* transaction_operation_failed_exception_ce;
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO(ai_Exception_getContext, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
-PHP_METHOD(Exception, getContext)
+PHP_METHOD(CouchbaseException, getContext)
 {
     if (zend_parse_parameters_none_throw() == FAILURE) {
         return;
@@ -131,7 +142,7 @@ PHP_METHOD(Exception, getContext)
 
 // clang-format off
 static const zend_function_entry exception_functions[] = {
-        PHP_ME(Exception, getContext, ai_Exception_getContext, ZEND_ACC_PUBLIC)
+        PHP_ME(CouchbaseException, getContext, ai_Exception_getContext, ZEND_ACC_PUBLIC)
         PHP_FE_END
 };
 // clang-format on
@@ -141,7 +152,11 @@ PHP_MINIT_FUNCTION(couchbase)
     (void)type;
 
     couchbase::php::set_persistent_connection_destructor_id(zend_register_list_destructors_ex(
-      couchbase_destroy_connection, couchbase_destroy_persistent_connection, "couchbase_persistent_connection", module_number));
+      nullptr, couchbase_destroy_persistent_connection, "couchbase_persistent_connection", module_number));
+    couchbase::php::set_transactions_destructor_id(
+      zend_register_list_destructors_ex(couchbase_destroy_transactions, nullptr, "couchbase_transactions", module_number));
+    couchbase::php::set_transaction_context_destructor_id(
+      zend_register_list_destructors_ex(couchbase_destroy_transaction_context, nullptr, "couchbase_transaction_context", module_number));
 
     zend_class_entry ce;
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "CouchbaseException", exception_functions);
@@ -282,6 +297,11 @@ PHP_MINIT_FUNCTION(couchbase)
     xattr_unknown_macro_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "XattrUnknownVirtualAttributeException", nullptr);
     xattr_unknown_virtual_attribute_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionException", nullptr);
+    transaction_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionOperationFailedException", nullptr);
+    transaction_operation_failed_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
 
     return SUCCESS;
 }
@@ -1342,6 +1362,219 @@ PHP_FUNCTION(bucketUpdate)
     }
 }
 
+static inline couchbase::php::transactions_resource*
+fetch_couchbase_transactions_from_resource(zval* resource)
+{
+    return static_cast<couchbase::php::transactions_resource*>(
+      zend_fetch_resource(Z_RES_P(resource), "couchbase_transactions", couchbase::php::get_transactions_destructor_id()));
+}
+
+PHP_FUNCTION(createTransactions)
+{
+    zval* connection = nullptr;
+    zval* configuration = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(configuration)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [resource, e] = couchbase::php::create_transactions_resource(handle, configuration);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_RES(resource);
+}
+
+static inline couchbase::php::transaction_context_resource*
+fetch_couchbase_transaction_context_from_resource(zval* resource)
+{
+    return static_cast<couchbase::php::transaction_context_resource*>(
+      zend_fetch_resource(Z_RES_P(resource), "couchbase_transaction_context", couchbase::php::get_transaction_context_destructor_id()));
+}
+
+PHP_FUNCTION(createTransactionContext)
+{
+    zval* transactions = nullptr;
+    zval* configuration = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(transactions)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(configuration)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_transactions_from_resource(transactions);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    auto [resource, e] = couchbase::php::create_transaction_context_resource(handle, configuration);
+    if (e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_RES(resource);
+}
+
+PHP_FUNCTION(transactionNewAttempt)
+{
+    zval* transaction = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_RESOURCE(transaction)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->new_attempt(); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(transactionCommit)
+{
+    zval* transaction = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_RESOURCE(transaction)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->commit(return_value); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(transactionRollback)
+{
+    zval* transaction = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_RESOURCE(transaction)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->rollback(); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(transactionGet)
+{
+    zval* transaction = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 5)
+    Z_PARAM_RESOURCE(transaction)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->get(return_value, bucket, scope, collection, id); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(transactionInsert)
+{
+    zval* transaction = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zend_string* value = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(6, 6)
+    Z_PARAM_RESOURCE(transaction)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_STR(value)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->insert(return_value, bucket, scope, collection, id, value); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(transactionReplace)
+{
+    zval* transaction = nullptr;
+    zval* document = nullptr;
+    zend_string* value = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(3, 3)
+    Z_PARAM_RESOURCE(transaction)
+    Z_PARAM_ARRAY(document)
+    Z_PARAM_STR(value)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->replace(return_value, document, value); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(transactionRemove)
+{
+    zval* transaction = nullptr;
+    zval* document = nullptr;
+    zend_string* value = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 2)
+    Z_PARAM_RESOURCE(transaction)
+    Z_PARAM_ARRAY(document)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->remove(document); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -1651,6 +1884,56 @@ ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactions, 0, 0, IS_RESOURCE, 1)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, configuration, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactionContext, 0, 0, IS_RESOURCE, 1)
+ZEND_ARG_TYPE_INFO(0, transactions, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, configuration, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionNewAttempt, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionCommit, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionRollback, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionGet, 0, 0, 5)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionInsert, 0, 0, 6)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionReplace, 0, 0, 3)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, document, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionRemove, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, document, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -1691,6 +1974,16 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", bucketGetAll, ai_CouchbaseExtension_bucketGetAll)
         ZEND_NS_FE("Couchbase\\Extension", bucketDrop, ai_CouchbaseExtension_bucketDrop)
         ZEND_NS_FE("Couchbase\\Extension", bucketFlush, ai_CouchbaseExtension_bucketFlush)
+
+        ZEND_NS_FE("Couchbase\\Extension", createTransactions, ai_CouchbaseExtension_createTransactions)
+        ZEND_NS_FE("Couchbase\\Extension", createTransactionContext, ai_CouchbaseExtension_createTransactionContext)
+        ZEND_NS_FE("Couchbase\\Extension", transactionNewAttempt, ai_CouchbaseExtension_transactionNewAttempt)
+        ZEND_NS_FE("Couchbase\\Extension", transactionCommit, ai_CouchbaseExtension_transactionCommit)
+        ZEND_NS_FE("Couchbase\\Extension", transactionRollback, ai_CouchbaseExtension_transactionRollback)
+        ZEND_NS_FE("Couchbase\\Extension", transactionGet, ai_CouchbaseExtension_transactionGet)
+        ZEND_NS_FE("Couchbase\\Extension", transactionInsert, ai_CouchbaseExtension_transactionInsert)
+        ZEND_NS_FE("Couchbase\\Extension", transactionReplace, ai_CouchbaseExtension_transactionReplace)
+        ZEND_NS_FE("Couchbase\\Extension", transactionRemove, ai_CouchbaseExtension_transactionRemove)
         PHP_FE_END
 };
 

@@ -26,13 +26,15 @@ class TransactionResult
     private bool $unstagingComplete;
 
     /**
-     * @internal
+     * @param array $response
+     *
      * @since 4.0.0
+     * @internal
      */
-    public function __construct(string $transactionId, bool $unstagingComplete)
+    public function __construct(array $response)
     {
-        $this->transactionId = $transactionId;
-        $this->unstagingComplete = $unstagingComplete;
+        $this->transactionId = $response["transactionId"];
+        $this->unstagingComplete = $response["unstagingComplete"];
     }
 
     /**

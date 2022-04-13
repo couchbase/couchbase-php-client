@@ -39,12 +39,12 @@ class BinaryCollection
     private $core;
 
     /**
-     * @internal
-     *
      * @param string $name
      * @param string $scopeName
      * @param string $bucketName
-     * @param        $core
+     * @param resource $core
+     *
+     * @internal
      */
     public function __construct(string $name, string $scopeName, string $bucketName, $core)
     {

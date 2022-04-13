@@ -20,15 +20,24 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\TransactionException;
 use Couchbase\Exception\UnsupportedOperationException;
 
 class TransactionAttemptContext
 {
     /**
+     * @var resource
+     */
+    private $transaction;
+
+    /**
+     * @param resource $transaction
+     *
      * @internal
      */
-    public function __construct(Transactions $transactions, ?TransactionOptions $options)
+    public function __construct($transaction)
     {
+        $this->transaction = $transaction;
     }
 
     /**
@@ -38,12 +47,19 @@ class TransactionAttemptContext
      * @param string $id The document key to retrieve.
      *
      * @return TransactionGetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function get(Collection $collection, string $id): TransactionGetResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\transactionGet(
+            $this->transaction,
+            $collection->bucketName(),
+            $collection->scopeName(),
+            $collection->name(),
+            $id
+        );
+
+        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
     }
 
     /**
@@ -54,12 +70,21 @@ class TransactionAttemptContext
      * @param mixed $value the document content to insert
      *
      * @return TransactionGetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function insert(Collection $collection, string $id, $value): TransactionGetResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = InsertOptions::encodeDocument(null, $value);
+        $response = Extension\transactionInsert(
+            $this->transaction,
+            $collection->bucketName(),
+            $collection->scopeName(),
+            $collection->name(),
+            $id,
+            $encoded[0] /* ignore flags */
+        );
+
+        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
     }
 
     /**
@@ -74,7 +99,14 @@ class TransactionAttemptContext
      */
     public function replace(TransactionGetResult $document, $value): TransactionGetResult
     {
-        throw new UnsupportedOperationException();
+        $encoded = ReplaceOptions::encodeDocument(null, $value);
+        $response = Extension\transactionReplace(
+            $this->transaction,
+            $document->export(),
+            $encoded[0] /* ignore flags */
+        );
+
+        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
     }
 
     /**
@@ -83,12 +115,14 @@ class TransactionAttemptContext
      * @param TransactionGetResult $document
      *
      * @return void
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function remove(TransactionGetResult $document)
     {
-        throw new UnsupportedOperationException();
+        Extension\transactionRemove(
+            $this->transaction,
+            $document->export(),
+        );
     }
 
     /**
@@ -103,29 +137,5 @@ class TransactionAttemptContext
     public function query(string $statement, ?TransactionQueryOptions $options = null)
     {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * @internal
-     * @return void
-     */
-    public function newAttempt()
-    {
-    }
-
-    /**
-     * @internal
-     * @return void
-     */
-    public function rollback()
-    {
-    }
-
-    /**
-     * @internal
-     * @return void
-     */
-    public function commit()
-    {
     }
 }

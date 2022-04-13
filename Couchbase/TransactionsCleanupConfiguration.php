@@ -76,7 +76,7 @@ class TransactionsCleanupConfiguration
     public function export(): array
     {
         return [
-            'cleanupWindowMilliseconds' => $this->cleanupWindowMilliseconds,
+            'cleanupWindow' => $this->cleanupWindowMilliseconds,
             'disableLostAttemptCleanup' => $this->disableLostAttemptCleanup,
             'disableClientAttemptCleanup' => $this->disableClientAttemptCleanup,
         ];

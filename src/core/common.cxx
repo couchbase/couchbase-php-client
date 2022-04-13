@@ -195,6 +195,17 @@ map_error_to_exception(const core_error_info& info)
             default:
                 break;
         }
+    } else if (info.ec.category() == detail::get_transactions_category()) {
+        switch (transactions_errc(info.ec.value())) {
+            case transactions_errc::operation_failed:
+                return transaction_operation_failed_exception_ce;
+                break;
+            case transactions_errc::std_exception:
+            case transactions_errc::unexpected_exception:
+                return transaction_exception_ce;
+            default:
+                break;
+        }
     }
     return couchbase_exception_ce;
 }
@@ -319,6 +330,30 @@ error_context_to_zval(const http_error_context& ctx, zval* return_value, std::st
     add_assoc_stringl(return_value, "method", ctx.method.data(), ctx.method.size());
     add_assoc_stringl(return_value, "path", ctx.path.data(), ctx.path.size());
     common_http_error_context_to_zval(ctx, return_value, enhanced_error_message);
+}
+
+void
+error_context_to_zval(const transactions_error_context& ctx, zval* return_value, std::string& /* enhanced_error_message */)
+{
+    if (ctx.cause) {
+        add_assoc_stringl(return_value, "cause", ctx.cause->data(), ctx.cause->size());
+    }
+    if (ctx.type) {
+        add_assoc_stringl(return_value, "type", ctx.type->data(), ctx.type->size());
+    }
+    if (ctx.result) {
+        zval result;
+        array_init(&result);
+        add_assoc_stringl(&result, "transactionId", ctx.result->transaction_id.data(), ctx.result->transaction_id.size());
+        add_assoc_bool(&result, "unstagingComplete", ctx.result->unstaging_complete);
+        add_assoc_zval(return_value, "result", &result);
+    }
+    if (ctx.should_not_rollback) {
+        add_assoc_bool(return_value, "shouldNotRollback", ctx.should_not_rollback.value());
+    }
+    if (ctx.should_not_retry) {
+        add_assoc_bool(return_value, "shouldNotRetry", ctx.should_not_retry.value());
+    }
 }
 
 void

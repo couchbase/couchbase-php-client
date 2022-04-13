@@ -39,10 +39,10 @@ class Bucket
     private $core;
 
     /**
-     * @internal
-     *
      * @param string $name
-     * @param        $core
+     * @param resource $core
+     *
+     * @internal
      *
      * @since 4.0.0
      */

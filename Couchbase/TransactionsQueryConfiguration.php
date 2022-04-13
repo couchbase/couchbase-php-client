@@ -30,8 +30,8 @@ class TransactionsQueryConfiguration
      * @param string $level
      *
      * @return TransactionsQueryConfiguration
-     * @see QueryOptions::SCAN_CONSISTENCY_REQUEST_PLUS
-     * @see QueryOptions::SCAN_CONSISTENCY_NOT_BOUNDED
+     * @see QueryScanConsistency::REQUEST_PLUS
+     * @see QueryScanConsistency::NOT_BOUNDED
      * @since 4.0.0
      */
     public function scanConsistency(string $level): TransactionsQueryConfiguration
@@ -41,8 +41,8 @@ class TransactionsQueryConfiguration
     }
 
     /**
-     * @internal
      * @return array
+     * @internal
      * @since 4.0.0
      */
     public function export(): array

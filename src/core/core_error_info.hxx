@@ -92,6 +92,18 @@ struct http_error_context : public common_http_error_context {
     std::string path{};
 };
 
+struct transactions_error_context {
+    struct transaction_result {
+        std::string transaction_id;
+        bool unstaging_complete;
+    };
+    std::optional<bool> should_not_retry{};
+    std::optional<bool> should_not_rollback{};
+    std::optional<std::string> type{};
+    std::optional<std::string> cause{};
+    std::optional<transaction_result> result{};
+};
+
 struct core_error_info {
     std::error_code ec{};
     source_location location{};
@@ -102,8 +114,58 @@ struct core_error_info {
                  analytics_error_context,
                  view_query_error_context,
                  search_error_context,
-                 http_error_context>
+                 http_error_context,
+                 transactions_error_context>
       error_context{};
 };
 
+enum class transactions_errc {
+    operation_failed = 1101,
+    std_exception = 1102,
+    unexpected_exception = 1103,
+};
+
+namespace detail
+{
+struct transactions_error_category : std::error_category {
+    [[nodiscard]] const char* name() const noexcept override
+    {
+        return "couchbase.transactions";
+    }
+
+    [[nodiscard]] std::string message(int ev) const noexcept override
+    {
+        switch (transactions_errc(ev)) {
+            case transactions_errc::operation_failed:
+                return "operation_failed";
+            case transactions_errc::std_exception:
+                return "std_exception";
+            case transactions_errc::unexpected_exception:
+                return "unexpected_exception";
+        }
+        return "FIXME: unknown error code in transactions category (recompile with newer library)";
+    }
+};
+
+inline const std::error_category&
+get_transactions_category()
+{
+    static detail::transactions_error_category instance;
+    return instance;
+}
+} // namespace detail
+
+inline std::error_code
+make_error_code(transactions_errc e)
+{
+    return { static_cast<int>(e), detail::get_transactions_category() };
+}
+
 } // namespace couchbase::php
+
+namespace std
+{
+template<>
+struct is_error_code_enum<couchbase::php::transactions_errc> : true_type {
+};
+} // namespace std

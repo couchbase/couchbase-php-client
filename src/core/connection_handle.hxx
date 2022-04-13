@@ -28,6 +28,7 @@
 namespace couchbase
 {
 struct origin;
+class cluster;
 } // namespace couchbase
 
 namespace couchbase::php
@@ -36,6 +37,8 @@ class connection_handle
 {
   public:
     explicit connection_handle(couchbase::origin origin, std::chrono::steady_clock::time_point idle_expiry);
+
+    [[nodiscard]] std::shared_ptr<couchbase::cluster> cluster() const;
 
     [[nodiscard]] bool is_expired(std::chrono::steady_clock::time_point now) const;
 

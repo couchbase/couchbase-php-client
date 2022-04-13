@@ -43,12 +43,12 @@ class Collection
     private $core;
 
     /**
-     * @internal
-     *
      * @param string $name
      * @param string $scopeName
      * @param string $bucketName
-     * @param        $core
+     * @param resource $core
+     *
+     * @internal
      *
      * @since 4.0.0
      */
@@ -58,6 +58,29 @@ class Collection
         $this->scopeName = $scopeName;
         $this->bucketName = $bucketName;
         $this->core = $core;
+    }
+
+
+    /**
+     * Get the name of the bucket.
+     *
+     * @return string
+     * @since 4.0.0
+     */
+    public function bucketName(): string
+    {
+        return $this->bucketName;
+    }
+
+    /**
+     * Get the name of the scope.
+     *
+     * @return string
+     * @since 4.0.0
+     */
+    public function scopeName(): string
+    {
+        return $this->scopeName;
     }
 
     /**

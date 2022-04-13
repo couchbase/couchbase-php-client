@@ -236,9 +236,8 @@ class Cluster
      */
     public function transactions(): Transactions
     {
-        return new Transactions($this->core, $this->options->getTransactionsOptions());
+        return new Transactions($this->core, $this->options->getTransactionsConfiguration());
     }
-
 
     /**
      * @internal

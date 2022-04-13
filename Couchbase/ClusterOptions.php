@@ -64,7 +64,7 @@ class ClusterOptions
 
     private ?ThresholdLoggingOptions $thresholdLoggingTracerOptions = null;
     private ?LoggingMeterOptions $loggingMeterOptions = null;
-    private ?TransactionsConfiguration $transactionsOptions = null;
+    private ?TransactionsConfiguration $transactionsConfiguration = null;
 
     private ?Authenticator $authenticator;
 
@@ -485,23 +485,23 @@ class ClusterOptions
      */
     public function transactionsOptions(TransactionsConfiguration $options): ClusterOptions
     {
-        $this->transactionsOptions = $options;
+        $this->transactionsConfiguration = $options;
         return $this;
     }
 
     /**
-     * @return TransactionsConfiguration
+     * @return TransactionsConfiguration|null
      * @since 4.0.0
      */
-    public function getTransactionsOptions(): TransactionsConfiguration
+    public function getTransactionsConfiguration(): ?TransactionsConfiguration
     {
-        return $this->transactionsOptions;
+        return $this->transactionsConfiguration;
     }
 
     /**
-     * @internal
      * @return string the string that uniquely identifies particular authenticator layout
      * @throws InvalidArgumentException
+     * @internal
      */
     public function authenticatorHash(): string
     {
@@ -519,9 +519,9 @@ class ClusterOptions
     }
 
     /**
-     * @internal
      * @return array
      * @throws InvalidArgumentException
+     * @internal
      */
     public function export(): array
     {
@@ -572,7 +572,6 @@ class ClusterOptions
             'thresholdLoggingTracerOptions' =>
                 $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),
             'loggingMeterOptions' => $this->loggingMeterOptions == null ? null : $this->loggingMeterOptions->export(),
-            'transactionsOptions' => $this->transactionsOptions == null ? null : $this->transactionsOptions->export(),
         ];
     }
 }

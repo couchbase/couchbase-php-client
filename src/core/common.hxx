@@ -108,6 +108,9 @@ extern zend_class_entry* xattr_invalid_key_combo_exception_ce;
 extern zend_class_entry* xattr_unknown_macro_exception_ce;
 extern zend_class_entry* xattr_unknown_virtual_attribute_exception_ce;
 
+extern zend_class_entry* transaction_exception_ce;
+extern zend_class_entry* transaction_operation_failed_exception_ce;
+
 namespace couchbase::php
 {
 zend_class_entry*

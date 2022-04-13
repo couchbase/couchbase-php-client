@@ -36,11 +36,11 @@ class Scope
     private $core;
 
     /**
-     * @internal
-     *
      * @param string $name
      * @param string $bucketName
-     * @param        $core
+     * @param resource $core
+     *
+     * @internal
      *
      * @since 4.0.0
      */

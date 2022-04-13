@@ -25,8 +25,6 @@ use Couchbase\Utilities\Deprecations;
 class TransactionOptions
 {
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
-
     private ?int $timeoutMilliseconds = null;
 
     /**
@@ -60,24 +58,24 @@ class TransactionOptions
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
         return $this;
     }
 
     /**
-     * @internal
-     *
      * @param TransactionOptions|null $options
      *
      * @return array
+     * @internal
      * @since 4.0.0
      */
     public static function export(?TransactionOptions $options): array
     {
+        if ($options == null) {
+            return [];
+        }
         return [
-            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'timeout' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
         ];
     }
 }

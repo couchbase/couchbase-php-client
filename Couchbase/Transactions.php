@@ -24,44 +24,42 @@ use Exception;
 
 class Transactions
 {
-    private ?TransactionsConfiguration $options = null;
-
     /**
      * @var resource
      */
-    private $core;
+    private $transactions;
 
     /**
-     * @internal
+     * @param ?TransactionsConfiguration $configuration
+     * @param resource $core
      *
-     * @param ?TransactionsConfiguration $options
-     * @param $core
+     * @internal
      *
      * @since 4.0.0
      */
-    public function __construct($core, ?TransactionsConfiguration $options = null)
+    public function __construct($core, ?TransactionsConfiguration $configuration = null)
     {
-        $this->core = $core;
-        $this->options = $options;
+        $this->transactions = Extension\createTransactions($core, TransactionsConfiguration::export($configuration));
     }
 
     /**
      * Executes a transactions
      *
-     * @param callable $logic The transaction closure to execute
+     * @param callable<TransactionAttemptContext> $logic The transaction closure to execute. The callable receives single argument of type
+     *     {TransactionAttemptContext}.
      * @param TransactionOptions|null $options configuration options for the transaction
      *
      * @return TransactionResult
      * @throws Exception
      */
-    public function run(callable $logic, ?TransactionOptions $options): TransactionResult
+    public function run(callable $logic, ?TransactionOptions $options = null): TransactionResult
     {
-        $transaction = new TransactionAttemptContext($this, $options);
+        $transaction = new TransactionAttemptContextDetails($this->transactions, $options);
 
         while (true) {
             $transaction->newAttempt();
             try {
-                $logic($transaction);
+                $logic($transaction->transactionAttemptContext());
             } catch (Exception $exception) {
                 $transaction->rollback();
                 throw $exception;

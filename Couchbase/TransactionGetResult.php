@@ -28,7 +28,9 @@ class TransactionGetResult extends Result
     private string $scopeName;
     private string $collectionName;
     private string $value;
-    private int $flags;
+    private string $cas;
+    private ?array $links = null;
+    private ?array $metadata = null;
 
     /**
      * @internal
@@ -38,12 +40,18 @@ class TransactionGetResult extends Result
     {
         parent::__construct($response);
         $this->transcoder = $transcoder;
-        $this->id = $response["id"];
         $this->bucketName = $response["bucketName"];
         $this->scopeName = $response["scopeName"];
         $this->collectionName = $response["collectionName"];
+        $this->id = $response["id"];
         $this->value = $response["value"];
-        $this->flags = $response["flags"];
+        $this->cas = $response["cas"];
+        if (array_key_exists("links", $response)) {
+            $this->links = $response["links"];
+        }
+        if (array_key_exists("metadata", $response)) {
+            $this->metadata = $response["metadata"];
+        }
     }
 
     /**
@@ -54,7 +62,7 @@ class TransactionGetResult extends Result
      */
     public function content()
     {
-        return $this->transcoder->decode($this->value, $this->flags);
+        return $this->transcoder->decode($this->value, 0);
     }
 
     /**
@@ -66,5 +74,23 @@ class TransactionGetResult extends Result
     public function contentAs(Transcoder $transcoder, ?int $overrideFlags = null)
     {
         return $transcoder->decode($this->value, $overrideFlags == null ? $overrideFlags : $this->flags);
+    }
+
+    /**
+     * @return array
+     * @internal
+     */
+    public function export(): array
+    {
+        return [
+            'bucketName' => $this->bucketName,
+            'scopeName' => $this->scopeName,
+            'collectionName' => $this->collectionName,
+            'id' => $this->id,
+            'value' => $this->value,
+            'cas' => $this->cas,
+            'links' => $this->links,
+            'metadata' => $this->metadata,
+        ];
     }
 }

@@ -106,18 +106,23 @@ class TransactionsConfiguration
     }
 
     /**
-     * @internal
+     * @param TransactionsConfiguration|null $configuration
+     *
      * @return array
+     * @internal
      * @since 4.0.0
      */
-    public function export(): array
+    public static function export(?TransactionsConfiguration $configuration): array
     {
+        if ($configuration == null) {
+            return [];
+        }
         return [
-            'durabilityLevel' => $this->durabilityLevel,
-            'keyValueTimeoutMilliseconds' => $this->keyValueTimeoutMilliseconds,
-            'timeoutMilliseconds' => $this->timeoutMilliseconds,
-            'queryOptions' => $this->queryOptions == null ? null : $this->queryOptions->export(),
-            'cleanupOptions' => $this->cleanupOptions == null ? null : $this->cleanupOptions->export(),
+            'durabilityLevel' => $configuration->durabilityLevel,
+            'keyValueTimeout' => $configuration->keyValueTimeoutMilliseconds,
+            'timeout' => $configuration->timeoutMilliseconds,
+            'queryOptions' => $configuration->queryOptions == null ? null : $configuration->queryOptions->export(),
+            'cleanupOptions' => $configuration->cleanupOptions == null ? null : $configuration->cleanupOptions->export(),
         ];
     }
 }
