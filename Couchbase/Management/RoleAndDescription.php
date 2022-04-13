@@ -22,15 +22,54 @@ namespace Couchbase\Management;
 
 class RoleAndDescription
 {
+    private Role $role;
+    private string $displayName;
+    private string $description;
+
+    /**
+     * Gets the role.
+     *
+     * @return Role
+     * @since 4.0.0
+     */
     public function role(): Role
     {
+        return $this->role;
     }
 
+    /**
+     * Gets the display name of the role.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function displayName(): string
     {
+        return $this->displayName;
     }
 
+    /**
+     * Gets the description of the role.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function description(): string
     {
+        return $this->description;
+    }
+
+    /**
+     * @internal
+     * @since 4.0.0
+     */
+    public static function import(array $role): RoleAndDescription
+    {
+        $settings = new RoleAndDescription();
+        $settings->role = Role::import($role);
+        $settings->displayName = $role['displayName'];
+        $settings->description = $role['description'];
+
+        return $settings;
     }
 }

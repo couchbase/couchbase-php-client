@@ -18,16 +18,13 @@
 #include "common.hxx"
 
 #include <couchbase/cluster.hxx>
-#include <couchbase/operations/management/bucket_drop.hxx>
-#include <couchbase/operations/management/bucket_flush.hxx>
-#include <couchbase/operations/management/bucket_get.hxx>
-#include <couchbase/operations/management/bucket_get_all.hxx>
-#include <couchbase/operations/management/bucket_update.hxx>
+#include <couchbase/operations/management/bucket.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>
 #include <couchbase/operations/management/design_document.hxx>
 #include <couchbase/operations/management/search_index.hxx>
 #include <couchbase/operations/management/search_index_upsert.hxx>
-#include <couchbase/operations/management/view_index_upsert.hxx>
+#include <couchbase/operations/management/user.hxx>
+#include <couchbase/operations/management/view.hxx>
 #include <couchbase/protocol/mutation_token.hxx>
 
 #include <fmt/core.h>
@@ -724,6 +721,174 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
+    std::pair<core_error_info, couchbase::operations::management::user_upsert_response> user_upsert(
+      couchbase::operations::management::user_upsert_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_upsert_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::user_upsert_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::user_get_response> user_get(
+      couchbase::operations::management::user_get_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_get_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::management::user_get_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::user_get_all_response> user_get_all(
+      couchbase::operations::management::user_get_all_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_get_all_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::user_get_all_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get all users: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::user_drop_response> user_drop(
+      couchbase::operations::management::user_drop_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_drop_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::management::user_drop_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to drop user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::group_upsert_response> group_upsert(
+      couchbase::operations::management::group_upsert_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_upsert_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_upsert_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to upsert group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::group_get_response> group_get(
+      couchbase::operations::management::group_get_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_get_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request),
+                          [barrier](couchbase::operations::management::group_get_response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::group_get_all_response> group_get_all(
+      couchbase::operations::management::group_get_all_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_get_all_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_get_all_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get all groups: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::group_drop_response> group_drop(
+      couchbase::operations::management::group_drop_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_drop_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_drop_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to drop group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
+    std::pair<core_error_info, couchbase::operations::management::role_get_all_response> role_get_all(
+      couchbase::operations::management::role_get_all_request request)
+    {
+        auto barrier = std::make_shared<std::promise<couchbase::operations::management::role_get_all_response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::role_get_all_response&& resp) {
+            barrier->set_value(std::move(resp));
+        });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to get all roles: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_http_error_context(resp.ctx) },
+                     {} };
+        }
+        return { {}, std::move(resp) };
+    }
+
   private:
     asio::io_context ctx_{};
     std::shared_ptr<couchbase::cluster> cluster_{ couchbase::cluster::create(ctx_) };
@@ -1024,6 +1189,43 @@ cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options
         field.emplace_back(cb_string_new(item));
     }
     ZEND_HASH_FOREACH_END();
+    return {};
+}
+
+template<typename Request>
+static core_error_info
+cb_assign_user_domain(Request& req, const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("domain"));
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected domain to be a string in the options" };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("local")) == 0) {
+        req.domain = couchbase::operations::management::rbac::auth_domain::local;
+    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("external")) == 0) {
+        req.domain = couchbase::operations::management::rbac::auth_domain::external;
+    } else {
+        return { error::common_errc::invalid_argument,
+                 { __LINE__, __FILE__, __func__ },
+                 fmt::format("unknown domain: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
+    }
     return {};
 }
 
@@ -3631,7 +3833,9 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
         return err;
     }
 
-    cb_bucket_settings_to_zval(return_value, resp.bucket);
+    if (auto e = cb_bucket_settings_to_zval(return_value, resp.bucket); e.ec) {
+        return e;
+    }
 
     return {};
 }
@@ -3653,7 +3857,9 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options)
     array_init(return_value);
     for (const auto& bucket_settings : resp.buckets) {
         zval this_settings;
-        cb_bucket_settings_to_zval(&this_settings, bucket_settings);
+        if (auto e = cb_bucket_settings_to_zval(&this_settings, bucket_settings); e.ec) {
+            return e;
+        }
 
         add_next_index_zval(return_value, &this_settings);
     }
@@ -3694,6 +3900,425 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
     }
 
     array_init(return_value);
+    return {};
+}
+
+void
+cb_role_to_zval(zval* return_value, const couchbase::operations::management::rbac::role role)
+{
+    add_assoc_string(return_value, "name", role.name.c_str());
+    if (role.bucket) {
+        add_assoc_string(return_value, "bucket", role.bucket->c_str());
+    }
+    if (role.scope) {
+        add_assoc_string(return_value, "scope", role.scope->c_str());
+    }
+    if (role.collection) {
+        add_assoc_string(return_value, "collection", role.collection->c_str());
+    }
+}
+
+core_error_info
+cb_user_and_metadata_to_zval(zval* return_value, const couchbase::operations::management::rbac::user_and_metadata user)
+{
+    array_init(return_value);
+
+    add_assoc_string(return_value, "username", user.username.c_str());
+    if (user.display_name) {
+        add_assoc_string(return_value, "displayName", user.display_name->c_str());
+    }
+
+    zval groups;
+    array_init(&groups);
+    for (const auto& group : user.groups) {
+        add_next_index_string(&groups, group.c_str());
+    }
+    add_assoc_zval(return_value, "groups", &groups);
+
+    zval roles;
+    array_init(&roles);
+    for (const auto& role : user.roles) {
+        zval z_role;
+        array_init(&z_role);
+        add_assoc_string(&z_role, "name", role.name.c_str());
+        if (role.bucket) {
+            add_assoc_string(&z_role, "bucket", role.bucket->c_str());
+        }
+        if (role.scope) {
+            add_assoc_string(&z_role, "scope", role.scope->c_str());
+        }
+        if (role.collection) {
+            add_assoc_string(&z_role, "collection", role.collection->c_str());
+        }
+        add_next_index_zval(&roles, &z_role);
+    }
+    add_assoc_zval(return_value, "roles", &roles);
+
+    std::string domain;
+    switch (user.domain) {
+        case couchbase::operations::management::rbac::auth_domain::local:
+            domain = "local";
+            break;
+        case couchbase::operations::management::rbac::auth_domain::external:
+            domain = "external";
+            break;
+        default:
+            domain = "unknown";
+            break;
+    }
+    add_assoc_string(return_value, "domain", domain.c_str());
+
+    if (user.password_changed) {
+        add_assoc_string(return_value, "passwordChanged", user.password_changed->c_str());
+    }
+
+    zval external_groups;
+    array_init(&external_groups);
+    for (const auto& group : user.external_groups) {
+        add_next_index_string(&external_groups, group.c_str());
+    }
+    add_assoc_zval(return_value, "externalGroups", &external_groups);
+
+    zval effective_roles;
+    array_init(&effective_roles);
+    for (const auto& role : user.effective_roles) {
+        zval z_role;
+        array_init(&z_role);
+        cb_role_to_zval(&z_role, role);
+
+        zval origins;
+        array_init(&origins);
+        for (const auto& origin : role.origins) {
+            zval z_origin;
+            array_init(&z_origin);
+            add_assoc_string(&z_origin, "type", origin.type.c_str());
+            if (origin.name) {
+                add_assoc_string(&z_origin, "name", origin.name->c_str());
+            }
+
+            add_next_index_zval(&origins, &z_origin);
+        }
+        add_assoc_zval(&z_role, "origins", &origins);
+
+        add_next_index_zval(&effective_roles, &z_role);
+    }
+    add_assoc_zval(return_value, "effectiveRoles", &effective_roles);
+
+    return {};
+}
+
+void
+cb_group_to_zval(zval* return_value, const couchbase::operations::management::rbac::group group)
+{
+    array_init(return_value);
+
+    add_assoc_string(return_value, "name", group.name.c_str());
+    if (group.description) {
+        add_assoc_string(return_value, "description", group.description->c_str());
+    }
+    if (group.ldap_group_reference) {
+        add_assoc_string(return_value, "ldapGroupReference", group.ldap_group_reference->c_str());
+    }
+
+    zval roles;
+    array_init(&roles);
+    for (const auto& role : group.roles) {
+        zval z_role;
+        array_init(&z_role);
+        cb_role_to_zval(&z_role, role);
+        add_next_index_zval(&roles, &z_role);
+    }
+    add_assoc_zval(return_value, "roles", &roles);
+}
+
+core_error_info
+connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
+{
+    couchbase::operations::management::rbac::user cuser{};
+    if (auto e = cb_assign_string(cuser.username, user, "username"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(cuser.display_name, user, "displayName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(cuser.password, user, "password"); e.ec) {
+        return e;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(user), ZEND_STRL("roles")); value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::operations::management::rbac::role> roles{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            couchbase::operations::management::rbac::role role{};
+            if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.bucket, item, "bucket"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.scope, item, "scope"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.collection, item, "collection"); e.ec) {
+                return e;
+            }
+            roles.emplace_back(role);
+        }
+        ZEND_HASH_FOREACH_END();
+
+        cuser.roles = roles;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(user), ZEND_STRL("groups"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::set<std::string> groups{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            groups.emplace(std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) }));
+        }
+        ZEND_HASH_FOREACH_END();
+
+        cuser.groups = groups;
+    }
+
+    couchbase::operations::management::user_upsert_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_user_domain(request, options); e.ec) {
+        return e;
+    }
+    request.user = cuser;
+
+    auto [err, resp] = impl_->user_upsert(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::user_get_all(zval* return_value, const zval* options)
+{
+    couchbase::operations::management::user_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_user_domain(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->user_get_all(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& user : resp.users) {
+        zval this_user;
+        if (auto e = cb_user_and_metadata_to_zval(&this_user, user); e.ec) {
+            return e;
+        }
+
+        add_next_index_zval(return_value, &this_user);
+    }
+
+    return {};
+}
+
+core_error_info
+connection_handle::user_get(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::user_get_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_user_domain(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->user_get(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    if (auto e = cb_user_and_metadata_to_zval(return_value, resp.user); e.ec) {
+        return e;
+    }
+
+    return {};
+}
+
+core_error_info
+connection_handle::user_drop(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::user_drop_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_user_domain(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->user_drop(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
+{
+    couchbase::operations::management::rbac::group cgroup{};
+    if (auto e = cb_assign_string(cgroup.name, group, "name"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(cgroup.description, group, "description"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(cgroup.ldap_group_reference, group, "ldapGroupReference"); e.ec) {
+        return e;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(group), ZEND_STRL("roles"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<couchbase::operations::management::rbac::role> roles{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            couchbase::operations::management::rbac::role role{};
+            if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.bucket, item, "bucket"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.scope, item, "scope"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(role.collection, item, "collection"); e.ec) {
+                return e;
+            }
+            roles.emplace_back(role);
+        }
+        ZEND_HASH_FOREACH_END();
+
+        cgroup.roles = roles;
+    }
+
+    couchbase::operations::management::group_upsert_request request{ cgroup };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->group_upsert(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::group_get_all(zval* return_value, const zval* options)
+{
+    couchbase::operations::management::group_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->group_get_all(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& group : resp.groups) {
+        zval this_group;
+        cb_group_to_zval(&this_group, group);
+
+        add_next_index_zval(return_value, &this_group);
+    }
+
+    return {};
+}
+
+core_error_info
+connection_handle::group_get(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::group_get_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->group_get(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    cb_group_to_zval(return_value, resp.group);
+
+    return {};
+}
+
+core_error_info
+connection_handle::group_drop(zval* return_value, const zend_string* name, const zval* options)
+{
+    couchbase::operations::management::group_drop_request request{ cb_string_new(name) };
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->group_drop(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+core_error_info
+connection_handle::role_get_all(zval* return_value, const zval* options)
+{
+    couchbase::operations::management::role_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [err, resp] = impl_->role_get_all(std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& role : resp.roles) {
+        zval this_role;
+        array_init(&this_role);
+        cb_role_to_zval(&this_role, role);
+        add_assoc_string(&this_role, "displayName", role.display_name.c_str());
+        add_assoc_string(&this_role, "description", role.description.c_str());
+
+        add_next_index_zval(return_value, &this_role);
+    }
+
     return {};
 }
 

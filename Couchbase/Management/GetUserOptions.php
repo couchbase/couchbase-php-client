@@ -22,7 +22,69 @@ namespace Couchbase\Management;
 
 class GetUserOptions
 {
-    public function domainName(string $name): GetUserOptions
+    private ?string $domainName = null;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
     {
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return GetUserOptions
+     * @since 4.0.0
+     */
+    public static function build(): GetUserOptions
+    {
+        return new GetUserOptions();
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     * @return GetUserOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): GetUserOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the auth domain.
+     *
+     * @param string $domain the auth domain
+     * @return GetUserOptions
+     * @see \Couchbase\Management\AuthDomain::LOCAL
+     * @see \Couchbase\Management\AuthDomain::EXTERNAL
+     * @since 4.0.0
+     */
+    public function domainName(string $domain): GetUserOptions
+    {
+        $this->domainName = $domain;
+        return $this;
+    }
+
+    /**
+     * @internal
+     * @param GetUserOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?GetUserOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'domain' => $options->domainName
+        ];
     }
 }

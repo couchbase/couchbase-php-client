@@ -22,11 +22,43 @@ namespace Couchbase\Management;
 
 class Origin
 {
+    private string $type;
+    private string $name;
+
+    /**
+     * Gets the type of the origin.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function type(): string
     {
+        return $this->type;
     }
 
+    /**
+     * Gets the name of the origin.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function name(): string
     {
+        return $this->name;
+    }
+
+    /**
+     * @internal
+     * @since 4.0.0
+     */
+    public static function import(array $origin): Origin
+    {
+        $settings = new Origin();
+        if (array_key_exists('name', $origin)) {
+            $settings->name = $origin['name'];
+        }
+        $settings->type = $origin['type'];
+
+        return $settings;
     }
 }

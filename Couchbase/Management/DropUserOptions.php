@@ -22,7 +22,69 @@ namespace Couchbase\Management;
 
 class DropUserOptions
 {
-    public function domainName(string $name): DropUserOptions
+    private ?string $domainName = null;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
     {
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return DropUserOptions
+     * @since 4.0.0
+     */
+    public static function build(): DropUserOptions
+    {
+        return new DropUserOptions();
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     * @return DropUserOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): DropUserOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the auth domain.
+     *
+     * @param string $domain the auth domain
+     * @return DropUserOptions
+     * @see \Couchbase\Management\AuthDomain::LOCAL
+     * @see \Couchbase\Management\AuthDomain::EXTERNAL
+     * @since 4.0.0
+     */
+    public function domainName(string $domain): DropUserOptions
+    {
+        $this->domainName = $domain;
+        return $this;
+    }
+
+    /**
+     * @internal
+     * @param DropUserOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?DropUserOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'domain' => $options->domainName
+        ];
     }
 }

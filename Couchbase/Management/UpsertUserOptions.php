@@ -22,7 +22,69 @@ namespace Couchbase\Management;
 
 class UpsertUserOptions
 {
-    public function domainName(string $name): DropUserOptions
+    private ?string $domainName = null;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.0
+     */
+    public function __construct()
     {
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return UpsertUserOptions
+     * @since 4.0.0
+     */
+    public static function build(): UpsertUserOptions
+    {
+        return new UpsertUserOptions();
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     * @return UpsertUserOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): UpsertUserOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the auth domain.
+     *
+     * @param string $domain the auth domain
+     * @return UpsertUserOptions
+     * @see \Couchbase\Management\AuthDomain::LOCAL
+     * @see \Couchbase\Management\AuthDomain::EXTERNAL
+     * @since 4.0.0
+     */
+    public function domainName(string $domain): UpsertUserOptions
+    {
+        $this->domainName = $domain;
+        return $this;
+    }
+
+    /**
+     * @internal
+     * @param UpsertUserOptions|null $options
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?UpsertUserOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'domain' => $options->domainName
+        ];
     }
 }

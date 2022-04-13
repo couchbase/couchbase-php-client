@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class GetAllUsersOptions
+class GetAllGroupsOptions
 {
     private ?string $domainName = null;
     private ?int $timeoutMilliseconds = null;
@@ -35,22 +35,22 @@ class GetAllUsersOptions
     /**
      * Static helper to keep code more readable
      *
-     * @return GetAllUsersOptions
+     * @return GetAllGroupsOptions
      * @since 4.0.0
      */
-    public static function build(): GetAllUsersOptions
+    public static function build(): GetAllGroupsOptions
     {
-        return new GetAllUsersOptions();
+        return new GetAllGroupsOptions();
     }
 
     /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
-     * @return GetAllUsersOptions
+     * @return GetAllGroupsOptions
      * @since 4.0.0
      */
-    public function timeout(int $milliseconds): GetAllUsersOptions
+    public function timeout(int $milliseconds): GetAllGroupsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
@@ -60,12 +60,12 @@ class GetAllUsersOptions
      * Sets the auth domain.
      *
      * @param string $domain the auth domain
-     * @return GetAllUsersOptions
+     * @return GetAllGroupsOptions
      * @see \Couchbase\Management\AuthDomain::LOCAL
      * @see \Couchbase\Management\AuthDomain::EXTERNAL
      * @since 4.0.0
      */
-    public function domainName(string $domain): GetAllUsersOptions
+    public function domainName(string $domain): GetAllGroupsOptions
     {
         $this->domainName = $domain;
         return $this;
@@ -73,11 +73,11 @@ class GetAllUsersOptions
 
     /**
      * @internal
-     * @param GetAllUsersOptions|null $options
+     * @param GetAllGroupsOptions|null $options
      * @return array
      * @since 4.0.0
      */
-    public static function export(?GetAllUsersOptions $options): array
+    public static function export(?GetAllGroupsOptions $options): array
     {
         if ($options == null) {
             return [];

@@ -28,6 +28,7 @@ use Couchbase\Management\AnalyticsIndexManager;
 use Couchbase\Management\BucketManager;
 use Couchbase\Management\QueryIndexManager;
 use Couchbase\Management\SearchIndexManager;
+use Couchbase\Management\User;
 use Couchbase\Management\UserManager;
 
 /**
@@ -141,12 +142,11 @@ class Cluster
      * Creates a new user manager object for managing users and groups.
      *
      * @return UserManager
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function users(): UserManager
     {
-        throw new UnsupportedOperationException();
+        return new UserManager($this->core);
     }
 
     /**

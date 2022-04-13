@@ -1575,6 +1575,207 @@ PHP_FUNCTION(transactionRemove)
     }
 }
 
+PHP_FUNCTION(userUpsert)
+{
+    zval* connection = nullptr;
+    zval* user = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_ARRAY(user)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->user_upsert(return_value, user, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(userGet)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->user_get(return_value, name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(userGetAll)
+{
+    zval* connection = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->user_get_all(return_value, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(userDrop)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->user_drop(return_value, name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(groupUpsert)
+{
+    zval* connection = nullptr;
+    zval* group = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_ARRAY(group)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->group_upsert(return_value, group, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(groupGet)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->group_get(return_value, name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(groupGetAll)
+{
+    zval* connection = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->group_get_all(return_value, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(groupDrop)
+{
+    zval* connection = nullptr;
+    zend_string* name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->group_drop(return_value, name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(roleGetAll)
+{
+    zval* connection = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->role_get_all(return_value, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -1934,6 +2135,57 @@ ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, document, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userUpsert, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, user, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userGet, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userGetAll, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userDrop, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupUpsert, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, group, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupGet, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupGetAll, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupDrop, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_roleGetAll, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -1984,6 +2236,16 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", transactionInsert, ai_CouchbaseExtension_transactionInsert)
         ZEND_NS_FE("Couchbase\\Extension", transactionReplace, ai_CouchbaseExtension_transactionReplace)
         ZEND_NS_FE("Couchbase\\Extension", transactionRemove, ai_CouchbaseExtension_transactionRemove)
+
+        ZEND_NS_FE("Couchbase\\Extension", userUpsert, ai_CouchbaseExtension_userUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", userGet, ai_CouchbaseExtension_userGet)
+        ZEND_NS_FE("Couchbase\\Extension", userGetAll, ai_CouchbaseExtension_userGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", userDrop, ai_CouchbaseExtension_userDrop)
+        ZEND_NS_FE("Couchbase\\Extension", groupUpsert, ai_CouchbaseExtension_groupUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", groupGet, ai_CouchbaseExtension_groupGet)
+        ZEND_NS_FE("Couchbase\\Extension", groupGetAll, ai_CouchbaseExtension_groupGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", groupDrop, ai_CouchbaseExtension_groupDrop)
+        ZEND_NS_FE("Couchbase\\Extension", roleGetAll, ai_CouchbaseExtension_roleGetAll)
         PHP_FE_END
 };
 

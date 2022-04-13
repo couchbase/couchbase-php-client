@@ -20,41 +20,154 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Extension;
+
 class UserManager
 {
+    /**
+     * @var resource
+     */
+    private $core;
+
+    /**
+     * @internal
+     * @param $core
+     * @since 4.0.0
+     */
+    public function __construct($core)
+    {
+        $this->core = $core;
+    }
+
+    /**
+     * Fetch a user.
+     *
+     * @param string $name the name of the user.
+     * @param GetUserOptions|null $options the options to use when fetching the user.
+     * @return UserAndMetadata
+     * @since 4.0.0
+     */
     public function getUser(string $name, GetUserOptions $options = null): UserAndMetadata
     {
+        $result = Extension\userGet($this->core, $name, GetUserOptions::export($options));
+        return UserAndMetadata::import($result);
     }
 
+    /**
+     * Fetch all users.
+     *
+     * @param GetAllUsersOptions|null $options the options to use when fetching the users.
+     * @return array
+     * @since 4.0.0
+     */
     public function getAllUsers(GetAllUsersOptions $options = null): array
     {
+        $result = Extension\userGetAll($this->core, GetAllUsersOptions::export($options));
+        $users = [];
+        foreach ($result as $user) {
+            $users[] = UserAndMetadata::import($user);
+        }
+
+        return $users;
     }
 
+    /**
+     * Create or replace a user.
+     *
+     * @param User $user the user.
+     * @param UpsertUserOptions|null $options the options to use when upserting the user.
+     * @since 4.0.0
+     */
     public function upsertUser(User $user, UpsertUserOptions $options = null)
     {
+        Extension\userUpsert($this->core, User::export($user), UpsertUserOptions::export($options));
     }
 
+    /**
+     * Remove a user.
+     *
+     * @param string $name the name of the user.
+     * @param DropUserOptions|null $options the options to use when dropping the user.
+     * @since 4.0.0
+     */
     public function dropUser(string $name, DropUserOptions $options = null)
     {
+        Extension\userDrop($this->core, $name, DropUserOptions::export($options));
     }
 
-    public function getRoles(): array
+    /**
+     * Get all roles and descriptions.
+     *
+     * @param GetRolesOptions|null $options the options to use when fetching the roles.
+     * @return array
+     * @see \Couchbase\Management\RoleAndDescription
+     * @since 4.0.0
+     */
+    public function getRoles(GetRolesOptions $options = null): array
     {
+        $result = Extension\roleGetAll($this->core, GetRolesOptions::export($options));
+        var_dump($result);
+        foreach ($result as $role) {
+            $roles[] = RoleAndDescription::import($role);
+        }
+
+        return $roles;
     }
 
-    public function getGroup(string $name): Group
+    /**
+     * Fetch a group.
+     *
+     * @param string $name the name of the user.
+     * @param GetGroupOptions|null $options the options to use when fetching the group.
+     * @return Group
+     * @since 4.0.0
+     */
+    public function getGroup(string $name, GetGroupOptions $options = null): Group
     {
+        $result = Extension\groupGet($this->core, $name, GetGroupOptions::export($options));
+        return Group::import($result);
     }
 
-    public function getAllGroups(): array
+    /**
+     * Get all groups.
+     *
+     * @param GetAllGroupsOptions|null $options the options to use when fetching the groups.
+     * @return array
+     * @see \Couchbase\Management\Group
+     * @since 4.0.0
+     */
+    public function getAllGroups(GetAllGroupsOptions $options = null): array
     {
+        $result = Extension\groupGetAll($this->core, GetAllGroupsOptions::export($options));
+        $groups = [];
+        foreach ($result as $group) {
+            $groups[] = Group::import($group);
+        }
+
+        return $groups;
     }
 
-    public function upsertGroup(Group $group)
+    /**
+     * Create or replace a group.
+     *
+     * @param Group $group the group.
+     * @param UpsertGroupOptions|null $options the options to use when upserting the group.
+     * @since 4.0.0
+     */
+    public function upsertGroup(Group $group, UpsertGroupOptions $options = null)
     {
+        Extension\groupUpsert($this->core, Group::export($group), UpsertGroupOptions::export($options));
     }
 
-    public function dropGroup(string $name)
+    /**
+     * Remove a group.
+     *
+     * @param string $name the name of the group.
+     * @param DropGroupOptions|null $options the options to use when dropping the group.
+     * @since 4.0.0
+     */
+    public function dropGroup(string $name, DropGroupOptions $options = null)
     {
+        Extension\groupDrop($this->core, $name, DropGroupOptions::export($options));
     }
 }

@@ -237,6 +237,24 @@ class connection_handle
 
     [[nodiscard]] core_error_info bucket_flush(zval* return_value, const zend_string* name, const zval* options);
 
+    [[nodiscard]] core_error_info user_upsert(zval* return_value, const zval* user, const zval* options);
+
+    [[nodiscard]] core_error_info user_get(zval* return_value, const zend_string* name, const zval* options);
+
+    [[nodiscard]] core_error_info user_get_all(zval* return_value, const zval* options);
+
+    [[nodiscard]] core_error_info user_drop(zval* return_value, const zend_string* name, const zval* options);
+
+    [[nodiscard]] core_error_info group_upsert(zval* return_value, const zval* group, const zval* options);
+
+    [[nodiscard]] core_error_info group_get(zval* return_value, const zend_string* name, const zval* options);
+
+    [[nodiscard]] core_error_info group_get_all(zval* return_value, const zval* options);
+
+    [[nodiscard]] core_error_info group_drop(zval* return_value, const zend_string* name, const zval* options);
+
+    [[nodiscard]] core_error_info role_get_all(zval* return_value, const zval* options);
+
   private:
     class impl;
 

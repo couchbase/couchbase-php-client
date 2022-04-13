@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class GetAllUsersOptions
+class DropGroupOptions
 {
     private ?string $domainName = null;
     private ?int $timeoutMilliseconds = null;
@@ -35,22 +35,22 @@ class GetAllUsersOptions
     /**
      * Static helper to keep code more readable
      *
-     * @return GetAllUsersOptions
+     * @return DropGroupOptions
      * @since 4.0.0
      */
-    public static function build(): GetAllUsersOptions
+    public static function build(): DropGroupOptions
     {
-        return new GetAllUsersOptions();
+        return new DropGroupOptions();
     }
 
     /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
-     * @return GetAllUsersOptions
+     * @return DropGroupOptions
      * @since 4.0.0
      */
-    public function timeout(int $milliseconds): GetAllUsersOptions
+    public function timeout(int $milliseconds): DropGroupOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
@@ -60,12 +60,12 @@ class GetAllUsersOptions
      * Sets the auth domain.
      *
      * @param string $domain the auth domain
-     * @return GetAllUsersOptions
+     * @return DropGroupOptions
      * @see \Couchbase\Management\AuthDomain::LOCAL
      * @see \Couchbase\Management\AuthDomain::EXTERNAL
      * @since 4.0.0
      */
-    public function domainName(string $domain): GetAllUsersOptions
+    public function domainName(string $domain): DropGroupOptions
     {
         $this->domainName = $domain;
         return $this;
@@ -73,11 +73,11 @@ class GetAllUsersOptions
 
     /**
      * @internal
-     * @param GetAllUsersOptions|null $options
+     * @param DropGroupOptions|null $options
      * @return array
      * @since 4.0.0
      */
-    public static function export(?GetAllUsersOptions $options): array
+    public static function export(?DropGroupOptions $options): array
     {
         if ($options == null) {
             return [];

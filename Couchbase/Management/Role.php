@@ -20,37 +20,170 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 class Role
 {
+    private string $name = "";
+    private ?string $bucket = null;
+    private ?string $scope = null;
+    private ?string $collection = null;
+
+    /**
+     * @param string $name name of the role
+     * @since 4.0.0
+     */
+    public function __construct()
+    {
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return Role
+     * @since 4.0.0
+     */
+    public static function build(): Role
+    {
+        return new Role();
+    }
+
+    /**
+     * Gets the name of the role.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function name(): string
     {
+        return $this->name;
     }
 
+    /**
+     * Gets the bucket name of the role.
+     *
+     * @return string|null
+     * @since 4.0.0
+     */
     public function bucket(): ?string
     {
+        return $this->bucket;
     }
 
+    /**
+     * Gets the scope name of the role.
+     *
+     * @return string|null
+     * @since 4.0.0
+     */
     public function scope(): ?string
     {
+        return $this->scope;
     }
 
+    /**
+     * Gets the collection name of the role.
+     *
+     * @return string|null
+     * @since 4.0.0
+     */
     public function collection(): ?string
     {
+        return $this->collection;
     }
 
+    /**
+     * Sets the name of the role.
+     *
+     * @param string $name the name of the role
+     * @return Role
+     * @since 4.0.0
+     */
     public function setName(string $name): Role
     {
+        $this->name = $name;
+        return $this;
     }
 
+    /**
+     * Sets the bucket name of the role.
+     *
+     * @param string $bucket the name of the bucket
+     * @return Role
+     * @since 4.0.0
+     */
     public function setBucket(string $bucket): Role
     {
+        $this->bucket = $bucket;
+        return $this;
     }
 
-    public function setScope(string $bucket): Role
+    /**
+     * Sets the scope name of the role.
+     *
+     * @param string $scope the name of the scope
+     * @return Role
+     * @since 4.0.0
+     */
+    public function setScope(string $scope): Role
     {
+        $this->scope = $scope;
+        return $this;
     }
 
-    public function setCollection(string $bucket): Role
+    /**
+     * Sets the collection name of the role.
+     *
+     * @param string $collection the name of the collection
+     * @return Role
+     * @since 4.0.0
+     */
+    public function setCollection(string $collection): Role
     {
+        $this->collection = $collection;
+        return $this;
+    }
+
+    /**
+     * @internal
+     * @since 4.0.0
+     */
+    public static function import(array $role): Role
+    {
+        $settings = Role::build()->setName($role['name']);
+        if (array_key_exists('bucket', $role)) {
+            $settings->setBucket($role['bucket']);
+        }
+        if (array_key_exists('scope', $role)) {
+            $settings->setScope($role['scope']);
+        }
+        if (array_key_exists('collection', $role)) {
+            $settings->setCollection($role['collection']);
+        }
+
+        return $settings;
+    }
+
+    /**
+     * @param Role $role
+     *
+     * @return array
+     * @throws InvalidArgumentException
+     * @since 4.0.0
+     * @internal
+     *
+     */
+    public static function export(Role $role): array
+    {
+        if ($role->name == "") {
+            throw new InvalidArgumentException();
+        }
+
+        return [
+            'name' => $role->name,
+            'bucket' => $role->bucket,
+            'scope' => $role->scope,
+            'collection' => $role->collection,
+        ];
     }
 }

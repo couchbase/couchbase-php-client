@@ -22,11 +22,45 @@ namespace Couchbase\Management;
 
 class RoleAndOrigin
 {
+    private Role $role;
+    private array $origins;
+
+    /**
+     * Gets the role.
+     *
+     * @return Role
+     * @since 4.0.0
+     */
     public function role(): Role
     {
+        return $this->role;
     }
 
+    /**
+     * Gets the role.
+     *
+     * @return array
+     * @see \Couchbase\Management\Origin
+     * @since 4.0.0
+     */
     public function origins(): array
     {
+        return $this->origins;
+    }
+
+    /**
+     * @internal
+     * @since 4.0.0
+     */
+    public static function import(array $role): RoleAndOrigin
+    {
+        $settings = new RoleAndOrigin();
+        $settings->role = Role::import($role);
+        $settings->origins = [];
+        foreach ($role['origins'] as $origin) {
+            $settings->origins[] = Origin::import($origin);
+        }
+
+        return $settings;
     }
 }

@@ -22,23 +22,102 @@ namespace Couchbase\Management;
 
 class UserAndMetadata
 {
+    private string $domain;
+    private User $user;
+    private ?array $effectiveRoles;
+    private ?string $passwordChanged;
+    private ?array $externalGroups;
+
+    /**
+     * @internal
+     * @param string $domain auth domain for the user
+     * @param User $user the user
+     * @since 4.0.0
+     */
+    public function __construct(string $domain, User $user)
+    {
+        $this->domain = $domain;
+        $this->user = $user;
+    }
+
+    /**
+     * Gets the auth domain.
+     *
+     * @return string
+     * @since 4.0.0
+     */
     public function domain(): string
     {
+        return $this->domain;
     }
 
+    /**
+     * Gets the user.
+     *
+     * @return User
+     * @since 4.0.0
+     */
     public function user(): User
     {
+        return $this->user;
     }
 
-    public function effectiveRoles(): array
+    /**
+     * Gets the effective roles - the roles the user has from groups and directly.
+     *
+     * @return array
+     * @see \Couchbase\Management\RoleAndOrigin
+     * @since 4.0.0
+     */
+    public function effectiveRoles(): ?array
     {
+        return $this->effectiveRoles;
     }
 
-    public function passwordChanged(): string
+    /**
+     * Gets the date the password last changed.
+     *
+     * @return string
+     * @since 4.0.0
+     */
+    public function passwordChanged(): ?string
     {
+        return $this->passwordChanged;
     }
 
-    public function externalGroups(): array
+    /**
+     * Gets any external group names that the user is assigned to.
+     *
+     * @return string
+     * @since 4.0.0
+     */
+    public function externalGroups(): ?array
     {
+        return $this->externalGroups;
+    }
+
+    /**
+     * @internal
+     * @since 4.0.0
+     */
+    public static function import(array $user): UserAndMetadata
+    {
+        $settings = new UserAndMetadata($user['domain'], User::import($user));
+        if (array_key_exists('effectiveRoles', $user)) {
+            $roles = [];
+            foreach ($user['effectiveRoles'] as $role) {
+                $roles[] = RoleAndOrigin::import($role);
+            }
+            $settings->effectiveRoles = $roles;
+        }
+        if (array_key_exists('passwordChanged', $user)) {
+            $settings->passwordChanged = $user['passwordChanged'];
+        }
+        if (array_key_exists('externalGroups', $user)) {
+            $settings->externalGroups = $user['externalGroups'];
+        }
+
+
+        return $settings;
     }
 }
