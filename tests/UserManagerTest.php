@@ -46,7 +46,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    function assertGroup(Group $result, string $groupName, string $desc)
+    protected function assertGroup(Group $result, string $groupName, string $desc)
     {
         $this->assertEquals($groupName, $result->name());
         $this->assertEquals($desc, $result->description());
@@ -112,7 +112,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->getGroup($groupName);
     }
 
-    function assertUser(UserAndMetadata $result, string $username, string $displayName, Group $group, Role $userRole)
+    protected function assertUser(UserAndMetadata $result, string $username, string $displayName, Group $group, Role $userRole)
     {
         $this->assertEquals($username, $result->user()->username());
         $this->assertEquals($displayName, $result->user()->displayName());

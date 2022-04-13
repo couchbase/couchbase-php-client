@@ -109,7 +109,14 @@ class CouchbaseTestCase extends TestCase
     {
         if (!$supported) {
             $caller = debug_backtrace()[1];
-            $this->markTestSkipped(sprintf("%s::%s is not supported on Couchbase server %s", $caller["class"], $caller["function"], $this->env()->version()));
+            $this->markTestSkipped(
+                sprintf(
+                    "%s::%s is not supported on Couchbase server %s",
+                    $caller["class"],
+                    $caller["function"],
+                    $this->env()->version()
+                )
+            );
         }
     }
 
@@ -158,7 +165,7 @@ class CouchbaseTestCase extends TestCase
         }
     }
 
-    function version(): ServerVersion
+    protected function version(): ServerVersion
     {
         if ($this->env()->version() != null) {
             return $this->env()->version();
