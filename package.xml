@@ -399,6 +399,7 @@
                                 <file role="src" name="http_session.hxx"/>
                                 <file role="src" name="http_session_manager.hxx"/>
                                 <file role="src" name="http_traits.hxx"/>
+                                <file role="src" name="ip_protocol.hxx"/>
                                 <file role="src" name="mcbp_command.hxx"/>
                                 <file role="src" name="mcbp_context.hxx"/>
                                 <file role="src" name="mcbp_message.cxx"/>
@@ -406,6 +407,7 @@
                                 <file role="src" name="mcbp_parser.cxx"/>
                                 <file role="src" name="mcbp_parser.hxx"/>
                                 <file role="src" name="mcbp_session.hxx"/>
+                                <file role="src" name="mcbp_traits.hxx"/>
                                 <file role="src" name="query_cache.hxx"/>
                                 <file role="src" name="retry_action.hxx"/>
                                 <file role="src" name="retry_context.hxx"/>
@@ -422,6 +424,35 @@
                                 <file role="src" name="custom_rotating_file_sink.hxx"/>
                                 <file role="src" name="logger.cxx"/>
                                 <file role="src" name="logger.hxx"/>
+                            </dir>
+                            <dir name="management">
+                                <file role="src" name="CMakeLists.txt"/>
+                                <file role="src" name="analytics_dataset.hxx"/>
+                                <file role="src" name="analytics_index.hxx"/>
+                                <file role="src" name="analytics_link.hxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external.cxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external.hxx"/>
+                                <file role="src" name="analytics_link_azure_blob_external_json.hxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote.cxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote.hxx"/>
+                                <file role="src" name="analytics_link_couchbase_remote_json.hxx"/>
+                                <file role="src" name="analytics_link_s3_external.cxx"/>
+                                <file role="src" name="analytics_link_s3_external.hxx"/>
+                                <file role="src" name="analytics_link_s3_external_json.hxx"/>
+                                <file role="src" name="bucket_settings.hxx"/>
+                                <file role="src" name="bucket_settings_json.hxx"/>
+                                <file role="src" name="design_document.hxx"/>
+                                <file role="src" name="design_document_fmt.hxx"/>
+                                <file role="src" name="eventing_function.hxx"/>
+                                <file role="src" name="eventing_function_json.hxx"/>
+                                <file role="src" name="eventing_status.hxx"/>
+                                <file role="src" name="eventing_status_json.hxx"/>
+                                <file role="src" name="query_index.hxx"/>
+                                <file role="src" name="rbac.hxx"/>
+                                <file role="src" name="rbac_fmt.hxx"/>
+                                <file role="src" name="rbac_json.hxx"/>
+                                <file role="src" name="search_index.hxx"/>
+                                <file role="src" name="search_index_json.hxx"/>
                             </dir>
                             <dir name="meta">
                                 <file role="src" name="CMakeLists.txt"/>
@@ -458,15 +489,8 @@
                                     <file role="src" name="analytics_index_drop.hxx"/>
                                     <file role="src" name="analytics_index_get_all.cxx"/>
                                     <file role="src" name="analytics_index_get_all.hxx"/>
-                                    <file role="src" name="analytics_link.hxx"/>
-                                    <file role="src" name="analytics_link_azure_blob_external.cxx"/>
-                                    <file role="src" name="analytics_link_azure_blob_external.hxx"/>
-                                    <file role="src" name="analytics_link_azure_blob_external_json.hxx"/>
                                     <file role="src" name="analytics_link_connect.cxx"/>
                                     <file role="src" name="analytics_link_connect.hxx"/>
-                                    <file role="src" name="analytics_link_couchbase_remote.cxx"/>
-                                    <file role="src" name="analytics_link_couchbase_remote.hxx"/>
-                                    <file role="src" name="analytics_link_couchbase_remote_json.hxx"/>
                                     <file role="src" name="analytics_link_create.cxx"/>
                                     <file role="src" name="analytics_link_create.hxx"/>
                                     <file role="src" name="analytics_link_disconnect.cxx"/>
@@ -477,9 +501,8 @@
                                     <file role="src" name="analytics_link_get_all.hxx"/>
                                     <file role="src" name="analytics_link_replace.cxx"/>
                                     <file role="src" name="analytics_link_replace.hxx"/>
-                                    <file role="src" name="analytics_link_s3_external.cxx"/>
-                                    <file role="src" name="analytics_link_s3_external.hxx"/>
-                                    <file role="src" name="analytics_link_s3_external_json.hxx"/>
+                                    <file role="src" name="analytics_link_utils.hxx"/>
+                                    <file role="src" name="analytics_problem.hxx"/>
                                     <file role="src" name="bucket.hxx"/>
                                     <file role="src" name="bucket_create.cxx"/>
                                     <file role="src" name="bucket_create.hxx"/>
@@ -493,8 +516,6 @@
                                     <file role="src" name="bucket_get.hxx"/>
                                     <file role="src" name="bucket_get_all.cxx"/>
                                     <file role="src" name="bucket_get_all.hxx"/>
-                                    <file role="src" name="bucket_settings.hxx"/>
-                                    <file role="src" name="bucket_settings_json.hxx"/>
                                     <file role="src" name="bucket_update.cxx"/>
                                     <file role="src" name="bucket_update.hxx"/>
                                     <file role="src" name="cluster_describe.cxx"/>
@@ -508,8 +529,6 @@
                                     <file role="src" name="collections.hxx"/>
                                     <file role="src" name="collections_manifest_get.cxx"/>
                                     <file role="src" name="collections_manifest_get.hxx"/>
-                                    <file role="src" name="design_document.hxx"/>
-                                    <file role="src" name="design_document_fmt.hxx"/>
                                     <file role="src" name="error_utils.cxx"/>
                                     <file role="src" name="error_utils.hxx"/>
                                     <file role="src" name="eventing.hxx"/>
@@ -517,8 +536,6 @@
                                     <file role="src" name="eventing_deploy_function.hxx"/>
                                     <file role="src" name="eventing_drop_function.cxx"/>
                                     <file role="src" name="eventing_drop_function.hxx"/>
-                                    <file role="src" name="eventing_function.hxx"/>
-                                    <file role="src" name="eventing_function_json.hxx"/>
                                     <file role="src" name="eventing_get_all_functions.cxx"/>
                                     <file role="src" name="eventing_get_all_functions.hxx"/>
                                     <file role="src" name="eventing_get_function.cxx"/>
@@ -530,8 +547,6 @@
                                     <file role="src" name="eventing_problem.hxx"/>
                                     <file role="src" name="eventing_resume_function.cxx"/>
                                     <file role="src" name="eventing_resume_function.hxx"/>
-                                    <file role="src" name="eventing_status.hxx"/>
-                                    <file role="src" name="eventing_status_json.hxx"/>
                                     <file role="src" name="eventing_undeploy_function.cxx"/>
                                     <file role="src" name="eventing_undeploy_function.hxx"/>
                                     <file role="src" name="eventing_upsert_function.cxx"/>
@@ -555,9 +570,6 @@
                                     <file role="src" name="query_index_drop.hxx"/>
                                     <file role="src" name="query_index_get_all.cxx"/>
                                     <file role="src" name="query_index_get_all.hxx"/>
-                                    <file role="src" name="rbac.hxx"/>
-                                    <file role="src" name="rbac_fmt.hxx"/>
-                                    <file role="src" name="rbac_json.hxx"/>
                                     <file role="src" name="role_get_all.cxx"/>
                                     <file role="src" name="role_get_all.hxx"/>
                                     <file role="src" name="scope_create.cxx"/>
@@ -569,7 +581,6 @@
                                     <file role="src" name="search.hxx"/>
                                     <file role="src" name="search_get_stats.cxx"/>
                                     <file role="src" name="search_get_stats.hxx"/>
-                                    <file role="src" name="search_index.hxx"/>
                                     <file role="src" name="search_index_analyze_document.cxx"/>
                                     <file role="src" name="search_index_analyze_document.hxx"/>
                                     <file role="src" name="search_index_control_ingest.cxx"/>
@@ -588,7 +599,6 @@
                                     <file role="src" name="search_index_get_documents_count.hxx"/>
                                     <file role="src" name="search_index_get_stats.cxx"/>
                                     <file role="src" name="search_index_get_stats.hxx"/>
-                                    <file role="src" name="search_index_json.hxx"/>
                                     <file role="src" name="search_index_upsert.cxx"/>
                                     <file role="src" name="search_index_upsert.hxx"/>
                                     <file role="src" name="user.hxx"/>
@@ -635,7 +645,6 @@
                                 <file role="src" name="document_lookup_in.hxx"/>
                                 <file role="src" name="document_mutate_in.cxx"/>
                                 <file role="src" name="document_mutate_in.hxx"/>
-                                <file role="src" name="document_observe.hxx"/>
                                 <file role="src" name="document_prepend.cxx"/>
                                 <file role="src" name="document_prepend.hxx"/>
                                 <file role="src" name="document_query.cxx"/>
@@ -678,8 +687,6 @@
                             </dir>
                             <dir name="protocol">
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="cas.hxx"/>
-                                <file role="src" name="cas_fmt.hxx"/>
                                 <file role="src" name="client_opcode.hxx"/>
                                 <file role="src" name="client_opcode_fmt.hxx"/>
                                 <file role="src" name="client_request.cxx"/>
@@ -754,8 +761,6 @@
                                 <file role="src" name="hello_feature_fmt.hxx"/>
                                 <file role="src" name="magic.hxx"/>
                                 <file role="src" name="magic_fmt.hxx"/>
-                                <file role="src" name="mutation_token.hxx"/>
-                                <file role="src" name="mutation_token_fmt.hxx"/>
                                 <file role="src" name="server_opcode.hxx"/>
                                 <file role="src" name="server_opcode_fmt.hxx"/>
                                 <file role="src" name="server_request.hxx"/>
@@ -829,11 +834,16 @@
                                 <file role="src" name="url_codec.cxx"/>
                                 <file role="src" name="url_codec.hxx"/>
                             </dir>
+                            <file role="src" name="analytics_scan_consistency.hxx"/>
                             <file role="src" name="bucket.hxx"/>
+                            <file role="src" name="capella_ca.hxx"/>
+                            <file role="src" name="cas.hxx"/>
+                            <file role="src" name="cas_fmt.hxx"/>
                             <file role="src" name="cluster.cxx"/>
                             <file role="src" name="cluster.hxx"/>
                             <file role="src" name="cluster_options.cxx"/>
                             <file role="src" name="cluster_options.hxx"/>
+                            <file role="src" name="design_document_namespace.hxx"/>
                             <file role="src" name="diagnostics.hxx"/>
                             <file role="src" name="diagnostics_fmt.hxx"/>
                             <file role="src" name="diagnostics_json.hxx"/>
@@ -842,11 +852,19 @@
                             <file role="src" name="document_id_fmt.hxx"/>
                             <file role="src" name="errors.hxx"/>
                             <file role="src" name="json_string.hxx"/>
+                            <file role="src" name="mutation_token.hxx"/>
+                            <file role="src" name="mutation_token_fmt.hxx"/>
                             <file role="src" name="operations.hxx"/>
                             <file role="src" name="origin.hxx"/>
+                            <file role="src" name="query_profile_mode.hxx"/>
+                            <file role="src" name="query_scan_consistency.hxx"/>
+                            <file role="src" name="search_highlight_style.hxx"/>
+                            <file role="src" name="search_scan_consistency.hxx"/>
                             <file role="src" name="service_type.hxx"/>
                             <file role="src" name="service_type_fmt.hxx"/>
                             <file role="src" name="timeout_defaults.hxx"/>
+                            <file role="src" name="view_scan_consistency.hxx"/>
+                            <file role="src" name="view_sort_order.hxx"/>
                         </dir>
                         <dir name="third_party">
                             <dir name="asio">

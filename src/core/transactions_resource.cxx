@@ -177,9 +177,9 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                                  "expected scanConsistency to be a string" };
                     }
                     if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("notBounded")) == 0) {
-                        config.scan_consistency(couchbase::operations::query_request::scan_consistency_type::not_bounded);
+                        config.scan_consistency(couchbase::query_scan_consistency::not_bounded);
                     } else if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("requestPlus")) == 0) {
-                        config.scan_consistency(couchbase::operations::query_request::scan_consistency_type::request_plus);
+                        config.scan_consistency(couchbase::query_scan_consistency::request_plus);
                     } else {
                         return { error::common_errc::invalid_argument,
                                  { __LINE__, __FILE__, __func__ },

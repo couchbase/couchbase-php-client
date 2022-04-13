@@ -498,11 +498,11 @@ cb_assign_string(String& field, const zval* document, std::string_view name)
 }
 
 static inline core_error_info
-cb_string_to_cas(const std::string& cas_string, protocol::cas& cas)
+cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
 {
     try {
         std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
-        cas = protocol::cas{ cas_value };
+        cas = couchbase::cas{ cas_value };
     } catch (const std::invalid_argument&) {
         return { error::common_errc::invalid_argument,
                  { __LINE__, __FILE__, __func__ },
@@ -517,7 +517,7 @@ cb_string_to_cas(const std::string& cas_string, protocol::cas& cas)
 }
 
 static core_error_info
-cb_assign_cas(protocol::cas& cas, const zval* document)
+cb_assign_cas(couchbase::cas& cas, const zval* document)
 {
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("cas"));
     if (value == nullptr) {
@@ -695,7 +695,7 @@ zval_to_transaction_get_result(const zval* document)
                  { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for transaction document" } };
     }
 
-    protocol::cas cas{};
+    couchbase::cas cas{};
     if (auto e = cb_assign_cas(cas, document); e.ec) {
         return { {}, e };
     }

@@ -53,7 +53,6 @@ class ClusterOptions
     private ?bool $enableTls = null;
     private ?bool $enableTracing = null;
     private ?bool $enableUnorderedExecution = null;
-    private ?bool $forceIpv4 = null;
     private ?bool $showQueries = null;
 
     private ?string $network = null;
@@ -61,6 +60,7 @@ class ClusterOptions
     private ?string $userAgentExtra = null;
 
     private ?string $tlsVerifyMode = null;
+    private ?string $useIpProtocol = null;
 
     private ?ThresholdLoggingOptions $thresholdLoggingTracerOptions = null;
     private ?LoggingMeterOptions $loggingMeterOptions = null;
@@ -394,14 +394,14 @@ class ClusterOptions
     }
 
     /**
-     * @param bool $enable
+     * @param string $mode "any", "forceIpv4" or "forceIpv6"
      *
      * @return ClusterOptions
      * @since 4.0.0
      */
-    public function forceIpv4(bool $enable): ClusterOptions
+    public function useIpProtocol(string $mode): ClusterOptions
     {
-        $this->forceIpv4 = $enable;
+        $this->useIpProtocol = $mode;
         return $this;
     }
 
@@ -560,7 +560,7 @@ class ClusterOptions
             'enableTls' => $this->enableTls,
             'enableTracing' => $this->enableTracing,
             'enableUnorderedExecution' => $this->enableUnorderedExecution,
-            'forceIpv4' => $this->forceIpv4,
+            'useIpProtocol' => $this->useIpProtocol,
             'showQueries' => $this->showQueries,
 
             'network' => $this->network,

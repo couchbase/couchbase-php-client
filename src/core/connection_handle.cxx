@@ -18,14 +18,13 @@
 #include "common.hxx"
 
 #include <couchbase/cluster.hxx>
+#include <couchbase/management/bucket_settings.hxx>
+#include <couchbase/mutation_token.hxx>
 #include <couchbase/operations/management/bucket.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>
-#include <couchbase/operations/management/design_document.hxx>
-#include <couchbase/operations/management/search_index.hxx>
-#include <couchbase/operations/management/search_index_upsert.hxx>
+#include <couchbase/operations/management/search.hxx>
 #include <couchbase/operations/management/user.hxx>
 #include <couchbase/operations/management/view.hxx>
-#include <couchbase/protocol/mutation_token.hxx>
 
 #include <fmt/core.h>
 
@@ -1022,11 +1021,11 @@ cb_assign_durability(Request& req, const zval* options)
 }
 
 static inline core_error_info
-cb_string_to_cas(const std::string& cas_string, protocol::cas& cas)
+cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
 {
     try {
         std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
-        cas = protocol::cas{ cas_value };
+        cas = couchbase::cas{ cas_value };
     } catch (const std::invalid_argument&) {
         return { error::common_errc::invalid_argument,
                  { __LINE__, __FILE__, __func__ },
@@ -1041,7 +1040,7 @@ cb_string_to_cas(const std::string& cas_string, protocol::cas& cas)
 }
 
 static core_error_info
-cb_assign_cas(protocol::cas& cas, const zval* options)
+cb_assign_cas(couchbase::cas& cas, const zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
         return {};
@@ -1218,9 +1217,9 @@ cb_assign_user_domain(Request& req, const zval* options)
                      "expected domain to be a string in the options" };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("local")) == 0) {
-        req.domain = couchbase::operations::management::rbac::auth_domain::local;
+        req.domain = couchbase::management::rbac::auth_domain::local;
     } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("external")) == 0) {
-        req.domain = couchbase::operations::management::rbac::auth_domain::external;
+        req.domain = couchbase::management::rbac::auth_domain::external;
     } else {
         return { error::common_errc::invalid_argument,
                  { __LINE__, __FILE__, __func__ },
@@ -2405,9 +2404,9 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::not_bounded;
+            request.scan_consistency = couchbase::query_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = couchbase::operations::query_request::scan_consistency_type::request_plus;
+            request.scan_consistency = couchbase::query_scan_consistency::request_plus;
         } else {
             if (!scan_consistency.empty()) {
                 return { error::common_errc::invalid_argument,
@@ -2433,15 +2432,15 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     if (auto [e, profile] = cb_get_integer<uint64_t>(options, "profile"); !e.ec) {
         switch (profile) {
             case 1:
-                request.profile = couchbase::operations::query_request::profile_mode::off;
+                request.profile = couchbase::query_profile_mode::off;
                 break;
 
             case 2:
-                request.profile = couchbase::operations::query_request::profile_mode::phases;
+                request.profile = couchbase::query_profile_mode::phases;
                 break;
 
             case 3:
-                request.profile = couchbase::operations::query_request::profile_mode::timings;
+                request.profile = couchbase::query_profile_mode::timings;
                 break;
 
             default:
@@ -2647,9 +2646,9 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
 
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::not_bounded;
+            request.scan_consistency = couchbase::analytics_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = couchbase::operations::analytics_request::scan_consistency_type::request_plus;
+            request.scan_consistency = couchbase::analytics_scan_consistency::request_plus;
         } else {
             if (!scan_consistency.empty()) {
                 return { error::common_errc::invalid_argument,
@@ -2816,11 +2815,11 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
     if (auto [e, highlight_style] = cb_get_integer<uint64_t>(options, "highlightStyle"); !e.ec) {
         switch (highlight_style) {
             case 1:
-                request.highlight_style = couchbase::operations::search_request::highlight_style_type::ansi;
+                request.highlight_style = couchbase::search_highlight_style::ansi;
                 break;
 
             case 2:
-                request.highlight_style = couchbase::operations::search_request::highlight_style_type::html;
+                request.highlight_style = couchbase::search_highlight_style::html;
                 break;
 
             default:
@@ -3052,14 +3051,14 @@ connection_handle::view_query(zval* return_value,
                               const zend_long name_space,
                               const zval* options)
 {
-    couchbase::operations::design_document::name_space cxx_name_space;
+    couchbase::design_document_namespace cxx_name_space;
     switch (auto name_space_val = std::uint32_t(name_space); name_space_val) {
         case 1:
-            cxx_name_space = couchbase::operations::design_document::name_space::development;
+            cxx_name_space = couchbase::design_document_namespace::development;
             break;
 
         case 2:
-            cxx_name_space = couchbase::operations::design_document::name_space::production;
+            cxx_name_space = couchbase::design_document_namespace::production;
             break;
 
         default:
@@ -3079,11 +3078,11 @@ connection_handle::view_query(zval* return_value,
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.consistency = couchbase::operations::document_view_request::scan_consistency::not_bounded;
+            request.consistency = couchbase::view_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.consistency = couchbase::operations::document_view_request::scan_consistency::request_plus;
+            request.consistency = couchbase::view_scan_consistency::request_plus;
         } else if (scan_consistency == "updateAfter") {
-            request.consistency = couchbase::operations::document_view_request::scan_consistency::update_after;
+            request.consistency = couchbase::view_scan_consistency::update_after;
         } else {
             if (!scan_consistency.empty()) {
                 return { error::common_errc::invalid_argument,
@@ -3111,11 +3110,11 @@ connection_handle::view_query(zval* return_value,
     if (auto [e, order] = cb_get_integer<uint64_t>(options, "order"); !e.ec) {
         switch (order) {
             case 0:
-                request.order = couchbase::operations::document_view_request::sort_order::ascending;
+                request.order = couchbase::view_sort_order::ascending;
                 break;
 
             case 1:
-                request.order = couchbase::operations::document_view_request::sort_order::descending;
+                request.order = couchbase::view_sort_order::descending;
                 break;
 
             default:
@@ -3420,7 +3419,7 @@ connection_handle::diagnostics(zval* return_value, const zend_string* report_id,
 core_error_info
 connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
 {
-    couchbase::operations::management::search_index idx{};
+    couchbase::management::search::index idx{};
     if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
         return e;
     }
@@ -3471,7 +3470,7 @@ connection_handle::view_index_upsert(zval* return_value,
                                      zend_long name_space,
                                      const zval* options)
 {
-    couchbase::operations::design_document idx{};
+    couchbase::management::views::design_document idx{};
     if (auto e = cb_assign_string(idx.name, design_document, "name"); e.ec) {
         return e;
     }
@@ -3480,11 +3479,11 @@ connection_handle::view_index_upsert(zval* return_value,
     }
     switch (name_space) {
         case 1:
-            idx.ns = couchbase::operations::design_document::name_space::development;
+            idx.ns = couchbase::design_document_namespace::development;
             break;
 
         case 2:
-            idx.ns = couchbase::operations::design_document::name_space::production;
+            idx.ns = couchbase::design_document_namespace::production;
             break;
 
         default:
@@ -3495,13 +3494,13 @@ connection_handle::view_index_upsert(zval* return_value,
 
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(design_document), ZEND_STRL("views"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::operations::design_document::view> views{};
+        std::map<std::string, couchbase::management::views::design_document::view> views{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
         {
-            couchbase::operations::design_document::view view{};
+            couchbase::management::views::design_document::view view{};
             if (auto e = cb_assign_string(view.name, item, "name"); e.ec) {
                 return e;
             }
@@ -3535,20 +3534,20 @@ connection_handle::view_index_upsert(zval* return_value,
     return {};
 }
 
-static std::pair<core_error_info, couchbase::operations::management::bucket_settings>
+static std::pair<core_error_info, couchbase::management::cluster::bucket_settings>
 zval_to_bucket_settings(const zval* bucket_settings)
 {
-    couchbase::operations::management::bucket_settings bucket{};
+    couchbase::management::cluster::bucket_settings bucket{};
     if (auto e = cb_assign_string(bucket.name, bucket_settings, "name"); e.ec) {
         return { e, {} };
     }
     if (auto [e, bucket_type] = cb_get_string(bucket_settings, "bucketType"); !e.ec) {
         if (bucket_type == "couchbase") {
-            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::couchbase;
+            bucket.bucket_type = couchbase::management::cluster::bucket_type::couchbase;
         } else if (bucket_type == "ephemeral") {
-            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::ephemeral;
+            bucket.bucket_type = couchbase::management::cluster::bucket_type::ephemeral;
         } else if (bucket_type == "memcached") {
-            bucket.bucket_type = couchbase::operations::management::bucket_settings::bucket_type::memcached;
+            bucket.bucket_type = couchbase::management::cluster::bucket_type::memcached;
         } else if (!bucket_type.empty()) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
@@ -3566,11 +3565,11 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, compression_mode] = cb_get_string(bucket_settings, "compressionMode"); !e.ec) {
         if (compression_mode == "off") {
-            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::off;
+            bucket.compression_mode = couchbase::management::cluster::bucket_compression::off;
         } else if (compression_mode == "active") {
-            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::active;
+            bucket.compression_mode = couchbase::management::cluster::bucket_compression::active;
         } else if (compression_mode == "passive") {
-            bucket.compression_mode = couchbase::operations::management::bucket_settings::compression_mode::passive;
+            bucket.compression_mode = couchbase::management::cluster::bucket_compression::passive;
         } else if (!compression_mode.empty()) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
@@ -3609,13 +3608,13 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, eviction_policy] = cb_get_string(bucket_settings, "evictionPolicy"); !e.ec) {
         if (eviction_policy == "noEviction") {
-            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::no_eviction;
+            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::no_eviction;
         } else if (eviction_policy == "fullEviction") {
-            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::full;
+            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::full;
         } else if (eviction_policy == "valueOnly") {
-            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::value_only;
+            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::value_only;
         } else if (eviction_policy == "nruEviction") {
-            bucket.eviction_policy = couchbase::operations::management::bucket_settings::eviction_policy::not_recently_used;
+            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::not_recently_used;
         } else if (!eviction_policy.empty()) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
@@ -3627,11 +3626,11 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, resolution_type] = cb_get_string(bucket_settings, "conflictResolutionType"); !e.ec) {
         if (resolution_type == "sequenceNumber") {
-            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::sequence_number;
+            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::sequence_number;
         } else if (resolution_type == "timestamp") {
-            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::timestamp;
+            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::timestamp;
         } else if (resolution_type == "custom") {
-            bucket.conflict_resolution_type = couchbase::operations::management::bucket_settings::conflict_resolution_type::custom;
+            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::custom;
         } else if (!resolution_type.empty()) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
@@ -3643,9 +3642,9 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, storage_backend] = cb_get_string(bucket_settings, "storageBackend"); !e.ec) {
         if (storage_backend == "couchstore") {
-            bucket.storage_backend = couchbase::operations::management::bucket_settings::storage_backend_type::couchstore;
+            bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::couchstore;
         } else if (storage_backend == "magma") {
-            bucket.storage_backend = couchbase::operations::management::bucket_settings::storage_backend_type::magma;
+            bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::magma;
         } else if (!storage_backend.empty()) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
@@ -3706,7 +3705,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
 }
 
 core_error_info
-cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::management::bucket_settings bucket_settings)
+cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::cluster::bucket_settings bucket_settings)
 {
     array_init(return_value);
 
@@ -3714,13 +3713,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::mana
     add_assoc_string(return_value, "uuid", bucket_settings.uuid.c_str());
     std::string bucket_type;
     switch (bucket_settings.bucket_type) {
-        case couchbase::operations::management::bucket_settings::bucket_type::couchbase:
+        case couchbase::management::cluster::bucket_type::couchbase:
             bucket_type = "couchbase";
             break;
-        case couchbase::operations::management::bucket_settings::bucket_type::ephemeral:
+        case couchbase::management::cluster::bucket_type::ephemeral:
             bucket_type = "ephemeral";
             break;
-        case couchbase::operations::management::bucket_settings::bucket_type::memcached:
+        case couchbase::management::cluster::bucket_type::memcached:
             bucket_type = "memcached";
             break;
         default:
@@ -3732,13 +3731,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::mana
     add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry);
     std::string compression_mode;
     switch (bucket_settings.compression_mode) {
-        case couchbase::operations::management::bucket_settings::compression_mode::off:
+        case couchbase::management::cluster::bucket_compression::off:
             compression_mode = "off";
             break;
-        case couchbase::operations::management::bucket_settings::compression_mode::active:
+        case couchbase::management::cluster::bucket_compression::active:
             compression_mode = "active";
             break;
-        case couchbase::operations::management::bucket_settings::compression_mode::passive:
+        case couchbase::management::cluster::bucket_compression::passive:
             compression_mode = "passive";
             break;
         default:
@@ -3769,16 +3768,16 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::mana
     add_assoc_bool(return_value, "flushEnabled", bucket_settings.flush_enabled);
     std::string eviction_policy;
     switch (bucket_settings.eviction_policy) {
-        case couchbase::operations::management::bucket_settings::eviction_policy::no_eviction:
+        case couchbase::management::cluster::bucket_eviction_policy::no_eviction:
             eviction_policy = "noEviction";
             break;
-        case couchbase::operations::management::bucket_settings::eviction_policy::not_recently_used:
+        case couchbase::management::cluster::bucket_eviction_policy::not_recently_used:
             eviction_policy = "nruEviction";
             break;
-        case couchbase::operations::management::bucket_settings::eviction_policy::value_only:
+        case couchbase::management::cluster::bucket_eviction_policy::value_only:
             eviction_policy = "valueOnly";
             break;
-        case couchbase::operations::management::bucket_settings::eviction_policy::full:
+        case couchbase::management::cluster::bucket_eviction_policy::full:
             eviction_policy = "fullEviction";
             break;
         default:
@@ -3788,13 +3787,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::mana
     add_assoc_string(return_value, "evictionPolicy", eviction_policy.c_str());
     std::string conflict_resolution_type;
     switch (bucket_settings.conflict_resolution_type) {
-        case couchbase::operations::management::bucket_settings::conflict_resolution_type::sequence_number:
+        case couchbase::management::cluster::bucket_conflict_resolution::sequence_number:
             conflict_resolution_type = "sequenceNumber";
             break;
-        case couchbase::operations::management::bucket_settings::conflict_resolution_type::timestamp:
+        case couchbase::management::cluster::bucket_conflict_resolution::timestamp:
             conflict_resolution_type = "timestamp";
             break;
-        case couchbase::operations::management::bucket_settings::conflict_resolution_type::custom:
+        case couchbase::management::cluster::bucket_conflict_resolution::custom:
             conflict_resolution_type = "custom";
             break;
         default:
@@ -3804,10 +3803,10 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::operations::mana
     add_assoc_string(return_value, "conflictResolutionType", conflict_resolution_type.c_str());
     std::string storage_backend;
     switch (bucket_settings.storage_backend) {
-        case couchbase::operations::management::bucket_settings::storage_backend_type::couchstore:
+        case couchbase::management::cluster::bucket_storage_backend::couchstore:
             storage_backend = "couchstore";
             break;
-        case couchbase::operations::management::bucket_settings::storage_backend_type::magma:
+        case couchbase::management::cluster::bucket_storage_backend::magma:
             storage_backend = "magma";
             break;
         default:
@@ -3904,7 +3903,7 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
 }
 
 void
-cb_role_to_zval(zval* return_value, const couchbase::operations::management::rbac::role role)
+cb_role_to_zval(zval* return_value, const couchbase::management::rbac::role& role)
 {
     add_assoc_string(return_value, "name", role.name.c_str());
     if (role.bucket) {
@@ -3919,7 +3918,7 @@ cb_role_to_zval(zval* return_value, const couchbase::operations::management::rba
 }
 
 core_error_info
-cb_user_and_metadata_to_zval(zval* return_value, const couchbase::operations::management::rbac::user_and_metadata user)
+cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rbac::user_and_metadata& user)
 {
     array_init(return_value);
 
@@ -3956,10 +3955,10 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::operations::ma
 
     std::string domain;
     switch (user.domain) {
-        case couchbase::operations::management::rbac::auth_domain::local:
+        case couchbase::management::rbac::auth_domain::local:
             domain = "local";
             break;
-        case couchbase::operations::management::rbac::auth_domain::external:
+        case couchbase::management::rbac::auth_domain::external:
             domain = "external";
             break;
         default:
@@ -4008,7 +4007,7 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::operations::ma
 }
 
 void
-cb_group_to_zval(zval* return_value, const couchbase::operations::management::rbac::group group)
+cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group group)
 {
     array_init(return_value);
 
@@ -4034,7 +4033,7 @@ cb_group_to_zval(zval* return_value, const couchbase::operations::management::rb
 core_error_info
 connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
 {
-    couchbase::operations::management::rbac::user cuser{};
+    couchbase::management::rbac::user cuser{};
     if (auto e = cb_assign_string(cuser.username, user, "username"); e.ec) {
         return e;
     }
@@ -4045,12 +4044,12 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
         return e;
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(user), ZEND_STRL("roles")); value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::operations::management::rbac::role> roles{};
+        std::vector<couchbase::management::rbac::role> roles{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            couchbase::operations::management::rbac::role role{};
+            couchbase::management::rbac::role role{};
             if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
                 return e;
             }
@@ -4180,7 +4179,7 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
 core_error_info
 connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
 {
-    couchbase::operations::management::rbac::group cgroup{};
+    couchbase::management::rbac::group cgroup{};
     if (auto e = cb_assign_string(cgroup.name, group, "name"); e.ec) {
         return e;
     }
@@ -4192,12 +4191,12 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(group), ZEND_STRL("roles"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::operations::management::rbac::role> roles{};
+        std::vector<couchbase::management::rbac::role> roles{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            couchbase::operations::management::rbac::role role{};
+            couchbase::management::rbac::role role{};
             if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
                 return e;
             }
@@ -4444,12 +4443,34 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
         ASSIGN_BOOLEAN_OPTION("enableTls", connstr.options.enable_tls, key, value);
         ASSIGN_BOOLEAN_OPTION("enableTracing", connstr.options.enable_tracing, key, value);
         ASSIGN_BOOLEAN_OPTION("enableUnorderedExecution", connstr.options.enable_unordered_execution, key, value);
-        ASSIGN_BOOLEAN_OPTION("forceIpv4", connstr.options.force_ipv4, key, value);
         ASSIGN_BOOLEAN_OPTION("showQueries", connstr.options.show_queries, key, value);
 
         ASSIGN_STRING_OPTION("network", connstr.options.network, key, value);
         ASSIGN_STRING_OPTION("trustCertificate", connstr.options.trust_certificate, key, value);
         ASSIGN_STRING_OPTION("userAgentExtra", connstr.options.user_agent_extra, key, value);
+
+        if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("useIpProtocol")) == 0) {
+            if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+                continue;
+            }
+            if (Z_TYPE_P(value) != IS_STRING) {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+            }
+            if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("any")) == 0) {
+                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::any;
+            } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv4")) == 0) {
+                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::force_ipv4;
+            } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv6")) == 0) {
+                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::force_ipv6;
+            } else {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format(R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
+                                     std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+            }
+        }
 
         if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("tlsVerify")) == 0) {
             if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
