@@ -43,15 +43,19 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                 $doc = $attempt->get($collection, $idToReplace);
                 $attempt->replace($doc, ["foo" => "baz"]);
 
-                  $doc = $attempt->get($collection, $idToRemove);
-                  $attempt->remove($doc);
+                $doc = $attempt->get($collection, $idToRemove);
+                $attempt->remove($doc);
 
-                  // check Read-Your-Own-Write
-                  $res = $attempt->get($collection, $idToInsert);
-                  $this->assertEquals(["foo" => "baz"], $res->content());
+                // check Read-Your-Own-Write
+                $res = $attempt->get($collection, $idToInsert);
+                $this->assertEquals(["foo" => "baz"], $res->content());
 
-                  $res = $attempt->get($collection, $idToReplace);
-                  $this->assertEquals(["foo" => "baz"], $res->content());
+                $res = $attempt->get($collection, $idToReplace);
+                $this->assertEquals(["foo" => "baz"], $res->content());
+
+                $this->wrapException(function () use ($idToRemove, $collection, $attempt) {
+                    $attempt->get($collection, $idToRemove);
+                }, Couchbase\Exception\DocumentNotFoundException::class);
             }
         );
 
@@ -60,5 +64,9 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 
         $res = $collection->get($idToReplace);
         $this->assertEquals(["foo" => "baz"], $res->content());
+
+        $this->wrapException(function () use ($idToRemove, $collection) {
+            $collection->get($idToRemove);
+        }, Couchbase\Exception\DocumentNotFoundException::class);
     }
 }

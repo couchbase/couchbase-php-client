@@ -150,7 +150,7 @@ class Cluster
     }
 
     /**
-     * Creates a new query index manager object for managing analytics query indexes.
+     * Creates a new manager object for managing analytics query indexes.
      *
      * @return AnalyticsIndexManager
      * @throws UnsupportedOperationException
@@ -162,7 +162,7 @@ class Cluster
     }
 
     /**
-     * Creates a new query index manager object for managing N1QL query indexes.
+     * Creates a new manager object for managing N1QL query indexes.
      *
      * @return QueryIndexManager
      * @throws UnsupportedOperationException

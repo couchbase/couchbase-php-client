@@ -94,7 +94,6 @@ class TransactionAttemptContext
      * @param mixed $value the document content to replace
      *
      * @return TransactionGetResult
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function replace(TransactionGetResult $document, $value): TransactionGetResult

@@ -795,6 +795,9 @@ transaction_context_resource::remove(const zval* document)
     if (e.ec) {
         return e;
     }
+    if (auto err = impl_->remove(doc); err.ec) {
+        return err;
+    }
     return {};
 }
 
