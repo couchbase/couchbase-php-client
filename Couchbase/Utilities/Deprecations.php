@@ -23,9 +23,11 @@ namespace Couchbase\Utilities;
 use Couchbase\AnalyticsScanConsistency;
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\QueryProfile;
 use Couchbase\QueryScanConsistency;
 use Couchbase\StoreSemantics;
 use Couchbase\ViewConsistency;
+use Couchbase\ViewOrdering;
 
 class Deprecations
 {
@@ -168,6 +170,62 @@ class Deprecations
             default:
                 throw new InvalidArgumentException(
                     sprintf("Integer value for store semantics must be in [0, 2] interval. Given: %d", $semantics)
+                );
+        }
+    }
+
+    /**
+     * Converts integer "enum" value of query profile into string representation
+     *
+     * @throws InvalidArgumentException
+     * @deprecated this utility function should not be used directly
+     *
+     * @since 4.0.0
+     */
+    public static function convertDeprecatedQueryProfile(string $method, int $profile): string
+    {
+        trigger_error(
+            'Method ' . $method . ' is deprecated with integer parameter, use string parameter instead',
+            E_USER_DEPRECATED
+        );
+
+        switch ($profile) {
+            case 1:
+                return QueryProfile::OFF;
+            case 2:
+                return QueryProfile::PHASES;
+            case 3:
+                return QueryProfile::TIMINGS;
+            default:
+                throw new InvalidArgumentException(
+                    sprintf("Integer value for query profile must be in [1, 3] interval. Given: %d", $profile)
+                );
+        }
+    }
+
+    /**
+     * Converts integer "enum" value of view ordering into string representation
+     *
+     * @throws InvalidArgumentException
+     * @deprecated this utility function should not be used directly
+     *
+     * @since 4.0.0
+     */
+    public static function convertDeprecatedViewOrder(string $method, int $order): string
+    {
+        trigger_error(
+            'Method ' . $method . ' is deprecated with integer parameter, use string parameter instead',
+            E_USER_DEPRECATED
+        );
+
+        switch ($order) {
+            case 1:
+                return ViewOrdering::ASCENDING;
+            case 2:
+                return ViewOrdering::DESCENDING;
+            default:
+                throw new InvalidArgumentException(
+                    sprintf("Integer value for view order must be in [0, 1] interval. Given: %d", $order)
                 );
         }
     }

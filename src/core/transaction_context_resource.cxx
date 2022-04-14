@@ -16,6 +16,7 @@
 
 #include "transaction_context_resource.hxx"
 #include "common.hxx"
+#include "conversion_utilities.hxx"
 #include "transactions_resource.hxx"
 
 #include <couchbase/transactions.hxx>
@@ -328,7 +329,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
                      { __LINE__, __FILE__, __func__ },
-                     fmt::format("unable to insert document: {}, cause: {}, id=\"{}\"",
+                     fmt::format("unable to remove document: {}, cause: {}, id=\"{}\"",
                                  e.what(),
                                  external_exception_to_string(e.cause()),
                                  document.id()),
@@ -336,13 +337,47 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const std::exception& e) {
             return { transactions_errc::std_exception,
                      { __LINE__, __FILE__, __func__ },
-                     fmt::format("unable to insert document: {}, id=\"{}\"", e.what(), document.id()) };
+                     fmt::format("unable to remove document: {}, id=\"{}\"", e.what(), document.id()) };
         } catch (...) {
             return { transactions_errc::unexpected_exception,
                      { __LINE__, __FILE__, __func__ },
-                     fmt::format("unable to insert document: unexpected C++ exception, id=\"{}\"", document.id()) };
+                     fmt::format("unable to remove document: unexpected C++ exception, id=\"{}\"", document.id()) };
         }
         return {};
+    }
+
+    [[nodiscard]] std::pair<std::optional<operations::query_response>, core_error_info> query(
+      const std::string& statement,
+      const transactions::transaction_query_options& options)
+    {
+        try {
+            auto barrier = std::make_shared<std::promise<std::optional<operations::query_response>>>();
+            auto f = barrier->get_future();
+            transaction_context_.query(statement, options, [barrier](std::exception_ptr e, std::optional<operations::query_response> res) {
+                if (e) {
+                    return barrier->set_exception(e);
+                }
+                return barrier->set_value(std::move(res));
+            });
+            return { f.get(), {} };
+        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+            return { {},
+                     { transactions_errc::operation_failed,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format("unable to execute query: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
+                       build_error_context(e) } };
+        } catch (const std::exception& e) {
+            return {
+                {},
+                { transactions_errc::std_exception, { __LINE__, __FILE__, __func__ }, fmt::format("unable to execute query: {}", e.what()) }
+            };
+        } catch (...) {
+            return { {},
+                     { transactions_errc::unexpected_exception,
+                       { __LINE__, __FILE__, __func__ },
+                       "unable to execute query: unexpected C++ exception" } };
+        }
+        return { {}, {} };
     }
 
   private:
@@ -382,18 +417,6 @@ core_error_info
 transaction_context_resource::rollback()
 {
     return impl_->rollback();
-}
-
-static std::string
-cb_string_new(const zend_string* value)
-{
-    return { ZSTR_VAL(value), ZSTR_LEN(value) };
-}
-
-static std::string
-cb_string_new(const zval* value)
-{
-    return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
 }
 
 static void
@@ -475,114 +498,6 @@ transaction_get_result_to_zval(zval* return_value, const transactions::transacti
     }
 }
 
-template<typename String>
-static core_error_info
-cb_assign_string(String& field, const zval* document, std::string_view name)
-{
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(document), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a string value in the document", name) };
-    }
-    field = { Z_STRVAL_P(value), Z_STRLEN_P(value) };
-    return {};
-}
-
-static inline core_error_info
-cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
-{
-    try {
-        std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
-        cas = couchbase::cas{ cas_value };
-    } catch (const std::invalid_argument&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("no numeric conversion could be performed for encoded CAS value: \"{}\"", cas_string) };
-    } catch (const std::out_of_range&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("the number encoded as CAS is out of the range of representable values by a unsigned long long: \"{}\"",
-                             cas_string) };
-    }
-    return {};
-}
-
-static core_error_info
-cb_assign_cas(couchbase::cas& cas, const zval* document)
-{
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("cas"));
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected CAS to be a string in the options" };
-    }
-    cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
-    return {};
-}
-
-template<typename Integer>
-static core_error_info
-cb_assign_integer(Integer& field, const zval* document, std::string_view name)
-{
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(document), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_LONG:
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a integer value", name) };
-    }
-
-    field = Z_LVAL_P(value);
-    return {};
-}
-
-template<typename Boolean>
-static core_error_info
-cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
-{
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_TRUE:
-            field = true;
-            break;
-        case IS_FALSE:
-            field = false;
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a boolean value in the options", name) };
-    }
-    return {};
-}
-
 static couchbase::document_id
 zval_to_document_id(const zval* document)
 {
@@ -636,7 +551,7 @@ zval_to_links(const zval* document)
     cb_assign_string(crc32_of_staging, links, "crc32_of_staging");
     cb_assign_string(op, links, "op");
     cb_assign_integer(exptime_pre_txn, links, "exptime_pre_txn");
-    cb_assign_string(forward_compat, links, "atr_id");
+    cb_assign_string(forward_compat, links, "forward_compat");
     cb_assign_boolean(is_deleted, links, "is_deleted");
 
     std::optional<nlohmann::json> forward_compat_json;
@@ -797,6 +712,23 @@ transaction_context_resource::remove(const zval* document)
     }
     if (auto err = impl_->remove(doc); err.ec) {
         return err;
+    }
+    return {};
+}
+
+core_error_info
+transaction_context_resource::query(zval* return_value, const zend_string* statement, const zval* options)
+{
+    auto [request, e] = zval_to_query_request(statement, options);
+    if (e.ec) {
+        return e;
+    }
+    auto [resp, err] = impl_->query(cb_string_new(statement), transactions::transaction_query_options(request));
+    if (err.ec) {
+        return err;
+    }
+    if (resp.has_value()) {
+        query_response_to_zval(return_value, resp.value());
     }
     return {};
 }

@@ -18,7 +18,9 @@
 
 declare(strict_types=1);
 
+use Couchbase\QueryOptions;
 use Couchbase\TransactionAttemptContext;
+use Couchbase\TransactionQueryOptions;
 
 include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
 
@@ -68,5 +70,48 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         $this->wrapException(function () use ($idToRemove, $collection) {
             $collection->get($idToRemove);
         }, Couchbase\Exception\DocumentNotFoundException::class);
+    }
+
+
+    public function testWorksWithQuery()
+    {
+        $this->skipIfCaves();
+        $prefix = $this->uniqueId();
+        $id1 = $prefix . "_1";
+        $id2 = $prefix . "_2";
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($id1, ["foo" => "bar"]);
+
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($id2, $id1, $collection) {
+                $doc = $attempt->insert($collection, $id2, ["foo" => "baz"]);
+
+                $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+
+                $res = $attempt->query(
+                    "SELECT foo FROM $collectionQualifier WHERE META().id IN \$ids ORDER BY META().id ASC",
+                    TransactionQueryOptions::build()->namedParameters([
+                        'ids' => [$id1, $id2],
+                    ])
+                );
+
+                $this->assertCount(2, $res->rows());
+                var_dump($res->rows());
+
+                $attempt->replace($doc, ["foo" => "bag"]);
+
+                $doc = $attempt->get($collection, $id1);
+                $attempt->replace($doc, ["foo" => "bad"]);
+            }
+        );
+
+        $res = $collection->get($id1);
+        $this->assertEquals(["foo" => "bad"], $res->content());
+
+        $res = $collection->get($id2);
+        $this->assertEquals(["foo" => "bag"], $res->content());
     }
 }

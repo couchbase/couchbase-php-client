@@ -32,7 +32,7 @@ class QueryOptions
     private ?int $pipelineCap = null;
     private ?int $pipelineBatch = null;
     private ?int $maxParallelism = null;
-    private ?int $profile = null;
+    private ?string $profile = null;
     private ?int $scanWaitMilliseconds = null;
     private ?bool $readonly = null;
     private ?bool $flexIndex = null;
@@ -186,13 +186,16 @@ class QueryOptions
     /**
      * Sets the query profile mode to use.
      *
-     * @param int $mode the query profile mode
+     * @param string|int $mode the query profile mode
      *
      * @return QueryOptions
      * @since 4.0.0
      */
-    public function profile(int $mode): QueryOptions
+    public function profile($mode): QueryOptions
     {
+        if (gettype($mode) == "integer") {
+            $mode = Deprecations::convertDeprecatedQueryProfile(__METHOD__, $mode);
+        }
         $this->profile = $mode;
         return $this;
     }

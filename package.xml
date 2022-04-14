@@ -340,6 +340,8 @@
                     <file role="src" name="common.hxx"/>
                     <file role="src" name="connection_handle.cxx"/>
                     <file role="src" name="connection_handle.hxx"/>
+                    <file role="src" name="conversion_utilites.cxx"/>
+                    <file role="src" name="conversion_utilities.hxx"/>
                     <file role="src" name="core_error_info.hxx"/>
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>

@@ -22,6 +22,6 @@ namespace Couchbase;
 
 interface ViewOrdering
 {
-    public const ASCENDING = 0;
-    public const DESCENDING = 1;
+    public const ASCENDING = "ascending";
+    public const DESCENDING = "descending";
 }

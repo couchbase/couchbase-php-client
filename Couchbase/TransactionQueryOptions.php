@@ -51,6 +51,17 @@ class TransactionQueryOptions
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return TransactionQueryOptions
+     * @since 4.0.0
+     */
+    public static function build(): TransactionQueryOptions
+    {
+        return new TransactionQueryOptions();
+    }
+
+    /**
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply

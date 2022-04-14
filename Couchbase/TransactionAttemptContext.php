@@ -131,10 +131,12 @@ class TransactionAttemptContext
      * @param TransactionQueryOptions|null $options
      *
      * @return mixed
-     * @throws UnsupportedOperationException
+     * @since 4.0.0
      */
     public function query(string $statement, ?TransactionQueryOptions $options = null)
     {
-        throw new UnsupportedOperationException();
+        $result = Extension\transactionQuery($this->transaction, $statement, TransactionQueryOptions::export($options));
+
+        return new QueryResult($result, TransactionQueryOptions::getTranscoder($options));
     }
 }

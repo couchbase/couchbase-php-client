@@ -32,7 +32,7 @@ class ViewOptions
     private ?int $limit = null;
     private ?int $skip = null;
     private ?string $scanConsistency = null;
-    private ?int $order = null;
+    private ?string $order = null;
     private ?bool $reduce = null;
     private ?bool $group = null;
     private ?int $groupLevel = null;
@@ -159,13 +159,16 @@ class ViewOptions
     /**
      * Sets the order of the results.
      *
-     * @param int $order the order of the results.
+     * @param int|string $order the order of the results.
      *
      * @return ViewOptions
      * @since 4.0.0
      */
-    public function order(int $order): ViewOptions
+    public function order($order): ViewOptions
     {
+        if (gettype($order) == "integer") {
+            $order = Deprecations::convertDeprecatedViewOrder(__METHOD__, $order);
+        }
         $this->order = $order;
         return $this;
     }

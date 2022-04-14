@@ -1575,6 +1575,29 @@ PHP_FUNCTION(transactionRemove)
     }
 }
 
+PHP_FUNCTION(transactionQuery)
+{
+    zval* transaction = nullptr;
+    zend_string* statement = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(transaction)
+    Z_PARAM_STR(statement)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+    if (context == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = context->query(return_value, statement, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(userUpsert)
 {
     zval* connection = nullptr;
@@ -2135,6 +2158,12 @@ ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, document, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionQuery, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userUpsert, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, user, IS_ARRAY, 0)
@@ -2218,14 +2247,6 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", searchQuery, ai_CouchbaseExtension_searchQuery)
         ZEND_NS_FE("Couchbase\\Extension", ping, ai_CouchbaseExtension_ping)
         ZEND_NS_FE("Couchbase\\Extension", diagnostics, ai_CouchbaseExtension_diagnostics)
-        ZEND_NS_FE("Couchbase\\Extension", searchIndexUpsert, ai_CouchbaseExtension_searchIndexUpsert)
-        ZEND_NS_FE("Couchbase\\Extension", viewIndexUpsert, ai_CouchbaseExtension_viewIndexUpsert)
-        ZEND_NS_FE("Couchbase\\Extension", bucketCreate, ai_CouchbaseExtension_bucketCreate)
-        ZEND_NS_FE("Couchbase\\Extension", bucketUpdate, ai_CouchbaseExtension_bucketUpdate)
-        ZEND_NS_FE("Couchbase\\Extension", bucketGet, ai_CouchbaseExtension_bucketGet)
-        ZEND_NS_FE("Couchbase\\Extension", bucketGetAll, ai_CouchbaseExtension_bucketGetAll)
-        ZEND_NS_FE("Couchbase\\Extension", bucketDrop, ai_CouchbaseExtension_bucketDrop)
-        ZEND_NS_FE("Couchbase\\Extension", bucketFlush, ai_CouchbaseExtension_bucketFlush)
 
         ZEND_NS_FE("Couchbase\\Extension", createTransactions, ai_CouchbaseExtension_createTransactions)
         ZEND_NS_FE("Couchbase\\Extension", createTransactionContext, ai_CouchbaseExtension_createTransactionContext)
@@ -2236,7 +2257,16 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", transactionInsert, ai_CouchbaseExtension_transactionInsert)
         ZEND_NS_FE("Couchbase\\Extension", transactionReplace, ai_CouchbaseExtension_transactionReplace)
         ZEND_NS_FE("Couchbase\\Extension", transactionRemove, ai_CouchbaseExtension_transactionRemove)
+        ZEND_NS_FE("Couchbase\\Extension", transactionQuery, ai_CouchbaseExtension_transactionQuery)
 
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexUpsert, ai_CouchbaseExtension_searchIndexUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", viewIndexUpsert, ai_CouchbaseExtension_viewIndexUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", bucketCreate, ai_CouchbaseExtension_bucketCreate)
+        ZEND_NS_FE("Couchbase\\Extension", bucketUpdate, ai_CouchbaseExtension_bucketUpdate)
+        ZEND_NS_FE("Couchbase\\Extension", bucketGet, ai_CouchbaseExtension_bucketGet)
+        ZEND_NS_FE("Couchbase\\Extension", bucketGetAll, ai_CouchbaseExtension_bucketGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", bucketDrop, ai_CouchbaseExtension_bucketDrop)
+        ZEND_NS_FE("Couchbase\\Extension", bucketFlush, ai_CouchbaseExtension_bucketFlush)
         ZEND_NS_FE("Couchbase\\Extension", userUpsert, ai_CouchbaseExtension_userUpsert)
         ZEND_NS_FE("Couchbase\\Extension", userGet, ai_CouchbaseExtension_userGet)
         ZEND_NS_FE("Couchbase\\Extension", userGetAll, ai_CouchbaseExtension_userGetAll)

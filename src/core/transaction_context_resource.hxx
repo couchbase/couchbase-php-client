@@ -54,8 +54,10 @@ class transaction_context_resource
                                          const zend_string* id,
                                          const zend_string* value);
 
-    core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
-    core_error_info remove(const zval* document);
+    [[nodiscard]] core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
+    [[nodiscard]] core_error_info remove(const zval* document);
+
+    [[nodiscard]] core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
 
   private:
     class impl;

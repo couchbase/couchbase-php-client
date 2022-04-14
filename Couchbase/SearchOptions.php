@@ -218,8 +218,7 @@ class SearchOptions implements JsonSerializable
     /**
      * Configures the highlighting of matches in the response
      *
-     * @param string $style highlight style to apply. Use constants HIGHLIGHT_HTML,
-     *   HIGHLIGHT_ANSI, HIGHLIGHT_SIMPLE.
+     * @param string|null $style highlight style to apply.
      * @param string ...$fields the optional fields on which to highlight.
      *   If none, all fields where there is a match are highlighted.
      *
@@ -302,17 +301,7 @@ class SearchOptions implements JsonSerializable
             return [];
         }
 
-        $highlightStyle = null;
-        switch ($options->highlight) {
-            case SearchHighlightMode::ANSI:
-                $highlightStyle = 1;
-                break;
-            case SearchHighlightMode::HTML:
-                $highlightStyle = 2;
-                break;
-            case SearchHighlightMode::SIMPLE:
-                break;
-        }
+        $highlightStyle = $options->highlight['style'];
         $highlightFields = null;
         if ($options->highlight != null) {
             $highlightFields = $options->highlight['fields'];

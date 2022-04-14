@@ -28,15 +28,15 @@ interface QueryProfile
     /**
      * Set profiling to off
      */
-    public const OFF = 1;
+    public const OFF = "off";
 
     /**
      * Set profiling to include phase timings
      */
-    public const PHASES = 2;
+    public const PHASES = "phases";
 
     /**
      * Set profiling to include execution timings
      */
-    public const TIMINGS = 3;
+    public const TIMINGS = "timings";
 }

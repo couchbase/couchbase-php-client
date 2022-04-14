@@ -16,6 +16,7 @@
 
 #include "connection_handle.hxx"
 #include "common.hxx"
+#include "conversion_utilities.hxx"
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/management/bucket_settings.hxx>
@@ -505,7 +506,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         if (resp.ctx.ec) {
             return { { resp.ctx.ec,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       fmt::format("unable to query analytics: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
                        build_analytics_error_context(resp.ctx) },
                      {} };
         }
@@ -909,18 +910,6 @@ connection_handle::open()
     return impl_->open();
 }
 
-static std::string
-cb_string_new(const zend_string* value)
-{
-    return { ZSTR_VAL(value), ZSTR_LEN(value) };
-}
-
-static std::string
-cb_string_new(const zval* value)
-{
-    return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
-}
-
 std::string
 connection_handle::cluster_version(const zend_string* bucket_name)
 {
@@ -937,42 +926,6 @@ core_error_info
 connection_handle::bucket_close(const zend_string* name)
 {
     return impl_->bucket_close(cb_string_new(name));
-}
-
-template<typename Duration>
-static core_error_info
-cb_get_timeout(Duration& timeout, const zval* options)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("timeoutMilliseconds"));
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_LONG:
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected timeoutMilliseconds to be a number in the options" };
-    }
-    timeout = std::chrono::milliseconds(Z_LVAL_P(value));
-    return {};
-}
-
-template<typename Request>
-static core_error_info
-cb_assign_timeout(Request& req, const zval* options)
-{
-    return cb_get_timeout(req.timeout, options);
 }
 
 struct durability_holder {
@@ -1017,142 +970,6 @@ cb_assign_durability(Request& req, const zval* options)
                  { __LINE__, __FILE__, __func__ },
                  fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
     }
-    return {};
-}
-
-static inline core_error_info
-cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
-{
-    try {
-        std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
-        cas = couchbase::cas{ cas_value };
-    } catch (const std::invalid_argument&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("no numeric conversion could be performed for encoded CAS value: \"{}\"", cas_string) };
-    } catch (const std::out_of_range&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("the number encoded as CAS is out of the range of representable values by a unsigned long long: \"{}\"",
-                             cas_string) };
-    }
-    return {};
-}
-
-static core_error_info
-cb_assign_cas(couchbase::cas& cas, const zval* options)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("cas"));
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected CAS to be a string in the options" };
-    }
-    cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
-    return {};
-}
-
-template<typename Boolean>
-static core_error_info
-cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_TRUE:
-            field = true;
-            break;
-        case IS_FALSE:
-            field = false;
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a boolean value in the options", name) };
-    }
-    return {};
-}
-
-template<typename Integer>
-static core_error_info
-cb_assign_integer(Integer& field, const zval* options, std::string_view name)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_LONG:
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a integer value in the options", name) };
-    }
-
-    field = Z_LVAL_P(value);
-    return {};
-}
-
-template<typename String>
-static core_error_info
-cb_assign_string(String& field, const zval* options, std::string_view name)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("expected {} to be a string value in the options", name) };
-    }
-    field = { Z_STRVAL_P(value), Z_STRLEN_P(value) };
     return {};
 }
 
@@ -1226,65 +1043,6 @@ cb_assign_user_domain(Request& req, const zval* options)
                  fmt::format("unknown domain: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
     }
     return {};
-}
-
-template<typename Integer>
-static std::pair<core_error_info, Integer>
-cb_get_integer(const zval* options, std::string_view name)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_LONG:
-            break;
-        default:
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("expected {} to be a integer value in the options", name) },
-                     {} };
-    }
-
-    return { {}, Z_LVAL_P(value) };
-}
-
-static std::pair<core_error_info, std::string>
-cb_get_string(const zval* options, std::string_view name)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("expected {} to be a integer value in the options", name) },
-                     {} };
-    }
-
-    return { {}, { Z_STRVAL_P(value), Z_STRLEN_P(value) } };
 }
 
 static inline void
@@ -2398,152 +2156,8 @@ connection_handle::document_upsert_multi(zval* return_value,
 core_error_info
 connection_handle::query(zval* return_value, const zend_string* statement, const zval* options)
 {
-    couchbase::operations::query_request request{ cb_string_new(statement) };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
-        return e;
-    }
-    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
-        if (scan_consistency == "notBounded") {
-            request.scan_consistency = couchbase::query_scan_consistency::not_bounded;
-        } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = couchbase::query_scan_consistency::request_plus;
-        } else {
-            if (!scan_consistency.empty()) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-            }
-        }
-    } else {
-        return e;
-    }
-    if (auto e = cb_assign_integer(request.scan_cap, options, "scanCap"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_integer(request.pipeline_cap, options, "pipelineCap"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_integer(request.pipeline_batch, options, "pipelineBatch"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_integer(request.max_parallelism, options, "maxParallelism"); e.ec) {
-        return e;
-    }
-    if (auto [e, profile] = cb_get_integer<uint64_t>(options, "profile"); !e.ec) {
-        switch (profile) {
-            case 1:
-                request.profile = couchbase::query_profile_mode::off;
-                break;
-
-            case 2:
-                request.profile = couchbase::query_profile_mode::phases;
-                break;
-
-            case 3:
-                request.profile = couchbase::query_profile_mode::timings;
-                break;
-
-            default:
-                if (profile > 0) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("invalid value used for profile: {}", profile) };
-                }
-        }
-    } else {
-        return e;
-    }
-
-    if (auto e = cb_assign_boolean(request.readonly, options, "readonly"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_boolean(request.flex_index, options, "flexIndex"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_boolean(request.adhoc, options, "adHoc"); e.ec) {
-        return e;
-    }
-    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
-        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::json_string> params{};
-        const zval* item = nullptr;
-
-        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
-        {
-            auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-            params.emplace_back(std::move(str));
-        }
-        ZEND_HASH_FOREACH_END();
-
-        request.positional_parameters = params;
-    }
-    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
-        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::json_string> params{};
-        const zend_string* key = nullptr;
-        const zval* item = nullptr;
-
-        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-        {
-            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-        }
-        ZEND_HASH_FOREACH_END();
-
-        request.named_parameters = params;
-    }
-    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
-        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::json_string> params{};
-        const zend_string* key = nullptr;
-        const zval* item = nullptr;
-
-        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
-        {
-            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
-        }
-        ZEND_HASH_FOREACH_END();
-
-        request.raw = params;
-    }
-    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
-        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::mutation_token> vectors{};
-        const zval* item = nullptr;
-
-        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
-        {
-            couchbase::mutation_token token{};
-            if (auto e = cb_assign_integer(token.partition_id, item, "partitionId"); e.ec) {
-                return e;
-            }
-            if (auto e = cb_assign_integer(token.partition_uuid, item, "partitionUuid"); e.ec) {
-                return e;
-            }
-            if (auto e = cb_assign_integer(token.sequence_number, item, "sequenceNumber"); e.ec) {
-                return e;
-            }
-            if (auto e = cb_assign_string(token.bucket_name, item, "bucketName"); e.ec) {
-                return e;
-            }
-            vectors.emplace_back(token);
-        }
-        ZEND_HASH_FOREACH_END();
-
-        request.mutation_state = vectors;
-    }
-    if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_boolean(request.metrics, options, "metrics"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(request.bucket_name, options, "bucketName"); e.ec) {
+    auto [request, e] = zval_to_query_request(statement, options);
+    if (e.ec) {
         return e;
     }
 
@@ -2551,88 +2165,7 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     if (err.ec) {
         return err;
     }
-
-    array_init(return_value);
-    add_assoc_string(return_value, "servedByNode", resp.served_by_node.c_str());
-
-    zval rows;
-    array_init(&rows);
-    for (const auto& row : resp.rows) {
-        add_next_index_string(&rows, row.c_str());
-    }
-    add_assoc_zval(return_value, "rows", &rows);
-
-    zval meta;
-    array_init(&meta);
-    add_assoc_string(&meta, "clientContextId", resp.meta.client_context_id.c_str());
-    add_assoc_string(&meta, "requestId", resp.meta.request_id.c_str());
-    add_assoc_string(&meta, "status", resp.meta.status.c_str());
-    if (resp.meta.profile.has_value()) {
-        add_assoc_string(&meta, "profile", resp.meta.profile.value().c_str());
-    }
-    if (resp.meta.signature.has_value()) {
-        add_assoc_string(&meta, "signature", resp.meta.signature.value().c_str());
-    }
-    if (resp.meta.metrics.has_value()) {
-        zval metrics;
-        array_init(&metrics);
-        add_assoc_long(&metrics, "errorCount", resp.meta.metrics.value().error_count);
-        add_assoc_long(&metrics, "mutationCount", resp.meta.metrics.value().mutation_count);
-        add_assoc_long(&metrics, "resultCount", resp.meta.metrics.value().result_count);
-        add_assoc_long(&metrics, "resultSize", resp.meta.metrics.value().result_size);
-        add_assoc_long(&metrics, "sortCount", resp.meta.metrics.value().sort_count);
-        add_assoc_long(&metrics, "warningCount", resp.meta.metrics.value().warning_count);
-        add_assoc_long(
-          &metrics, "elapsedTime", std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().elapsed_time).count());
-        add_assoc_long(&metrics,
-                       "executionTime",
-                       std::chrono::duration_cast<std::chrono::milliseconds>(resp.meta.metrics.value().execution_time).count());
-
-        add_assoc_zval(&meta, "metrics", &metrics);
-    }
-    if (resp.meta.errors.has_value()) {
-        zval errors;
-        array_init(&errors);
-        for (const auto& e : resp.meta.errors.value()) {
-            zval error;
-            array_init(&error);
-
-            add_assoc_long(&error, "code", e.code);
-            add_assoc_string(&error, "code", e.message.c_str());
-            if (e.reason.has_value()) {
-                add_assoc_long(&error, "reason", e.reason.value());
-            }
-            if (e.retry.has_value()) {
-                add_assoc_bool(&error, "retry", e.retry.value());
-            }
-
-            add_next_index_zval(&errors, &error);
-        }
-        add_assoc_zval(return_value, "errors", &errors);
-    }
-    if (resp.meta.warnings.has_value()) {
-        zval warnings;
-        array_init(&warnings);
-        for (const auto& w : resp.meta.warnings.value()) {
-            zval warning;
-            array_init(&warning);
-
-            add_assoc_long(&warning, "code", w.code);
-            add_assoc_string(&warning, "code", w.message.c_str());
-            if (w.reason.has_value()) {
-                add_assoc_long(&warning, "reason", w.reason.value());
-            }
-            if (w.retry.has_value()) {
-                add_assoc_bool(&warning, "retry", w.retry.value());
-            }
-
-            add_next_index_zval(&warnings, &warning);
-        }
-        add_assoc_zval(return_value, "warnings", &warnings);
-    }
-
-    add_assoc_zval(return_value, "meta", &meta);
-
+    query_response_to_zval(return_value, resp);
     return {};
 }
 
@@ -2649,12 +2182,10 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
             request.scan_consistency = couchbase::analytics_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
             request.scan_consistency = couchbase::analytics_scan_consistency::request_plus;
-        } else {
-            if (!scan_consistency.empty()) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-            }
+        } else if (scan_consistency) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
     } else {
         return e;
@@ -2812,22 +2343,17 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
         return e;
     }
 
-    if (auto [e, highlight_style] = cb_get_integer<uint64_t>(options, "highlightStyle"); !e.ec) {
-        switch (highlight_style) {
-            case 1:
-                request.highlight_style = couchbase::search_highlight_style::ansi;
-                break;
-
-            case 2:
-                request.highlight_style = couchbase::search_highlight_style::html;
-                break;
-
-            default:
-                if (highlight_style > 0) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
-                             fmt::format("invalid value used for highlight style: {}", highlight_style) };
-                }
+    if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); !e.ec) {
+        if (highlight_style == "html") {
+            request.highlight_style = couchbase::search_highlight_style::html;
+        } else if (highlight_style == "ansi") {
+            request.highlight_style = couchbase::search_highlight_style::ansi;
+        } else if (highlight_style == "simple") {
+            request.highlight_style = couchbase::search_highlight_style::html;
+        } else if (highlight_style) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for highlight style: {}", *highlight_style) };
         }
     } else {
         return e;
@@ -3083,12 +2609,10 @@ connection_handle::view_query(zval* return_value,
             request.consistency = couchbase::view_scan_consistency::request_plus;
         } else if (scan_consistency == "updateAfter") {
             request.consistency = couchbase::view_scan_consistency::update_after;
-        } else {
-            if (!scan_consistency.empty()) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         fmt::format("invalid value used for scan consistency: {}", scan_consistency) };
-            }
+        } else if (scan_consistency) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
     } else {
         return e;
@@ -3107,20 +2631,15 @@ connection_handle::view_query(zval* return_value,
 
         request.keys = keys;
     }
-    if (auto [e, order] = cb_get_integer<uint64_t>(options, "order"); !e.ec) {
-        switch (order) {
-            case 0:
-                request.order = couchbase::view_sort_order::ascending;
-                break;
-
-            case 1:
-                request.order = couchbase::view_sort_order::descending;
-                break;
-
-            default:
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         fmt::format("invalid value used for order: {}", order) };
+    if (auto [e, order] = cb_get_string(options, "order"); !e.ec) {
+        if (order == "ascending") {
+            request.order = couchbase::view_sort_order::ascending;
+        } else if (order == "descending") {
+            request.order = couchbase::view_sort_order::descending;
+        } else if (order) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     fmt::format("invalid value used for order: {}", *order) };
         }
     } else {
         return e;
@@ -3548,10 +3067,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.bucket_type = couchbase::management::cluster::bucket_type::ephemeral;
         } else if (bucket_type == "memcached") {
             bucket.bucket_type = couchbase::management::cluster::bucket_type::memcached;
-        } else if (!bucket_type.empty()) {
+        } else if (bucket_type) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for bucket type: {}", bucket_type) },
+                       fmt::format("invalid value used for bucket type: {}", *bucket_type) },
                      {} };
         }
     } else {
@@ -3570,10 +3089,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.compression_mode = couchbase::management::cluster::bucket_compression::active;
         } else if (compression_mode == "passive") {
             bucket.compression_mode = couchbase::management::cluster::bucket_compression::passive;
-        } else if (!compression_mode.empty()) {
+        } else if (compression_mode) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for compression mode: {}", compression_mode) },
+                       fmt::format("invalid value used for compression mode: {}", *compression_mode) },
                      {} };
         }
     } else {
@@ -3588,10 +3107,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.minimum_durability_level = couchbase::protocol::durability_level::majority_and_persist_to_active;
         } else if (durability_level == "persistToMajority") {
             bucket.minimum_durability_level = couchbase::protocol::durability_level::persist_to_majority;
-        } else if (!durability_level.empty()) {
+        } else if (durability_level) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for durability level: {}", durability_level) },
+                       fmt::format("invalid value used for durability level: {}", *durability_level) },
                      {} };
         }
     } else {
@@ -3615,10 +3134,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::value_only;
         } else if (eviction_policy == "nruEviction") {
             bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::not_recently_used;
-        } else if (!eviction_policy.empty()) {
+        } else if (eviction_policy) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for eviction policy: {}", eviction_policy) },
+                       fmt::format("invalid value used for eviction policy: {}", *eviction_policy) },
                      {} };
         }
     } else {
@@ -3631,10 +3150,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::timestamp;
         } else if (resolution_type == "custom") {
             bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::custom;
-        } else if (!resolution_type.empty()) {
+        } else if (resolution_type) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for custom resolution type: {}", resolution_type) },
+                       fmt::format("invalid value used for custom resolution type: {}", *resolution_type) },
                      {} };
         }
     } else {
@@ -3645,10 +3164,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
             bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::couchstore;
         } else if (storage_backend == "magma") {
             bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::magma;
-        } else if (!storage_backend.empty()) {
+        } else if (storage_backend) {
             return { { error::common_errc::invalid_argument,
                        { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for storage backend: {}", storage_backend) },
+                       fmt::format("invalid value used for storage backend: {}", *storage_backend) },
                      {} };
         }
     } else {
