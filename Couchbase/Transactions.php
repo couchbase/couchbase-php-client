@@ -60,9 +60,6 @@ class Transactions
             try {
                 $logic($transaction->transactionAttemptContext());
             } catch (Exception $exception) {
-                var_dump($exception->getMessage());
-                var_dump($exception->getFile());
-                var_dump($exception->getLine());
                 $transaction->rollback();
                 throw $exception;
             }

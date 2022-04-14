@@ -55,9 +55,12 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                 $res = $attempt->get($collection, $idToReplace);
                 $this->assertEquals(["foo" => "baz"], $res->content());
 
-                $this->wrapException(function () use ($idToRemove, $collection, $attempt) {
-                    $attempt->get($collection, $idToRemove);
-                }, Couchbase\Exception\DocumentNotFoundException::class);
+                $this->wrapException(
+                    function () use ($idToRemove, $collection, $attempt) {
+                        $attempt->get($collection, $idToRemove);
+                    },
+                    Couchbase\Exception\DocumentNotFoundException::class
+                );
             }
         );
 
@@ -67,35 +70,39 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($idToReplace);
         $this->assertEquals(["foo" => "baz"], $res->content());
 
-        $this->wrapException(function () use ($idToRemove, $collection) {
-            $collection->get($idToRemove);
-        }, Couchbase\Exception\DocumentNotFoundException::class);
+        $this->wrapException(
+            function () use ($idToRemove, $collection) {
+                $collection->get($idToRemove);
+            },
+            Couchbase\Exception\DocumentNotFoundException::class
+        );
     }
-
 
     public function testWorksWithQuery()
     {
         $this->skipIfCaves();
         $prefix = $this->uniqueId();
-        $id1 = $prefix . "_1";
-        $id2 = $prefix . "_2";
+        $idOne = $prefix . "_1";
+        $idTwo = $prefix . "_2";
 
         $cluster = $this->connectCluster();
 
         $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
-        $collection->insert($id1, ["foo" => "bar"]);
+        $collection->insert($idOne, ["foo" => "bar"]);
 
         $cluster->transactions()->run(
-            function (TransactionAttemptContext $attempt) use ($id2, $id1, $collection) {
-                $doc = $attempt->insert($collection, $id2, ["foo" => "baz"]);
+            function (TransactionAttemptContext $attempt) use ($idTwo, $idOne, $collection) {
+                $doc = $attempt->insert($collection, $idTwo, ["foo" => "baz"]);
 
                 $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
 
                 $res = $attempt->query(
                     "SELECT foo FROM $collectionQualifier WHERE META().id IN \$ids ORDER BY META().id ASC",
-                    TransactionQueryOptions::build()->namedParameters([
-                        'ids' => [$id1, $id2],
-                    ])
+                    TransactionQueryOptions::build()->namedParameters(
+                        [
+                            'ids' => [$idOne, $idTwo],
+                        ]
+                    )
                 );
 
                 $this->assertCount(2, $res->rows());
@@ -103,15 +110,205 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 
                 $attempt->replace($doc, ["foo" => "bag"]);
 
-                $doc = $attempt->get($collection, $id1);
+                $doc = $attempt->get($collection, $idOne);
                 $attempt->replace($doc, ["foo" => "bad"]);
             }
         );
 
-        $res = $collection->get($id1);
+        $res = $collection->get($idOne);
         $this->assertEquals(["foo" => "bad"], $res->content());
 
-        $res = $collection->get($id2);
+        $res = $collection->get($idTwo);
         $this->assertEquals(["foo" => "bag"], $res->content());
+    }
+
+    public function testFailsWithApplicationErrors()
+    {
+        $idToInsert = $this->uniqueId();
+        $idToReplace = $this->uniqueId();
+        $idToRemove = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($idToReplace, ["foo" => "bar"]);
+        $collection->insert($idToRemove, ["foo" => "bar"]);
+
+        $numberOfAttempts = 0;
+        $this->wrapException(
+            function () use ($collection, $idToInsert, $idToReplace, $idToRemove, &$numberOfAttempts, $cluster) {
+                $cluster->transactions()->run(
+                    function (TransactionAttemptContext $attempt) use (
+                        &$numberOfAttempts,
+                        $idToRemove,
+                        $idToReplace,
+                        $idToInsert,
+                        $collection
+                    ) {
+                        $numberOfAttempts++;
+
+                        $attempt->insert($collection, $idToInsert, ["foo" => "baz"]);
+
+                        $doc = $attempt->get($collection, $idToReplace);
+                        $attempt->replace($doc, ["foo" => "baz"]);
+
+                        $doc = $attempt->get($collection, $idToRemove);
+                        $attempt->remove($doc);
+
+                        throw new Exception("application failure");
+                    }
+                );
+            },
+            Exception::class,
+            null,
+            "/application failure/"
+        );
+
+        $this->assertEquals(1, $numberOfAttempts);
+
+        $this->wrapException(
+            function () use ($idToInsert, $collection) {
+                $collection->get($idToInsert);
+            },
+            Couchbase\Exception\DocumentNotFoundException::class
+        );
+
+        $res = $collection->get($idToReplace);
+        $this->assertEquals(["foo" => "bar"], $res->content());
+
+        $res = $collection->get($idToRemove);
+        $this->assertEquals(["foo" => "bar"], $res->content());
+    }
+
+    public function testCommitWithQuery()
+    {
+        $this->skipIfCaves();
+        $idToInsert = $this->uniqueId();
+        $idToReplace = $this->uniqueId();
+        $idToRemove = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($idToReplace, ["foo" => "bar"]);
+        $collection->insert($idToRemove, ["foo" => "bar"]);
+
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($idToRemove, $idToReplace, $idToInsert, $collection) {
+                $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+
+                $attempt->query(
+                    "INSERT INTO $collectionQualifier VALUES (\$1, \$2)",
+                    TransactionQueryOptions::build()->positionalParameters([$idToInsert, ["foo" => "baz"]])
+                );
+
+                $attempt->query(
+                    "UPDATE $collectionQualifier SET foo=\"baz\" WHERE META().id = \$1",
+                    TransactionQueryOptions::build()->positionalParameters([$idToReplace])
+                );
+
+                $attempt->query(
+                    "DELETE FROM $collectionQualifier WHERE META().id = \$1",
+                    TransactionQueryOptions::build()->positionalParameters([$idToRemove])
+                );
+
+                // check Read-Your-Own-Write
+                $res = $attempt->get($collection, $idToInsert);
+                $this->assertEquals(["foo" => "baz"], $res->content());
+
+                $res = $attempt->get($collection, $idToReplace);
+                $this->assertEquals(["foo" => "baz"], $res->content());
+
+                $this->wrapException(
+                    function () use ($idToRemove, $collection, $attempt) {
+                        $attempt->get($collection, $idToRemove);
+                    },
+                    Couchbase\Exception\TransactionException::class,
+                    null,
+                    "/doc not found/"
+                );
+            }
+        );
+
+        $res = $collection->get($idToInsert);
+        $this->assertEquals(["foo" => "baz"], $res->content());
+
+        $res = $collection->get($idToReplace);
+        $this->assertEquals(["foo" => "baz"], $res->content());
+
+        $this->wrapException(
+            function () use ($idToRemove, $collection) {
+                $collection->get($idToRemove);
+            },
+            Couchbase\Exception\DocumentNotFoundException::class
+        );
+    }
+
+    public function testRollbackAfterQuery()
+    {
+        $this->skipIfCaves();
+        $idToInsert = $this->uniqueId();
+        $idToReplace = $this->uniqueId();
+        $idToRemove = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($idToReplace, ["foo" => "bar"]);
+        $collection->insert($idToRemove, ["foo" => "bar"]);
+
+        $numberOfAttempts = 0;
+        $this->wrapException(
+            function () use (&$numberOfAttempts, $collection, $idToInsert, $idToReplace, $idToRemove, $cluster) {
+                $cluster->transactions()->run(
+                    function (TransactionAttemptContext $attempt) use (
+                        &$numberOfAttempts,
+                        $idToRemove,
+                        $idToReplace,
+                        $idToInsert,
+                        $collection
+                    ) {
+                        $numberOfAttempts++;
+
+                        $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+
+                        $attempt->query(
+                            "INSERT INTO $collectionQualifier VALUES (\$1, \$2)",
+                            TransactionQueryOptions::build()->positionalParameters([$idToInsert, ["foo" => "baz"]])
+                        );
+
+                        $attempt->query(
+                            "UPDATE $collectionQualifier SET foo=\"baz\" WHERE META().id = \$1",
+                            TransactionQueryOptions::build()->positionalParameters([$idToReplace])
+                        );
+
+                        $attempt->query(
+                            "DELETE FROM $collectionQualifier WHERE META().id = \$1",
+                            TransactionQueryOptions::build()->positionalParameters([$idToRemove])
+                        );
+
+                        throw new Exception("application failure");
+                    }
+                );
+            },
+            Exception::class,
+            null,
+            "/application failure/"
+        );
+
+        $this->assertEquals(1, $numberOfAttempts);
+
+        $this->wrapException(
+            function () use ($idToInsert, $collection) {
+                $collection->get($idToInsert);
+            },
+            Couchbase\Exception\DocumentNotFoundException::class
+        );
+
+        $res = $collection->get($idToReplace);
+        $this->assertEquals(["foo" => "bar"], $res->content());
+
+        $res = $collection->get($idToRemove);
+        $this->assertEquals(["foo" => "bar"], $res->content());
     }
 }
