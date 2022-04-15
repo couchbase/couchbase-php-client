@@ -45,17 +45,24 @@ DEFAULT_PHP_PREFIX =
     "/usr"
   end
 
-DEFAULT_CC="cc"
-DEFAULT_CXX="c++"
-if RbConfig::CONFIG["target_os"] =~ /darwin/
+default_cc="cc"
+default_cxx="c++"
+case RbConfig::CONFIG["target_os"]
+when /darwin/
   prefix = `brew --prefix gcc@10 2>/dev/null`.strip
-  DEFAULT_CC = File.join(prefix, "bin/gcc-10")
-  DEFAULT_CXX = File.join(prefix, "bin/g++-10")
+  default_cc = File.join(prefix, "bin/gcc-10")
+  default_cxx = File.join(prefix, "bin/g++-10")
+when /linux/
+  prefix = "/opt/rh/devtoolset-9/root/usr"
+  if File.directory?(prefix)
+    default_cc = File.join(prefix, "bin/gcc")
+    default_cxx = File.join(prefix, "bin/g++")
+  end
 end
 
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
-CB_CC = ENV.fetch("CB_CC", DEFAULT_CC)
-CB_CXX = ENV.fetch("CB_CXX", DEFAULT_CXX)
+CB_CC = ENV.fetch("CB_CC", default_cc)
+CB_CXX = ENV.fetch("CB_CXX", default_cxx)
 
 run("#{CB_PHP_PREFIX}/bin/php --version")
 run("#{CB_PHP_PREFIX}/bin/php --ini")
