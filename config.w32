@@ -8,6 +8,7 @@ if (PHP_COUCHBASE != "no") {
 
         var COUCHBASE_CMAKE_SOURCE_DIRECTORY = FSO.GetAbsolutePathName(configure_module_dirname + "\\src");
         var COUCHBASE_CMAKE_BUILD_DIRECTORY = get_define("BUILD_DIR") + "\\cmake-build";
+        var COUCHBASE_PHP_CFLAGS = get_define("CFLAGS_PHP");
         var COUCHBASE_PHP_INCLUDES =
                 PHP_SRC_DIR + " " +
                 PHP_SRC_DIR + "\\main " +
@@ -19,6 +20,7 @@ if (PHP_COUCHBASE != "no") {
         STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
         STDOUT.WriteLine('COUCHBASE_CMAKE_SOURCE_DIRECTORY="' + COUCHBASE_CMAKE_SOURCE_DIRECTORY + '"');
         STDOUT.WriteLine('COUCHBASE_CMAKE_BUILD_DIRECTORY="' + COUCHBASE_CMAKE_BUILD_DIRECTORY + '"');
+        STDOUT.WriteLine('COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"');
         STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
         STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
 
@@ -35,6 +37,7 @@ if (PHP_COUCHBASE != "no") {
                 ' -S ' + COUCHBASE_CMAKE_SOURCE_DIRECTORY +
                 ' -B ' + COUCHBASE_CMAKE_BUILD_DIRECTORY +
                 ' -G ' + '"NMake Makefiles"' +
+                ' -D COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"' +
                 ' -D COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"' +
                 ' -D COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"' +
                 ' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF 2>&1';

@@ -89,7 +89,7 @@ if(APPLE)
   target_link_libraries(couchbase_php_core PRIVATE -Wl,-undefined,dynamic_lookup)
 endif()
 if(WIN32)
-  target_compile_options(couchbase_php_core PRIVATE /bigobj)
+  target_compile_options(couchbase_php_core PRIVATE /bigobj ${COUCHBASE_PHP_CFLAGS})
   target_compile_definitions(
     couchbase_php_core
     PRIVATE _WINDOWS
