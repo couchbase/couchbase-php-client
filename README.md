@@ -34,7 +34,6 @@ such as `brew`, `apt-get`, and similar package management utilities (depending o
 - **cmake >= 3.20.0+** (e.g., `brew install cmake`)
 - **c++ compiler >= std_17** (e.g., `xcode-select --install`)
 - **openssl >= 1.1+** (e.g., `brew install openssl`)
-- **boost** (e.g., `brew install boost`)
 
 **IMPORTANT:** On macOS, the **OpenSSL** `brew` install command mentioned above is not sufficient to be able to build. The easiest way to fix this is to add the `OPENSSL_ROOT_DIR` env variable to your exports (e.g., `.zshenv`). If this is not sufficient, see the other tips mentioned when you run `brew info openssl`.
 ```shell
