@@ -49,9 +49,8 @@ default_cc="cc"
 default_cxx="c++"
 case RbConfig::CONFIG["target_os"]
 when /darwin/
-  prefix = `brew --prefix gcc@10 2>/dev/null`.strip
-  default_cc = File.join(prefix, "bin/gcc-10")
-  default_cxx = File.join(prefix, "bin/g++-10")
+  default_cc = "/usr/bin/gcc"
+  default_cxx = "/usr/bin/g++"
 when /linux/
   prefix = "/opt/rh/devtoolset-9/root/usr"
   if File.directory?(prefix)
