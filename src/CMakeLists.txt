@@ -30,7 +30,7 @@ add_subdirectory(deps/couchbase-cxx-transactions)
 
 string(
   REGEX
-  REPLACE "[\r\n]|-I|/I"
+  REPLACE "[\r\n]| *-I| */I"
           " "
           PHP_INCLUDE_DIRS
           "${COUCHBASE_PHP_INCLUDES}")
@@ -78,7 +78,7 @@ file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/core/*.cxx)
 add_library(couchbase_php_core SHARED ${SOURCE_FILES})
 target_include_directories(couchbase_php_core PRIVATE ${PROJECT_BINARY_DIR}/generated)
 target_include_directories(couchbase_php_core PRIVATE ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-transactions/include)
-target_include_directories(couchbase_php_core PRIVATE BEFORE SYSTEM ${PHP_INCLUDE_DIRS})
+target_include_directories(couchbase_php_core PRIVATE ${PHP_INCLUDE_DIRS})
 target_link_libraries(
   couchbase_php_core
   PRIVATE project_options
