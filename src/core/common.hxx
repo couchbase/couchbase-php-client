@@ -32,87 +32,16 @@ zend_long persistent_timeout{}; /* time period after which idle persistent conne
 ZEND_END_MODULE_GLOBALS(couchbase)
 
 ZEND_EXTERN_MODULE_GLOBALS(couchbase)
-
-#ifdef ZTS
-#define COUCHBASE_G(v) TSRMG(couchbase_globals_id, zend_couchbase_globals*, v)
-#else
-#define COUCHBASE_G(v) (couchbase_globals.v)
-#endif
-
-extern zend_class_entry* couchbase_exception_ce;
-extern zend_class_entry* ambiguous_timeout_exception_ce;
-extern zend_class_entry* authentication_failure_exception_ce;
-extern zend_class_entry* bucket_exists_exception_ce;
-extern zend_class_entry* bucket_not_flushable_exception_ce;
-extern zend_class_entry* bucket_not_found_exception_ce;
-extern zend_class_entry* cas_mismatch_exception_ce;
-extern zend_class_entry* collection_exists_exception_ce;
-extern zend_class_entry* collection_not_found_exception_ce;
-extern zend_class_entry* compilation_failure_exception_ce;
-extern zend_class_entry* consistency_mismatch_exception_ce;
-extern zend_class_entry* dataset_exists_exception_ce;
-extern zend_class_entry* dataset_not_found_exception_ce;
-extern zend_class_entry* dataverse_exists_exception_ce;
-extern zend_class_entry* dataverse_not_found_exception_ce;
-extern zend_class_entry* decoding_failure_exception_ce;
-extern zend_class_entry* delta_invalid_exception_ce;
-extern zend_class_entry* design_document_not_found_exception_ce;
-extern zend_class_entry* document_exists_exception_ce;
-extern zend_class_entry* document_irretrievable_exception_ce;
-extern zend_class_entry* document_locked_exception_ce;
-extern zend_class_entry* document_not_found_exception_ce;
-extern zend_class_entry* document_not_json_exception_ce;
-extern zend_class_entry* durability_ambiguous_exception_ce;
-extern zend_class_entry* durability_impossible_exception_ce;
-extern zend_class_entry* durability_level_not_available_exception_ce;
-extern zend_class_entry* durable_write_in_progress_exception_ce;
-extern zend_class_entry* durable_write_re_commit_in_progress_exception_ce;
-extern zend_class_entry* encoding_failure_exception_ce;
-extern zend_class_entry* feature_not_available_exception_ce;
-extern zend_class_entry* group_not_found_exception_ce;
-extern zend_class_entry* index_exists_exception_ce;
-extern zend_class_entry* index_failure_exception_ce;
-extern zend_class_entry* index_not_found_exception_ce;
-extern zend_class_entry* index_not_ready_exception_ce;
-extern zend_class_entry* internal_server_failure_exception_ce;
-extern zend_class_entry* invalid_argument_exception_ce;
-extern zend_class_entry* job_queue_full_exception_ce;
-extern zend_class_entry* link_exists_exception_ce;
-extern zend_class_entry* link_not_found_exception_ce;
-extern zend_class_entry* number_too_big_exception_ce;
-extern zend_class_entry* parsing_failure_exception_ce;
-extern zend_class_entry* path_exists_exception_ce;
-extern zend_class_entry* path_invalid_exception_ce;
-extern zend_class_entry* path_mismatch_exception_ce;
-extern zend_class_entry* path_not_found_exception_ce;
-extern zend_class_entry* path_too_big_exception_ce;
-extern zend_class_entry* path_too_deep_exception_ce;
-extern zend_class_entry* planning_failure_exception_ce;
-extern zend_class_entry* prepared_statement_failure_exception_ce;
-extern zend_class_entry* request_canceled_exception_ce;
-extern zend_class_entry* scope_exists_exception_ce;
-extern zend_class_entry* scope_not_found_exception_ce;
-extern zend_class_entry* service_not_available_exception_ce;
-extern zend_class_entry* temporary_failure_exception_ce;
-extern zend_class_entry* timeout_exception_ce;
-extern zend_class_entry* unambiguous_timeout_exception_ce;
-extern zend_class_entry* unsupported_operation_exception_ce;
-extern zend_class_entry* user_exists_exception_ce;
-extern zend_class_entry* user_not_found_exception_ce;
-extern zend_class_entry* value_invalid_exception_ce;
-extern zend_class_entry* value_too_deep_exception_ce;
-extern zend_class_entry* value_too_large_exception_ce;
-extern zend_class_entry* view_not_found_exception_ce;
-extern zend_class_entry* xattr_cannot_modify_virtual_attribute_exception_ce;
-extern zend_class_entry* xattr_invalid_key_combo_exception_ce;
-extern zend_class_entry* xattr_unknown_macro_exception_ce;
-extern zend_class_entry* xattr_unknown_virtual_attribute_exception_ce;
-
-extern zend_class_entry* transaction_exception_ce;
-extern zend_class_entry* transaction_operation_failed_exception_ce;
+#define COUCHBASE_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(couchbase, v)
 
 namespace couchbase::php
 {
+void
+initialize_exceptions(const zend_function_entry* exception_functions);
+
+[[nodiscard]] zend_class_entry*
+couchbase_exception();
+
 zend_class_entry*
 map_error_to_exception(const core_error_info& info);
 
