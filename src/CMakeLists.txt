@@ -36,6 +36,8 @@ string(
           "${COUCHBASE_PHP_INCLUDES}")
 separate_arguments(PHP_INCLUDE_DIRS)
 message(STATUS "PHP_INCLUDE_DIRS: ${PHP_INCLUDE_DIRS}")
+separate_arguments(COUCHBASE_PHP_CFLAGS)
+message(STATUS "COUCHBASE_PHP_CFLAGS: ${COUCHBASE_PHP_CFLAGS}")
 
 find_program(GIT git)
 if(NOT EXT_GIT_REVISION)
@@ -89,17 +91,7 @@ if(APPLE)
   target_link_libraries(couchbase_php_core PRIVATE -Wl,-undefined,dynamic_lookup)
 endif()
 if(WIN32)
-  target_compile_options(couchbase_php_core PRIVATE /bigobj ${COUCHBASE_PHP_CFLAGS})
-  target_compile_definitions(
-    couchbase_php_core
-    PRIVATE _WINDOWS
-            WINDOWS=1
-            ZEND_WIN32=1
-            PHP_WIN32=1
-            WIN32
-            _MBCS
-            NOMINMAX
-            _USE_MATH_DEFINES)
+  target_compile_options(couchbase_php_core PRIVATE ${COUCHBASE_PHP_CFLAGS} /bigobj)
   target_link_options(couchbase_php_core PUBLIC "${COUCHBASE_PHP_LIB}")
 endif()
 if(COUCHBASE_PHP_LIBDIR)
