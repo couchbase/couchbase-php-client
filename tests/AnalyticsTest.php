@@ -3,6 +3,7 @@
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsScanConsistency;
 use Couchbase\Cluster;
+use Couchbase\Exception\DatasetExistsException;
 use Couchbase\JsonTranscoder;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
@@ -22,6 +23,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     {
         try {
             $this->cluster->analyticsQuery("ALTER COLLECTION `$bucketName`.`$scopeName`.`$collectionName` ENABLE ANALYTICS");
+        } catch (DatasetExistsException $e) {
         } catch (Exception $e) {
             printf("Dataset setup failed %s", $e);
         }
