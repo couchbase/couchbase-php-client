@@ -86,8 +86,9 @@ end
 
 tests = ARGV.to_a
 tests << File.join(project_root, "tests") if tests.empty?
+results_xml = File.join(project_root, "results.xml")
 
 php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
 Dir.chdir(project_root) do 
-  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')}")
+  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
 end
