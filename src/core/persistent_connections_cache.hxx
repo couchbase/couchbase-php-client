@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "api_visibility.hxx"
+
 #include "connection_handle.hxx"
 
 #include <Zend/zend_API.h>
@@ -23,18 +25,18 @@
 namespace couchbase::php
 {
 
-void
+COUCHBASE_API void
 set_persistent_connection_destructor_id(int id);
 
-[[nodiscard]] int
+COUCHBASE_API int
 get_persistent_connection_destructor_id();
 
-[[nodiscard]] std::pair<zend_resource*, core_error_info>
+COUCHBASE_API std::pair<zend_resource*, core_error_info>
 create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options);
 
-void
+COUCHBASE_API void
 destroy_persistent_connection(zend_resource* res);
 
-[[nodiscard]] int
+COUCHBASE_API int
 check_persistent_connection(zval* zv);
 } // namespace couchbase::php

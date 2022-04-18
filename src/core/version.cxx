@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "version.hxx"
 #include "ext_build_version.hxx"
 
@@ -21,6 +23,7 @@
 
 namespace couchbase::php
 {
+COUCHBASE_API
 void
 core_version(zval* return_value)
 {
@@ -41,18 +44,21 @@ core_version(zval* return_value)
     }
 }
 
+COUCHBASE_API
 const char*
 extension_revision()
 {
     return COUCHBASE_EXTENSION_GIT_REVISION;
 }
 
+COUCHBASE_API
 const char*
 cxx_client_revision()
 {
     return COUCHBASE_CXX_CLIENT_GIT_REVISION;
 }
 
+COUCHBASE_API
 const char*
 cxx_transactions_revision()
 {

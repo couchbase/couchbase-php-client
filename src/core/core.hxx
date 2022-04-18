@@ -16,25 +16,8 @@
 
 #pragma once
 
-#include "api_visibility.hxx"
-
-#include <Zend/zend_API.h>
-
-namespace couchbase::php
-{
-COUCHBASE_API
-void
-core_version(zval* return_value);
-
-COUCHBASE_API
-const char*
-extension_revision();
-
-COUCHBASE_API
-const char*
-cxx_client_revision();
-
-COUCHBASE_API
-const char*
-cxx_transactions_revision();
-} // namespace couchbase::php
+/**
+ * core library depends on PHP runtime, so make sure it does not demand PHP symbols during link phase
+ */
+#undef LIBZEND_EXPORTS
+#undef COUCHBASE_EXPORTS

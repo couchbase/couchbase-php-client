@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "connection_handle.hxx"
 #include "common.hxx"
 #include "conversion_utilities.hxx"
@@ -896,6 +898,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     origin origin_;
 };
 
+COUCHBASE_API
 connection_handle::connection_handle(couchbase::origin origin, std::chrono::steady_clock::time_point idle_expiry)
   : idle_expiry_{ idle_expiry }
   , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
@@ -904,24 +907,28 @@ connection_handle::connection_handle(couchbase::origin origin, std::chrono::stea
     impl_->start();
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::open()
 {
     return impl_->open();
 }
 
+COUCHBASE_API
 std::string
 connection_handle::cluster_version(const zend_string* bucket_name)
 {
     return impl_->cluster_version(cb_string_new(bucket_name));
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_open(const zend_string* name)
 {
     return impl_->bucket_open(cb_string_new(name));
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_close(const zend_string* name)
 {
@@ -1063,6 +1070,7 @@ is_mutation_token_valid(const couchbase::mutation_token& token)
     return !token.bucket_name.empty() && token.partition_uuid > 0;
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_upsert(zval* return_value,
                                    const zend_string* bucket,
@@ -1110,6 +1118,7 @@ connection_handle::document_upsert(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_insert(zval* return_value,
                                    const zend_string* bucket,
@@ -1154,6 +1163,7 @@ connection_handle::document_insert(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_replace(zval* return_value,
                                     const zend_string* bucket,
@@ -1204,6 +1214,7 @@ connection_handle::document_replace(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_append(zval* return_value,
                                    const zend_string* bucket,
@@ -1243,6 +1254,7 @@ connection_handle::document_append(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_prepend(zval* return_value,
                                     const zend_string* bucket,
@@ -1282,6 +1294,7 @@ connection_handle::document_prepend(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_increment(zval* return_value,
                                       const zend_string* bucket,
@@ -1329,6 +1342,7 @@ connection_handle::document_increment(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_decrement(zval* return_value,
                                       const zend_string* bucket,
@@ -1376,6 +1390,7 @@ connection_handle::document_decrement(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_get(zval* return_value,
                                 const zend_string* bucket,
@@ -1439,6 +1454,7 @@ connection_handle::document_get(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_get_and_lock(zval* return_value,
                                          const zend_string* bucket,
@@ -1474,6 +1490,7 @@ connection_handle::document_get_and_lock(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_get_and_touch(zval* return_value,
                                           const zend_string* bucket,
@@ -1509,6 +1526,7 @@ connection_handle::document_get_and_touch(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_touch(zval* return_value,
                                   const zend_string* bucket,
@@ -1542,6 +1560,7 @@ connection_handle::document_touch(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_unlock(zval* return_value,
                                    const zend_string* bucket,
@@ -1577,6 +1596,7 @@ connection_handle::document_unlock(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_remove(zval* return_value,
                                    const zend_string* bucket,
@@ -1618,6 +1638,7 @@ connection_handle::document_remove(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_exists(zval* return_value,
                                    const zend_string* bucket,
@@ -1655,6 +1676,7 @@ connection_handle::document_exists(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_mutate_in(zval* return_value,
                                       const zend_string* bucket,
@@ -1802,6 +1824,7 @@ connection_handle::document_mutate_in(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_lookup_in(zval* return_value,
                                       const zend_string* bucket,
@@ -1890,6 +1913,7 @@ connection_handle::document_lookup_in(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_get_multi(zval* return_value,
                                       const zend_string* bucket,
@@ -1950,6 +1974,7 @@ connection_handle::document_get_multi(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_remove_multi(zval* return_value,
                                          const zend_string* bucket,
@@ -2058,6 +2083,7 @@ connection_handle::document_remove_multi(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::document_upsert_multi(zval* return_value,
                                          const zend_string* bucket,
@@ -2153,6 +2179,7 @@ connection_handle::document_upsert_multi(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::query(zval* return_value, const zend_string* statement, const zval* options)
 {
@@ -2169,6 +2196,7 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::analytics_query(zval* return_value, const zend_string* statement, const zval* options)
 {
@@ -2308,6 +2336,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::search_query(zval* return_value, const zend_string* index_name, const zend_string* query, const zval* options)
 {
@@ -2569,6 +2598,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::view_query(zval* return_value,
                               const zend_string* bucket_name,
@@ -2740,6 +2770,7 @@ connection_handle::view_query(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::ping(zval* return_value, const zval* options)
 {
@@ -2855,6 +2886,7 @@ connection_handle::ping(zval* return_value, const zval* options)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::diagnostics(zval* return_value, const zend_string* report_id, const zval* options)
 {
@@ -2935,6 +2967,7 @@ connection_handle::diagnostics(zval* return_value, const zend_string* report_id,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
 {
@@ -2982,6 +3015,7 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::view_index_upsert(zval* return_value,
                                      const zend_string* bucket_name,
@@ -3177,6 +3211,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
     return { {}, bucket };
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_create(zval* return_value, const zval* bucket_settings, const zval* options)
 {
@@ -3200,6 +3235,7 @@ connection_handle::bucket_create(zval* return_value, const zval* bucket_settings
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_update(zval* return_value, const zval* bucket_settings, const zval* options)
 {
@@ -3223,6 +3259,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::cluster::bucket_settings bucket_settings)
 {
@@ -3337,6 +3374,7 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_get(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3358,6 +3396,7 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_get_all(zval* return_value, const zval* options)
 {
@@ -3385,6 +3424,7 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_drop(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3403,6 +3443,7 @@ connection_handle::bucket_drop(zval* return_value, const zend_string* name, cons
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::bucket_flush(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3436,6 +3477,7 @@ cb_role_to_zval(zval* return_value, const couchbase::management::rbac::role& rol
     }
 }
 
+COUCHBASE_API
 core_error_info
 cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rbac::user_and_metadata& user)
 {
@@ -3525,7 +3567,7 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rb
     return {};
 }
 
-void
+static void
 cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group group)
 {
     array_init(return_value);
@@ -3549,6 +3591,7 @@ cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group gr
     add_assoc_zval(return_value, "roles", &roles);
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
 {
@@ -3620,6 +3663,7 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::user_get_all(zval* return_value, const zval* options)
 {
@@ -3650,6 +3694,7 @@ connection_handle::user_get_all(zval* return_value, const zval* options)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::user_get(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3674,6 +3719,7 @@ connection_handle::user_get(zval* return_value, const zend_string* name, const z
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::user_drop(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3695,6 +3741,7 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
 {
@@ -3750,6 +3797,7 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::group_get_all(zval* return_value, const zval* options)
 {
@@ -3775,6 +3823,7 @@ connection_handle::group_get_all(zval* return_value, const zval* options)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::group_get(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3794,6 +3843,7 @@ connection_handle::group_get(zval* return_value, const zend_string* name, const 
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::group_drop(zval* return_value, const zend_string* name, const zval* options)
 {
@@ -3812,6 +3862,7 @@ connection_handle::group_drop(zval* return_value, const zend_string* name, const
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 connection_handle::role_get_all(zval* return_value, const zval* options)
 {
@@ -4146,6 +4197,7 @@ extract_credentials(couchbase::cluster_credentials& credentials, zval* options)
              fmt::format("unknown type of the authenticator: {}", std::string(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type))) };
 }
 
+COUCHBASE_API
 std::pair<connection_handle*, core_error_info>
 create_connection_handle(const zend_string* connection_string, zval* options, std::chrono::steady_clock::time_point idle_expiry)
 {

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "common.hxx"
 #include "connection_handle.hxx"
 
@@ -22,18 +24,21 @@ namespace couchbase::php
 
 static int persistent_connection_destructor_id_{ 0 };
 
+COUCHBASE_API
 void
 set_persistent_connection_destructor_id(int id)
 {
     persistent_connection_destructor_id_ = id;
 }
 
+COUCHBASE_API
 int
 get_persistent_connection_destructor_id()
 {
     return persistent_connection_destructor_id_;
 }
 
+COUCHBASE_API
 int
 check_persistent_connection(zval* zv)
 {
@@ -50,6 +55,7 @@ check_persistent_connection(zval* zv)
     return ZEND_HASH_APPLY_KEEP;
 }
 
+COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options)
 {
@@ -93,6 +99,7 @@ create_persistent_connection(zend_string* connection_hash, zend_string* connecti
     return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
 }
 
+COUCHBASE_API
 void
 destroy_persistent_connection(zend_resource* res)
 {

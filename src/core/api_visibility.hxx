@@ -16,25 +16,10 @@
 
 #pragma once
 
-#include "api_visibility.hxx"
+#include <Zend/zend_portability.h>
 
-#include <Zend/zend_API.h>
-
-namespace couchbase::php
-{
-COUCHBASE_API
-void
-core_version(zval* return_value);
-
-COUCHBASE_API
-const char*
-extension_revision();
-
-COUCHBASE_API
-const char*
-cxx_client_revision();
-
-COUCHBASE_API
-const char*
-cxx_transactions_revision();
-} // namespace couchbase::php
+#ifdef COUCHBASE_EXPORTS
+#define COUCHBASE_API ZEND_DLIMPORT
+#else
+#define COUCHBASE_API ZEND_DLEXPORT
+#endif

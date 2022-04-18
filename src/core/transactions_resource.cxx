@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "transactions_resource.hxx"
 #include "common.hxx"
 
@@ -28,12 +30,14 @@ namespace couchbase::php
 {
 static int transactions_destructor_id_{ 0 };
 
+COUCHBASE_API
 void
 set_transactions_destructor_id(int id)
 {
     transactions_destructor_id_ = id;
 }
 
+COUCHBASE_API
 int
 get_transactions_destructor_id()
 {
@@ -67,10 +71,13 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
     couchbase::transactions::transactions transactions_;
 };
 
+COUCHBASE_API
 transactions_resource::transactions_resource(connection_handle* connection, couchbase::transactions::transaction_config&& configuration)
   : impl_{ std::make_shared<transactions_resource::impl>(connection, std::move(configuration)) }
 {
 }
+
+COUCHBASE_API
 couchbase::transactions::transactions&
 transactions_resource::transactions()
 {
@@ -217,6 +224,7 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
     return {};
 }
 
+COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transactions_resource(connection_handle* connection, zval* options)
 {
@@ -228,6 +236,7 @@ create_transactions_resource(connection_handle* connection, zval* options)
     return { zend_register_resource(handle, transactions_destructor_id_), {} };
 }
 
+COUCHBASE_API
 void
 destroy_transactions_resource(zend_resource* res)
 {

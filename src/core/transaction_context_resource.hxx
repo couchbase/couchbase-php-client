@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "api_visibility.hxx"
+
 #include "transactions_resource.hxx"
 
 #include <Zend/zend_API.h>
@@ -35,29 +37,38 @@ namespace couchbase::php
 class transaction_context_resource
 {
   public:
+    COUCHBASE_API
     transaction_context_resource(transactions_resource* transactions, couchbase::transactions::per_transaction_config&& configuration);
 
-    [[nodiscard]] core_error_info new_attempt();
-    [[nodiscard]] core_error_info commit(zval* return_value);
-    [[nodiscard]] core_error_info rollback();
+    COUCHBASE_API
+    core_error_info new_attempt();
+    COUCHBASE_API
+    core_error_info commit(zval* return_value);
+    COUCHBASE_API
+    core_error_info rollback();
 
-    [[nodiscard]] core_error_info get(zval* return_value,
-                                      const zend_string* bucket,
-                                      const zend_string* scope,
-                                      const zend_string* collection,
-                                      const zend_string* id);
+    COUCHBASE_API
+    core_error_info get(zval* return_value,
+                        const zend_string* bucket,
+                        const zend_string* scope,
+                        const zend_string* collection,
+                        const zend_string* id);
 
-    [[nodiscard]] core_error_info insert(zval* return_value,
-                                         const zend_string* bucket,
-                                         const zend_string* scope,
-                                         const zend_string* collection,
-                                         const zend_string* id,
-                                         const zend_string* value);
+    COUCHBASE_API
+    core_error_info insert(zval* return_value,
+                           const zend_string* bucket,
+                           const zend_string* scope,
+                           const zend_string* collection,
+                           const zend_string* id,
+                           const zend_string* value);
 
-    [[nodiscard]] core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
-    [[nodiscard]] core_error_info remove(const zval* document);
+    COUCHBASE_API
+    core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
+    COUCHBASE_API
+    core_error_info remove(const zval* document);
 
-    [[nodiscard]] core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
+    COUCHBASE_API
+    core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
 
   private:
     class impl;
@@ -65,16 +76,16 @@ class transaction_context_resource
     std::shared_ptr<impl> impl_;
 };
 
-[[nodiscard]] std::pair<zend_resource*, core_error_info>
+COUCHBASE_API std::pair<zend_resource*, core_error_info>
 create_transaction_context_resource(transactions_resource* transactions, zval* options);
 
-void
+COUCHBASE_API void
 destroy_transaction_context_resource(zend_resource* res);
 
-void
+COUCHBASE_API void
 set_transaction_context_destructor_id(int id);
 
-[[nodiscard]] int
+COUCHBASE_API int
 get_transaction_context_destructor_id();
 
 } // namespace couchbase::php

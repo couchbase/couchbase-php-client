@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "conversion_utilities.hxx"
 
 #include <chrono>

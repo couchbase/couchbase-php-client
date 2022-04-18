@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include "api_visibility.hxx"
+
 #include "core_error_info.hxx"
 #include "php_7_api_layer.hxx"
 
@@ -31,23 +33,24 @@ zend_long num_persistent{};     /* number of existing persistent connections */
 zend_long persistent_timeout{}; /* time period after which idle persistent connection is considered expired */
 ZEND_END_MODULE_GLOBALS(couchbase)
 
+COUCHBASE_API
 ZEND_EXTERN_MODULE_GLOBALS(couchbase)
 #define COUCHBASE_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(couchbase, v)
 
 namespace couchbase::php
 {
-void
+COUCHBASE_API void
 initialize_exceptions(const zend_function_entry* exception_functions);
 
-[[nodiscard]] zend_class_entry*
+COUCHBASE_API zend_class_entry*
 couchbase_exception();
 
-zend_class_entry*
+COUCHBASE_API zend_class_entry*
 map_error_to_exception(const core_error_info& info);
 
-void
+COUCHBASE_API void
 error_context_to_zval(const core_error_info& info, zval* return_value);
 
-void
+COUCHBASE_API void
 create_exception(zval* return_value, const couchbase::php::core_error_info& error_info);
 } // namespace couchbase::php

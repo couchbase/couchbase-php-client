@@ -1,53 +1,56 @@
 // vim:ft=javascript
 ARG_ENABLE("couchbase", "weather to enable Couchbase support", "no");
 if (PHP_COUCHBASE != "no") {
-        var CMAKE = PATH_PROG("cmake");
-        if (!CMAKE) {
-                ERROR("cmake is required");
-        }
-        ADD_FLAG("CFLAGS", "/std:c++17");
+    var CMAKE = PATH_PROG("cmake");
+    if (!CMAKE) {
+        ERROR("cmake is required");
+    }
+    ADD_FLAG("CFLAGS", "/std:c++17");
 
-        var COUCHBASE_CMAKE_SOURCE_DIRECTORY = FSO.GetAbsolutePathName(configure_module_dirname + "\\src");
-        var COUCHBASE_CMAKE_BUILD_DIRECTORY = get_define("BUILD_DIR") + "\\cmake-build";
-        var COUCHBASE_PHP_CFLAGS = (get_define("CFLAGS_PHP") + " " + get_define("CFLAGS"))
-		.replace('$(BASE_INCLUDES)', '')
-		.replace(new RegExp('\\s+', 'g'), ' ')
-		.replace(new RegExp('/D ', 'g'), '/D');
-		.replace(new RegExp('/I ', 'g'), '/I');
+    var COUCHBASE_CMAKE_SOURCE_DIRECTORY = FSO.GetAbsolutePathName(configure_module_dirname + "\\src");
+    var COUCHBASE_CMAKE_BUILD_DIRECTORY = get_define("BUILD_DIR") + "\\cmake-build";
+    var COUCHBASE_PHP_CFLAGS = (get_define("CFLAGS_PHP") + " " + get_define("CFLAGS"))
+        .replace('$(BASE_INCLUDES)', '')
+        .replace(new RegExp('\\s+', 'g'), ' ')
+        .replace(new RegExp('/D ', 'g'), '/D')
+        .replace(new RegExp('/I ', 'g'), '/I');
 
-        var COUCHBASE_PHP_INCLUDES =
-                PHP_SRC_DIR + " " +
-                PHP_SRC_DIR + "\\main " +
-                PHP_SRC_DIR + "\\Zend " +
-                PHP_SRC_DIR + "\\TSRM " +
-                PHP_SRC_DIR + "\\ext";
-        var COUCHBASE_PHP_LIB = get_define("BUILD_DIR") + "\\" + get_define("PHPLIB");
+    var COUCHBASE_PHP_INCLUDES =
+        PHP_SRC_DIR + " " +
+        PHP_SRC_DIR + "\\main " +
+        PHP_SRC_DIR + "\\Zend " +
+        PHP_SRC_DIR + "\\TSRM " +
+        PHP_SRC_DIR + "\\ext";
+    var COUCHBASE_PHP_LIB = get_define("BUILD_DIR") + "\\" + get_define("PHPLIB");
 
-        STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
-        STDOUT.WriteLine('COUCHBASE_CMAKE_SOURCE_DIRECTORY="' + COUCHBASE_CMAKE_SOURCE_DIRECTORY + '"');
-        STDOUT.WriteLine('COUCHBASE_CMAKE_BUILD_DIRECTORY="' + COUCHBASE_CMAKE_BUILD_DIRECTORY + '"');
-        STDOUT.WriteLine('COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"');
-        STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
-        STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
+    STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
+    STDOUT.WriteLine('COUCHBASE_CMAKE_SOURCE_DIRECTORY="' + COUCHBASE_CMAKE_SOURCE_DIRECTORY + '"');
+    STDOUT.WriteLine('COUCHBASE_CMAKE_BUILD_DIRECTORY="' + COUCHBASE_CMAKE_BUILD_DIRECTORY + '"');
+    STDOUT.WriteLine('COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"');
+    STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
+    STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
 
-        EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
+    DEFINE("LIBS_COUCHBASE", "$(BUILD_DIR)\\couchbase_php_core.lib");
+    DEFINE("DEPS_COUCHBASE", get_define("LIBS_COUCHBASE"));
+    EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
 
-        MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_core.dll: $(BUILD_DIR)\\$(PHPDLL)");
-        MFO.WriteLine("\t" + CMAKE + " --build " + COUCHBASE_CMAKE_BUILD_DIRECTORY + " --parallel 4 --verbose");
-        MFO.WriteLine("couchbase_php_core.dll: $(BUILD_DIR)\\couchbase_php_core.dll");
-        MFO.WriteLine("\t@echo couchbase core build complete");
+    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_core.lib: $(BUILD_DIR)\\$(PHPDLL)");
+    MFO.WriteLine("\t" + CMAKE + " --build " + COUCHBASE_CMAKE_BUILD_DIRECTORY + " --parallel 4 --verbose");
+    MFO.WriteLine("couchbase_php_core.lib: $(BUILD_DIR)\\couchbase_php_core.lib");
+    MFO.WriteLine("\t@echo EXT couchbase core build complete");
 
-        cmake_command =
-                'cmd /c ' + CMAKE +
-                ' -S ' + COUCHBASE_CMAKE_SOURCE_DIRECTORY +
-                ' -B ' + COUCHBASE_CMAKE_BUILD_DIRECTORY +
-                ' -G ' + '"NMake Makefiles"' +
-		' -D CMAKE_BUILD_TYPE=RelWithDebInfo' +
-                ' -D COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"' +
-                ' -D COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"' +
-                ' -D COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"' +
-                ' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF 2>&1';
-        STDOUT.WriteLine(cmake_command);
-        cmake_output = execute(cmake_command);
-        STDOUT.WriteLine(cmake_output);
+    cmake_command =
+        'cmd /c ' + CMAKE +
+        ' -S ' + COUCHBASE_CMAKE_SOURCE_DIRECTORY +
+        ' -B ' + COUCHBASE_CMAKE_BUILD_DIRECTORY +
+        ' -G ' + '"NMake Makefiles"' +
+        ' -D CMAKE_BUILD_TYPE=RelWithDebInfo' +
+        ' -D COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"' +
+        ' -D COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"' +
+        ' -D COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"' +
+        ' -D COUCHBASE_PHP_LIBDIR="' + get_define("BUILD_DIR") + '"' +
+        ' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF 2>&1';
+    STDOUT.WriteLine(cmake_command);
+    cmake_output = execute(cmake_command);
+    STDOUT.WriteLine(cmake_output);
 }

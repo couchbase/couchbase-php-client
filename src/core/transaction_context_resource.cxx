@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "transaction_context_resource.hxx"
 #include "common.hxx"
 #include "conversion_utilities.hxx"
@@ -384,18 +386,21 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
     couchbase::transactions::transaction_context transaction_context_;
 };
 
+COUCHBASE_API
 transaction_context_resource::transaction_context_resource(transactions_resource* transactions,
                                                            couchbase::transactions::per_transaction_config&& configuration)
   : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(), std::move(configuration)) }
 {
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::new_attempt()
 {
     return impl_->new_attempt();
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::commit(zval* return_value)
 {
@@ -413,6 +418,7 @@ transaction_context_resource::commit(zval* return_value)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::rollback()
 {
@@ -628,6 +634,7 @@ zval_to_transaction_get_result(const zval* document)
     return { transactions::transaction_get_result(zval_to_document_id(document), content, cas.value, links, metadata), {} };
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::get(zval* return_value,
                                   const zend_string* bucket,
@@ -655,6 +662,7 @@ transaction_context_resource::get(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::insert(zval* return_value,
                                      const zend_string* bucket,
@@ -683,6 +691,7 @@ transaction_context_resource::insert(zval* return_value,
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::replace(zval* return_value, const zval* document, const zend_string* value)
 {
@@ -703,6 +712,7 @@ transaction_context_resource::replace(zval* return_value, const zval* document, 
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::remove(const zval* document)
 {
@@ -716,6 +726,7 @@ transaction_context_resource::remove(const zval* document)
     return {};
 }
 
+COUCHBASE_API
 core_error_info
 transaction_context_resource::query(zval* return_value, const zend_string* statement, const zval* options)
 {
@@ -796,6 +807,7 @@ apply_options(couchbase::transactions::per_transaction_config& config, zval* opt
     return {};
 }
 
+COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transaction_context_resource(transactions_resource* connection, zval* options)
 {
@@ -807,6 +819,7 @@ create_transaction_context_resource(transactions_resource* connection, zval* opt
     return { zend_register_resource(handle, transaction_context_destructor_id_), {} };
 }
 
+COUCHBASE_API
 void
 destroy_transaction_context_resource(zend_resource* res)
 {

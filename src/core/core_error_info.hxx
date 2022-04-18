@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "api_visibility.hxx"
+
 #include <optional>
 #include <set>
 #include <system_error>

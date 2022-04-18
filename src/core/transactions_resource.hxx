@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "api_visibility.hxx"
+
 #include "connection_handle.hxx"
 
 #include <Zend/zend_API.h>
@@ -36,9 +38,11 @@ namespace couchbase::php
 class transactions_resource
 {
   public:
+    COUCHBASE_API
     transactions_resource(connection_handle* connection, couchbase::transactions::transaction_config&& configuration);
 
-    [[nodiscard]] couchbase::transactions::transactions& transactions();
+    COUCHBASE_API
+    couchbase::transactions::transactions& transactions();
 
   private:
     class impl;
@@ -46,15 +50,15 @@ class transactions_resource
     std::shared_ptr<impl> impl_;
 };
 
-[[nodiscard]] std::pair<zend_resource*, core_error_info>
+COUCHBASE_API std::pair<zend_resource*, core_error_info>
 create_transactions_resource(connection_handle* connection, zval* options);
 
-void
+COUCHBASE_API void
 destroy_transactions_resource(zend_resource* res);
 
-void
+COUCHBASE_API void
 set_transactions_destructor_id(int id);
 
-[[nodiscard]] int
+COUCHBASE_API int
 get_transactions_destructor_id();
 } // namespace couchbase::php

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "core.hxx"
+
 #include "common.hxx"
 
 #include <couchbase/errors.hxx>
@@ -23,6 +25,7 @@
 #include <sstream>
 #include <zend_exceptions.h>
 
+COUCHBASE_API
 ZEND_DECLARE_MODULE_GLOBALS(couchbase)
 
 namespace couchbase::php
@@ -99,12 +102,14 @@ zend_class_entry* xattr_unknown_virtual_attribute_exception_ce;
 zend_class_entry* transaction_exception_ce;
 zend_class_entry* transaction_operation_failed_exception_ce;
 
+COUCHBASE_API
 zend_class_entry*
 couchbase_exception()
 {
     return couchbase_exception_ce;
 }
 
+COUCHBASE_API
 void
 initialize_exceptions(const zend_function_entry* exception_functions)
 {
@@ -254,6 +259,7 @@ initialize_exceptions(const zend_function_entry* exception_functions)
     transaction_operation_failed_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
 }
 
+COUCHBASE_API
 zend_class_entry*
 map_error_to_exception(const core_error_info& info)
 {
@@ -553,6 +559,7 @@ error_context_to_zval(const search_error_context& ctx, zval* return_value, std::
     common_http_error_context_to_zval(ctx, return_value, enhanced_error_message);
 }
 
+COUCHBASE_API
 void
 error_context_to_zval(const http_error_context& ctx, zval* return_value, std::string& enhanced_error_message)
 {
@@ -561,6 +568,7 @@ error_context_to_zval(const http_error_context& ctx, zval* return_value, std::st
     common_http_error_context_to_zval(ctx, return_value, enhanced_error_message);
 }
 
+COUCHBASE_API
 void
 error_context_to_zval(const transactions_error_context& ctx, zval* return_value, std::string& /* enhanced_error_message */)
 {
@@ -585,12 +593,14 @@ error_context_to_zval(const transactions_error_context& ctx, zval* return_value,
     }
 }
 
+COUCHBASE_API
 void
 error_context_to_zval(const empty_error_context& /* ctx */, zval* /* return_value */, std::string& /* enhanced_error_message */)
 {
     /* nothing to do */
 }
 
+COUCHBASE_API
 void
 error_context_to_zval(const core_error_info& info, zval* return_value, std::string& enhanced_error_message)
 {
@@ -601,6 +611,7 @@ error_context_to_zval(const core_error_info& info, zval* return_value, std::stri
       info.error_context);
 }
 
+COUCHBASE_API
 void
 create_exception(zval* return_value, const core_error_info& error_info)
 {

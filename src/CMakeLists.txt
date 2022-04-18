@@ -12,6 +12,9 @@ set(COUCHBASE_CXX_CLIENT_BUILD_TESTS
 set(COUCHBASE_CXX_CLIENT_BUILD_EXAMPLES
     OFF
     CACHE BOOL "" FORCE)
+set(COUCHBASE_CXX_CLIENT_STATIC_OPENSSL
+    ON
+    CACHE BOOL "" FORCE)
 add_subdirectory(deps/couchbase-cxx-client)
 
 set(COUCHBASE_TXNS_CXX_BUILD_TESTS
@@ -92,13 +95,15 @@ if(APPLE)
 endif()
 if(WIN32)
   target_compile_options(couchbase_php_core PRIVATE ${COUCHBASE_PHP_CFLAGS} /bigobj)
+  target_compile_definitions(couchbase_php_core PRIVATE NOMINMAX)
   target_link_options(couchbase_php_core PUBLIC "${COUCHBASE_PHP_LIB}")
 endif()
 if(COUCHBASE_PHP_LIBDIR)
   add_custom_command(
     TARGET couchbase_php_core
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_core>"
-            "${COUCHBASE_PHP_LIBDIR}/$<TARGET_FILE_NAME:couchbase_php_core>"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_core>" "$<TARGET_LINKER_FILE:couchbase_php_core>"
+            "${COUCHBASE_PHP_LIBDIR}/"
+
     VERBATIM)
 endif()
