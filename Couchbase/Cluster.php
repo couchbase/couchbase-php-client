@@ -165,12 +165,11 @@ class Cluster
      * Creates a new manager object for managing N1QL query indexes.
      *
      * @return QueryIndexManager
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function queryIndexes(): QueryIndexManager
     {
-        throw new UnsupportedOperationException();
+        return new QueryIndexManager($this->core);
     }
 
     /**
@@ -240,11 +239,11 @@ class Cluster
     }
 
     /**
-     * @internal
-     *
      * @param string $bucketName
      *
      * @return string|null
+     * @internal
+     *
      */
     public function version(string $bucketName): ?string
     {
@@ -253,6 +252,7 @@ class Cluster
 
     /**
      * @internal
+     * @deprecated will be removed once all managers will be implemented
      */
     public function core()
     {

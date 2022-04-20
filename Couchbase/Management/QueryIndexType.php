@@ -20,21 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class CreateQueryIndexOptions
+interface QueryIndexType
 {
-    public function condition(string $condition): CreateQueryIndexOptions
-    {
-    }
-
-    public function ignoreIfExists(bool $shouldIgnore): CreateQueryIndexOptions
-    {
-    }
-
-    public function numReplicas(int $number): CreateQueryIndexOptions
-    {
-    }
-
-    public function deferred(bool $isDeferred): CreateQueryIndexOptions
-    {
-    }
+    public const VIEW = "view";
+    public const GSI = "gsi";
 }

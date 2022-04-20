@@ -26,12 +26,18 @@ namespace couchbase::php
 std::string
 cb_string_new(const zend_string* value)
 {
+    if (value == nullptr) {
+        return {};
+    }
     return { ZSTR_VAL(value), ZSTR_LEN(value) };
 }
 
 std::string
 cb_string_new(const zval* value)
 {
+    if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+        return {};
+    }
     return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
 }
 

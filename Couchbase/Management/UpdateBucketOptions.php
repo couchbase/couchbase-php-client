@@ -25,13 +25,6 @@ class UpdateBucketOptions
     private ?int $timeoutMilliseconds = null;
 
     /**
-     * @since 4.0.0
-     */
-    public function __construct()
-    {
-    }
-
-    /**
      * Static helper to keep code more readable
      *
      * @return UpdateBucketOptions
@@ -46,6 +39,7 @@ class UpdateBucketOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return UpdateBucketOptions
      * @since 4.0.0
      */
@@ -56,9 +50,10 @@ class UpdateBucketOptions
     }
 
     /**
-     * @internal
      * @param UpdateBucketOptions|null $options
+     *
      * @return array
+     * @internal
      * @since 4.0.0
      */
     public static function export(?UpdateBucketOptions $options): array

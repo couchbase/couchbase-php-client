@@ -20,8 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-use Couchbase\Bucket;
-
 class BucketSettings
 {
     private string $name;
@@ -39,6 +37,7 @@ class BucketSettings
 
     /**
      * @param string $name the name of the bucket
+     *
      * @since 4.0.0
      */
     public function __construct(string $name)
@@ -48,6 +47,7 @@ class BucketSettings
 
     /**
      * @param string $name the name of the bucket
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -229,7 +229,10 @@ class BucketSettings
      * Sets the name of the bucket.
      *
      * @param string $name the name of the bucket
+     *
      * @return BucketSettings
+     * @deprecated use constructor argument instead
+     *
      * @since 4.0.0
      */
     public function setName(string $name): BucketSettings
@@ -242,6 +245,7 @@ class BucketSettings
      * Sets whether flush is enabled.
      *
      * @param bool $enable whether flush is enabled
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -255,6 +259,7 @@ class BucketSettings
      * Sets the ram quota of the bucket.
      *
      * @param int $sizeInMb the ram quota in mb.
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -268,6 +273,7 @@ class BucketSettings
      * Sets the number of replicas for the bucket.
      *
      * @param int $numReplicas the number of replicas
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -281,6 +287,7 @@ class BucketSettings
      * Sets whether replicas are enabled.
      *
      * @param bool $enable whether to enable replicas
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -294,6 +301,7 @@ class BucketSettings
      * Sets the type of the bucket.
      *
      * @param string $type the type of the bucket
+     *
      * @return BucketSettings
      *
      * @see \BucketType::COUCHBASE
@@ -312,6 +320,7 @@ class BucketSettings
      *
      * @param string $policy eviction policy. Use constants FULL, VALUE_ONLY,
      *   NO_EVICTION, NOT_RECENTLY_USED.
+     *
      * @return BucketSettings
      *
      * @see \EvictionPolicy::FULL
@@ -330,6 +339,7 @@ class BucketSettings
      * Configures storage backend for the bucket.
      *
      * @param string $backend storage backend. Use constants COUCHSTORE, MAGMA.
+     *
      * @return BucketSettings
      *
      * @see \StorageBackend::COUCHSTORE
@@ -345,20 +355,22 @@ class BucketSettings
      * Sets the default max expiry time for documents in the bucket.
      *
      * @param int $expirySeconds the default expiry time.
+     *
      * @return BucketSettings
      * @deprecated
      * @see setMaxExpiry
      * @since 4.0.0
      */
-    public function setMaxTtl(int $ttlSeconds): BucketSettings
+    public function setMaxTtl(int $expirySeconds): BucketSettings
     {
-        return $this->setMaxExpiry($ttlSeconds);
+        return $this->setMaxExpiry($expirySeconds);
     }
 
     /**
      * Sets the default max expiry time for documents in the bucket.
      *
      * @param int $expirySeconds the default expiry time.
+     *
      * @return BucketSettings
      * @since 4.0.0
      */
@@ -371,8 +383,8 @@ class BucketSettings
     /**
      * Configures compression mode for the bucket.
      *
-     * @param string $policy eviction policy. Use constants FULL, VALUE_ONLY,
-     *   NO_EVICTION, NOT_RECENTLY_USED.
+     * @param string $mode
+     *
      * @return BucketSettings
      *
      * @see \CompressionMode::OFF
@@ -388,7 +400,8 @@ class BucketSettings
 
     /**
      * Retrieves minimal durability level configured for the bucket
-     * @return int|string
+     *
+     * @return string|null
      *
      * @see \DurabilityLevel::NONE
      * @see \DurabilityLevel::MAJORITY
@@ -399,7 +412,7 @@ class BucketSettings
      * @see minimumDurabilityLevel
      * @since 4.0.0
      */
-    public function minimalDurabilityLevel(): mixed
+    public function minimalDurabilityLevel(): ?string
     {
         return $this->minimumDurabilityLevel();
     }
@@ -408,6 +421,7 @@ class BucketSettings
      * Configures minimal durability level for the bucket.
      *
      * @param int|string $durabilityLevel durability level.
+     *
      * @return BucketSettings
      *
      * @see \DurabilityLevel::NONE
@@ -421,13 +435,14 @@ class BucketSettings
      */
     public function setMinimalDurabilityLevel($durabilityLevel): BucketSettings
     {
-        return $this->setMinimalDurabilityLevel($durabilityLevel);
+        return $this->setMinimumDurabilityLevel($durabilityLevel);
     }
 
     /**
      * Configures minimum durability level for the bucket.
      *
      * @param int|string $durabilityLevel durability level.
+     *
      * @return BucketSettings
      *
      * @see \DurabilityLevel::NONE
@@ -446,6 +461,7 @@ class BucketSettings
      * Set the conflict resolution type used by the bucket.
      *
      * @param string $resolutionType the conflict resolution type.
+     *
      * @return BucketSettings
      *
      * @see \ConflictResolutionType::TIMESTAMP

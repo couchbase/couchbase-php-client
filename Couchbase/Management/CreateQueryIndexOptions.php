@@ -20,12 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class CreateQueryPrimaryIndexOptions
+class CreateQueryIndexOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $scopeName = null;
     private ?string $collectionName = null;
-    private ?string $indexName = null;
+    private ?string $condition = null;
     private ?bool $ignoreIfExists = null;
     private ?int $numberOfReplicas = null;
     private ?bool $deferred = null;
@@ -33,21 +33,21 @@ class CreateQueryPrimaryIndexOptions
     /**
      * Static helper to keep code more readable
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public static function build(): CreateQueryPrimaryIndexOptions
+    public static function build(): CreateQueryIndexOptions
     {
-        return new CreateQueryPrimaryIndexOptions();
+        return new CreateQueryIndexOptions();
     }
 
     /**
      * @param string $scopeName
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function scopeName(string $scopeName): CreateQueryPrimaryIndexOptions
+    public function scopeName(string $scopeName): CreateQueryIndexOptions
     {
         $this->scopeName = $scopeName;
         return $this;
@@ -56,34 +56,34 @@ class CreateQueryPrimaryIndexOptions
     /**
      * @param string $collectionName
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function collectionName(string $collectionName): CreateQueryPrimaryIndexOptions
+    public function collectionName(string $collectionName): CreateQueryIndexOptions
     {
         $this->collectionName = $collectionName;
         return $this;
     }
 
     /**
-     * @param string $name
+     * @param string $condition
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function indexName(string $name): CreateQueryPrimaryIndexOptions
+    public function condition(string $condition): CreateQueryIndexOptions
     {
-        $this->indexName = $name;
+        $this->condition = $condition;
         return $this;
     }
 
     /**
      * @param bool $shouldIgnore
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function ignoreIfExists(bool $shouldIgnore): CreateQueryPrimaryIndexOptions
+    public function ignoreIfExists(bool $shouldIgnore): CreateQueryIndexOptions
     {
         $this->ignoreIfExists = $shouldIgnore;
         return $this;
@@ -92,10 +92,10 @@ class CreateQueryPrimaryIndexOptions
     /**
      * @param int $numberOfReplicas
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function numReplicas(int $numberOfReplicas): CreateQueryPrimaryIndexOptions
+    public function numReplicas(int $numberOfReplicas): CreateQueryIndexOptions
     {
         $this->numberOfReplicas = $numberOfReplicas;
         return $this;
@@ -104,10 +104,10 @@ class CreateQueryPrimaryIndexOptions
     /**
      * @param bool $isDeferred
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function deferred(bool $isDeferred): CreateQueryPrimaryIndexOptions
+    public function deferred(bool $isDeferred): CreateQueryIndexOptions
     {
         $this->deferred = $isDeferred;
         return $this;
@@ -118,23 +118,23 @@ class CreateQueryPrimaryIndexOptions
      *
      * @param int $milliseconds the operation timeout to apply
      *
-     * @return CreateQueryPrimaryIndexOptions
+     * @return CreateQueryIndexOptions
      * @since 4.0.0
      */
-    public function timeout(int $milliseconds): CreateQueryPrimaryIndexOptions
+    public function timeout(int $milliseconds): CreateQueryIndexOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
     /**
-     * @param CreateQueryPrimaryIndexOptions|null $options
+     * @param CreateQueryIndexOptions|null $options
      *
      * @return array
      * @internal
      * @since 4.0.0
      */
-    public static function export(?CreateQueryPrimaryIndexOptions $options): array
+    public static function export(?CreateQueryIndexOptions $options): array
     {
         if ($options == null) {
             return [];
@@ -143,7 +143,7 @@ class CreateQueryPrimaryIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'scopeName' => $options->scopeName,
             'collectionName' => $options->collectionName,
-            'indexName' => $options->indexName,
+            'condition' => $options->condition,
             'ignoreIfExists' => $options->ignoreIfExists,
             'numberOfReplicas' => $options->numberOfReplicas,
             'deferred' => $options->deferred,

@@ -123,6 +123,7 @@
                     <file role="php" name="BucketManager.php"/>
                     <file role="php" name="BucketSettings.php"/>
                     <file role="php" name="BucketType.php"/>
+                    <file role="php" name="BuildQueryIndexesOptions.php"/>
                     <file role="php" name="CollectionManager.php"/>
                     <file role="php" name="CollectionSpec.php"/>
                     <file role="php" name="CompressionMode.php"/>
@@ -134,6 +135,7 @@
                     <file role="php" name="CreateAnalyticsIndexOptions.php"/>
                     <file role="php" name="CreateAnalyticsLinkOptions.php"/>
                     <file role="php" name="CreateBucketOptions.php"/>
+                    <file role="php" name="CreateQueryIndexOptions.php"/>
                     <file role="php" name="CreateQueryPrimaryIndexOptions.php"/>
                     <file role="php" name="DesignDocument.php"/>
                     <file role="php" name="DisconnectAnalyticsLinkOptions.php"/>
@@ -151,6 +153,7 @@
                     <file role="php" name="FlushBucketOptions.php"/>
                     <file role="php" name="GetAllBucketsOptions.php"/>
                     <file role="php" name="GetAllGroupsOptions.php"/>
+                    <file role="php" name="GetAllQueryIndexesOptions.php"/>
                     <file role="php" name="GetAllUsersOptions.php"/>
                     <file role="php" name="GetAnalyticsLinksOptions.php"/>
                     <file role="php" name="GetBucketOptions.php"/>
@@ -161,7 +164,7 @@
                     <file role="php" name="Origin.php"/>
                     <file role="php" name="QueryIndex.php"/>
                     <file role="php" name="QueryIndexManager.php"/>
-                    <file role="php" name="QueryIndexOptions.php"/>
+                    <file role="php" name="QueryIndexType.php"/>
                     <file role="php" name="ReplaceAnalyticsLinkOptions.php"/>
                     <file role="php" name="Role.php"/>
                     <file role="php" name="RoleAndDescription.php"/>

@@ -22,7 +22,75 @@ namespace Couchbase\Management;
 
 class WatchQueryIndexesOptions
 {
+    private ?string $scopeName = null;
+    private ?string $collectionName = null;
+    private ?bool $watchPrimary = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return WatchQueryIndexesOptions
+     * @since 4.0.0
+     */
+    public static function build(): WatchQueryIndexesOptions
+    {
+        return new WatchQueryIndexesOptions();
+    }
+
+    /**
+     * @param string $scopeName
+     *
+     * @return WatchQueryIndexesOptions
+     * @since 4.0.0
+     */
+    public function scopeName(string $scopeName): WatchQueryIndexesOptions
+    {
+        $this->scopeName = $scopeName;
+        return $this;
+    }
+
+    /**
+     * @param string $collectionName
+     *
+     * @return WatchQueryIndexesOptions
+     * @since 4.0.0
+     */
+    public function collectionName(string $collectionName): WatchQueryIndexesOptions
+    {
+        $this->collectionName = $collectionName;
+        return $this;
+    }
+
+    /**
+     * Whether to watch the primary index
+     *
+     * @param bool $shouldWatch
+     *
+     * @return WatchQueryIndexesOptions
+     * @since 4.0.0
+     */
     public function watchPrimary(bool $shouldWatch): WatchQueryIndexesOptions
     {
+        $this->watchPrimary = $shouldWatch;
+        return $this;
+    }
+
+    /**
+     * @param WatchQueryIndexesOptions|null $options
+     *
+     * @return array
+     * @internal
+     * @since 4.0.0
+     */
+    public static function export(?WatchQueryIndexesOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'scopeName' => $options->scopeName,
+            'collectionName' => $options->collectionName,
+            'watchPrimary' => $options->watchPrimary,
+        ];
     }
 }

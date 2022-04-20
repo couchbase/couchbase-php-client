@@ -12,11 +12,6 @@ set(COUCHBASE_CXX_CLIENT_BUILD_TESTS
 set(COUCHBASE_CXX_CLIENT_BUILD_EXAMPLES
     OFF
     CACHE BOOL "" FORCE)
-if(WIN32)
-    set(COUCHBASE_CXX_CLIENT_STATIC_OPENSSL
-        ON
-        CACHE BOOL "" FORCE)
-endif()
 add_subdirectory(deps/couchbase-cxx-client)
 
 set(COUCHBASE_TXNS_CXX_BUILD_TESTS
