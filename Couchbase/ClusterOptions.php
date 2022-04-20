@@ -483,7 +483,7 @@ class ClusterOptions
      * @return ClusterOptions
      * @since 4.0.0
      */
-    public function transactionsOptions(TransactionsConfiguration $options): ClusterOptions
+    public function transactionsConfiguration(TransactionsConfiguration $options): ClusterOptions
     {
         $this->transactionsConfiguration = $options;
         return $this;
