@@ -94,7 +94,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
             function (TransactionAttemptContext $attempt) use ($idTwo, $idOne, $collection) {
                 $doc = $attempt->insert($collection, $idTwo, ["foo" => "baz"]);
 
-                $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+                $collectionQualifier = "`{$collection->bucketName()}`.`{$collection->scopeName()}`.`{$collection->name()}`";
 
                 $res = $attempt->query(
                     "SELECT foo FROM $collectionQualifier WHERE META().id IN \$ids ORDER BY META().id ASC",
@@ -195,7 +195,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 
         $cluster->transactions()->run(
             function (TransactionAttemptContext $attempt) use ($idToRemove, $idToReplace, $idToInsert, $collection) {
-                $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+                $collectionQualifier = "`{$collection->bucketName()}`.`{$collection->scopeName()}`.`{$collection->name()}`";
 
                 $attempt->query(
                     "INSERT INTO $collectionQualifier VALUES (\$1, \$2)",
@@ -270,7 +270,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     ) {
                         $numberOfAttempts++;
 
-                        $collectionQualifier = "{$collection->bucketName()}.{$collection->scopeName()}.{$collection->name()}";
+                        $collectionQualifier = "`{$collection->bucketName()}`.`{$collection->scopeName()}`.`{$collection->name()}`";
 
                         $attempt->query(
                             "INSERT INTO $collectionQualifier VALUES (\$1, \$2)",
