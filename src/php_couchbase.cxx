@@ -122,10 +122,9 @@ PHP_FUNCTION(createConnection)
     zend_string* connection_string = nullptr;
     zval* options = nullptr;
 
-    ZEND_PARSE_PARAMETERS_START(2, 3)
+    ZEND_PARSE_PARAMETERS_START(3, 3)
     Z_PARAM_STR(connection_hash)
     Z_PARAM_STR(connection_string)
-    Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
 
@@ -820,7 +819,7 @@ PHP_FUNCTION(query)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(statement)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -843,7 +842,7 @@ PHP_FUNCTION(analyticsQuery)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(statement)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -873,7 +872,7 @@ PHP_FUNCTION(viewQuery)
     Z_PARAM_STR(view_name)
     Z_PARAM_LONG(name_space)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -899,7 +898,7 @@ PHP_FUNCTION(searchQuery)
     Z_PARAM_STR(index_name)
     Z_PARAM_STR(query)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -920,7 +919,7 @@ PHP_FUNCTION(ping)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -944,7 +943,7 @@ PHP_FUNCTION(diagnostics)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(reportId)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -968,7 +967,7 @@ PHP_FUNCTION(searchIndexUpsert)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_ARRAY(index)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -996,7 +995,7 @@ PHP_FUNCTION(viewIndexUpsert)
     Z_PARAM_ARRAY(index)
     Z_PARAM_LONG(name_space)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1019,7 +1018,7 @@ PHP_FUNCTION(bucketCreate)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_ARRAY(bucket_settings)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1042,7 +1041,7 @@ PHP_FUNCTION(bucketGet)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1063,7 +1062,7 @@ PHP_FUNCTION(bucketGetAll)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1086,7 +1085,7 @@ PHP_FUNCTION(bucketDrop)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1109,7 +1108,7 @@ PHP_FUNCTION(bucketFlush)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1132,7 +1131,7 @@ PHP_FUNCTION(bucketUpdate)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_ARRAY(bucket_settings)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1160,7 +1159,7 @@ PHP_FUNCTION(createTransactions)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(configuration)
+    Z_PARAM_ARRAY_OR_NULL(configuration)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1190,7 +1189,7 @@ PHP_FUNCTION(createTransactionContext)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(transactions)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(configuration)
+    Z_PARAM_ARRAY_OR_NULL(configuration)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_transactions_from_resource(transactions);
@@ -1368,7 +1367,7 @@ PHP_FUNCTION(transactionQuery)
     Z_PARAM_RESOURCE(transaction)
     Z_PARAM_STR(statement)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
@@ -1391,7 +1390,7 @@ PHP_FUNCTION(userUpsert)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_ARRAY(user)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1414,7 +1413,7 @@ PHP_FUNCTION(userGet)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1435,7 +1434,7 @@ PHP_FUNCTION(userGetAll)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1458,7 +1457,7 @@ PHP_FUNCTION(userDrop)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1481,7 +1480,7 @@ PHP_FUNCTION(groupUpsert)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_ARRAY(group)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1504,7 +1503,7 @@ PHP_FUNCTION(groupGet)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1525,7 +1524,7 @@ PHP_FUNCTION(groupGetAll)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1548,7 +1547,7 @@ PHP_FUNCTION(groupDrop)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1569,7 +1568,7 @@ PHP_FUNCTION(roleGetAll)
     ZEND_PARSE_PARAMETERS_START(1, 2)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_OPTIONAL
-    Z_PARAM_ARRAY(options)
+    Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
@@ -1577,6 +1576,155 @@ PHP_FUNCTION(roleGetAll)
         RETURN_THROWS();
     }
     if (auto e = handle->role_get_all(return_value, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(queryIndexGetAll)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_get_all(return_value, bucket_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(queryIndexCreate)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* fields = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_ARRAY(fields)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_create(bucket_name, index_name, fields, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(queryIndexCreatePrimary)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_create_primary(bucket_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(queryIndexDrop)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(3, 4)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_drop(bucket_name, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(queryIndexDropPrimary)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_drop_primary(bucket_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(queryIndexBuildDeferred)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->query_index_build_deferred(return_value, bucket_name, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -1602,7 +1750,7 @@ ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_createConnection, 0, 0, 2)
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_createConnection, 0, 0, 3)
 ZEND_ARG_TYPE_INFO(0, connectionHash, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, connectionString, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
@@ -1806,13 +1954,13 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_query, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsQuery, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_viewQuery, 0, 0, 5)
@@ -1821,31 +1969,31 @@ ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, designDocumentName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, viewName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, nameSpace, IS_LONG, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchQuery, 0, 0, 3)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_ping, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_diagnostics, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, reportId, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexUpsert, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_viewIndexUpsert, 0, 0, 4)
@@ -1853,42 +2001,42 @@ ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, nameSpace, IS_LONG, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketCreate, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucketSettings, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketUpdate, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, bucketSettings, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketGet, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketGetAll, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketDrop, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_bucketFlush, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactions, 0, 0, IS_RESOURCE, 1)
@@ -1944,58 +2092,97 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionQuery, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, transaction, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, statement, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userUpsert, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, user, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userGet, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userGetAll, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_userDrop, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupUpsert, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, group, IS_ARRAY, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupGet, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupGetAll, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupDrop, 0, 0, 2)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
 ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_roleGetAll, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
-ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexGetAll, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexCreate, 0, 0, 4)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, fields, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexCreatePrimary, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexDrop, 0, 0, 3)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexDropPrimary, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_queryIndexBuildDeferred, 0, 0, 2)
+ZEND_ARG_TYPE_INFO(0, connection, IS_RESOURCE, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
 // clang-format off
@@ -2059,6 +2246,13 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", groupGetAll, ai_CouchbaseExtension_groupGetAll)
         ZEND_NS_FE("Couchbase\\Extension", groupDrop, ai_CouchbaseExtension_groupDrop)
         ZEND_NS_FE("Couchbase\\Extension", roleGetAll, ai_CouchbaseExtension_roleGetAll)
+
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexGetAll, ai_CouchbaseExtension_queryIndexGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexCreate, ai_CouchbaseExtension_queryIndexCreate)
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexCreatePrimary, ai_CouchbaseExtension_queryIndexCreatePrimary)
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexDrop, ai_CouchbaseExtension_queryIndexDrop)
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexDropPrimary, ai_CouchbaseExtension_queryIndexDropPrimary)
+        ZEND_NS_FE("Couchbase\\Extension", queryIndexBuildDeferred, ai_CouchbaseExtension_queryIndexBuildDeferred)
         PHP_FE_END
 };
 

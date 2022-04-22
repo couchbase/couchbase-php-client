@@ -103,7 +103,8 @@ class BucketManager
     /**
      * Get all buckets.
      *
-     * @param GetAllBucketsOptions|null $options the options to use when getting the buckets.
+     * @param GetAllQueryIndexesOptions|null $options the options to use when getting the buckets.
+     *
      * @since 4.0.0
      */
     public function getAllBuckets(GetAllBucketsOptions $options = null): array

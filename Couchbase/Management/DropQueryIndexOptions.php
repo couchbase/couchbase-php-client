@@ -22,7 +22,89 @@ namespace Couchbase\Management;
 
 class DropQueryIndexOptions
 {
-    public function ignoreIfNotExists(bool $shouldIgnore): DropQueryIndexOptions
+    private ?int $timeoutMilliseconds = null;
+    private ?string $scopeName = null;
+    private ?string $collectionName = null;
+    private ?bool $ignoreIfDoesNotExist = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.0.0
+     */
+    public static function build(): DropQueryIndexOptions
     {
+        return new DropQueryIndexOptions();
+    }
+
+    /**
+     * @param string $scopeName
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.0.0
+     */
+    public function scopeName(string $scopeName): DropQueryIndexOptions
+    {
+        $this->scopeName = $scopeName;
+        return $this;
+    }
+
+    /**
+     * @param string $collectionName
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.0.0
+     */
+    public function collectionName(string $collectionName): DropQueryIndexOptions
+    {
+        $this->collectionName = $collectionName;
+        return $this;
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.0.0
+     */
+    public function ignoreIfDoesNotExist(bool $shouldIgnore): DropQueryIndexOptions
+    {
+        $this->ignoreIfDoesNotExist = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): DropQueryIndexOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @param DropQueryIndexOptions|null $options
+     *
+     * @return array
+     * @internal
+     * @since 4.0.0
+     */
+    public static function export(?DropQueryIndexOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'scopeName' => $options->scopeName,
+            'collectionName' => $options->collectionName,
+            'ignoreIfDoesNotExist' => $options->ignoreIfDoesNotExist,
+        ];
     }
 }

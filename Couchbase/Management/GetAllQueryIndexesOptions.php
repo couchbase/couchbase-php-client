@@ -20,19 +20,43 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class GetAllBucketsOptions
+class GetAllQueryIndexesOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?string $scopeName = null;
+    private ?string $collectionName = null;
 
     /**
      * Static helper to keep code more readable
      *
-     * @return GetAllBucketsOptions
+     * @return GetAllQueryIndexesOptions
      * @since 4.0.0
      */
-    public static function build(): GetAllBucketsOptions
+    public static function build(): GetAllQueryIndexesOptions
     {
-        return new GetAllBucketsOptions();
+        return new GetAllQueryIndexesOptions();
+    }
+
+    /**
+     * @param string $scopeName
+     *
+     * @return GetAllQueryIndexesOptions
+     */
+    public function scopeName(string $scopeName): GetAllQueryIndexesOptions
+    {
+        $this->scopeName = $scopeName;
+        return $this;
+    }
+
+    /**
+     * @param string $collectionName
+     *
+     * @return GetAllQueryIndexesOptions
+     */
+    public function collectionName(string $collectionName): GetAllQueryIndexesOptions
+    {
+        $this->collectionName = $collectionName;
+        return $this;
     }
 
     /**
@@ -40,29 +64,31 @@ class GetAllBucketsOptions
      *
      * @param int $milliseconds the operation timeout to apply
      *
-     * @return GetAllBucketsOptions
+     * @return GetAllQueryIndexesOptions
      * @since 4.0.0
      */
-    public function timeout(int $milliseconds): GetAllBucketsOptions
+    public function timeout(int $milliseconds): GetAllQueryIndexesOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
     /**
-     * @param GetAllBucketsOptions|null $options
+     * @param GetAllQueryIndexesOptions|null $options
      *
      * @return array
      * @internal
      * @since 4.0.0
      */
-    public static function export(?GetAllBucketsOptions $options): array
+    public static function export(?GetAllQueryIndexesOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'scopeName' => $options->scopeName,
+            'collectionName' => $options->collectionName,
         ];
     }
 }

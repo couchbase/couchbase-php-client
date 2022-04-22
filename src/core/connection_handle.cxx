@@ -16,8 +16,8 @@
 
 #include "core.hxx"
 
-#include "connection_handle.hxx"
 #include "common.hxx"
+#include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
 
 #include <couchbase/cluster.hxx>
@@ -25,6 +25,7 @@
 #include <couchbase/mutation_token.hxx>
 #include <couchbase/operations/management/bucket.hxx>
 #include <couchbase/operations/management/cluster_describe.hxx>
+#include <couchbase/operations/management/query.hxx>
 #include <couchbase/operations/management/search.hxx>
 #include <couchbase/operations/management/user.hxx>
 #include <couchbase/operations/management/view.hxx>
@@ -246,7 +247,7 @@ build_error_context(const error_context::key_value& ctx)
 }
 
 static query_error_context
-build_query_error_context(const error_context::query& ctx)
+build_error_context(const error_context::query& ctx)
 {
     query_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -268,7 +269,7 @@ build_query_error_context(const error_context::query& ctx)
 }
 
 static analytics_error_context
-build_analytics_error_context(const error_context::analytics& ctx)
+build_error_context(const error_context::analytics& ctx)
 {
     analytics_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -290,7 +291,7 @@ build_analytics_error_context(const error_context::analytics& ctx)
 }
 
 static view_query_error_context
-build_view_query_error_context(const error_context::view& ctx)
+build_error_context(const error_context::view& ctx)
 {
     view_query_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -311,7 +312,7 @@ build_view_query_error_context(const error_context::view& ctx)
 }
 
 static search_error_context
-build_search_query_error_context(const error_context::search& ctx)
+build_error_context(const error_context::search& ctx)
 {
     search_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -332,7 +333,7 @@ build_search_query_error_context(const error_context::search& ctx)
 }
 
 static http_error_context
-build_http_error_context(const error_context::http& ctx)
+build_error_context(const error_context::http& ctx)
 {
     http_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -464,6 +465,24 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     }
 
     template<typename Request, typename Response = typename Request::response_type>
+    std::pair<Response, core_error_info> http_execute(const char* operation, Request request)
+    {
+        auto barrier = std::make_shared<std::promise<Response>>();
+        auto f = barrier->get_future();
+        cluster_->execute(std::move(request), [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
+        auto resp = f.get();
+        if (resp.ctx.ec) {
+            return { std::move(resp),
+                     { resp.ctx.ec,
+                       { __LINE__, __FILE__, __func__ },
+                       fmt::format(
+                         R"(unable to execute HTTP operation "{}": ec={} ({}))", operation, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       build_error_context(resp.ctx) } };
+        }
+        return { std::move(resp), {} };
+    }
+
+    template<typename Request, typename Response = typename Request::response_type>
     std::vector<Response> key_value_execute_multi(std::vector<Request> requests)
     {
         std::vector<std::shared_ptr<std::promise<Response>>> barriers;
@@ -479,75 +498,6 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             responses.emplace_back(barrier->get_future().get());
         }
         return responses;
-    }
-
-    std::pair<core_error_info, couchbase::operations::query_response> query(couchbase::operations::query_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::query_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::query_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_query_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::analytics_response> analytics_query(couchbase::operations::analytics_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::analytics_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::analytics_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to query analytics: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_analytics_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::document_view_response> view_query(
-      couchbase::operations::document_view_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::document_view_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::document_view_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to view query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_view_query_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::search_response> search_query(couchbase::operations::search_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::search_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::search_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to search query: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_search_query_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
     }
 
     std::pair<core_error_info, couchbase::diag::ping_result> ping(std::optional<std::string> report_id,
@@ -568,326 +518,6 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         auto f = barrier->get_future();
         cluster_->diagnostics(report_id, [barrier](couchbase::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::search_index_upsert_response> search_index_upsert(
-      couchbase::operations::management::search_index_upsert_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::search_index_upsert_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::search_index_upsert_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to upsert search index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::view_index_upsert_response> view_index_upsert(
-      couchbase::operations::management::view_index_upsert_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::view_index_upsert_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::view_index_upsert_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to upsert view index: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_create_response> bucket_create(
-      couchbase::operations::management::bucket_create_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_create_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_create_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to create bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_update_response> bucket_update(
-      couchbase::operations::management::bucket_update_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_update_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_update_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to update bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_drop_response> bucket_drop(
-      couchbase::operations::management::bucket_drop_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_drop_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_drop_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to drop bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_get_response> bucket_get(
-      couchbase::operations::management::bucket_get_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_get_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_get_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_get_all_response> bucket_get_all(
-      couchbase::operations::management::bucket_get_all_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_get_all_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_get_all_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get all buckets: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::bucket_flush_response> bucket_flush(
-      couchbase::operations::management::bucket_flush_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::bucket_flush_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::bucket_flush_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to flush bucket: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::user_upsert_response> user_upsert(
-      couchbase::operations::management::user_upsert_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_upsert_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::user_upsert_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::user_get_response> user_get(
-      couchbase::operations::management::user_get_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_get_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::management::user_get_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::user_get_all_response> user_get_all(
-      couchbase::operations::management::user_get_all_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_get_all_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::user_get_all_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get all users: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::user_drop_response> user_drop(
-      couchbase::operations::management::user_drop_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::user_drop_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::management::user_drop_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to drop user: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::group_upsert_response> group_upsert(
-      couchbase::operations::management::group_upsert_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_upsert_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_upsert_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to upsert group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::group_get_response> group_get(
-      couchbase::operations::management::group_get_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_get_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request),
-                          [barrier](couchbase::operations::management::group_get_response&& resp) { barrier->set_value(std::move(resp)); });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::group_get_all_response> group_get_all(
-      couchbase::operations::management::group_get_all_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_get_all_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_get_all_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get all groups: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::group_drop_response> group_drop(
-      couchbase::operations::management::group_drop_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::group_drop_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::group_drop_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to drop group: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
-        return { {}, std::move(resp) };
-    }
-
-    std::pair<core_error_info, couchbase::operations::management::role_get_all_response> role_get_all(
-      couchbase::operations::management::role_get_all_request request)
-    {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::role_get_all_response>>();
-        auto f = barrier->get_future();
-        cluster_->execute(std::move(request), [barrier](couchbase::operations::management::role_get_all_response&& resp) {
-            barrier->set_value(std::move(resp));
-        });
-        auto resp = f.get();
-        if (resp.ctx.ec) {
-            return { { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get all roles: {}, {}", resp.ctx.ec.value(), resp.ctx.ec.message()),
-                       build_http_error_context(resp.ctx) },
-                     {} };
-        }
         return { {}, std::move(resp) };
     }
 
@@ -2188,7 +1818,7 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
         return e;
     }
 
-    auto [err, resp] = impl_->query(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -2276,7 +1906,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         return e;
     }
 
-    auto [err, resp] = impl_->analytics_query(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -2446,7 +2076,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
         return e;
     }
 
-    auto [err, resp] = impl_->search_query(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -2732,7 +2362,7 @@ connection_handle::view_query(zval* return_value,
         return e;
     }
 
-    auto [err, resp] = impl_->view_query(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3003,7 +2633,7 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
         return e;
     }
 
-    auto [err, resp] = impl_->search_index_upsert(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3077,7 +2707,7 @@ connection_handle::view_index_upsert(zval* return_value,
         return e;
     }
 
-    auto [err, resp] = impl_->view_index_upsert(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3226,7 +2856,7 @@ connection_handle::bucket_create(zval* return_value, const zval* bucket_settings
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_create(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3250,7 +2880,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_update(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3384,7 +3014,7 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_get(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3406,7 +3036,7 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options)
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_get_all(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3434,7 +3064,7 @@ connection_handle::bucket_drop(zval* return_value, const zend_string* name, cons
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_drop(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3453,7 +3083,7 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
         return e;
     }
 
-    auto [err, resp] = impl_->bucket_flush(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3654,7 +3284,7 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
     }
     request.user = cuser;
 
-    auto [err, resp] = impl_->user_upsert(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3676,7 +3306,7 @@ connection_handle::user_get_all(zval* return_value, const zval* options)
         return e;
     }
 
-    auto [err, resp] = impl_->user_get_all(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3707,7 +3337,7 @@ connection_handle::user_get(zval* return_value, const zend_string* name, const z
         return e;
     }
 
-    auto [err, resp] = impl_->user_get(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3732,7 +3362,7 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
         return e;
     }
 
-    auto [err, resp] = impl_->user_drop(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3788,7 +3418,7 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
         return e;
     }
 
-    auto [err, resp] = impl_->group_upsert(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3807,7 +3437,7 @@ connection_handle::group_get_all(zval* return_value, const zval* options)
         return e;
     }
 
-    auto [err, resp] = impl_->group_get_all(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3833,7 +3463,7 @@ connection_handle::group_get(zval* return_value, const zend_string* name, const 
         return e;
     }
 
-    auto [err, resp] = impl_->group_get(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3853,7 +3483,7 @@ connection_handle::group_drop(zval* return_value, const zend_string* name, const
         return e;
     }
 
-    auto [err, resp] = impl_->group_drop(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3872,7 +3502,7 @@ connection_handle::role_get_all(zval* return_value, const zval* options)
         return e;
     }
 
-    auto [err, resp] = impl_->role_get_all(std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
     if (err.ec) {
         return err;
     }
@@ -3886,6 +3516,247 @@ connection_handle::role_get_all(zval* return_value, const zval* options)
         add_assoc_string(&this_role, "description", role.description.c_str());
 
         add_next_index_zval(return_value, &this_role);
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_get_all(zval* return_value, const zend_string* bucket_name, const zval* options)
+{
+    couchbase::operations::management::query_index_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& idx : resp.indexes) {
+        zval index;
+        array_init(&index);
+        add_assoc_bool(&index, "isPrimary", idx.is_primary);
+        add_assoc_stringl(&index, "name", idx.name.data(), idx.name.size());
+        add_assoc_stringl(&index, "state", idx.state.data(), idx.state.size());
+        add_assoc_stringl(&index, "type", idx.type.data(), idx.type.size());
+        add_assoc_stringl(&index, "bucketName", idx.bucket_name.data(), idx.bucket_name.size());
+        if (idx.partition) {
+            add_assoc_stringl(&index, "partition", idx.partition->data(), idx.partition->size());
+        }
+        if (idx.condition) {
+            add_assoc_stringl(&index, "condition", idx.condition->data(), idx.condition->size());
+        }
+        if (idx.scope_name) {
+            add_assoc_stringl(&index, "scopeName", idx.scope_name->data(), idx.scope_name->size());
+        }
+        if (idx.collection_name) {
+            add_assoc_stringl(&index, "collectionName", idx.collection_name->data(), idx.collection_name->size());
+        }
+        zval index_key;
+        array_init(&index_key);
+        for (const auto& field : idx.index_key) {
+            add_next_index_stringl(&index_key, field.data(), field.size());
+        }
+        add_assoc_zval(&index, "indexKey", &index_key);
+        add_next_index_zval(return_value, &index);
+    }
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_create(const zend_string* bucket_name,
+                                      const zend_string* index_name,
+                                      const zval* fields,
+                                      const zval* options)
+{
+    if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
+        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for index fields" };
+    }
+    couchbase::operations::management::query_index_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = false;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.index_name = cb_string_new(index_name);
+
+    const zval* value;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(fields), value)
+    {
+        if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
+            return { error::common_errc::invalid_argument,
+                     { __LINE__, __FILE__, __func__ },
+                     "expected index fields to be array of strings" };
+        }
+        request.fields.emplace_back(cb_string_new(value));
+    }
+    ZEND_HASH_FOREACH_END();
+
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.condition, options, "condition"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.deferred, options, "deferred"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.num_replicas, options, "numberOfReplicas"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_create_primary(const zend_string* bucket_name, const zval* options)
+{
+    couchbase::operations::management::query_index_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = true;
+    request.bucket_name = cb_string_new(bucket_name);
+
+    if (auto e = cb_assign_string(request.index_name, options, "indexName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.deferred, options, "deferred"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.num_replicas, options, "numberOfReplicas"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_drop(const zend_string* bucket_name, const zend_string* index_name, const zval* options)
+{
+    couchbase::operations::management::query_index_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = false;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.index_name = cb_string_new(index_name);
+
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_drop_primary(const zend_string* bucket_name, const zval* options)
+{
+    couchbase::operations::management::query_index_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = true;
+    request.bucket_name = cb_string_new(bucket_name);
+
+    if (auto e = cb_assign_string(request.index_name, options, "indexName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::query_index_build_deferred(zval* return_value, const zend_string* bucket_name, const zval* options)
+{
+    couchbase::operations::management::query_index_build_deferred_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(request.collection_name, options, "collectionName"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
     }
 
     return {};

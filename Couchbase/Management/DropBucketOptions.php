@@ -25,13 +25,6 @@ class DropBucketOptions
     private ?int $timeoutMilliseconds = null;
 
     /**
-     * @since 4.0.0
-     */
-    public function __construct()
-    {
-    }
-
-    /**
      * Static helper to keep code more readable
      *
      * @return DropBucketOptions
@@ -46,6 +39,7 @@ class DropBucketOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return DropBucketOptions
      * @since 4.0.0
      */
@@ -56,9 +50,10 @@ class DropBucketOptions
     }
 
     /**
-     * @internal
      * @param DropBucketOptions|null $options
+     *
      * @return array
+     * @internal
      * @since 4.0.0
      */
     public static function export(?DropBucketOptions $options): array

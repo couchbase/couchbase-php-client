@@ -25,13 +25,6 @@ class FlushBucketOptions
     private ?int $timeoutMilliseconds = null;
 
     /**
-     * @since 4.0.0
-     */
-    public function __construct()
-    {
-    }
-
-    /**
      * Static helper to keep code more readable
      *
      * @return FlushBucketOptions
@@ -46,6 +39,7 @@ class FlushBucketOptions
      * Sets the operation timeout in milliseconds.
      *
      * @param int $milliseconds the operation timeout to apply
+     *
      * @return FlushBucketOptions
      * @since 4.0.0
      */
@@ -56,9 +50,10 @@ class FlushBucketOptions
     }
 
     /**
-     * @internal
      * @param FlushBucketOptions|null $options
+     *
      * @return array
+     * @internal
      * @since 4.0.0
      */
     public static function export(?FlushBucketOptions $options): array

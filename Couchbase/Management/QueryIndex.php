@@ -22,31 +22,131 @@ namespace Couchbase\Management;
 
 class QueryIndex
 {
+    private string $name;
+    private bool $isPrimary;
+    private string $type;
+    private string $state;
+    private array $indexKey;
+    private string $bucketName;
+    private ?string $scopeName = null;
+    private ?string $collectionName = null;
+    private ?string $condition = null;
+    private ?string $partition = null;
+
+    /**
+     * @param array $response
+     *
+     * @since 4.0.0
+     */
+    public function __construct(array $response)
+    {
+        $this->name = $response["name"];
+        $this->isPrimary = $response["isPrimary"];
+        $this->type = $response["type"];
+        $this->state = $response["state"];
+        $this->indexKey = $response["indexKey"];
+        $this->bucketName = $response["bucketName"];
+        if (array_key_exists("condition", $response)) {
+            $this->condition = $response["condition"];
+        }
+        if (array_key_exists("partition", $response)) {
+            $this->partition = $response["partition"];
+        }
+        if (array_key_exists("scopeName", $response)) {
+            $this->scopeName = $response["scopeName"];
+        }
+        if (array_key_exists("collectionName", $response)) {
+            $this->collectionName = $response["collectionName"];
+        }
+    }
+
+    /**
+     * @return string
+     * @since 4.0.0
+     */
     public function name(): string
     {
+        return $this->name;
     }
 
+    /**
+     * @return string
+     * @since 4.0.0
+     */
+    public function bucketName(): string
+    {
+        return $this->bucketName;
+    }
+
+    /**
+     * @return string|null
+     * @since 4.0.0
+     */
+    public function scopeName(): ?string
+    {
+        return $this->scopeName;
+    }
+
+    /**
+     * @return string|null
+     * @since 4.0.0
+     */
+    public function collectionName(): ?string
+    {
+        return $this->collectionName;
+    }
+
+    /**
+     * @return bool
+     * @since 4.0.0
+     */
     public function isPrimary(): bool
     {
+        return $this->isPrimary;
     }
 
+    /**
+     * @return string
+     * @since 4.0.0
+     */
     public function type(): string
     {
+        return $this->type;
     }
 
+    /**
+     * @return string
+     * @since 4.0.0
+     */
     public function state(): string
     {
+        return $this->state;
     }
 
-    public function keyspace(): string
-    {
-    }
-
+    /**
+     * @return array
+     * @since 4.0.0
+     */
     public function indexKey(): array
     {
+        return $this->indexKey;
     }
 
+    /**
+     * @return string|null
+     * @since 4.0.0
+     */
     public function condition(): ?string
     {
+        return $this->condition;
+    }
+
+    /**
+     * @return string|null
+     * @since 4.0.0
+     */
+    public function partition(): ?string
+    {
+        return $this->partition;
     }
 }

@@ -25,13 +25,6 @@ class GetBucketOptions
     private ?int $timeoutMilliseconds = null;
 
     /**
-     * @since 4.0.0
-     */
-    public function __construct()
-    {
-    }
-
-    /**
      * Static helper to keep code more readable
      *
      * @return GetBucketOptions

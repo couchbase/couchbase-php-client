@@ -22,11 +22,103 @@ namespace Couchbase\Management;
 
 class DropQueryPrimaryIndexOptions
 {
-    public function indexName(string $name): DropQueryPrimaryIndexOptions
+    private ?int $timeoutMilliseconds = null;
+    private ?string $scopeName = null;
+    private ?string $collectionName = null;
+    private ?string $indexName = null;
+    private ?bool $ignoreIfDoesNotExist = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public static function build(): DropQueryPrimaryIndexOptions
     {
+        return new DropQueryPrimaryIndexOptions();
     }
 
-    public function ignoreIfNotExists(bool $shouldIgnore): DropQueryPrimaryIndexOptions
+    /**
+     * @param string $scopeName
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public function scopeName(string $scopeName): DropQueryPrimaryIndexOptions
     {
+        $this->scopeName = $scopeName;
+        return $this;
+    }
+
+    /**
+     * @param string $collectionName
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public function collectionName(string $collectionName): DropQueryPrimaryIndexOptions
+    {
+        $this->collectionName = $collectionName;
+        return $this;
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public function indexName(string $name): DropQueryPrimaryIndexOptions
+    {
+        $this->indexName = $name;
+        return $this;
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public function ignoreIfDoesNotExist(bool $shouldIgnore): DropQueryPrimaryIndexOptions
+    {
+        $this->ignoreIfDoesNotExist = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return DropQueryPrimaryIndexOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): DropQueryPrimaryIndexOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @param DropQueryPrimaryIndexOptions|null $options
+     *
+     * @return array
+     * @internal
+     * @since 4.0.0
+     */
+    public static function export(?DropQueryPrimaryIndexOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'scopeName' => $options->scopeName,
+            'collectionName' => $options->collectionName,
+            'indexName' => $options->indexName,
+            'ignoreIfDoesNotExist' => $options->ignoreIfDoesNotExist,
+        ];
     }
 }

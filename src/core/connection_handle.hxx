@@ -303,6 +303,27 @@ class connection_handle
     COUCHBASE_API
     core_error_info role_get_all(zval* return_value, const zval* options);
 
+    COUCHBASE_API
+    core_error_info query_index_get_all(zval* return_value, const zend_string* bucket_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info query_index_create(const zend_string* bucket_name,
+                                       const zend_string* index_name,
+                                       const zval* fields,
+                                       const zval* options);
+
+    COUCHBASE_API
+    core_error_info query_index_create_primary(const zend_string* bucket_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info query_index_drop(const zend_string* bucket_name, const zend_string* index_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info query_index_drop_primary(const zend_string* bucket_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info query_index_build_deferred(zval* return_value, const zend_string* bucket_name, const zval* options);
+
   private:
     class impl;
 
