@@ -449,7 +449,6 @@
                                 <file role="src" name="bucket_settings.hxx"/>
                                 <file role="src" name="bucket_settings_json.hxx"/>
                                 <file role="src" name="design_document.hxx"/>
-                                <file role="src" name="design_document_fmt.hxx"/>
                                 <file role="src" name="eventing_function.hxx"/>
                                 <file role="src" name="eventing_function_json.hxx"/>
                                 <file role="src" name="eventing_status.hxx"/>
@@ -851,6 +850,7 @@
                             <file role="src" name="cluster_options.cxx"/>
                             <file role="src" name="cluster_options.hxx"/>
                             <file role="src" name="design_document_namespace.hxx"/>
+                            <file role="src" name="design_document_namespace_fmt.hxx"/>
                             <file role="src" name="diagnostics.hxx"/>
                             <file role="src" name="diagnostics_fmt.hxx"/>
                             <file role="src" name="diagnostics_json.hxx"/>
