@@ -15,6 +15,7 @@
  */
 
 #include "core/common.hxx"
+#include "core/logger.hxx"
 #include "core/persistent_connections_cache.hxx"
 #include "core/transaction_context_resource.hxx"
 #include "core/transactions_resource.hxx"
@@ -71,11 +72,20 @@ static const zend_function_entry exception_functions[] = {
         PHP_ME(CouchbaseException, getContext, ai_Exception_getContext, ZEND_ACC_PUBLIC)
         PHP_FE_END
 };
+
+PHP_INI_BEGIN()
+STD_PHP_INI_ENTRY("couchbase.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_couchbase_globals, couchbase_globals)
+STD_PHP_INI_ENTRY("couchbase.persistent_timeout", "-1", PHP_INI_SYSTEM, OnUpdateLong, persistent_timeout, zend_couchbase_globals, couchbase_globals)
+STD_PHP_INI_ENTRY("couchbase.log_level", "", PHP_INI_ALL, OnUpdateString, log_level, zend_couchbase_globals, couchbase_globals)
+PHP_INI_END()
 // clang-format on
 
 PHP_MINIT_FUNCTION(couchbase)
 {
     (void)type;
+    REGISTER_INI_ENTRIES();
+
+    couchbase::php::initialize_logger();
 
     couchbase::php::initialize_exceptions(exception_functions);
 
@@ -2260,15 +2270,6 @@ static zend_module_dep php_couchbase_deps[] = {
         ZEND_MOD_REQUIRED("json")
         ZEND_MOD_END
 };
-
-PHP_INI_BEGIN()
-                STD_PHP_INI_ENTRY
-                ("couchbase.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_couchbase_globals,
-                 couchbase_globals)
-                STD_PHP_INI_ENTRY
-                ("couchbase.persistent_timeout", "-1", PHP_INI_SYSTEM, OnUpdateLong, persistent_timeout,
-                 zend_couchbase_globals, couchbase_globals)
-PHP_INI_END()
 // clang-format on
 
 zend_module_entry couchbase_module_entry = {
