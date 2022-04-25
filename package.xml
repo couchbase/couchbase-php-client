@@ -348,6 +348,8 @@
                     <file role="src" name="conversion_utilities.hxx"/>
                     <file role="src" name="core.hxx"/>
                     <file role="src" name="core_error_info.hxx"/>
+                    <file role="src" name="logger.cxx"/>
+                    <file role="src" name="logger.hxx"/>
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>
                     <file role="src" name="php_7_api_layer.hxx"/>
