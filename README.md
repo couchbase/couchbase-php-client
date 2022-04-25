@@ -2,11 +2,12 @@
 
 [![license](https://img.shields.io/github/license/couchbaselabs/couchbase-php-client?color=brightgreen)](https://opensource.org/licenses/Apache-2.0)
 
-This repository contains source code of the Couchbase PHP Extension. 
+This repository contains source code of the Couchbase PHP SDK. 
 
-The extension provides low-level APIs for the Couchbase PHP Client SDK.
+## Support and Feedback
 
-This repo is under active development and is not yet ready for release as a public SDK.
+If you find an issue, please file it in [our JIRA issue tracker](https://couchbase.com/issues/browse/PCBC). Also you are
+always welcome on [our forum](https://forums.couchbase.com/c/php-sdk) and [Discord](https://discord.com/invite/sQ5qbPZuTh).
 
 
 ## Getting the Source Code
