@@ -28,6 +28,7 @@
 #include <Zend/zend_API.h>
 
 ZEND_BEGIN_MODULE_GLOBALS(couchbase)
+const char* log_level{};
 zend_long max_persistent{};     /* maximum number of persistent connections per process */
 zend_long num_persistent{};     /* number of existing persistent connections */
 zend_long persistent_timeout{}; /* time period after which idle persistent connection is considered expired */
