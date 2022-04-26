@@ -301,10 +301,11 @@ class SearchOptions implements JsonSerializable
             return [];
         }
 
-        $highlightStyle = $options->highlight['style'];
+        $highlightStyle = null;
         $highlightFields = null;
         if ($options->highlight != null) {
             $highlightFields = $options->highlight['fields'];
+            $highlightStyle = $options->highlight['style'];
         }
         $sort = null;
         if ($options->sort != null) {
