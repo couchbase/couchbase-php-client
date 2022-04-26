@@ -106,7 +106,6 @@ class UserManager
     public function getRoles(GetRolesOptions $options = null): array
     {
         $result = Extension\roleGetAll($this->core, GetRolesOptions::export($options));
-        var_dump($result);
         foreach ($result as $role) {
             $roles[] = RoleAndDescription::import($role);
         }
