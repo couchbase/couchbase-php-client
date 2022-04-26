@@ -81,6 +81,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
     public function testWorksWithQuery()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactionsQueries());
+
         $prefix = $this->uniqueId();
         $idOne = $prefix . "_1";
         $idTwo = $prefix . "_2";
@@ -183,6 +185,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
     public function testCommitWithQuery()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactionsQueries());
+
         $idToInsert = $this->uniqueId();
         $idToReplace = $this->uniqueId();
         $idToRemove = $this->uniqueId();
@@ -247,6 +251,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
     public function testRollbackAfterQuery()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactionsQueries());
+
         $idToInsert = $this->uniqueId();
         $idToReplace = $this->uniqueId();
         $idToRemove = $this->uniqueId();

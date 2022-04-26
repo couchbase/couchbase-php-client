@@ -202,6 +202,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
     public function testCreateBucketStorageBackendCouchstore()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsMagmaStorageBackend());
 
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::COUCHSTORE);

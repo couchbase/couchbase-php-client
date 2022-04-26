@@ -39,8 +39,10 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
                 $this->assertEquals("Query Manage Index", $roleAndDesc->displayName());
                 $role = $roleAndDesc->role();
                 $this->assertEquals("*", $role->bucket());
-                $this->assertEquals("*", $role->scope());
-                $this->assertEquals("*", $role->collection());
+                if ($this->version()->supportsCollections()) {
+                    $this->assertEquals("*", $role->scope());
+                    $this->assertEquals("*", $role->collection());
+                }
                 break;
             }
         }

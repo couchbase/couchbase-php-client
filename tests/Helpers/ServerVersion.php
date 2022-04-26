@@ -219,6 +219,11 @@ class ServerVersion
         return $this->isNeo();
     }
 
+    public function supportsTransactionsQueries(): bool
+    {
+        return $this->isCheshireCat() || $this->isNeo();
+    }
+
     /**
      * @return int
      */
