@@ -55,6 +55,8 @@ class ServerVersionTest extends Helpers\CouchbaseTestCase
         $versionString = $cluster->version($this->env()->bucketName());
         $this->assertNotNull($versionString);
         $version = ServerVersion::parse($versionString);
-        $this->assertGreaterThan(6, $version->major());
+        $this->assertNotNull($version->major());
+        $this->assertNotNull($version->minor());
+        $this->assertNotNull($version->micro());
     }
 }

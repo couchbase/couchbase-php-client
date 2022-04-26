@@ -39,12 +39,20 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $nameSpace = $this->nameSpace($bucketName);
+        $nameSpace = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $nameSpace = $this->nameSpace($bucketName);
+        }
         $this->maybeCreateIndex($nameSpace);
 
         $key = $this->uniqueId('a');
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
+
+        $collectionName = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $collectionName = $collection->name();
+        }
 
         $options = QueryOptions::build()->scanConsistency(QueryScanConsistency::REQUEST_PLUS);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \"$key\"", $options);
@@ -57,7 +65,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($meta->signature());
         $rows = $res->rows();
         $this->assertNotEmpty($rows);
-        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collectionName]['bar']);
     }
 
     public function testParameters()
@@ -65,7 +73,10 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $nameSpace = $this->nameSpace($bucketName);
+        $nameSpace = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $nameSpace = $this->nameSpace($bucketName);
+        }
         $this->maybeCreateIndex($nameSpace);
 
         // USE KEYS doesn't like a number as first character.
@@ -73,19 +84,24 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
 
+        $collectionName = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $collectionName = $collection->name();
+        }
+
         $options = QueryOptions::build()
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$key]);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$1", $options);
         $this->assertNotEmpty($res->rows());
-        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collectionName]['bar']);
 
         $options = QueryOptions::build()
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
             ->namedParameters(["key" => $key]);
         $res = $this->cluster->query("SELECT * FROM $nameSpace USE KEYS \$key", $options);
         $this->assertNotEmpty($res->rows());
-        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collectionName]['bar']);
 
         // it will use PHP interpolation, and actually breaks query
         $this->wrapException(
@@ -106,7 +122,10 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $nameSpace = $this->nameSpace($bucketName);
+        $nameSpace = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $nameSpace = $this->nameSpace($bucketName);
+        }
         $this->maybeCreateIndex($nameSpace);
 
         $collection = $this->cluster->bucket($bucketName)->defaultCollection();
@@ -176,6 +195,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
     public function testPreserveExpiry()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsPreserveExpiryForQuery());
 
         $bucketName = $this->env()->bucketName();
         $nameSpace = $this->nameSpace($bucketName);
@@ -202,12 +222,20 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $bucketName = $this->env()->bucketName();
-        $nameSpace = $this->nameSpace($bucketName);
+        $nameSpace = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $nameSpace = $this->nameSpace($bucketName);
+        }
+        $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $this->maybeCreateIndex($nameSpace);
 
         $key = $this->uniqueId('a');
-        $collection = $this->cluster->bucket($bucketName)->defaultCollection();
         $collection->upsert($key, ["bar" => 42]);
+
+        $collectionName = $bucketName;
+        if ($this->version()->supportsCollections()) {
+            $collectionName = $collection->name();
+        }
 
         $options = QueryOptions::build()
             ->scanConsistency(QueryScanConsistency::REQUEST_PLUS)
@@ -216,12 +244,13 @@ class QueryTest extends Helpers\CouchbaseTestCase
 
         $rows = $res->rows();
         $this->assertNotEmpty($rows);
-        $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+        $this->assertEquals(42, $res->rows()[0][$collectionName]['bar']);
     }
 
     public function testScope()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsCollections());
 
         $bucketName = $this->env()->bucketName();
         $nameSpace = $this->nameSpace($bucketName);

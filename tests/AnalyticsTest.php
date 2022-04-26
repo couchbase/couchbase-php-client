@@ -32,6 +32,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     public function testScopeAnalyticsQuery()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsCollections());
 
         $this->maybeCreateAnalyticsIndex("beer-sample");
 
@@ -52,6 +53,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     public function testClusterAnalyticsQuery()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsCollections());
 
         $this->maybeCreateAnalyticsIndex("beer-sample");
 
@@ -72,8 +74,6 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $this->maybeCreateAnalyticsIndex("beer-sample");
-
         $opts = AnalyticsOptions::build()->transcoder(new JsonTranscoder(true));
         $result = $this->cluster->analyticsQuery("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
@@ -86,8 +86,6 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
 
-        $this->maybeCreateAnalyticsIndex("beer-sample");
-
         $opts = AnalyticsOptions::build()->transcoder(new JsonTranscoder(false));
         $result = $this->cluster->analyticsQuery("SELECT 'Hello, PHP!' AS message", $opts);
         $this->assertNotEmpty($result->rows());
@@ -99,8 +97,6 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
     public function testRowsShapeDefault()
     {
         $this->skipIfCaves();
-
-        $this->maybeCreateAnalyticsIndex("beer-sample");
 
         $result = $this->cluster->analyticsQuery("SELECT 'Hello, PHP!' AS message");
         $this->assertNotEmpty($result->rows());
