@@ -62,6 +62,22 @@ class CouchbaseTestCase extends TestCase
         return new Cluster(self::env()->connectionString(), $options);
     }
 
+    public function connectClusterUnique(?ClusterOptions $options = null): Cluster
+    {
+        if ($options == null) {
+            $options = new ClusterOptions();
+        }
+        $options->authenticator(self::env()->buildPasswordAuthenticator());
+        $connstr = self::env()->connectionString();
+        if (str_contains($connstr, "?")) {
+            $connstr .= "&";
+        } else {
+            $connstr .= "?";
+        }
+        $connstr .= $this->uniqueId() . "=" . $this->uniqueId();
+        return new Cluster($connstr, $options);
+    }
+
     public function openBucket(string $name = null): Bucket
     {
         if ($name == null) {

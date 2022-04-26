@@ -26,31 +26,37 @@ class PingTest extends Helpers\CouchbaseTestCase
 {
     public function testClusterPingNoParams()
     {
-        $cluster = $this->connectCluster();
+        $cluster = $this->connectClusterUnique();
         $result = $cluster->ping();
 
         $this->assertNotEmpty($result['id']);
         $this->assertNotEmpty($result['sdk']);
         $this->assertEquals(2, $result['version']);
         $this->assertNotEmpty($result['services']);
-        $this->verifyService(ServiceType::ANALYTICS, $result['services']);
-        $this->verifyService(ServiceType::QUERY, $result['services']);
-        $this->verifyService(ServiceType::VIEWS, $result['services']);
-        $this->verifyService(ServiceType::SEARCH, $result['services']);
-        if (array_key_exists(ServiceType::MANAGEMENT, $result['services'])) {
-            $this->verifyService(ServiceType::MANAGEMENT, $result['services']);
+        if (array_key_exists(ServiceType::ANALYTICS, $result['services'])) {
+            $this->verifyService(ServiceType::ANALYTICS, $result['services']);
+        }
+        if (array_key_exists(ServiceType::SEARCH, $result['services'])) {
+            $this->verifyService(ServiceType::SEARCH, $result['services']);
+        }
+        if (array_key_exists(ServiceType::QUERY, $result['services'])) {
+            $this->verifyService(ServiceType::QUERY, $result['services']);
+        }
+        if (array_key_exists(ServiceType::VIEWS, $result['services'])) {
+            $this->verifyService(ServiceType::VIEWS, $result['services']);
         }
         if (array_key_exists(ServiceType::EVENTING, $result['services'])) {
             $this->verifyService(ServiceType::EVENTING, $result['services']);
         }
-        if (array_key_exists(ServiceType::KEY_VALUE, $result['services'])) {
-            $this->verifyService(ServiceType::KEY_VALUE, $result['services']);
+        if (array_key_exists(ServiceType::MANAGEMENT, $result['services'])) {
+            $this->verifyService(ServiceType::MANAGEMENT, $result['services']);
         }
+        $this->verifyService(ServiceType::KEY_VALUE, $result['services']);
     }
 
     public function testBucketPingNoParams()
     {
-        $cluster = $this->connectCluster();
+        $cluster = $this->connectClusterUnique();
         $bucketName = $this->env()->bucketName();
         $result = $cluster->bucket($bucketName)->ping();
 
