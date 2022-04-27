@@ -50,15 +50,15 @@ unless File.file?(caves_binary)
   basename = 
     case RbConfig::CONFIG["target_os"]
     when /darwin/
-      case RbConfig::CONFIG["arch"]
-      when /arm64-darwin20/
+      case RUBY_PLATFORM
+      when /arm64/
         "gocaves-macos-arm64"
       else
         "gocaves-macos"
       end
     when /linux/
       case RbConfig::CONFIG["arch"]
-      when /aarch64-linux/
+      when /aarch64/
         "gocaves-linux-arm64"
       else
         "gocaves-linux-amd64"
