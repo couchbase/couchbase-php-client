@@ -54,3 +54,4 @@
 cmake-build*/
 composer.lock
 php_test_results_*.txt
+results.xml

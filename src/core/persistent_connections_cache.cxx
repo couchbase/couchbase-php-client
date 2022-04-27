@@ -94,7 +94,7 @@ create_persistent_connection(zend_string* connection_hash, zend_string* connecti
         delete handle;
         return { nullptr, rc };
     }
-    zend_register_persistent_resource_ex(connection_hash, handle, persistent_connection_destructor_id_);
+    zend_register_persistent_resource_ex(zend_string_dup(connection_hash, 1), handle, persistent_connection_destructor_id_);
     ++COUCHBASE_G(num_persistent);
     return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
 }
