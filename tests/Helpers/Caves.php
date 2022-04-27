@@ -56,12 +56,14 @@ class Caves
             }
         }
         $this->cavesSocket = socket_accept($this->controlSocket);
-        printf(
-            "--- %s, control_port: %d, logs: %s\n",
-            $this->executablePath(),
-            $this->controlPort(),
-            sprintf("%s/%s.{out,err}.txt", $this->buildDirectory(), $this->logPrefix)
-        );
+        if (getenv("CAVES_VERBOSE")) {
+            printf(
+                "--- %s, control_port: %d, logs: %s\n",
+                $this->executablePath(),
+                $this->controlPort(),
+                sprintf("%s/%s.{out,err}.txt", $this->buildDirectory(), $this->logPrefix)
+            );
+        }
         $helloCommand = $this->readCommand();
         if ($helloCommand["type"] != "hello") {
             throw new UnexpectedValueException("CAVES didn't greet us, something happened: " . var_export($helloCommand));
