@@ -20,9 +20,11 @@
 #include "logger.hxx"
 
 #include <couchbase/logger/logger.hxx>
-#include <spdlog/spdlog.h>
 
 #include <spdlog/details/os.h>
+#include <spdlog/spdlog.h>
+
+#include <algorithm>
 
 namespace couchbase::php
 {
