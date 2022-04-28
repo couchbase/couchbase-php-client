@@ -15,13 +15,19 @@ if (PHP_COUCHBASE != "no") {
         .replace(new RegExp('/D ', 'g'), '/D')
         .replace(new RegExp('/I ', 'g'), '/I');
 
+    STDOUT.WriteLine('MODE_PHPIZE=' + MODE_PHPIZE);
+    STDOUT.WriteLine('PHP_DIR="' + PHP_DIR + '"');
+    STDOUT.WriteLine('PHP_SRC_DIR="' + PHP_SRC_DIR + '"');
+    var php_src_prefix = MODE_PHPIZE ? PHP_DIR : PHP_SRC_DIR;
     var COUCHBASE_PHP_INCLUDES =
-        PHP_SRC_DIR + " " +
-        PHP_SRC_DIR + "\\main " +
-        PHP_SRC_DIR + "\\Zend " +
-        PHP_SRC_DIR + "\\TSRM " +
-        PHP_SRC_DIR + "\\ext";
-    var COUCHBASE_PHP_LIB = get_define("BUILD_DIR") + "\\" + get_define("PHPLIB");
+        php_src_prefix + " " +
+        php_src_prefix + "\\main " +
+        php_src_prefix + "\\Zend " +
+        php_src_prefix + "\\TSRM " +
+        php_src_prefix + "\\ext";
+    var COUCHBASE_PHP_LIB =
+        MODE_PHPIZE ?  PHP_DIR + "\\lib" : get_define("BUILD_DIR") +
+        "\\" + get_define("PHPLIB");
 
     STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
     STDOUT.WriteLine('COUCHBASE_CMAKE_SOURCE_DIRECTORY="' + COUCHBASE_CMAKE_SOURCE_DIRECTORY + '"');
