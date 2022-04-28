@@ -18,7 +18,7 @@ if (PHP_COUCHBASE != "no") {
     STDOUT.WriteLine('MODE_PHPIZE=' + MODE_PHPIZE);
     STDOUT.WriteLine('PHP_DIR="' + PHP_DIR + '"');
     STDOUT.WriteLine('PHP_SRC_DIR="' + PHP_SRC_DIR + '"');
-    var php_src_prefix = MODE_PHPIZE ? PHP_DIR : PHP_SRC_DIR;
+    var php_src_prefix = MODE_PHPIZE ? PHP_DIR + "\\include" : PHP_SRC_DIR;
     var COUCHBASE_PHP_INCLUDES =
         php_src_prefix + " " +
         php_src_prefix + "\\main " +
