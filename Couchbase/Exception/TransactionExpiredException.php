@@ -20,6 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Exception;
 
-class TransactionOperationFailedException extends TransactionException
+class TransactionExpiredException extends TransactionException
 {
 }

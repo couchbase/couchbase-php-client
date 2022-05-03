@@ -100,7 +100,9 @@ zend_class_entry* xattr_unknown_macro_exception_ce;
 zend_class_entry* xattr_unknown_virtual_attribute_exception_ce;
 
 zend_class_entry* transaction_exception_ce;
-zend_class_entry* transaction_operation_failed_exception_ce;
+zend_class_entry* transaction_failed_exception_ce;
+zend_class_entry* transaction_expired_exception_ce;
+zend_class_entry* transaction_commit_ambiguous_exception_ce;
 
 COUCHBASE_API
 zend_class_entry*
@@ -255,8 +257,12 @@ initialize_exceptions(const zend_function_entry* exception_functions)
 
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionException", nullptr);
     transaction_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
-    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionOperationFailedException", nullptr);
-    transaction_operation_failed_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionFailedException", nullptr);
+    transaction_failed_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionExpiredException", nullptr);
+    transaction_expired_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "TransactionCommitAmbiguousException", nullptr);
+    transaction_commit_ambiguous_exception_ce = zend_register_internal_class_ex(&ce, transaction_exception_ce);
 }
 
 COUCHBASE_API
@@ -433,8 +439,7 @@ map_error_to_exception(const core_error_info& info)
     } else if (info.ec.category() == detail::get_transactions_category()) {
         switch (transactions_errc(info.ec.value())) {
             case transactions_errc::operation_failed:
-                return transaction_operation_failed_exception_ce;
-                break;
+                return transaction_failed_exception_ce;
             case transactions_errc::std_exception:
             case transactions_errc::unexpected_exception:
                 return transaction_exception_ce;

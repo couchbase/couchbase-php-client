@@ -19,6 +19,7 @@
 declare(strict_types=1);
 
 use Couchbase\Exception\TransactionException;
+use Couchbase\Exception\TransactionFailedException;
 use Couchbase\QueryOptions;
 use Couchbase\TransactionAttemptContext;
 use Couchbase\TransactionQueryOptions;
@@ -162,7 +163,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     }
                 );
             },
-            TransactionException::class,
+            TransactionFailedException::class,
             null,
             "/Exception caught during execution of transaction/"
         );
@@ -267,7 +268,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         $collection->insert($idToRemove, ["foo" => "bar"]);
 
         $numberOfAttempts = 0;
-        /** @var TransactionException $ex */
+        /** @var TransactionFailedException $ex */
         $ex = $this->wrapException(
             function () use (&$numberOfAttempts, $collection, $idToInsert, $idToReplace, $idToRemove, $cluster) {
                 $cluster->transactions()->run(
@@ -301,7 +302,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     }
                 );
             },
-            TransactionException::class,
+            TransactionFailedException::class,
             null,
             "/Exception caught during execution of transaction/"
         );

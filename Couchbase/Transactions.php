@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\TransactionException;
+use Couchbase\Exception\TransactionFailedException;
 use Exception;
 
 class Transactions
@@ -63,7 +63,7 @@ class Transactions
                 $logic($transaction->transactionAttemptContext());
             } catch (Exception $exception) {
                 $transaction->rollback();
-                throw new TransactionException("Exception caught during execution of transaction logic", 0, $exception);
+                throw new TransactionFailedException("Exception caught during execution of transaction logic", 0, $exception);
             }
 
             try {
