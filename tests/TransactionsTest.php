@@ -18,6 +18,7 @@
 
 declare(strict_types=1);
 
+use Couchbase\Exception\TransactionException;
 use Couchbase\QueryOptions;
 use Couchbase\TransactionAttemptContext;
 use Couchbase\TransactionQueryOptions;
@@ -108,7 +109,6 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                 );
 
                 $this->assertCount(2, $res->rows());
-                var_dump($res->rows());
 
                 $attempt->replace($doc, ["foo" => "bag"]);
 
@@ -137,7 +137,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         $collection->insert($idToRemove, ["foo" => "bar"]);
 
         $numberOfAttempts = 0;
-        $this->wrapException(
+        /** @var TransactionException $ex */
+        $ex = $this->wrapException(
             function () use ($collection, $idToInsert, $idToReplace, $idToRemove, &$numberOfAttempts, $cluster) {
                 $cluster->transactions()->run(
                     function (TransactionAttemptContext $attempt) use (
@@ -161,10 +162,12 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     }
                 );
             },
-            Exception::class,
+            TransactionException::class,
             null,
-            "/application failure/"
+            "/Exception caught during execution of transaction/"
         );
+        $this->assertErrorType(Exception::class, $ex->getPrevious());
+        $this->assertErrorMessage("/application failure/", $ex->getPrevious());
 
         $this->assertEquals(1, $numberOfAttempts);
 
@@ -227,7 +230,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     function () use ($idToRemove, $collection, $attempt) {
                         $attempt->get($collection, $idToRemove);
                     },
-                    Couchbase\Exception\TransactionException::class,
+                    TransactionException::class,
                     null,
                     "/doc not found/"
                 );
@@ -264,7 +267,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         $collection->insert($idToRemove, ["foo" => "bar"]);
 
         $numberOfAttempts = 0;
-        $this->wrapException(
+        /** @var TransactionException $ex */
+        $ex = $this->wrapException(
             function () use (&$numberOfAttempts, $collection, $idToInsert, $idToReplace, $idToRemove, $cluster) {
                 $cluster->transactions()->run(
                     function (TransactionAttemptContext $attempt) use (
@@ -297,10 +301,12 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     }
                 );
             },
-            Exception::class,
+            TransactionException::class,
             null,
-            "/application failure/"
+            "/Exception caught during execution of transaction/"
         );
+        $this->assertErrorType(Exception::class, $ex->getPrevious());
+        $this->assertErrorMessage("/application failure/", $ex->getPrevious());
 
         $this->assertEquals(1, $numberOfAttempts);
 
