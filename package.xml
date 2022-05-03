@@ -102,6 +102,7 @@
                     <file role="php" name="TransactionException.php"/>
                     <file role="php" name="TransactionExpiredException.php"/>
                     <file role="php" name="TransactionFailedException.php"/>
+                    <file role="php" name="TransactionOperationFailedException.php"/>
                     <file role="php" name="UnambiguousTimeoutException.php"/>
                     <file role="php" name="UnsupportedOperationException.php"/>
                     <file role="php" name="UserExistsException.php"/>

@@ -16,9 +16,9 @@
 
 #include "core.hxx"
 
-#include "transaction_context_resource.hxx"
 #include "common.hxx"
 #include "conversion_utilities.hxx"
+#include "transaction_context_resource.hxx"
 #include "transactions_resource.hxx"
 
 #include <couchbase/transactions.hxx>
@@ -111,6 +111,47 @@ build_error_context(const couchbase::transactions::transaction_operation_failed&
     return out;
 }
 
+static std::string
+failure_type_to_string(couchbase::transactions::failure_type failure)
+{
+    switch (failure) {
+        case transactions::failure_type::FAIL:
+            return "fail";
+        case transactions::failure_type::EXPIRY:
+            return "expiry";
+        case transactions::failure_type::COMMIT_AMBIGUOUS:
+            return "commit_ambiguous";
+    }
+    return "unknown";
+}
+
+static transactions_error_context
+build_error_context(const couchbase::transactions::transaction_exception& e)
+{
+    transactions_error_context out;
+    out.type = failure_type_to_string(e.type());
+    out.cause = external_exception_to_string(e.cause());
+    transactions_error_context::transaction_result res;
+    res.transaction_id = e.get_transaction_result().transaction_id;
+    res.unstaging_complete = e.get_transaction_result().unstaging_complete;
+    out.result = res;
+    return out;
+}
+
+static std::error_code
+failure_type_to_error_code(couchbase::transactions::failure_type failure)
+{
+    switch (failure) {
+        case transactions::failure_type::FAIL:
+            return transactions_errc::failed;
+        case transactions::failure_type::EXPIRY:
+            return transactions_errc::expired;
+        case transactions::failure_type::COMMIT_AMBIGUOUS:
+            return transactions_errc::commit_ambiguous;
+    }
+    return transactions_errc::unexpected_exception;
+}
+
 class transaction_context_resource::impl : public std::enable_shared_from_this<transaction_context_resource::impl>
 {
   public:
@@ -190,9 +231,9 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                   return barrier->set_value(std::move(res));
               });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const couchbase::transactions::transaction_exception& e) {
             return { {},
-                     { transactions_errc::operation_failed,
+                     { failure_type_to_error_code(e.type()),
                        { __LINE__, __FILE__, __func__ },
                        fmt::format("unable to commit transaction: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
                        build_error_context(e) } };
