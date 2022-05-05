@@ -102,7 +102,7 @@ class Caves
 
     private function executablePath(): string
     {
-        return $this->buildDirectory() . "/gocaves";
+        return $this->buildDirectory() . "/gocaves" . (PHP_OS_FAMILY == "Windows" ? ".exe" : "");
     }
 
     private function buildDirectory(): string

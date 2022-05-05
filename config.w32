@@ -16,8 +16,12 @@ if (PHP_COUCHBASE != "no") {
         .replace(new RegExp('/I ', 'g'), '/I');
 
     STDOUT.WriteLine('MODE_PHPIZE=' + MODE_PHPIZE);
-    STDOUT.WriteLine('PHP_DIR="' + PHP_DIR + '"');
+    STDOUT.WriteLine('PHP_PREFIX="' + PHP_PREFIX + '"');
+    if (MODE_PHPIZE) {
+        STDOUT.WriteLine('PHP_DIR="' + PHP_DIR + '"');
+    }
     STDOUT.WriteLine('PHP_SRC_DIR="' + PHP_SRC_DIR + '"');
+    STDOUT.WriteLine('BUILD_DIR="' + get_define("BUILD_DIR") + '"');
     var php_src_prefix = MODE_PHPIZE ? PHP_DIR + "\\include" : PHP_SRC_DIR;
     var COUCHBASE_PHP_INCLUDES =
         php_src_prefix + " " +
@@ -26,7 +30,7 @@ if (PHP_COUCHBASE != "no") {
         php_src_prefix + "\\TSRM " +
         php_src_prefix + "\\ext";
     var COUCHBASE_PHP_LIB =
-        MODE_PHPIZE ?  PHP_DIR + "\\lib" : get_define("BUILD_DIR") +
+        (MODE_PHPIZE ?  PHP_DIR + "\\lib" : get_define("BUILD_DIR")) +
         "\\" + get_define("PHPLIB");
 
     STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
@@ -40,7 +44,7 @@ if (PHP_COUCHBASE != "no") {
     DEFINE("DEPS_COUCHBASE", get_define("LIBS_COUCHBASE"));
     EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
 
-    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_core.lib: $(BUILD_DIR)\\$(PHPDLL)");
+    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_core.lib:" + (MODE_PHPIZE ? "" : "$(BUILD_DIR)\\$(PHPDLL)"));
     MFO.WriteLine("\t" + CMAKE + " --build " + COUCHBASE_CMAKE_BUILD_DIRECTORY + " --parallel 4 --verbose");
     MFO.WriteLine("couchbase_php_core.lib: $(BUILD_DIR)\\couchbase_php_core.lib");
     MFO.WriteLine("\t@echo EXT couchbase core build complete");

@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+
+class Object
+  def to_b
+    ![nil, false, 0, "", "0", "f", "F", "false", "FALSE", "off", "OFF", "no", "NO"].include?(self)
+  end
+end
+
+def run(*args)
+  args = args.compact.map(&:to_s)
+  puts args.join(" ")
+  system(*args) || abort("command returned non-zero status (#{$?}): #{args.join(" ")}")
+end
+
+project_root = File.expand_path(File.join(__dir__, ".."))
+
+main_header = File.read(File.join(project_root, "src/php_couchbase.hxx"))
+sdk_version = main_header[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1]
+snapshot = ENV.fetch("BUILD_NUMBER", 0) unless ENV.fetch("IS_RELEASE", false).to_b
+package_version = snapshot ? "#{sdk_version}.#{snapshot}" : sdk_version
+php_version = ENV.fetch("CB_PHP_VERSION")[/^(\d+\.\d+)/, 1]
+thread_safety = ENV.fetch("THREAD_SAFETY")
+
+package_name = "php_couchbase-#{package_version}-#{php_version}-#{thread_safety}-x64"
+
+build_dir = File.read("Makefile")[/^BUILD_DIR=(.*)/, 1].strip
+cmake_build_dir = File.join(build_dir, "cmake-build")
+
+package_dir = File.join(project_root, "build", package_name)
+FileUtils.mkdir_p(package_dir, verbose: true)
+[
+  File.join(project_root, "Couchbase"),
+  File.join(project_root, "LICENSE"),
+  File.join(project_root, "README.md"),
+  File.join(project_root, "package.xml"),
+  File.join(build_dir, "php_couchbase.dll"),
+  File.join(cmake_build_dir, "couchbase_php_core.dll"),
+].each do |path|
+  FileUtils.cp_r(path, package_dir, verbose: true)
+end
+Dir.chdir(File.join(project_root, "build")) do
+  run("zip", "-r9", "#{package_name}.zip", package_name)
+  FileUtils.mv(package_name, "verification", verbose: true)
+  FileUtils.mkdir_p("verification/bin", verbose: true)
+  FileUtils.cp_r("C:/Jenkins/workspace/php/sdk/php-build-pipeline.copy/php-build/install/openssl-1.1.1g-sdk2", "verification/", verbose: true)
+  FileUtils.cp_r("../tests", "verification/", verbose: true)
+  FileUtils.cp_r("../bin/test", "verification/bin/", verbose: true)
+  run("zip", "-r9", "verification.zip", "verification")
+end

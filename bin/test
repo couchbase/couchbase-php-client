@@ -41,12 +41,16 @@ def run(*args)
   system(*args) || abort("command returned non-zero status (#{$?}): #{args.join(" ")}")
 end
 
+def windows?
+  RUBY_PLATFORM.include?('mingw')
+end
+
 project_root = File.expand_path(File.join(__dir__, ".."))
 build_root = File.join(project_root, "build")
 
-caves_binary = File.join(build_root, "gocaves")
+caves_binary = File.join(build_root, "gocaves#{".exe" if windows?}")
 unless File.file?(caves_binary)
-  caves_version = "v0.0.1-73"
+  caves_version = "v0.0.1-74"
   basename = 
     case RbConfig::CONFIG["target_os"]
     when /darwin/
@@ -63,6 +67,8 @@ unless File.file?(caves_binary)
       else
         "gocaves-linux-amd64"
       end
+    when /mingw/
+      "gocaves-windows.exe"
     else
       abort(format("unexpected architecture, please update \"%s\", your target_os=\"%s\", arch=\"%s\"",
                    File.realpath(__FILE__), RbConfig::CONFIG["target_os"], RbConfig::CONFIG["arch"]))
@@ -70,7 +76,7 @@ unless File.file?(caves_binary)
   caves_url = "https://github.com/couchbaselabs/gocaves/releases/download/#{caves_version}/#{basename}"
   FileUtils.mkdir_p(File.dirname(caves_binary))
   run("curl -L -o #{caves_binary.shellescape} #{caves_url}")
-  run("chmod a+x #{caves_binary.shellescape}")
+  run("chmod a+x #{caves_binary.shellescape}") unless windows?
 end
 
 php_unit_phar = File.join(build_root, "phpunit.phar")
@@ -81,19 +87,32 @@ unless File.file?(php_unit_phar)
   run("curl -L -o #{php_unit_phar.shellescape} #{php_unit_url}")
 end
 
-couchbase_ext = "#{project_root}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
-unless File.exists?(couchbase_ext)
-  alt_filename = "#{project_root}/modules/couchbase.so"
-  if File.exists?(alt_filename)
-    couchbase_ext = alt_filename
+extensions = 
+  if windows?
+    "-d extension=phar -d extension=#{File.join(Dir.pwd, "php_couchbase.dll")}"
+  else
+    couchbase_ext = "#{project_root}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+    unless File.exists?(couchbase_ext)
+      alt_filename = "#{project_root}/modules/couchbase.so"
+      if File.exists?(alt_filename)
+        couchbase_ext = alt_filename
+      end
+    end
+    "-d extension=#{couchbase_ext}"
   end
-end
 
 tests = ARGV.to_a
 tests << File.join(project_root, "tests") if tests.empty?
 results_xml = File.join(project_root, "results.xml")
 
-php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
+php_executable = 
+  if windows?
+    File.join(CB_PHP_PREFIX, "php.exe")
+  else
+    File.join(CB_PHP_PREFIX, "bin", "php")
+  end
 Dir.chdir(project_root) do 
-  run("#{php_executable} -d extension=#{couchbase_ext} #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
+  p ENV["PATH"]
+  run("#{php_executable} #{extensions} -m")
+  run("#{php_executable} #{extensions} #{php_unit_phar} --color --testdox #{tests.join(' ')} --log-junit #{results_xml}")
 end
