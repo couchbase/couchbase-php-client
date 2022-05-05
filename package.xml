@@ -98,7 +98,10 @@
                     <file role="php" name="ServiceNotAvailableException.php"/>
                     <file role="php" name="TemporaryFailureException.php"/>
                     <file role="php" name="TimeoutException.php"/>
+                    <file role="php" name="TransactionCommitAmbiguousException.php"/>
                     <file role="php" name="TransactionException.php"/>
+                    <file role="php" name="TransactionExpiredException.php"/>
+                    <file role="php" name="TransactionFailedException.php"/>
                     <file role="php" name="TransactionOperationFailedException.php"/>
                     <file role="php" name="UnambiguousTimeoutException.php"/>
                     <file role="php" name="UnsupportedOperationException.php"/>

@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\TransactionFailedException;
 use Exception;
 
 class Transactions
@@ -45,7 +46,8 @@ class Transactions
     /**
      * Executes a transactions
      *
-     * @param callable $logic The transaction closure to execute. The callable receives single argument of type {TransactionAttemptContext}.
+     * @param callable $logic The transaction closure to execute. The callable receives single argument of type
+     *     {TransactionAttemptContext}.
      * @param TransactionOptions|null $options configuration options for the transaction
      *
      * @return TransactionResult
@@ -61,7 +63,7 @@ class Transactions
                 $logic($transaction->transactionAttemptContext());
             } catch (Exception $exception) {
                 $transaction->rollback();
-                throw $exception;
+                throw new TransactionFailedException("Exception caught during execution of transaction logic", 0, $exception);
             }
 
             try {

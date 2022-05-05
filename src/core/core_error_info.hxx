@@ -125,6 +125,9 @@ enum class transactions_errc {
     operation_failed = 1101,
     std_exception = 1102,
     unexpected_exception = 1103,
+    failed = 1104,
+    expired = 1105,
+    commit_ambiguous = 1106,
 };
 
 namespace detail
