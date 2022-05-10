@@ -44,7 +44,7 @@ class Coordinate implements JsonSerializable
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return Coordinate::export($this);
     }

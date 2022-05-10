@@ -88,7 +88,7 @@ class DateRangeSearchFacet implements JsonSerializable, SearchFacet
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return DateRangeSearchFacet::export($this);
     }

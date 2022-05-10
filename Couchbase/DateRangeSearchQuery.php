@@ -142,7 +142,7 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return DateRangeSearchQuery::export($this);
     }

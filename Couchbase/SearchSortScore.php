@@ -47,7 +47,7 @@ class SearchSortScore implements JsonSerializable, SearchSort
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return SearchSortScore::export($this);
     }

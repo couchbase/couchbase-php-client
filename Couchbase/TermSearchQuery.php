@@ -102,7 +102,7 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return TermSearchQuery::export($this);
     }

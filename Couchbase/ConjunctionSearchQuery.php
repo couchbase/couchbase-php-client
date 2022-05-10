@@ -92,7 +92,7 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
      * @return mixed
      * @throws InvalidArgumentException
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return ConjunctionSearchQuery::export($this);
     }

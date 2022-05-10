@@ -47,7 +47,7 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return MatchNoneSearchQuery::export($this);
     }

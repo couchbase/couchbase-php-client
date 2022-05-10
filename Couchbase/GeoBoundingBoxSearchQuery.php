@@ -82,7 +82,7 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return GeoBoundingBoxSearchQuery::export($this);
     }

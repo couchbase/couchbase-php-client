@@ -22,7 +22,7 @@ namespace Couchbase\Management;
 
 class SearchIndex implements JsonSerializable
 {
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
     }
 
