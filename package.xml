@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2022-03-31</date>
+    <date>2022-05-11</date>
     <version>
         <release>4.0.0</release>
         <api>4.0.0</api>
@@ -24,7 +24,9 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        Migrate core to C++ SDK
+        * Migrate core to C++ SDK
+        * Update query index management API to accept collections
+        * PCBC-836: implemented Transactions API
     </notes>
     <contents>
         <dir name="/">
