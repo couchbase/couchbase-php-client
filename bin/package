@@ -17,6 +17,14 @@ File.write(File.join(project_root, "src", "cmake", "revisions.cmake"), <<~REVISI
   set(COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION #{txn_revision.inspect})
 REVISIONS
 
+package_xml_path = File.join(project_root, "package.xml")
+File.write(
+  package_xml_path,
+  File
+    .read(package_xml_path)
+    .gsub(/^ {4}<date>.*<\/date>$/, "    <date>#{Time.now.strftime("%Y-%m-%d")}</date>")
+)
+
 Dir.chdir(project_root) do
   run("pecl package")
 end
