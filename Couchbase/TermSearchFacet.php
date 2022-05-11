@@ -44,7 +44,7 @@ class TermSearchFacet implements JsonSerializable, SearchFacet
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return TermSearchFacet::export($this);
     }

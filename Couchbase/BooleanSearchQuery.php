@@ -113,7 +113,7 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return BooleanSearchQuery::export($this);
     }

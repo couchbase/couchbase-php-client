@@ -71,7 +71,7 @@ class PrefixSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return PrefixSearchQuery::export($this);
     }

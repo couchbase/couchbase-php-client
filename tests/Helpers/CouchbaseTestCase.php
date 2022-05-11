@@ -69,7 +69,7 @@ class CouchbaseTestCase extends TestCase
         }
         $options->authenticator(self::env()->buildPasswordAuthenticator());
         $connstr = self::env()->connectionString();
-        if (str_contains($connstr, "?")) {
+        if (strpos($connstr, "?") !== false) {
             $connstr .= "&";
         } else {
             $connstr .= "?";

@@ -108,7 +108,7 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize()
     {
         return DisjunctionSearchQuery::export($this);
     }
