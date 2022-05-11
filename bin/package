@@ -1,5 +1,13 @@
 #!/usr/bin/env ruby
 
+require "fileutils"
+
+class Object
+  def to_b
+    ![nil, false, 0, "", "0", "f", "F", "false", "FALSE", "off", "OFF", "no", "NO"].include?(self)
+  end
+end
+
 def run(*args)
   args = args.compact.map(&:to_s)
   puts args.join(" ")
@@ -17,6 +25,21 @@ File.write(File.join(project_root, "src", "cmake", "revisions.cmake"), <<~REVISI
   set(COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION #{txn_revision.inspect})
 REVISIONS
 
+package_xml_path = File.join(project_root, "package.xml")
+File.write(
+  package_xml_path,
+  File
+    .read(package_xml_path)
+    .gsub(/^ {4}<date>.*<\/date>$/, "    <date>#{Time.now.strftime("%Y-%m-%d")}</date>")
+)
+
 Dir.chdir(project_root) do
   run("pecl package")
+
+  main_header = File.read(File.join(project_root, "src/php_couchbase.hxx"))
+  sdk_version = main_header[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1]
+  snapshot = ENV.fetch("BUILD_NUMBER", 0) unless ENV.fetch("IS_RELEASE", false).to_b
+  if snapshot
+    FileUtils.mv("couchbase-#{sdk_version}.tgz", "couchbase-#{sdk_version}.#{snapshot}.tgz")
+  end
 end
