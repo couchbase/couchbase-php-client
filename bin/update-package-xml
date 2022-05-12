@@ -86,10 +86,16 @@ files.sort.uniq.each do |file|
     cursor[:directories][parent] ||= {directories: {}, files: []}
     cursor = cursor[:directories][parent]
   end
-  cursor[:files] << {name: filename, role: filename =~ /\.php$/ ? "php" : "src"}
-end
-tree[:files].each do |file|
-  file[:role] = "doc" if file[:name] =~ /README|LICENSE/
+  role =
+    case filename
+    when /\.php$/
+      "php"
+    when /README|LICENSE|COPYING/
+      "doc"
+    else
+      "src"
+    end
+  cursor[:files] << {name: filename, role: role}
 end
 
 def traverse(document, reader, writer)

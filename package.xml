@@ -1630,8 +1630,8 @@
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="ChangeLog.rst"/>
-                                <file role="src" name="LICENSE.rst"/>
-                                <file role="src" name="README.rst"/>
+                                <file role="doc" name="LICENSE.rst"/>
+                                <file role="doc" name="README.rst"/>
                             </dir>
                             <dir name="gsl">
                                 <dir name="cmake">
@@ -1658,7 +1658,7 @@
                                     <file role="src" name="CMakeLists.txt"/>
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="LICENSE"/>
+                                <file role="doc" name="LICENSE"/>
                                 <file role="src" name="ThirdPartyNotices.txt"/>
                             </dir>
                             <dir name="hdr_histogram_c">
@@ -1685,12 +1685,12 @@
                                     <file role="src" name="hdr_writer_reader_phaser.h"/>
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="COPYING.txt"/>
-                                <file role="src" name="LICENSE.txt"/>
+                                <file role="doc" name="COPYING.txt"/>
+                                <file role="doc" name="LICENSE.txt"/>
                                 <file role="src" name="config.cmake.in"/>
                             </dir>
                             <dir name="http_parser">
-                                <file role="src" name="LICENSE-MIT"/>
+                                <file role="doc" name="LICENSE-MIT"/>
                                 <file role="src" name="http_parser.c"/>
                                 <file role="src" name="http_parser.h"/>
                             </dir>
@@ -1906,7 +1906,7 @@
                                             </dir>
                                         </dir>
                                         <file role="src" name="CMakeLists.txt"/>
-                                        <file role="src" name="LICENSE"/>
+                                        <file role="doc" name="LICENSE"/>
                                     </dir>
                                 </dir>
                                 <dir name="include">
@@ -2171,13 +2171,13 @@
                                     </dir>
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="LICENSE"/>
-                                <file role="src" name="LICENSE.double-conversion"/>
-                                <file role="src" name="LICENSE.itoa"/>
-                                <file role="src" name="LICENSE.ryu"/>
+                                <file role="doc" name="LICENSE"/>
+                                <file role="doc" name="LICENSE.double-conversion"/>
+                                <file role="doc" name="LICENSE.itoa"/>
+                                <file role="doc" name="LICENSE.ryu"/>
                             </dir>
                             <dir name="jsonsl">
-                                <file role="src" name="LICENSE"/>
+                                <file role="doc" name="LICENSE"/>
                                 <file role="src" name="jsonsl.c"/>
                                 <file role="src" name="jsonsl.h"/>
                             </dir>
@@ -2187,7 +2187,7 @@
                                     <file role="src" name="config.h.in"/>
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="COPYING"/>
+                                <file role="doc" name="COPYING"/>
                                 <file role="src" name="snappy-c.cc"/>
                                 <file role="src" name="snappy-c.h"/>
                                 <file role="src" name="snappy-internal.h"/>
@@ -2328,11 +2328,11 @@
                                     <file role="src" name="stdout_sinks.cpp"/>
                                 </dir>
                                 <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="LICENSE"/>
+                                <file role="doc" name="LICENSE"/>
                             </dir>
                         </dir>
                         <file role="src" name="CMakeLists.txt"/>
-                        <file role="src" name="LICENSE.txt"/>
+                        <file role="doc" name="LICENSE.txt"/>
                     </dir>
                     <dir name="couchbase-cxx-transactions">
                         <dir name="deps">
