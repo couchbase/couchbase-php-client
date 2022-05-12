@@ -7,7 +7,7 @@ package_xml_path = File.join(project_root, "package.xml")
 package_xml = Nokogiri::XML.parse(File.read(package_xml_path)) { |x| x.noblanks }
 
 files = [
-    "LICENSE.txt",
+    "LICENSE",
     "Makefile.frag",
     "config.m4",
     "Couchbase/**/*.php",
