@@ -29,7 +29,7 @@ if test "$PHP_COUCHBASE" != "no"; then
 
   COUCHBASE_FILES="src/php_couchbase.cxx"
 
-  PHP_NEW_EXTENSION(couchbase, ${COUCHBASE_FILES}, $ext_shared)
+  PHP_NEW_EXTENSION(couchbase, ${COUCHBASE_FILES}, $ext_shared,,, cxx)
   PHP_ADD_EXTENSION_DEP(couchbase, json)
   PHP_ADD_BUILD_DIR($ext_builddir/src, 1)
 fi
