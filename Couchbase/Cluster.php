@@ -230,12 +230,14 @@ class Cluster
     /**
      * Creates a new bucket manager object for managing buckets.
      *
+     * @param TransactionsConfiguration|null $config
+     *
      * @return Transactions
      * @since 4.0.0
      */
-    public function transactions(): Transactions
+    public function transactions(?TransactionsConfiguration $config = null): Transactions
     {
-        return new Transactions($this->core, $this->options->getTransactionsConfiguration());
+        return new Transactions($this->core, $config ?: $this->options->getTransactionsConfiguration());
     }
 
     /**

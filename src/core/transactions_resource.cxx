@@ -16,8 +16,8 @@
 
 #include "core.hxx"
 
-#include "transactions_resource.hxx"
 #include "common.hxx"
+#include "transactions_resource.hxx"
 
 #include <couchbase/transactions.hxx>
 
@@ -122,6 +122,24 @@ transactions_resource::transactions()
         }                                                                                                                                  \
     }
 
+#define ASSIGN_STRING_OPTION(name, field, key, value)                                                                                      \
+    if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                                                          \
+        if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                                                            \
+            continue;                                                                                                                      \
+        }                                                                                                                                  \
+        if (Z_TYPE_P(value) != IS_STRING) {                                                                                                \
+            return { error::common_errc::invalid_argument,                                                                                 \
+                     { __LINE__, __FILE__, __func__ },                                                                                     \
+                     fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                                   \
+        }                                                                                                                                  \
+        if (Z_STRLEN_P(value) == 0) {                                                                                                      \
+            return { error::common_errc::invalid_argument,                                                                                 \
+                     { __LINE__, __FILE__, __func__ },                                                                                     \
+                     fmt::format("expected non-empty string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                         \
+        }                                                                                                                                  \
+        (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                                                              \
+    }
+
 static core_error_info
 apply_options(couchbase::transactions::transaction_config& config, zval* options)
 {
@@ -218,6 +236,33 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
             }
             ZEND_HASH_FOREACH_END();
         }
+
+        if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("metadataCollection")) == 0) {
+            if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+                continue;
+            }
+            if (Z_TYPE_P(value) != IS_ARRAY) {
+                return { error::common_errc::invalid_argument,
+                         { __LINE__, __FILE__, __func__ },
+                         fmt::format("expected array for {} as metadata collection for transactions",
+                                     std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+            }
+
+            const zend_string* k;
+            const zval* v;
+            std::string bucket;
+            std::string scope;
+            std::string collection;
+            ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
+            {
+                ASSIGN_STRING_OPTION("bucket", bucket, k, v);
+                ASSIGN_STRING_OPTION("scope", scope, k, v);
+                ASSIGN_STRING_OPTION("collection", collection, k, v);
+            }
+            ZEND_HASH_FOREACH_END();
+            fprintf(stderr, "bucket: %s, scope: %s, collection: %s\n", bucket.c_str(), scope.c_str(), collection.c_str());
+            config.custom_metadata_collection(bucket, scope, collection);
+        }
     }
     ZEND_HASH_FOREACH_END();
 
@@ -231,6 +276,12 @@ create_transactions_resource(connection_handle* connection, zval* options)
     couchbase::transactions::transaction_config config{};
     if (auto e = apply_options(config, options); e.ec) {
         return { nullptr, e };
+    }
+    // ensure that metadata collection is opened
+    if (auto metadata_collection = config.custom_metadata_collection(); metadata_collection && !metadata_collection->bucket().empty()) {
+        if (auto e = connection->bucket_open(metadata_collection->bucket()); e.ec) {
+            return { nullptr, e };
+        }
     }
     auto* handle = new transactions_resource(connection, std::move(config));
     return { zend_register_resource(handle, transactions_destructor_id_), {} };
