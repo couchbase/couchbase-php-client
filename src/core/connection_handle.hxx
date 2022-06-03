@@ -54,6 +54,9 @@ class connection_handle
     core_error_info open();
 
     COUCHBASE_API
+    core_error_info bucket_open(const std::string& name);
+
+    COUCHBASE_API
     core_error_info bucket_open(const zend_string* name);
 
     COUCHBASE_API

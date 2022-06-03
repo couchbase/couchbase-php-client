@@ -553,6 +553,13 @@ connection_handle::cluster_version(const zend_string* bucket_name)
 
 COUCHBASE_API
 core_error_info
+connection_handle::bucket_open(const std::string& name)
+{
+    return impl_->bucket_open(name);
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::bucket_open(const zend_string* name)
 {
     return impl_->bucket_open(cb_string_new(name));
