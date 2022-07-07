@@ -18,10 +18,30 @@
 
 #include "conversion_utilities.hxx"
 
+#include <couchbase/utils/binary.hxx>
+
 #include <chrono>
 
 namespace couchbase::php
 {
+
+std::vector<std::byte>
+cb_binary_new(const zend_string* value)
+{
+    if (value == nullptr) {
+        return {};
+    }
+    return couchbase::utils::to_binary(ZSTR_VAL(value), ZSTR_LEN(value));
+}
+
+std::vector<std::byte>
+cb_binary_new(const zval* value)
+{
+    if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+        return {};
+    }
+    return cb_binary_new(Z_STR_P(value));
+}
 
 std::string
 cb_string_new(const zend_string* value)
@@ -38,7 +58,7 @@ cb_string_new(const zval* value)
     if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
         return {};
     }
-    return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
+    return cb_string_new(Z_STR_P(value));
 }
 
 std::pair<core_error_info, std::optional<std::string>>
