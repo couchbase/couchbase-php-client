@@ -717,7 +717,7 @@ connection_handle::document_upsert(zval* return_value,
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+    couchbase::operations::upsert_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -765,7 +765,7 @@ connection_handle::document_insert(zval* return_value,
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::insert_request request{ doc_id, cb_string_new(value) };
+    couchbase::operations::insert_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -810,7 +810,7 @@ connection_handle::document_replace(zval* return_value,
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::replace_request request{ doc_id, cb_string_new(value) };
+    couchbase::operations::replace_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -860,7 +860,7 @@ connection_handle::document_append(zval* return_value,
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::append_request request{ doc_id, cb_string_new(value) };
+    couchbase::operations::append_request request{ doc_id, cb_binary_new(value) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -900,7 +900,7 @@ connection_handle::document_prepend(zval* return_value,
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::prepend_request request{ doc_id, cb_string_new(value) };
+    couchbase::operations::prepend_request request{ doc_id, cb_binary_new(value) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1059,7 +1059,7 @@ connection_handle::document_get(zval* return_value,
         auto cas = fmt::format("{:x}", resp.cas.value);
         add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
         add_assoc_long(return_value, "flags", resp.flags);
-        add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+        add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
         return {};
     }
     couchbase::operations::get_projected_request request{ doc_id };
@@ -1077,7 +1077,7 @@ connection_handle::document_get(zval* return_value,
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     if (resp.expiry) {
         add_assoc_long(return_value, "expiry", resp.expiry.value());
     }
@@ -1116,7 +1116,7 @@ connection_handle::document_get_and_lock(zval* return_value,
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     return {};
 }
 
@@ -1152,7 +1152,7 @@ connection_handle::document_get_and_touch(zval* return_value,
     auto cas = fmt::format("{:x}", resp.cas.value);
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     return {};
 }
 
@@ -1598,7 +1598,7 @@ connection_handle::document_get_multi(zval* return_value,
         auto cas = fmt::format("{:x}", resp.cas.value);
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
         add_assoc_long(&entry, "flags", resp.flags);
-        add_assoc_stringl(&entry, "value", resp.value.data(), resp.value.size());
+        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
         add_next_index_zval(return_value, &entry);
     }
     return {};
@@ -1772,7 +1772,7 @@ connection_handle::document_upsert_multi(zval* return_value,
             cb_string_new(collection),
             cb_string_new(id),
         };
-        couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+        couchbase::operations::upsert_request request{ doc_id, cb_binary_new(value) };
         request.timeout = timeout;
         request.flags = static_cast<std::uint32_t>(Z_LVAL_P(flags));
         request.durability_level = durability.durability_level;
@@ -2238,7 +2238,7 @@ connection_handle::view_query(zval* return_value,
                               const zval* options)
 {
     couchbase::design_document_namespace cxx_name_space;
-    switch (auto name_space_val = std::uint32_t(name_space); name_space_val) {
+    switch (auto name_space_val = static_cast<std::uint32_t>(name_space); name_space_val) {
         case 1:
             cxx_name_space = couchbase::design_document_namespace::development;
             break;
@@ -2891,7 +2891,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
 
 COUCHBASE_API
 core_error_info
-cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::cluster::bucket_settings bucket_settings)
+cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::cluster::bucket_settings& bucket_settings)
 {
     array_init(return_value);
 
@@ -3198,7 +3198,7 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rb
 }
 
 static void
-cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group group)
+cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group& group)
 {
     array_init(return_value);
 

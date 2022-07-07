@@ -25,6 +25,12 @@
 
 namespace couchbase::php
 {
+std::vector<std::byte>
+cb_binary_new(const zend_string* value);
+
+std::vector<std::byte>
+cb_binary_new(const zval* value);
+
 std::string
 cb_string_new(const zend_string* value);
 
