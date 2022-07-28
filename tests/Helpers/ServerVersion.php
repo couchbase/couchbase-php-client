@@ -107,6 +107,11 @@ class ServerVersion
         return $this->major == 6 && $this->minor >= 5;
     }
 
+    public function is66(): bool
+    {
+        return $this->major == 6 && $this->minor == 6;
+    }
+
     public function isCheshireCat(): bool
     {
         // [7.0.0, 7.1.0)
@@ -201,12 +206,12 @@ class ServerVersion
 
     public function supportsAnalyticsLinks(): bool
     {
-        return ($this->major == 6 && $this->minor >= 6) || $this->major > 6;
+        return $this->is66() || $this->isCheshireCat() || $this->isNeo();
     }
 
     public function supportsMinimumDurabilityLevel(): bool
     {
-        return ($this->major == 6 && $this->minor >= 6) || $this->major > 6;
+        return $this->is66() || $this->isCheshireCat() || $this->isNeo();
     }
 
     public function supportsCustomConflictResolutionType(): bool
@@ -217,6 +222,11 @@ class ServerVersion
     public function supportsMagmaStorageBackend(): bool
     {
         return $this->isNeo();
+    }
+
+    public function supportsTransactions(): bool
+    {
+        return $this->is66() || $this->isCheshireCat() || $this->isNeo();
     }
 
     public function supportsTransactionsQueries(): bool

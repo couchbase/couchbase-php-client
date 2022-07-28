@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "common.hxx"
 #include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
 
-#include <couchbase/cluster.hxx>
-#include <couchbase/management/bucket_settings.hxx>
-#include <couchbase/mutation_token.hxx>
-#include <couchbase/operations/management/bucket.hxx>
-#include <couchbase/operations/management/cluster_describe.hxx>
-#include <couchbase/operations/management/query.hxx>
-#include <couchbase/operations/management/search.hxx>
-#include <couchbase/operations/management/user.hxx>
-#include <couchbase/operations/management/view.hxx>
+#include <core/cluster.hxx>
+#include <core/management/bucket_settings.hxx>
+#include <core/mutation_token.hxx>
+#include <core/operations/management/bucket.hxx>
+#include <core/operations/management/cluster_describe.hxx>
+#include <core/operations/management/query.hxx>
+#include <core/operations/management/search.hxx>
+#include <core/operations/management/user.hxx>
+#include <core/operations/management/view.hxx>
+
+#include <couchbase/retry_reason.hxx>
 
 #include <fmt/core.h>
 
@@ -39,207 +41,201 @@ namespace couchbase::php
 {
 
 static std::string
-retry_reason_to_string(io::retry_reason reason)
+retry_reason_to_string(retry_reason reason)
 {
     switch (reason) {
-        case io::retry_reason::do_not_retry:
+        case retry_reason::do_not_retry:
             return "do_not_retry";
-        case io::retry_reason::socket_not_available:
+        case retry_reason::socket_not_available:
             return "socket_not_available";
-        case io::retry_reason::service_not_available:
+        case retry_reason::service_not_available:
             return "service_not_available";
-        case io::retry_reason::node_not_available:
+        case retry_reason::node_not_available:
             return "node_not_available";
-        case io::retry_reason::kv_not_my_vbucket:
+        case retry_reason::kv_not_my_vbucket:
             return "kv_not_my_vbucket";
-        case io::retry_reason::kv_collection_outdated:
+        case retry_reason::kv_collection_outdated:
             return "kv_collection_outdated";
-        case io::retry_reason::kv_error_map_retry_indicated:
+        case retry_reason::kv_error_map_retry_indicated:
             return "kv_error_map_retry_indicated";
-        case io::retry_reason::kv_locked:
+        case retry_reason::kv_locked:
             return "kv_locked";
-        case io::retry_reason::kv_temporary_failure:
+        case retry_reason::kv_temporary_failure:
             return "kv_temporary_failure";
-        case io::retry_reason::kv_sync_write_in_progress:
+        case retry_reason::kv_sync_write_in_progress:
             return "kv_sync_write_in_progress";
-        case io::retry_reason::kv_sync_write_re_commit_in_progress:
+        case retry_reason::kv_sync_write_re_commit_in_progress:
             return "kv_sync_write_re_commit_in_progress";
-        case io::retry_reason::service_response_code_indicated:
+        case retry_reason::service_response_code_indicated:
             return "service_response_code_indicated";
-        case io::retry_reason::socket_closed_while_in_flight:
+        case retry_reason::socket_closed_while_in_flight:
             return "socket_closed_while_in_flight";
-        case io::retry_reason::circuit_breaker_open:
+        case retry_reason::circuit_breaker_open:
             return "circuit_breaker_open";
-        case io::retry_reason::query_prepared_statement_failure:
+        case retry_reason::query_prepared_statement_failure:
             return "query_prepared_statement_failure";
-        case io::retry_reason::query_index_not_found:
+        case retry_reason::query_index_not_found:
             return "query_index_not_found";
-        case io::retry_reason::analytics_temporary_failure:
+        case retry_reason::analytics_temporary_failure:
             return "analytics_temporary_failure";
-        case io::retry_reason::search_too_many_requests:
+        case retry_reason::search_too_many_requests:
             return "search_too_many_requests";
-        case io::retry_reason::views_temporary_failure:
+        case retry_reason::views_temporary_failure:
             return "views_temporary_failure";
-        case io::retry_reason::views_no_active_partition:
+        case retry_reason::views_no_active_partition:
             return "views_no_active_partition";
-        case io::retry_reason::unknown:
+        case retry_reason::unknown:
             return "unknown";
     }
     return "unexpected";
 }
 
 static const char*
-subdoc_opcode_to_string(protocol::subdoc_opcode opcode)
+subdoc_opcode_to_string(core::protocol::subdoc_opcode opcode)
 {
     switch (opcode) {
-        case protocol::subdoc_opcode::get_doc:
+        case core::protocol::subdoc_opcode::get_doc:
             return "getDocument";
-        case protocol::subdoc_opcode::set_doc:
+        case core::protocol::subdoc_opcode::set_doc:
             return "setDocument";
-        case protocol::subdoc_opcode::remove_doc:
+        case core::protocol::subdoc_opcode::remove_doc:
             return "removeDocument";
-        case protocol::subdoc_opcode::get:
+        case core::protocol::subdoc_opcode::get:
             return "get";
-        case protocol::subdoc_opcode::exists:
+        case core::protocol::subdoc_opcode::exists:
             return "exists";
-        case protocol::subdoc_opcode::dict_add:
+        case core::protocol::subdoc_opcode::dict_add:
             return "dictionaryAdd";
-        case protocol::subdoc_opcode::dict_upsert:
+        case core::protocol::subdoc_opcode::dict_upsert:
             return "dictionaryUpsert";
-        case protocol::subdoc_opcode::remove:
+        case core::protocol::subdoc_opcode::remove:
             return "remove";
-        case protocol::subdoc_opcode::replace:
+        case core::protocol::subdoc_opcode::replace:
             return "replace";
-        case protocol::subdoc_opcode::array_push_last:
+        case core::protocol::subdoc_opcode::array_push_last:
             return "arrayPushLast";
-        case protocol::subdoc_opcode::array_push_first:
+        case core::protocol::subdoc_opcode::array_push_first:
             return "arrayPushFirst";
-        case protocol::subdoc_opcode::array_insert:
+        case core::protocol::subdoc_opcode::array_insert:
             return "arrayInsert";
-        case protocol::subdoc_opcode::array_add_unique:
+        case core::protocol::subdoc_opcode::array_add_unique:
             return "arrayAddUnique";
-        case protocol::subdoc_opcode::counter:
+        case core::protocol::subdoc_opcode::counter:
             return "counter";
-        case protocol::subdoc_opcode::get_count:
+        case core::protocol::subdoc_opcode::get_count:
             return "getCount";
-        case protocol::subdoc_opcode::replace_body_with_xattr:
+        case core::protocol::subdoc_opcode::replace_body_with_xattr:
             return "replaceBodyWithXattr";
     }
     return "unexpected";
 }
 
-static std::pair<protocol::subdoc_opcode, core_error_info>
+static std::pair<core::protocol::subdoc_opcode, core_error_info>
 decode_lookup_subdoc_opcode(const zval* spec)
 {
     if (spec == nullptr || Z_TYPE_P(spec) != IS_ARRAY) {
-        return {
-            {},
-            { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected that spec will be represented as an array" }
-        };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected that spec will be represented as an array" } };
     }
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(spec), ZEND_STRL("opcode"));
     if (value == nullptr && Z_TYPE_P(value) != IS_STRING) {
-        return { {}, { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "missing opcode field of the spec" } };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "missing opcode field of the spec" } };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("getDocument")) == 0) {
-        return { { protocol::subdoc_opcode::get_doc }, {} };
+        return { { core::protocol::subdoc_opcode::get_doc }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("get")) == 0) {
-        return { { protocol::subdoc_opcode::get }, {} };
+        return { { core::protocol::subdoc_opcode::get }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("exists")) == 0) {
-        return { { protocol::subdoc_opcode::exists }, {} };
+        return { { core::protocol::subdoc_opcode::exists }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("getCount")) == 0) {
-        return { { protocol::subdoc_opcode::get_count }, {} };
+        return { { core::protocol::subdoc_opcode::get_count }, {} };
     }
     return { {},
-             { error::common_errc::invalid_argument,
-               { __LINE__, __FILE__, __func__ },
+             { errc::common::invalid_argument,
+               ERROR_LOCATION,
                fmt::format("unexpected opcode field of the spec: \"{}\"", std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 
-static std::pair<protocol::subdoc_opcode, core_error_info>
+static std::pair<core::protocol::subdoc_opcode, core_error_info>
 decode_mutation_subdoc_opcode(const zval* spec)
 {
     if (spec == nullptr || Z_TYPE_P(spec) != IS_ARRAY) {
-        return {
-            {},
-            { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected that spec will be represented as an array" }
-        };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected that spec will be represented as an array" } };
     }
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(spec), ZEND_STRL("opcode"));
     if (value == nullptr && Z_TYPE_P(value) != IS_STRING) {
-        return { {}, { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "missing opcode field of the spec" } };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "missing opcode field of the spec" } };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("setDocument")) == 0) {
-        return { { protocol::subdoc_opcode::set_doc }, {} };
+        return { { core::protocol::subdoc_opcode::set_doc }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("removeDocument")) == 0) {
-        return { { protocol::subdoc_opcode::remove_doc }, {} };
+        return { { core::protocol::subdoc_opcode::remove_doc }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("dictionaryAdd")) == 0) {
-        return { { protocol::subdoc_opcode::dict_add }, {} };
+        return { { core::protocol::subdoc_opcode::dict_add }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("dictionaryUpsert")) == 0) {
-        return { { protocol::subdoc_opcode::dict_upsert }, {} };
+        return { { core::protocol::subdoc_opcode::dict_upsert }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("remove")) == 0) {
-        return { { protocol::subdoc_opcode::remove }, {} };
+        return { { core::protocol::subdoc_opcode::remove }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("replace")) == 0) {
-        return { { protocol::subdoc_opcode::replace }, {} };
+        return { { core::protocol::subdoc_opcode::replace }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("arrayPushLast")) == 0) {
-        return { { protocol::subdoc_opcode::array_push_last }, {} };
+        return { { core::protocol::subdoc_opcode::array_push_last }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("arrayPushFirst")) == 0) {
-        return { { protocol::subdoc_opcode::array_push_first }, {} };
+        return { { core::protocol::subdoc_opcode::array_push_first }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("arrayInsert")) == 0) {
-        return { { protocol::subdoc_opcode::array_insert }, {} };
+        return { { core::protocol::subdoc_opcode::array_insert }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("arrayAddUnique")) == 0) {
-        return { { protocol::subdoc_opcode::array_add_unique }, {} };
+        return { { core::protocol::subdoc_opcode::array_add_unique }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("counter")) == 0) {
-        return { { protocol::subdoc_opcode::counter }, {} };
+        return { { core::protocol::subdoc_opcode::counter }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("replaceBodyWithXattr")) == 0) {
-        return { { protocol::subdoc_opcode::replace_body_with_xattr }, {} };
+        return { { core::protocol::subdoc_opcode::replace_body_with_xattr }, {} };
     }
     return { {},
-             { error::common_errc::invalid_argument,
-               { __LINE__, __FILE__, __func__ },
+             { errc::common::invalid_argument,
+               ERROR_LOCATION,
                fmt::format("unexpected opcode field of the spec: \"{}\"", std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 
 static key_value_error_context
-build_error_context(const error_context::key_value& ctx)
+build_error_context(const couchbase::key_value_error_context& ctx)
 {
     key_value_error_context out;
-    out.bucket = ctx.id.bucket();
-    out.scope = ctx.id.scope();
-    out.collection = ctx.id.collection();
-    out.id = ctx.id.key();
-    out.opaque = ctx.opaque;
-    out.cas = ctx.cas.value;
-    if (ctx.status_code) {
-        out.status_code = static_cast<std::uint16_t>(ctx.status_code.value());
+    out.bucket = ctx.bucket();
+    out.scope = ctx.scope();
+    out.collection = ctx.collection();
+    out.id = ctx.id();
+    out.opaque = ctx.opaque();
+    out.cas = ctx.cas().value();
+    if (ctx.status_code()) {
+        out.status_code = static_cast<std::uint16_t>(ctx.status_code().value());
     }
-    if (ctx.error_map_info) {
-        out.error_map_name = ctx.error_map_info->name;
-        out.error_map_description = ctx.error_map_info->description;
+    if (ctx.error_map_info()) {
+        out.error_map_name = ctx.error_map_info()->name();
+        out.error_map_description = ctx.error_map_info()->description();
     }
-    if (ctx.enhanced_error_info) {
-        out.enhanced_error_reference = ctx.enhanced_error_info->reference;
-        out.enhanced_error_context = ctx.error_map_info->description;
+    if (ctx.extended_error_info()) {
+        out.enhanced_error_reference = ctx.extended_error_info()->reference();
+        out.enhanced_error_context = ctx.extended_error_info()->context();
     }
-    out.last_dispatched_to = ctx.last_dispatched_to;
-    out.last_dispatched_from = ctx.last_dispatched_from;
-    out.retry_attempts = ctx.retry_attempts;
-    if (!ctx.retry_reasons.empty()) {
-        for (const auto& reason : ctx.retry_reasons) {
+    out.last_dispatched_to = ctx.last_dispatched_to();
+    out.last_dispatched_from = ctx.last_dispatched_from();
+    out.retry_attempts = ctx.retry_attempts();
+    if (!ctx.retry_reasons().empty()) {
+        for (const auto& reason : ctx.retry_reasons()) {
             out.retry_reasons.insert(retry_reason_to_string(reason));
         }
     }
@@ -247,7 +243,7 @@ build_error_context(const error_context::key_value& ctx)
 }
 
 static query_error_context
-build_error_context(const error_context::query& ctx)
+build_error_context(const core::error_context::query& ctx)
 {
     query_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -269,7 +265,7 @@ build_error_context(const error_context::query& ctx)
 }
 
 static analytics_error_context
-build_error_context(const error_context::analytics& ctx)
+build_error_context(const core::error_context::analytics& ctx)
 {
     analytics_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -291,7 +287,7 @@ build_error_context(const error_context::analytics& ctx)
 }
 
 static view_query_error_context
-build_error_context(const error_context::view& ctx)
+build_error_context(const core::error_context::view& ctx)
 {
     view_query_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -312,7 +308,7 @@ build_error_context(const error_context::view& ctx)
 }
 
 static search_error_context
-build_error_context(const error_context::search& ctx)
+build_error_context(const core::error_context::search& ctx)
 {
     search_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -333,7 +329,7 @@ build_error_context(const error_context::search& ctx)
 }
 
 static http_error_context
-build_error_context(const error_context::http& ctx)
+build_error_context(const core::error_context::http& ctx)
 {
     http_error_context out;
     out.client_context_id = ctx.client_context_id;
@@ -356,7 +352,7 @@ build_error_context(const error_context::http& ctx)
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
   public:
-    explicit impl(couchbase::origin origin)
+    explicit impl(couchbase::core::origin origin)
       : origin_(std::move(origin))
     {
     }
@@ -383,7 +379,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         }
     }
 
-    [[nodiscard]] std::shared_ptr<couchbase::cluster> cluster() const
+    [[nodiscard]] std::shared_ptr<couchbase::core::cluster> cluster() const
     {
         return cluster_;
     }
@@ -395,13 +391,13 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 
     std::string cluster_version(const std::string& bucket_name = "")
     {
-        auto barrier = std::make_shared<std::promise<couchbase::operations::management::cluster_describe_response>>();
+        auto barrier = std::make_shared<std::promise<couchbase::core::operations::management::cluster_describe_response>>();
         auto f = barrier->get_future();
         cluster_->execute(
-          couchbase::operations::management::cluster_describe_request{},
-          [barrier](couchbase::operations::management::cluster_describe_response&& resp) { barrier->set_value(std::move(resp)); });
+          couchbase::core::operations::management::cluster_describe_request{},
+          [barrier](couchbase::core::operations::management::cluster_describe_response&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
-        if (resp.ctx.ec == couchbase::error::common_errc::service_not_available && !bucket_name.empty()) {
+        if (resp.ctx.ec == couchbase::errc::common::service_not_available && !bucket_name.empty()) {
             if (auto e = bucket_open(bucket_name); e.ec) {
                 return {};
             }
@@ -453,12 +449,11 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         auto f = barrier->get_future();
         cluster_->execute(std::move(request), [barrier](Response&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
-        if (resp.ctx.ec) {
+        if (resp.ctx.ec()) {
             return { std::move(resp),
-                     { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format(
-                         R"(unable to execute KV operation "{}": ec={} ({}))", operation, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                     { resp.ctx.ec(),
+                       ERROR_LOCATION,
+                       fmt::format(R"(unable to execute KV operation "{}": ec={})", operation, resp.ctx.ec().message()),
                        build_error_context(resp.ctx) } };
         }
         return { std::move(resp), {} };
@@ -474,9 +469,8 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         if (resp.ctx.ec) {
             return { std::move(resp),
                      { resp.ctx.ec,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format(
-                         R"(unable to execute HTTP operation "{}": ec={} ({}))", operation, resp.ctx.ec.value(), resp.ctx.ec.message()),
+                       ERROR_LOCATION,
+                       fmt::format(R"(unable to execute HTTP operation "{}": ec={})", operation, resp.ctx.ec.message()),
                        build_error_context(resp.ctx) } };
         }
         return { std::move(resp), {} };
@@ -500,36 +494,37 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return responses;
     }
 
-    std::pair<core_error_info, couchbase::diag::ping_result> ping(std::optional<std::string> report_id,
-                                                                  std::optional<std::string> bucket_name,
-                                                                  std::set<couchbase::service_type> services)
+    std::pair<core_error_info, core::diag::ping_result> ping(std::optional<std::string> report_id,
+                                                             std::optional<std::string> bucket_name,
+                                                             std::set<core::service_type> services)
     {
-        auto barrier = std::make_shared<std::promise<couchbase::diag::ping_result>>();
+        auto barrier = std::make_shared<std::promise<core::diag::ping_result>>();
         auto f = barrier->get_future();
-        cluster_->ping(
-          report_id, bucket_name, services, [barrier](couchbase::diag::ping_result&& resp) { barrier->set_value(std::move(resp)); });
+        cluster_->ping(std::move(report_id), std::move(bucket_name), std::move(services), [barrier](core::diag::ping_result&& resp) {
+            barrier->set_value(std::move(resp));
+        });
         auto resp = f.get();
         return { {}, std::move(resp) };
     }
 
-    std::pair<core_error_info, couchbase::diag::diagnostics_result> diagnostics(std::string report_id)
+    std::pair<core_error_info, core::diag::diagnostics_result> diagnostics(std::string report_id)
     {
-        auto barrier = std::make_shared<std::promise<couchbase::diag::diagnostics_result>>();
+        auto barrier = std::make_shared<std::promise<core::diag::diagnostics_result>>();
         auto f = barrier->get_future();
-        cluster_->diagnostics(report_id, [barrier](couchbase::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
+        cluster_->diagnostics(report_id, [barrier](core::diag::diagnostics_result&& resp) { barrier->set_value(std::move(resp)); });
         auto resp = f.get();
         return { {}, std::move(resp) };
     }
 
   private:
     asio::io_context ctx_{};
-    std::shared_ptr<couchbase::cluster> cluster_{ couchbase::cluster::create(ctx_) };
+    std::shared_ptr<couchbase::core::cluster> cluster_{ couchbase::core::cluster::create(ctx_) };
     std::thread worker;
-    origin origin_;
+    core::origin origin_;
 };
 
 COUCHBASE_API
-connection_handle::connection_handle(couchbase::origin origin, std::chrono::steady_clock::time_point idle_expiry)
+connection_handle::connection_handle(couchbase::core::origin origin, std::chrono::steady_clock::time_point idle_expiry)
   : idle_expiry_{ idle_expiry }
   , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
 {
@@ -553,6 +548,13 @@ connection_handle::cluster_version(const zend_string* bucket_name)
 
 COUCHBASE_API
 core_error_info
+connection_handle::bucket_open(const std::string& name)
+{
+    return impl_->bucket_open(name);
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::bucket_open(const zend_string* name)
 {
     return impl_->bucket_open(cb_string_new(name));
@@ -566,7 +568,7 @@ connection_handle::bucket_close(const zend_string* name)
 }
 
 struct durability_holder {
-    protocol::durability_level durability_level{ protocol::durability_level::none };
+    core::protocol::durability_level durability_level{ core::protocol::durability_level::none };
 };
 
 template<typename Request>
@@ -577,7 +579,7 @@ cb_assign_durability(Request& req, const zval* options)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityLevel"));
@@ -590,21 +592,19 @@ cb_assign_durability(Request& req, const zval* options)
         case IS_STRING:
             break;
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected durabilityLevel to be a string in the options" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string in the options" };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-        req.durability_level = couchbase::protocol::durability_level::none;
+        req.durability_level = core::protocol::durability_level::none;
     } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-        req.durability_level = couchbase::protocol::durability_level::majority;
+        req.durability_level = core::protocol::durability_level::majority;
     } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-        req.durability_level = couchbase::protocol::durability_level::majority_and_persist_to_active;
+        req.durability_level = core::protocol::durability_level::majority_and_persist_to_active;
     } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-        req.durability_level = couchbase::protocol::durability_level::persist_to_majority;
+        req.durability_level = core::protocol::durability_level::persist_to_majority;
     } else {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
                  fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
     }
     return {};
@@ -617,7 +617,7 @@ cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options" };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
@@ -625,17 +625,15 @@ cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options
         return {};
     }
     if (Z_TYPE_P(value) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("expected array for options argument \"{}\"", name) };
+        return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected array for options argument \"{}\"", name) };
     }
 
     zval* item;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
     {
         if (Z_TYPE_P(item) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      fmt::format("expected \"{}\" option to be an array of strings, detected non-string value", name) };
         }
         auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
@@ -653,7 +651,7 @@ cb_assign_user_domain(Request& req, const zval* options)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("domain"));
@@ -666,24 +664,22 @@ cb_assign_user_domain(Request& req, const zval* options)
         case IS_STRING:
             break;
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected domain to be a string in the options" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected domain to be a string in the options" };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("local")) == 0) {
-        req.domain = couchbase::management::rbac::auth_domain::local;
+        req.domain = couchbase::core::management::rbac::auth_domain::local;
     } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("external")) == 0) {
-        req.domain = couchbase::management::rbac::auth_domain::external;
+        req.domain = couchbase::core::management::rbac::auth_domain::external;
     } else {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
                  fmt::format("unknown domain: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
     }
     return {};
 }
 
 static inline void
-mutation_token_to_zval(const couchbase::mutation_token& token, zval* return_value)
+mutation_token_to_zval(const core::mutation_token& token, zval* return_value)
 {
     array_init(return_value);
     add_assoc_stringl(return_value, "bucketName", token.bucket_name.data(), token.bucket_name.size());
@@ -695,7 +691,7 @@ mutation_token_to_zval(const couchbase::mutation_token& token, zval* return_valu
 }
 
 static inline bool
-is_mutation_token_valid(const couchbase::mutation_token& token)
+is_mutation_token_valid(const core::mutation_token& token)
 {
     return !token.bucket_name.empty() && token.partition_uuid > 0;
 }
@@ -711,13 +707,13 @@ connection_handle::document_upsert(zval* return_value,
                                    zend_long flags,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+    couchbase::core::operations::upsert_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -737,8 +733,8 @@ connection_handle::document_upsert(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -759,13 +755,13 @@ connection_handle::document_insert(zval* return_value,
                                    zend_long flags,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::insert_request request{ doc_id, cb_string_new(value) };
+    couchbase::core::operations::insert_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -782,8 +778,8 @@ connection_handle::document_insert(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -804,13 +800,13 @@ connection_handle::document_replace(zval* return_value,
                                     zend_long flags,
                                     const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::replace_request request{ doc_id, cb_string_new(value) };
+    couchbase::core::operations::replace_request request{ doc_id, cb_binary_new(value) };
     request.flags = static_cast<std::uint32_t>(flags);
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -833,8 +829,8 @@ connection_handle::document_replace(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -854,13 +850,13 @@ connection_handle::document_append(zval* return_value,
                                    const zend_string* value,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::append_request request{ doc_id, cb_string_new(value) };
+    couchbase::core::operations::append_request request{ doc_id, cb_binary_new(value) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -873,8 +869,8 @@ connection_handle::document_append(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -894,13 +890,13 @@ connection_handle::document_prepend(zval* return_value,
                                     const zend_string* value,
                                     const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::prepend_request request{ doc_id, cb_string_new(value) };
+    couchbase::core::operations::prepend_request request{ doc_id, cb_binary_new(value) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -913,8 +909,8 @@ connection_handle::document_prepend(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -933,13 +929,13 @@ connection_handle::document_increment(zval* return_value,
                                       const zend_string* id,
                                       const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::increment_request request{ doc_id };
+    couchbase::core::operations::increment_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -958,11 +954,11 @@ connection_handle::document_increment(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
     add_assoc_long(return_value, "value", resp.content);
     auto value_str = fmt::format("{}", resp.content);
     add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -981,13 +977,13 @@ connection_handle::document_decrement(zval* return_value,
                                       const zend_string* id,
                                       const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
-    couchbase::operations::decrement_request request{ doc_id };
+    couchbase::core::operations::decrement_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1006,11 +1002,11 @@ connection_handle::document_decrement(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
     add_assoc_long(return_value, "value", resp.content);
     auto value_str = fmt::format("{}", resp.content);
     add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -1029,7 +1025,7 @@ connection_handle::document_get(zval* return_value,
                                 const zend_string* id,
                                 const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
@@ -1045,7 +1041,7 @@ connection_handle::document_get(zval* return_value,
         return e;
     }
     if (!with_expiry && projections.empty()) {
-        couchbase::operations::get_request request{ doc_id };
+        couchbase::core::operations::get_request request{ doc_id };
         if (auto e = cb_assign_timeout(request, options); e.ec) {
             return e;
         }
@@ -1055,14 +1051,14 @@ connection_handle::document_get(zval* return_value,
             return err;
         }
         array_init(return_value);
-        add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-        auto cas = fmt::format("{:x}", resp.cas.value);
+        add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+        auto cas = fmt::format("{:x}", resp.cas.value());
         add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
         add_assoc_long(return_value, "flags", resp.flags);
-        add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+        add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
         return {};
     }
-    couchbase::operations::get_projected_request request{ doc_id };
+    couchbase::core::operations::get_projected_request request{ doc_id };
     request.with_expiry = with_expiry;
     request.projections = projections;
     if (auto e = cb_assign_timeout(request, options); e.ec) {
@@ -1073,11 +1069,11 @@ connection_handle::document_get(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     if (resp.expiry) {
         add_assoc_long(return_value, "expiry", resp.expiry.value());
     }
@@ -1094,14 +1090,14 @@ connection_handle::document_get_and_lock(zval* return_value,
                                          zend_long lock_time,
                                          const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::get_and_lock_request request{ doc_id };
+    couchbase::core::operations::get_and_lock_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1112,11 +1108,11 @@ connection_handle::document_get_and_lock(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     return {};
 }
 
@@ -1130,14 +1126,14 @@ connection_handle::document_get_and_touch(zval* return_value,
                                           zend_long expiry,
                                           const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::get_and_touch_request request{ doc_id };
+    couchbase::core::operations::get_and_touch_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1148,11 +1144,11 @@ connection_handle::document_get_and_touch(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
-    add_assoc_stringl(return_value, "value", resp.value.data(), resp.value.size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
     return {};
 }
 
@@ -1166,14 +1162,14 @@ connection_handle::document_touch(zval* return_value,
                                   zend_long expiry,
                                   const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::touch_request request{ doc_id };
+    couchbase::core::operations::touch_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1184,8 +1180,8 @@ connection_handle::document_touch(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
 }
@@ -1200,14 +1196,14 @@ connection_handle::document_unlock(zval* return_value,
                                    const zend_string* locked_cas,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::unlock_request request{ doc_id };
+    couchbase::core::operations::unlock_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1220,8 +1216,8 @@ connection_handle::document_unlock(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     return {};
 }
@@ -1235,14 +1231,14 @@ connection_handle::document_remove(zval* return_value,
                                    const zend_string* id,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::remove_request request{ doc_id };
+    couchbase::core::operations::remove_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1257,8 +1253,8 @@ connection_handle::document_remove(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -1277,26 +1273,26 @@ connection_handle::document_exists(zval* return_value,
                                    const zend_string* id,
                                    const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::exists_request request{ doc_id };
+    couchbase::core::operations::exists_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
     auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec && resp.ctx.ec != error::key_value_errc::document_not_found) {
+    if (err.ec && resp.ctx.ec() != errc::key_value::document_not_found) {
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
     add_assoc_bool(return_value, "exists", resp.exists());
     add_assoc_bool(return_value, "deleted", resp.deleted);
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
     add_assoc_long(return_value, "datatype", resp.datatype);
@@ -1316,14 +1312,14 @@ connection_handle::document_mutate_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::mutate_in_request request{ doc_id };
+    couchbase::core::operations::mutate_in_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1347,13 +1343,13 @@ connection_handle::document_mutate_in(zval* return_value,
         return e;
     }
     if (store_semantics == "replace") {
-        request.store_semantics = protocol::mutate_in_request_body::store_semantics_type::replace;
+        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::replace;
     } else if (store_semantics == "insert") {
-        request.store_semantics = protocol::mutate_in_request_body::store_semantics_type::insert;
+        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::insert;
     } else if (store_semantics == "upsert") {
-        request.store_semantics = protocol::mutate_in_request_body::store_semantics_type::upsert;
+        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::upsert;
     } else if (!store_semantics.empty()) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "unexpected value for storeSemantics option" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "unexpected value for storeSemantics option" };
     }
 
     if (Z_TYPE_P(specs) == IS_ARRAY) {
@@ -1381,15 +1377,15 @@ connection_handle::document_mutate_in(zval* return_value,
                 return e;
             }
             switch (operation) {
-                case protocol::subdoc_opcode::counter: {
+                case core::protocol::subdoc_opcode::counter: {
                     std::int64_t delta = 0;
                     if (e = cb_assign_integer(delta, item, "value"); e.ec) {
                         return e;
                     }
                     request.specs.add_spec(operation, xattr, create_parents, expand_macros, path, delta);
                 } break;
-                case protocol::subdoc_opcode::remove:
-                case protocol::subdoc_opcode::remove_doc: {
+                case core::protocol::subdoc_opcode::remove:
+                case core::protocol::subdoc_opcode::remove_doc: {
                     request.specs.add_spec(operation, xattr, path);
                 } break;
                 default: {
@@ -1403,7 +1399,7 @@ connection_handle::document_mutate_in(zval* return_value,
         }
         ZEND_HASH_FOREACH_END();
     } else {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "specs must be an array" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
     }
 
     auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
@@ -1411,9 +1407,9 @@ connection_handle::document_mutate_in(zval* return_value,
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
     add_assoc_bool(return_value, "deleted", resp.deleted);
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     if (is_mutation_token_valid(resp.token)) {
         zval token_val;
@@ -1437,11 +1433,10 @@ connection_handle::document_mutate_in(zval* return_value,
             zval ex;
             create_exception(&ex,
                              { field.ec,
-                               { __LINE__, __FILE__, __func__ },
-                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: ec={} ({}), status={}, index={})",
+                               ERROR_LOCATION,
+                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: ec={}, status={}, index={})",
                                            subdoc_opcode_to_string(field.opcode),
                                            field.path,
-                                           field.ec.value(),
                                            field.ec.message(),
                                            field.status,
                                            field.original_index),
@@ -1464,14 +1459,14 @@ connection_handle::document_lookup_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
         cb_string_new(id),
     };
 
-    couchbase::operations::lookup_in_request request{ doc_id };
+    couchbase::core::operations::lookup_in_request request{ doc_id };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -1499,17 +1494,17 @@ connection_handle::document_lookup_in(zval* return_value,
         }
         ZEND_HASH_FOREACH_END();
     } else {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "specs must be an array" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
     }
 
     auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec && resp.ctx.ec != error::key_value_errc::document_not_found) {
+    if (err.ec && resp.ctx.ec() != errc::key_value::document_not_found) {
         return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
+    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
     add_assoc_bool(return_value, "deleted", resp.deleted);
-    auto cas = fmt::format("{:x}", resp.cas.value);
+    auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     zval fields;
     array_init_size(&fields, resp.fields.size());
@@ -1526,11 +1521,10 @@ connection_handle::document_lookup_in(zval* return_value,
             zval ex;
             create_exception(&ex,
                              { field.ec,
-                               { __LINE__, __FILE__, __func__ },
-                               fmt::format(R"(lookupIn operation "{}" for path "{}" failed: ec={} ({}), status={}, index={})",
+                               ERROR_LOCATION,
+                               fmt::format(R"(lookupIn operation "{}" for path "{}" failed: ec={}, status={}, index={})",
                                            subdoc_opcode_to_string(field.opcode),
                                            field.path,
-                                           field.ec.value(),
                                            field.ec.message(),
                                            field.status,
                                            field.original_index),
@@ -1553,7 +1547,7 @@ connection_handle::document_get_multi(zval* return_value,
                                       const zval* options)
 {
     if (Z_TYPE_P(ids) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected ids to be an array" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected ids to be an array" };
     }
 
     std::optional<std::chrono::milliseconds> timeout;
@@ -1561,19 +1555,19 @@ connection_handle::document_get_multi(zval* return_value,
         return e;
     }
 
-    std::vector<couchbase::operations::get_request> requests;
+    std::vector<couchbase::core::operations::get_request> requests;
     requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
     const zval* id = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
     {
-        couchbase::document_id doc_id{
+        couchbase::core::document_id doc_id{
             cb_string_new(bucket),
             cb_string_new(scope),
             cb_string_new(collection),
             cb_string_new(id),
         };
 
-        couchbase::operations::get_request request{ doc_id };
+        couchbase::core::operations::get_request request{ doc_id };
         request.timeout = timeout;
         requests.emplace_back(request);
     }
@@ -1584,21 +1578,20 @@ connection_handle::document_get_multi(zval* return_value,
     for (const auto& resp : responses) {
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-        if (resp.ctx.ec) {
+        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
+        if (resp.ctx.ec()) {
             zval ex;
-            create_exception(
-              &ex,
-              { resp.ctx.ec,
-                { __LINE__, __FILE__, __func__ },
-                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
-                build_error_context(resp.ctx) });
+            create_exception(&ex,
+                             { resp.ctx.ec(),
+                               ERROR_LOCATION,
+                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value);
+        auto cas = fmt::format("{:x}", resp.cas.value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
         add_assoc_long(&entry, "flags", resp.flags);
-        add_assoc_stringl(&entry, "value", resp.value.data(), resp.value.size());
+        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
         add_next_index_zval(return_value, &entry);
     }
     return {};
@@ -1614,7 +1607,7 @@ connection_handle::document_remove_multi(zval* return_value,
                                          const zval* options)
 {
     if (Z_TYPE_P(entries) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected entries to be an array" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
     }
 
     std::optional<std::chrono::milliseconds> timeout;
@@ -1626,49 +1619,49 @@ connection_handle::document_remove_multi(zval* return_value,
         return e;
     }
 
-    std::vector<couchbase::operations::remove_request> requests;
+    std::vector<couchbase::core::operations::remove_request> requests;
     requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
     const zval* tuple = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
     {
         switch (Z_TYPE_P(tuple)) {
             case IS_STRING: {
-                couchbase::document_id doc_id{
+                couchbase::core::document_id doc_id{
                     cb_string_new(bucket),
                     cb_string_new(scope),
                     cb_string_new(collection),
                     cb_string_new(tuple),
                 };
-                couchbase::operations::remove_request request{ doc_id };
+                couchbase::core::operations::remove_request request{ doc_id };
                 request.timeout = timeout;
                 request.durability_level = durability.durability_level;
                 requests.emplace_back(request);
             } break;
             case IS_ARRAY: {
                 if (zend_array_count(Z_ARRVAL_P(tuple)) != 2) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
+                    return { errc::common::invalid_argument,
+                             ERROR_LOCATION,
                              "expected that removeMulti ID-CAS tuples be represented by arrays with exactly two entries" };
                 }
                 const zval* id = zend_hash_index_find(Z_ARRVAL_P(tuple), 0);
                 if (id == nullptr || Z_TYPE_P(id) != IS_STRING) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
+                    return { errc::common::invalid_argument,
+                             ERROR_LOCATION,
                              "expected that removeMulti first member (ID) of ID-CAS tuple be a string" };
                 }
                 const zval* cas = zend_hash_index_find(Z_ARRVAL_P(tuple), 1);
                 if (cas == nullptr || Z_TYPE_P(cas) != IS_STRING) {
-                    return { error::common_errc::invalid_argument,
-                             { __LINE__, __FILE__, __func__ },
+                    return { errc::common::invalid_argument,
+                             ERROR_LOCATION,
                              "expected that removeMulti second member (CAS) of ID-CAS tuple be a string" };
                 }
-                couchbase::document_id doc_id{
+                couchbase::core::document_id doc_id{
                     cb_string_new(bucket),
                     cb_string_new(scope),
                     cb_string_new(collection),
                     cb_string_new(id),
                 };
-                couchbase::operations::remove_request request{ doc_id };
+                couchbase::core::operations::remove_request request{ doc_id };
                 request.timeout = timeout;
                 request.durability_level = durability.durability_level;
                 if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(cas), Z_STRLEN_P(cas)), request.cas); e.ec) {
@@ -1677,8 +1670,8 @@ connection_handle::document_remove_multi(zval* return_value,
                 requests.emplace_back(request);
             } break;
             default:
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          "expected that removeMulti entries will be either ID strings or pairs of ID with CAS" };
                 break;
         }
@@ -1690,18 +1683,17 @@ connection_handle::document_remove_multi(zval* return_value,
     for (const auto& resp : responses) {
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-        if (resp.ctx.ec) {
+        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
+        if (resp.ctx.ec()) {
             zval ex;
-            create_exception(
-              &ex,
-              { resp.ctx.ec,
-                { __LINE__, __FILE__, __func__ },
-                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
-                build_error_context(resp.ctx) });
+            create_exception(&ex,
+                             { resp.ctx.ec(),
+                               ERROR_LOCATION,
+                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value);
+        auto cas = fmt::format("{:x}", resp.cas.value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
         if (is_mutation_token_valid(resp.token)) {
             zval token_val;
@@ -1723,7 +1715,7 @@ connection_handle::document_upsert_multi(zval* return_value,
                                          const zval* options)
 {
     if (Z_TYPE_P(entries) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected entries to be an array" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
     }
     std::optional<std::chrono::milliseconds> timeout;
     if (auto e = cb_get_timeout(timeout, options); e.ec) {
@@ -1738,41 +1730,41 @@ connection_handle::document_upsert_multi(zval* return_value,
         return e;
     }
 
-    std::vector<couchbase::operations::upsert_request> requests;
+    std::vector<couchbase::core::operations::upsert_request> requests;
     requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
     const zval* tuple = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
     {
         if (Z_TYPE_P(tuple) != IS_ARRAY || zend_array_count(Z_ARRVAL_P(tuple)) != 3) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      "expected that core upsertMulti entries will be ID-VALUE-FLAGS tuples" };
         }
         const zval* id = zend_hash_index_find(Z_ARRVAL_P(tuple), 0);
         if (id == nullptr || Z_TYPE_P(id) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      "expected that core upsertMulti first member (ID) of ID-VALUE-FLAGS tuple be a string" };
         }
         const zval* value = zend_hash_index_find(Z_ARRVAL_P(tuple), 1);
         if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      "expected that core upsertMulti second member (CAS) of ID-VALUE-FLAGS tuple be a string" };
         }
         const zval* flags = zend_hash_index_find(Z_ARRVAL_P(tuple), 2);
         if (flags == nullptr || Z_TYPE_P(flags) != IS_LONG) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      "expected that core upsertMulti third member (FLAGS) of ID-VALUE-FLAGS tuple be an integer" };
         }
-        couchbase::document_id doc_id{
+        couchbase::core::document_id doc_id{
             cb_string_new(bucket),
             cb_string_new(scope),
             cb_string_new(collection),
             cb_string_new(id),
         };
-        couchbase::operations::upsert_request request{ doc_id, cb_string_new(value) };
+        couchbase::core::operations::upsert_request request{ doc_id, cb_binary_new(value) };
         request.timeout = timeout;
         request.flags = static_cast<std::uint32_t>(Z_LVAL_P(flags));
         request.durability_level = durability.durability_level;
@@ -1786,18 +1778,17 @@ connection_handle::document_upsert_multi(zval* return_value,
     for (const auto& resp : responses) {
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id.key().data(), resp.ctx.id.key().size());
-        if (resp.ctx.ec) {
+        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
+        if (resp.ctx.ec()) {
             zval ex;
-            create_exception(
-              &ex,
-              { resp.ctx.ec,
-                { __LINE__, __FILE__, __func__ },
-                fmt::format(R"(unable to execute KV operation "{}": ec={} ({}))", __func__, resp.ctx.ec.value(), resp.ctx.ec.message()),
-                build_error_context(resp.ctx) });
+            create_exception(&ex,
+                             { resp.ctx.ec(),
+                               ERROR_LOCATION,
+                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value);
+        auto cas = fmt::format("{:x}", resp.cas.value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
         if (is_mutation_token_valid(resp.token)) {
             zval token_val;
@@ -1826,23 +1817,53 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
     return {};
 }
 
+static const char*
+cb_analytics_status_str(core::operations::analytics_response::analytics_status status)
+{
+    switch (status) {
+        case couchbase::core::operations::analytics_response::running:
+            return "running";
+        case couchbase::core::operations::analytics_response::success:
+            return "success";
+        case couchbase::core::operations::analytics_response::errors:
+            return "errors";
+        case couchbase::core::operations::analytics_response::completed:
+            return "completed";
+        case couchbase::core::operations::analytics_response::stopped:
+            return "stopped";
+        case couchbase::core::operations::analytics_response::timedout:
+            return "timedout";
+        case couchbase::core::operations::analytics_response::closed:
+            return "closed";
+        case couchbase::core::operations::analytics_response::fatal:
+            return "fatal";
+        case couchbase::core::operations::analytics_response::aborted:
+            return "aborted";
+        case couchbase::core::operations::analytics_response::unknown:
+            return "unknown";
+        default:
+            break;
+    }
+    return "unknown";
+}
+
 COUCHBASE_API
 core_error_info
 connection_handle::analytics_query(zval* return_value, const zend_string* statement, const zval* options)
 {
-    couchbase::operations::analytics_request request{ cb_string_new(statement) };
+    couchbase::core::operations::analytics_request request{ cb_string_new(statement) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
 
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.scan_consistency = couchbase::analytics_scan_consistency::not_bounded;
+            request.scan_consistency = core::analytics_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = couchbase::analytics_scan_consistency::request_plus;
+            request.scan_consistency = core::analytics_scan_consistency::request_plus;
         } else if (scan_consistency) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
     } else {
@@ -1857,7 +1878,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::json_string> params{};
+        std::vector<core::json_string> params{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
@@ -1870,7 +1891,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::json_string> params{};
+        std::map<std::string, core::json_string> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -1884,7 +1905,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::json_string> params{};
+        std::map<std::string, core::json_string> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -1924,7 +1945,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         array_init(&meta);
         add_assoc_string(&meta, "clientContextId", resp.meta.client_context_id.c_str());
         add_assoc_string(&meta, "requestId", resp.meta.request_id.c_str());
-        add_assoc_string(&meta, "status", resp.meta.status.c_str());
+        add_assoc_string(&meta, "status", cb_analytics_status_str(resp.meta.status));
         if (resp.meta.signature.has_value()) {
             add_assoc_string(&meta, "signature", resp.meta.signature.value().c_str());
         }
@@ -1970,7 +1991,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::search_query(zval* return_value, const zend_string* index_name, const zend_string* query, const zval* options)
 {
-    couchbase::operations::search_request request{ cb_string_new(index_name), cb_string_new(query) };
+    couchbase::core::operations::search_request request{ cb_string_new(index_name), cb_string_new(query) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
@@ -2004,14 +2025,14 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
 
     if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); !e.ec) {
         if (highlight_style == "html") {
-            request.highlight_style = couchbase::search_highlight_style::html;
+            request.highlight_style = core::search_highlight_style::html;
         } else if (highlight_style == "ansi") {
-            request.highlight_style = couchbase::search_highlight_style::ansi;
+            request.highlight_style = core::search_highlight_style::ansi;
         } else if (highlight_style == "simple") {
-            request.highlight_style = couchbase::search_highlight_style::html;
+            request.highlight_style = core::search_highlight_style::html;
         } else if (highlight_style) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      fmt::format("invalid value used for highlight style: {}", *highlight_style) };
         }
     } else {
@@ -2019,12 +2040,12 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::mutation_token> vectors{};
+        std::vector<core::mutation_token> vectors{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            couchbase::mutation_token token{};
+            core::mutation_token token{};
             if (auto e = cb_assign_integer(token.partition_id, options, "partitionId"); e.ec) {
                 return e;
             }
@@ -2046,7 +2067,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
 
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::json_string> params{};
+        std::map<std::string, core::json_string> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -2237,23 +2258,21 @@ connection_handle::view_query(zval* return_value,
                               const zend_long name_space,
                               const zval* options)
 {
-    couchbase::design_document_namespace cxx_name_space;
-    switch (auto name_space_val = std::uint32_t(name_space); name_space_val) {
+    core::design_document_namespace cxx_name_space;
+    switch (auto name_space_val = static_cast<std::uint32_t>(name_space); name_space_val) {
         case 1:
-            cxx_name_space = couchbase::design_document_namespace::development;
+            cxx_name_space = core::design_document_namespace::development;
             break;
 
         case 2:
-            cxx_name_space = couchbase::design_document_namespace::production;
+            cxx_name_space = core::design_document_namespace::production;
             break;
 
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for namespace: {}", name_space_val) };
+            return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for namespace: {}", name_space_val) };
     }
 
-    couchbase::operations::document_view_request request{
+    couchbase::core::operations::document_view_request request{
         cb_string_new(bucket_name),
         cb_string_new(design_document_name),
         cb_string_new(view_name),
@@ -2264,14 +2283,14 @@ connection_handle::view_query(zval* return_value,
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.consistency = couchbase::view_scan_consistency::not_bounded;
+            request.consistency = core::view_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.consistency = couchbase::view_scan_consistency::request_plus;
+            request.consistency = core::view_scan_consistency::request_plus;
         } else if (scan_consistency == "updateAfter") {
-            request.consistency = couchbase::view_scan_consistency::update_after;
+            request.consistency = core::view_scan_consistency::update_after;
         } else if (scan_consistency) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
     } else {
@@ -2293,13 +2312,11 @@ connection_handle::view_query(zval* return_value,
     }
     if (auto [e, order] = cb_get_string(options, "order"); !e.ec) {
         if (order == "ascending") {
-            request.order = couchbase::view_sort_order::ascending;
+            request.order = core::view_sort_order::ascending;
         } else if (order == "descending") {
-            request.order = couchbase::view_sort_order::descending;
+            request.order = core::view_sort_order::descending;
         } else if (order) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for order: {}", *order) };
+            return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for order: {}", *order) };
         }
     } else {
         return e;
@@ -2416,32 +2433,32 @@ connection_handle::ping(zval* return_value, const zval* options)
     if (auto e = cb_assign_vector_of_strings(service_types, options, "serviceTypes"); e.ec) {
         return e;
     }
-    std::set<couchbase::service_type> cb_services{};
+    std::set<core::service_type> cb_services{};
     if (!service_types.empty()) {
         for (const auto& service_type : service_types) {
             if (service_type == "kv") {
-                cb_services.emplace(couchbase::service_type::key_value);
+                cb_services.emplace(core::service_type::key_value);
             } else if (service_type == "query") {
-                cb_services.emplace(couchbase::service_type::query);
+                cb_services.emplace(core::service_type::query);
             } else if (service_type == "analytics") {
-                cb_services.emplace(couchbase::service_type::analytics);
+                cb_services.emplace(core::service_type::analytics);
             } else if (service_type == "search") {
-                cb_services.emplace(couchbase::service_type::search);
+                cb_services.emplace(core::service_type::search);
             } else if (service_type == "views") {
-                cb_services.emplace(couchbase::service_type::view);
+                cb_services.emplace(core::service_type::view);
             } else if (service_type == "mgmt") {
-                cb_services.emplace(couchbase::service_type::management);
+                cb_services.emplace(core::service_type::management);
             } else if (service_type == "eventing") {
-                cb_services.emplace(couchbase::service_type::eventing);
+                cb_services.emplace(core::service_type::eventing);
             } else {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("invalid value used for service type: {}", service_type) };
             }
         }
     }
 
-    auto [err, resp] = impl_->ping(report_id, bucket_name, cb_services);
+    auto [err, resp] = impl_->ping(std::move(report_id), std::move(bucket_name), std::move(cb_services));
     if (err.ec) {
         return { err };
     }
@@ -2456,25 +2473,25 @@ connection_handle::ping(zval* return_value, const zval* options)
     for (const auto& [service_type, service_infos] : resp.services) {
         std::string type_str;
         switch (service_type) {
-            case couchbase::service_type::key_value:
+            case core::service_type::key_value:
                 type_str = "kv";
                 break;
-            case couchbase::service_type::query:
+            case core::service_type::query:
                 type_str = "query";
                 break;
-            case couchbase::service_type::analytics:
+            case core::service_type::analytics:
                 type_str = "analytics";
                 break;
-            case couchbase::service_type::search:
+            case core::service_type::search:
                 type_str = "search";
                 break;
-            case couchbase::service_type::view:
+            case core::service_type::view:
                 type_str = "views";
                 break;
-            case couchbase::service_type::management:
+            case core::service_type::management:
                 type_str = "mgmt";
                 break;
-            case couchbase::service_type::eventing:
+            case core::service_type::eventing:
                 type_str = "eventing";
                 break;
         }
@@ -2490,13 +2507,13 @@ connection_handle::ping(zval* return_value, const zval* options)
             add_assoc_long(&endpoint, "latencyUs", svc.latency.count());
             std::string state;
             switch (svc.state) {
-                case couchbase::diag::ping_state::ok:
+                case core::diag::ping_state::ok:
                     state = "ok";
                     break;
-                case couchbase::diag::ping_state::timeout:
+                case core::diag::ping_state::timeout:
                     state = "timeout";
                     break;
-                case couchbase::diag::ping_state::error:
+                case core::diag::ping_state::error:
                     state = "error";
                     break;
             }
@@ -2535,25 +2552,25 @@ connection_handle::diagnostics(zval* return_value, const zend_string* report_id,
     for (const auto& [service_type, service_infos] : resp.services) {
         std::string type_str;
         switch (service_type) {
-            case couchbase::service_type::key_value:
+            case core::service_type::key_value:
                 type_str = "kv";
                 break;
-            case couchbase::service_type::query:
+            case core::service_type::query:
                 type_str = "query";
                 break;
-            case couchbase::service_type::analytics:
+            case core::service_type::analytics:
                 type_str = "analytics";
                 break;
-            case couchbase::service_type::search:
+            case core::service_type::search:
                 type_str = "search";
                 break;
-            case couchbase::service_type::view:
+            case core::service_type::view:
                 type_str = "views";
                 break;
-            case couchbase::service_type::management:
+            case core::service_type::management:
                 type_str = "mgmt";
                 break;
-            case couchbase::service_type::eventing:
+            case core::service_type::eventing:
                 type_str = "eventing";
                 break;
         }
@@ -2571,16 +2588,16 @@ connection_handle::diagnostics(zval* return_value, const zend_string* report_id,
             add_assoc_string(&endpoint, "local", svc.local.c_str());
             std::string state;
             switch (svc.state) {
-                case couchbase::diag::endpoint_state::disconnected:
+                case core::diag::endpoint_state::disconnected:
                     state = "disconnected";
                     break;
-                case couchbase::diag::endpoint_state::connecting:
+                case core::diag::endpoint_state::connecting:
                     state = "connecting";
                     break;
-                case couchbase::diag::endpoint_state::connected:
+                case core::diag::endpoint_state::connected:
                     state = "connected";
                     break;
-                case couchbase::diag::endpoint_state::disconnecting:
+                case core::diag::endpoint_state::disconnecting:
                     state = "disconnecting";
                     break;
             }
@@ -2601,7 +2618,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
 {
-    couchbase::management::search::index idx{};
+    couchbase::core::management::search::index idx{};
     if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
         return e;
     }
@@ -2627,7 +2644,7 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
         return e;
     }
 
-    couchbase::operations::management::search_index_upsert_request request{ idx };
+    couchbase::core::operations::management::search_index_upsert_request request{ idx };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -2653,7 +2670,7 @@ connection_handle::view_index_upsert(zval* return_value,
                                      zend_long name_space,
                                      const zval* options)
 {
-    couchbase::management::views::design_document idx{};
+    couchbase::core::management::views::design_document idx{};
     if (auto e = cb_assign_string(idx.name, design_document, "name"); e.ec) {
         return e;
     }
@@ -2662,28 +2679,26 @@ connection_handle::view_index_upsert(zval* return_value,
     }
     switch (name_space) {
         case 1:
-            idx.ns = couchbase::design_document_namespace::development;
+            idx.ns = core::design_document_namespace::development;
             break;
 
         case 2:
-            idx.ns = couchbase::design_document_namespace::production;
+            idx.ns = core::design_document_namespace::production;
             break;
 
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("invalid value used for namespace: {}", name_space) };
+            return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for namespace: {}", name_space) };
     }
 
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(design_document), ZEND_STRL("views"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, couchbase::management::views::design_document::view> views{};
+        std::map<std::string, couchbase::core::management::views::design_document::view> views{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
         {
-            couchbase::management::views::design_document::view view{};
+            couchbase::core::management::views::design_document::view view{};
             if (auto e = cb_assign_string(view.name, item, "name"); e.ec) {
                 return e;
             }
@@ -2701,7 +2716,7 @@ connection_handle::view_index_upsert(zval* return_value,
         idx.views = views;
     }
 
-    couchbase::operations::management::view_index_upsert_request request{ cb_string_new(bucket_name), idx };
+    couchbase::core::operations::management::view_index_upsert_request request{ cb_string_new(bucket_name), idx };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -2717,25 +2732,24 @@ connection_handle::view_index_upsert(zval* return_value,
     return {};
 }
 
-static std::pair<core_error_info, couchbase::management::cluster::bucket_settings>
+static std::pair<core_error_info, couchbase::core::management::cluster::bucket_settings>
 zval_to_bucket_settings(const zval* bucket_settings)
 {
-    couchbase::management::cluster::bucket_settings bucket{};
+    couchbase::core::management::cluster::bucket_settings bucket{};
     if (auto e = cb_assign_string(bucket.name, bucket_settings, "name"); e.ec) {
         return { e, {} };
     }
     if (auto [e, bucket_type] = cb_get_string(bucket_settings, "bucketType"); !e.ec) {
         if (bucket_type == "couchbase") {
-            bucket.bucket_type = couchbase::management::cluster::bucket_type::couchbase;
+            bucket.bucket_type = couchbase::core::management::cluster::bucket_type::couchbase;
         } else if (bucket_type == "ephemeral") {
-            bucket.bucket_type = couchbase::management::cluster::bucket_type::ephemeral;
+            bucket.bucket_type = couchbase::core::management::cluster::bucket_type::ephemeral;
         } else if (bucket_type == "memcached") {
-            bucket.bucket_type = couchbase::management::cluster::bucket_type::memcached;
+            bucket.bucket_type = couchbase::core::management::cluster::bucket_type::memcached;
         } else if (bucket_type) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for bucket type: {}", *bucket_type) },
-                     {} };
+            return {
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for bucket type: {}", *bucket_type) }, {}
+            };
         }
     } else {
         return { e, {} };
@@ -2748,14 +2762,14 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, compression_mode] = cb_get_string(bucket_settings, "compressionMode"); !e.ec) {
         if (compression_mode == "off") {
-            bucket.compression_mode = couchbase::management::cluster::bucket_compression::off;
+            bucket.compression_mode = couchbase::core::management::cluster::bucket_compression::off;
         } else if (compression_mode == "active") {
-            bucket.compression_mode = couchbase::management::cluster::bucket_compression::active;
+            bucket.compression_mode = couchbase::core::management::cluster::bucket_compression::active;
         } else if (compression_mode == "passive") {
-            bucket.compression_mode = couchbase::management::cluster::bucket_compression::passive;
+            bucket.compression_mode = couchbase::core::management::cluster::bucket_compression::passive;
         } else if (compression_mode) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+            return { { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for compression mode: {}", *compression_mode) },
                      {} };
         }
@@ -2764,16 +2778,16 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, durability_level] = cb_get_string(bucket_settings, "minimumDurabilityLevel"); !e.ec) {
         if (durability_level == "none") {
-            bucket.minimum_durability_level = couchbase::protocol::durability_level::none;
+            bucket.minimum_durability_level = core::protocol::durability_level::none;
         } else if (durability_level == "majority") {
-            bucket.minimum_durability_level = couchbase::protocol::durability_level::majority;
+            bucket.minimum_durability_level = core::protocol::durability_level::majority;
         } else if (durability_level == "majorityAndPersistToActive") {
-            bucket.minimum_durability_level = couchbase::protocol::durability_level::majority_and_persist_to_active;
+            bucket.minimum_durability_level = core::protocol::durability_level::majority_and_persist_to_active;
         } else if (durability_level == "persistToMajority") {
-            bucket.minimum_durability_level = couchbase::protocol::durability_level::persist_to_majority;
+            bucket.minimum_durability_level = core::protocol::durability_level::persist_to_majority;
         } else if (durability_level) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+            return { { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for durability level: {}", *durability_level) },
                      {} };
         }
@@ -2791,16 +2805,16 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, eviction_policy] = cb_get_string(bucket_settings, "evictionPolicy"); !e.ec) {
         if (eviction_policy == "noEviction") {
-            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::no_eviction;
+            bucket.eviction_policy = couchbase::core::management::cluster::bucket_eviction_policy::no_eviction;
         } else if (eviction_policy == "fullEviction") {
-            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::full;
+            bucket.eviction_policy = couchbase::core::management::cluster::bucket_eviction_policy::full;
         } else if (eviction_policy == "valueOnly") {
-            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::value_only;
+            bucket.eviction_policy = couchbase::core::management::cluster::bucket_eviction_policy::value_only;
         } else if (eviction_policy == "nruEviction") {
-            bucket.eviction_policy = couchbase::management::cluster::bucket_eviction_policy::not_recently_used;
+            bucket.eviction_policy = couchbase::core::management::cluster::bucket_eviction_policy::not_recently_used;
         } else if (eviction_policy) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+            return { { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for eviction policy: {}", *eviction_policy) },
                      {} };
         }
@@ -2809,14 +2823,14 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, resolution_type] = cb_get_string(bucket_settings, "conflictResolutionType"); !e.ec) {
         if (resolution_type == "sequenceNumber") {
-            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::sequence_number;
+            bucket.conflict_resolution_type = couchbase::core::management::cluster::bucket_conflict_resolution::sequence_number;
         } else if (resolution_type == "timestamp") {
-            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::timestamp;
+            bucket.conflict_resolution_type = couchbase::core::management::cluster::bucket_conflict_resolution::timestamp;
         } else if (resolution_type == "custom") {
-            bucket.conflict_resolution_type = couchbase::management::cluster::bucket_conflict_resolution::custom;
+            bucket.conflict_resolution_type = couchbase::core::management::cluster::bucket_conflict_resolution::custom;
         } else if (resolution_type) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+            return { { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for custom resolution type: {}", *resolution_type) },
                      {} };
         }
@@ -2825,12 +2839,12 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, storage_backend] = cb_get_string(bucket_settings, "storageBackend"); !e.ec) {
         if (storage_backend == "couchstore") {
-            bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::couchstore;
+            bucket.storage_backend = couchbase::core::management::cluster::bucket_storage_backend::couchstore;
         } else if (storage_backend == "magma") {
-            bucket.storage_backend = couchbase::management::cluster::bucket_storage_backend::magma;
+            bucket.storage_backend = couchbase::core::management::cluster::bucket_storage_backend::magma;
         } else if (storage_backend) {
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+            return { { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for storage backend: {}", *storage_backend) },
                      {} };
         }
@@ -2850,7 +2864,7 @@ connection_handle::bucket_create(zval* return_value, const zval* bucket_settings
         return e;
     }
 
-    couchbase::operations::management::bucket_create_request request{ bucket };
+    couchbase::core::operations::management::bucket_create_request request{ bucket };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -2874,7 +2888,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
         return e;
     }
 
-    couchbase::operations::management::bucket_update_request request{ bucket };
+    couchbase::core::operations::management::bucket_update_request request{ bucket };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -2891,7 +2905,7 @@ connection_handle::bucket_update(zval* return_value, const zval* bucket_settings
 
 COUCHBASE_API
 core_error_info
-cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::cluster::bucket_settings bucket_settings)
+cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management::cluster::bucket_settings& bucket_settings)
 {
     array_init(return_value);
 
@@ -2899,13 +2913,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     add_assoc_string(return_value, "uuid", bucket_settings.uuid.c_str());
     std::string bucket_type;
     switch (bucket_settings.bucket_type) {
-        case couchbase::management::cluster::bucket_type::couchbase:
+        case couchbase::core::management::cluster::bucket_type::couchbase:
             bucket_type = "couchbase";
             break;
-        case couchbase::management::cluster::bucket_type::ephemeral:
+        case couchbase::core::management::cluster::bucket_type::ephemeral:
             bucket_type = "ephemeral";
             break;
-        case couchbase::management::cluster::bucket_type::memcached:
+        case couchbase::core::management::cluster::bucket_type::memcached:
             bucket_type = "memcached";
             break;
         default:
@@ -2917,13 +2931,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry);
     std::string compression_mode;
     switch (bucket_settings.compression_mode) {
-        case couchbase::management::cluster::bucket_compression::off:
+        case couchbase::core::management::cluster::bucket_compression::off:
             compression_mode = "off";
             break;
-        case couchbase::management::cluster::bucket_compression::active:
+        case couchbase::core::management::cluster::bucket_compression::active:
             compression_mode = "active";
             break;
-        case couchbase::management::cluster::bucket_compression::passive:
+        case couchbase::core::management::cluster::bucket_compression::passive:
             compression_mode = "passive";
             break;
         default:
@@ -2934,16 +2948,16 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     if (bucket_settings.minimum_durability_level) {
         std::string durability_level;
         switch (*bucket_settings.minimum_durability_level) {
-            case couchbase::protocol::durability_level::none:
+            case core::protocol::durability_level::none:
                 durability_level = "none";
                 break;
-            case couchbase::protocol::durability_level::majority:
+            case core::protocol::durability_level::majority:
                 durability_level = "majority";
                 break;
-            case couchbase::protocol::durability_level::majority_and_persist_to_active:
+            case core::protocol::durability_level::majority_and_persist_to_active:
                 durability_level = "majorityAndPersistToActive";
                 break;
-            case couchbase::protocol::durability_level::persist_to_majority:
+            case core::protocol::durability_level::persist_to_majority:
                 durability_level = "persistToMajority";
                 break;
         }
@@ -2954,16 +2968,16 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     add_assoc_bool(return_value, "flushEnabled", bucket_settings.flush_enabled);
     std::string eviction_policy;
     switch (bucket_settings.eviction_policy) {
-        case couchbase::management::cluster::bucket_eviction_policy::no_eviction:
+        case couchbase::core::management::cluster::bucket_eviction_policy::no_eviction:
             eviction_policy = "noEviction";
             break;
-        case couchbase::management::cluster::bucket_eviction_policy::not_recently_used:
+        case couchbase::core::management::cluster::bucket_eviction_policy::not_recently_used:
             eviction_policy = "nruEviction";
             break;
-        case couchbase::management::cluster::bucket_eviction_policy::value_only:
+        case couchbase::core::management::cluster::bucket_eviction_policy::value_only:
             eviction_policy = "valueOnly";
             break;
-        case couchbase::management::cluster::bucket_eviction_policy::full:
+        case couchbase::core::management::cluster::bucket_eviction_policy::full:
             eviction_policy = "fullEviction";
             break;
         default:
@@ -2973,13 +2987,13 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     add_assoc_string(return_value, "evictionPolicy", eviction_policy.c_str());
     std::string conflict_resolution_type;
     switch (bucket_settings.conflict_resolution_type) {
-        case couchbase::management::cluster::bucket_conflict_resolution::sequence_number:
+        case couchbase::core::management::cluster::bucket_conflict_resolution::sequence_number:
             conflict_resolution_type = "sequenceNumber";
             break;
-        case couchbase::management::cluster::bucket_conflict_resolution::timestamp:
+        case couchbase::core::management::cluster::bucket_conflict_resolution::timestamp:
             conflict_resolution_type = "timestamp";
             break;
-        case couchbase::management::cluster::bucket_conflict_resolution::custom:
+        case couchbase::core::management::cluster::bucket_conflict_resolution::custom:
             conflict_resolution_type = "custom";
             break;
         default:
@@ -2989,10 +3003,10 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::management::clus
     add_assoc_string(return_value, "conflictResolutionType", conflict_resolution_type.c_str());
     std::string storage_backend;
     switch (bucket_settings.storage_backend) {
-        case couchbase::management::cluster::bucket_storage_backend::couchstore:
+        case couchbase::core::management::cluster::bucket_storage_backend::couchstore:
             storage_backend = "couchstore";
             break;
-        case couchbase::management::cluster::bucket_storage_backend::magma:
+        case couchbase::core::management::cluster::bucket_storage_backend::magma:
             storage_backend = "magma";
             break;
         default:
@@ -3008,7 +3022,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::bucket_get(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::bucket_get_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::bucket_get_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3030,7 +3044,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::bucket_get_all(zval* return_value, const zval* options)
 {
-    couchbase::operations::management::bucket_get_all_request request{};
+    couchbase::core::operations::management::bucket_get_all_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3058,7 +3072,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::bucket_drop(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::bucket_drop_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::bucket_drop_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3077,7 +3091,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::bucket_flush(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::bucket_flush_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::bucket_flush_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3093,7 +3107,7 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
 }
 
 void
-cb_role_to_zval(zval* return_value, const couchbase::management::rbac::role& role)
+cb_role_to_zval(zval* return_value, const couchbase::core::management::rbac::role& role)
 {
     add_assoc_string(return_value, "name", role.name.c_str());
     if (role.bucket) {
@@ -3109,7 +3123,7 @@ cb_role_to_zval(zval* return_value, const couchbase::management::rbac::role& rol
 
 COUCHBASE_API
 core_error_info
-cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rbac::user_and_metadata& user)
+cb_user_and_metadata_to_zval(zval* return_value, const couchbase::core::management::rbac::user_and_metadata& user)
 {
     array_init(return_value);
 
@@ -3146,10 +3160,10 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rb
 
     std::string domain;
     switch (user.domain) {
-        case couchbase::management::rbac::auth_domain::local:
+        case couchbase::core::management::rbac::auth_domain::local:
             domain = "local";
             break;
-        case couchbase::management::rbac::auth_domain::external:
+        case couchbase::core::management::rbac::auth_domain::external:
             domain = "external";
             break;
         default:
@@ -3198,7 +3212,7 @@ cb_user_and_metadata_to_zval(zval* return_value, const couchbase::management::rb
 }
 
 static void
-cb_group_to_zval(zval* return_value, const couchbase::management::rbac::group group)
+cb_group_to_zval(zval* return_value, const couchbase::core::management::rbac::group& group)
 {
     array_init(return_value);
 
@@ -3225,7 +3239,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
 {
-    couchbase::management::rbac::user cuser{};
+    couchbase::core::management::rbac::user cuser{};
     if (auto e = cb_assign_string(cuser.username, user, "username"); e.ec) {
         return e;
     }
@@ -3236,12 +3250,12 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
         return e;
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(user), ZEND_STRL("roles")); value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::management::rbac::role> roles{};
+        std::vector<couchbase::core::management::rbac::role> roles{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            couchbase::management::rbac::role role{};
+            couchbase::core::management::rbac::role role{};
             if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
                 return e;
             }
@@ -3274,7 +3288,7 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
         cuser.groups = groups;
     }
 
-    couchbase::operations::management::user_upsert_request request{};
+    couchbase::core::operations::management::user_upsert_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3297,7 +3311,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::user_get_all(zval* return_value, const zval* options)
 {
-    couchbase::operations::management::user_get_all_request request{};
+    couchbase::core::operations::management::user_get_all_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3328,7 +3342,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::user_get(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::user_get_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::user_get_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3353,7 +3367,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::user_drop(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::user_drop_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::user_drop_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3375,7 +3389,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
 {
-    couchbase::management::rbac::group cgroup{};
+    couchbase::core::management::rbac::group cgroup{};
     if (auto e = cb_assign_string(cgroup.name, group, "name"); e.ec) {
         return e;
     }
@@ -3387,12 +3401,12 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(group), ZEND_STRL("roles"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<couchbase::management::rbac::role> roles{};
+        std::vector<couchbase::core::management::rbac::role> roles{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            couchbase::management::rbac::role role{};
+            couchbase::core::management::rbac::role role{};
             if (auto e = cb_assign_string(role.name, item, "name"); e.ec) {
                 return e;
             }
@@ -3412,7 +3426,7 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
         cgroup.roles = roles;
     }
 
-    couchbase::operations::management::group_upsert_request request{ cgroup };
+    couchbase::core::operations::management::group_upsert_request request{ cgroup };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3431,7 +3445,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::group_get_all(zval* return_value, const zval* options)
 {
-    couchbase::operations::management::group_get_all_request request{};
+    couchbase::core::operations::management::group_get_all_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3457,7 +3471,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::group_get(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::group_get_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::group_get_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3477,7 +3491,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::group_drop(zval* return_value, const zend_string* name, const zval* options)
 {
-    couchbase::operations::management::group_drop_request request{ cb_string_new(name) };
+    couchbase::core::operations::management::group_drop_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3496,7 +3510,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::role_get_all(zval* return_value, const zval* options)
 {
-    couchbase::operations::management::role_get_all_request request{};
+    couchbase::core::operations::management::role_get_all_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3525,7 +3539,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::query_index_get_all(zval* return_value, const zend_string* bucket_name, const zval* options)
 {
-    couchbase::operations::management::query_index_get_all_request request{};
+    couchbase::core::operations::management::query_index_get_all_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3583,9 +3597,9 @@ connection_handle::query_index_create(const zend_string* bucket_name,
                                       const zval* options)
 {
     if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for index fields" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for index fields" };
     }
-    couchbase::operations::management::query_index_create_request request{};
+    couchbase::core::operations::management::query_index_create_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3598,9 +3612,7 @@ connection_handle::query_index_create(const zend_string* bucket_name,
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(fields), value)
     {
         if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected index fields to be array of strings" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected index fields to be array of strings" };
         }
         request.fields.emplace_back(cb_string_new(value));
     }
@@ -3637,7 +3649,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::query_index_create_primary(const zend_string* bucket_name, const zval* options)
 {
-    couchbase::operations::management::query_index_create_request request{};
+    couchbase::core::operations::management::query_index_create_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3676,7 +3688,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::query_index_drop(const zend_string* bucket_name, const zend_string* index_name, const zval* options)
 {
-    couchbase::operations::management::query_index_drop_request request{};
+    couchbase::core::operations::management::query_index_drop_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3707,7 +3719,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::query_index_drop_primary(const zend_string* bucket_name, const zval* options)
 {
-    couchbase::operations::management::query_index_drop_request request{};
+    couchbase::core::operations::management::query_index_drop_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3740,7 +3752,7 @@ COUCHBASE_API
 core_error_info
 connection_handle::query_index_build_deferred(zval* return_value, const zend_string* bucket_name, const zval* options)
 {
-    couchbase::operations::management::query_index_build_deferred_request request{};
+    couchbase::core::operations::management::query_index_build_deferred_request request{};
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -3768,7 +3780,7 @@ connection_handle::is_expired(std::chrono::steady_clock::time_point now) const
     return idle_expiry_ < now;
 }
 
-std::shared_ptr<couchbase::cluster>
+std::shared_ptr<couchbase::core::cluster>
 connection_handle::cluster() const
 {
     return impl_->cluster();
@@ -3780,14 +3792,14 @@ connection_handle::cluster() const
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_LONG) {                                                                                                  \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                     \
         }                                                                                                                                  \
         zend_long ms = Z_LVAL_P(value);                                                                                                    \
         if (ms < 0) {                                                                                                                      \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a positive number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };            \
         }                                                                                                                                  \
         (field) = std::chrono::milliseconds(ms);                                                                                           \
@@ -3799,8 +3811,8 @@ connection_handle::cluster() const
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_LONG) {                                                                                                  \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                                   \
         }                                                                                                                                  \
         (field) = Z_LVAL_P(value);                                                                                                         \
@@ -3819,8 +3831,8 @@ connection_handle::cluster() const
                 (field) = false;                                                                                                           \
                 break;                                                                                                                     \
             default:                                                                                                                       \
-                return { error::common_errc::invalid_argument,                                                                             \
-                         { __LINE__, __FILE__, __func__ },                                                                                 \
+                return { errc::common::invalid_argument,                                                                                   \
+                         ERROR_LOCATION,                                                                                                   \
                          fmt::format("expected boolean for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                              \
         }                                                                                                                                  \
     }
@@ -3831,23 +3843,23 @@ connection_handle::cluster() const
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_STRING) {                                                                                                \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                                   \
         }                                                                                                                                  \
         if (Z_STRLEN_P(value) == 0) {                                                                                                      \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected non-empty string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                         \
         }                                                                                                                                  \
         (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                                                              \
     }
 
 static core_error_info
-apply_options(couchbase::utils::connection_string& connstr, zval* options)
+apply_options(core::utils::connection_string& connstr, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for cluster options" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" };
     }
 
     const zend_string* key;
@@ -3895,19 +3907,19 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
                 continue;
             }
             if (Z_TYPE_P(value) != IS_STRING) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("any")) == 0) {
-                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::any;
+                connstr.options.use_ip_protocol = core::io::ip_protocol::any;
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv4")) == 0) {
-                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::force_ipv4;
+                connstr.options.use_ip_protocol = core::io::ip_protocol::force_ipv4;
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv6")) == 0) {
-                connstr.options.use_ip_protocol = couchbase::io::ip_protocol::force_ipv6;
+                connstr.options.use_ip_protocol = core::io::ip_protocol::force_ipv6;
             } else {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format(R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
                                      std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
@@ -3918,17 +3930,17 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
                 continue;
             }
             if (Z_TYPE_P(value) != IS_STRING) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("peer")) == 0) {
-                connstr.options.tls_verify = couchbase::tls_verify_mode::peer;
+                connstr.options.tls_verify = core::tls_verify_mode::peer;
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-                connstr.options.tls_verify = couchbase::tls_verify_mode::none;
+                connstr.options.tls_verify = core::tls_verify_mode::none;
             } else {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format(R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
                                      std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
@@ -3939,8 +3951,8 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
                 continue;
             }
             if (Z_TYPE_P(value) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected array for {} as tracer options", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
 
@@ -3970,8 +3982,8 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
                 continue;
             }
             if (Z_TYPE_P(value) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected array for {} as meter options", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
 
@@ -3996,33 +4008,29 @@ apply_options(couchbase::utils::connection_string& connstr, zval* options)
 #undef ASSIGN_STRING_OPTION
 
 static core_error_info
-extract_credentials(couchbase::cluster_credentials& credentials, zval* options)
+extract_credentials(couchbase::core::cluster_credentials& credentials, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for cluster options" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" };
     }
 
     const zval* auth = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("authenticator"));
     if (auth == nullptr || Z_TYPE_P(auth) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "missing authenticator" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "missing authenticator" };
     }
 
     const zval* auth_type = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("type"));
     if (auth_type == nullptr || Z_TYPE_P(auth_type) != IS_STRING) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "unexpected type of the authenticator" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "unexpected type of the authenticator" };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("password")) == 0) {
         const zval* username = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("username"));
         if (username == nullptr || Z_TYPE_P(username) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected username to be a string in the authenticator" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected username to be a string in the authenticator" };
         }
         const zval* password = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("password"));
         if (password == nullptr || Z_TYPE_P(password) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected password to be a string in the authenticator" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected password to be a string in the authenticator" };
         }
         credentials.username.assign(Z_STRVAL_P(username));
         credentials.password.assign(Z_STRVAL_P(password));
@@ -4030,8 +4038,8 @@ extract_credentials(couchbase::cluster_credentials& credentials, zval* options)
         if (const zval* allowed_sasl_mechanisms = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("allowedSaslMechanisms"));
             allowed_sasl_mechanisms != nullptr && Z_TYPE_P(allowed_sasl_mechanisms) != IS_NULL) {
             if (Z_TYPE_P(allowed_sasl_mechanisms) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          "expected allowedSaslMechanisms to be an array in the authenticator" };
             }
             credentials.allowed_sasl_mechanisms.clear();
@@ -4049,22 +4057,18 @@ extract_credentials(couchbase::cluster_credentials& credentials, zval* options)
     if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("certificate")) == 0) {
         const zval* certificate_path = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("certificatePath"));
         if (certificate_path == nullptr || Z_TYPE_P(certificate_path) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected certificate path to be a string in the authenticator" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected certificate path to be a string in the authenticator" };
         }
         const zval* key_path = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("keyPath"));
         if (key_path == nullptr || Z_TYPE_P(key_path) != IS_STRING) {
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected key path to be a string in the authenticator" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected key path to be a string in the authenticator" };
         }
         credentials.certificate_path.assign(Z_STRVAL_P(certificate_path));
         credentials.key_path.assign(Z_STRVAL_P(key_path));
         return {};
     }
-    return { error::common_errc::invalid_argument,
-             { __LINE__, __FILE__, __func__ },
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
              fmt::format("unknown type of the authenticator: {}", std::string(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type))) };
 }
 
@@ -4072,18 +4076,18 @@ COUCHBASE_API
 std::pair<connection_handle*, core_error_info>
 create_connection_handle(const zend_string* connection_string, zval* options, std::chrono::steady_clock::time_point idle_expiry)
 {
-    auto connstr = couchbase::utils::parse_connection_string(std::string(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string)));
+    auto connstr = core::utils::parse_connection_string(std::string(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string)));
     if (connstr.error) {
-        return { nullptr, { couchbase::error::common_errc::parsing_failure, { __LINE__, __FILE__, __func__ }, connstr.error.value() } };
+        return { nullptr, { couchbase::errc::common::parsing_failure, ERROR_LOCATION, connstr.error.value() } };
     }
     if (auto e = apply_options(connstr, options); e.ec) {
         return { nullptr, e };
     }
-    couchbase::cluster_credentials credentials;
+    couchbase::core::cluster_credentials credentials;
     if (auto e = extract_credentials(credentials, options); e.ec) {
         return { nullptr, e };
     }
-    couchbase::origin origin{ credentials, connstr };
+    couchbase::core::origin origin{ credentials, connstr };
     return { new connection_handle(origin, idle_expiry), {} };
 }
 } // namespace couchbase::php

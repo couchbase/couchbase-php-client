@@ -27,11 +27,11 @@
 #include <string>
 #include <system_error>
 
-namespace couchbase
+namespace couchbase::core
 {
 struct origin;
 class cluster;
-} // namespace couchbase
+} // namespace couchbase::core
 
 namespace couchbase::php
 {
@@ -39,10 +39,10 @@ class connection_handle
 {
   public:
     COUCHBASE_API
-    explicit connection_handle(couchbase::origin origin, std::chrono::steady_clock::time_point idle_expiry);
+    explicit connection_handle(couchbase::core::origin origin, std::chrono::steady_clock::time_point idle_expiry);
 
     COUCHBASE_API
-    std::shared_ptr<couchbase::cluster> cluster() const;
+    std::shared_ptr<couchbase::core::cluster> cluster() const;
 
     COUCHBASE_API
     bool is_expired(std::chrono::steady_clock::time_point now) const;
@@ -52,6 +52,9 @@ class connection_handle
 
     COUCHBASE_API
     core_error_info open();
+
+    COUCHBASE_API
+    core_error_info bucket_open(const std::string& name);
 
     COUCHBASE_API
     core_error_info bucket_open(const zend_string* name);

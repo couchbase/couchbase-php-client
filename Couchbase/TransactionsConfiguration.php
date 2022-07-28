@@ -29,6 +29,7 @@ class TransactionsConfiguration
     private ?int $timeoutMilliseconds = null;
     private ?TransactionsQueryConfiguration $queryOptions = null;
     private ?TransactionsCleanupConfiguration $cleanupOptions = null;
+    private ?TransactionKeyspace $metadataCollection = null;
 
     /**
      * Specifies the level of synchronous durability level.
@@ -105,6 +106,21 @@ class TransactionsConfiguration
         return $this;
     }
 
+
+    /**
+     * Specifies the collection to use for any metadata (ATR and client-record) access.
+     *
+     * @param TransactionKeyspace $collection
+     *
+     * @return TransactionsConfiguration
+     * @since 4.0.1
+     */
+    public function metadataCollection(TransactionKeyspace $collection): TransactionsConfiguration
+    {
+        $this->metadataCollection = $collection;
+        return $this;
+    }
+
     /**
      * @param TransactionsConfiguration|null $configuration
      *
@@ -123,6 +139,7 @@ class TransactionsConfiguration
             'timeout' => $configuration->timeoutMilliseconds,
             'queryOptions' => $configuration->queryOptions == null ? null : $configuration->queryOptions->export(),
             'cleanupOptions' => $configuration->cleanupOptions == null ? null : $configuration->cleanupOptions->export(),
+            'metadataCollection' => TransactionKeyspace::export($configuration->metadataCollection),
         ];
     }
 }

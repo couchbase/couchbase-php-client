@@ -14,14 +14,34 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "conversion_utilities.hxx"
+
+#include <core/utils/binary.hxx>
 
 #include <chrono>
 
 namespace couchbase::php
 {
+
+std::vector<std::byte>
+cb_binary_new(const zend_string* value)
+{
+    if (value == nullptr) {
+        return {};
+    }
+    return core::utils::to_binary(ZSTR_VAL(value), ZSTR_LEN(value));
+}
+
+std::vector<std::byte>
+cb_binary_new(const zval* value)
+{
+    if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+        return {};
+    }
+    return cb_binary_new(Z_STR_P(value));
+}
 
 std::string
 cb_string_new(const zend_string* value)
@@ -38,7 +58,7 @@ cb_string_new(const zval* value)
     if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
         return {};
     }
-    return { Z_STRVAL_P(value), Z_STRLEN_P(value) };
+    return cb_string_new(Z_STR_P(value));
 }
 
 std::pair<core_error_info, std::optional<std::string>>
@@ -48,7 +68,7 @@ cb_get_string(const zval* options, std::string_view name)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
@@ -61,31 +81,31 @@ cb_get_string(const zval* options, std::string_view name)
         case IS_STRING:
             break;
         default:
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("expected {} to be a integer value in the options", name) },
-                     {} };
+            return {
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a integer value in the options", name) },
+                {}
+            };
     }
 
     return { {}, cb_string_new(value) };
 }
 
-std::pair<operations::query_request, core_error_info>
+std::pair<core::operations::query_request, core_error_info>
 zval_to_query_request(const zend_string* statement, const zval* options)
 {
-    operations::query_request request{ cb_string_new(statement) };
+    core::operations::query_request request{ cb_string_new(statement) };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { {}, e };
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.scan_consistency = query_scan_consistency::not_bounded;
+            request.scan_consistency = core::query_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = query_scan_consistency::request_plus;
+            request.scan_consistency = core::query_scan_consistency::request_plus;
         } else if (scan_consistency) {
             return { {},
-                     { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
+                     { errc::common::invalid_argument,
+                       ERROR_LOCATION,
                        fmt::format("invalid value used for scan consistency: {}", *scan_consistency) } };
         }
     } else {
@@ -105,16 +125,13 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (auto [e, profile] = cb_get_string(options, "profile"); !e.ec) {
         if (profile == "off") {
-            request.profile = query_profile_mode::off;
+            request.profile = core::query_profile_mode::off;
         } else if (profile == "phases") {
-            request.profile = query_profile_mode::phases;
+            request.profile = core::query_profile_mode::phases;
         } else if (profile == "timings") {
-            request.profile = query_profile_mode::timings;
+            request.profile = core::query_profile_mode::timings;
         } else if (profile) {
-            return { {},
-                     { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("invalid value used for profile: {}", *profile) } };
+            return { {}, { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for profile: {}", *profile) } };
         }
     } else {
         return { {}, e };
@@ -131,7 +148,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<json_string> params{};
+        std::vector<core::json_string> params{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
@@ -145,7 +162,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, json_string> params{};
+        std::map<std::string, core::json_string> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -159,7 +176,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, json_string> params{};
+        std::map<std::string, core::json_string> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -173,12 +190,12 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<mutation_token> vectors{};
+        std::vector<core::mutation_token> vectors{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            mutation_token token{};
+            core::mutation_token token{};
             if (auto e = cb_assign_integer(token.partition_id, item, "partitionId"); e.ec) {
                 return { {}, e };
             }
@@ -216,7 +233,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
 }
 
 void
-query_response_to_zval(zval* return_value, const operations::query_response& resp)
+query_response_to_zval(zval* return_value, const core::operations::query_response& resp)
 {
     array_init(return_value);
     add_assoc_string(return_value, "servedByNode", resp.served_by_node.c_str());
@@ -307,12 +324,12 @@ cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
         std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
         cas = couchbase::cas{ cas_value };
     } catch (const std::invalid_argument&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
                  fmt::format("no numeric conversion could be performed for encoded CAS value: \"{}\"", cas_string) };
     } catch (const std::out_of_range&) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
                  fmt::format("the number encoded as CAS is out of the range of representable values by a unsigned long long: \"{}\"",
                              cas_string) };
     }
@@ -332,7 +349,7 @@ cb_assign_cas(couchbase::cas& cas, const zval* document)
         case IS_STRING:
             break;
         default:
-            return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected CAS to be a string in the options" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected CAS to be a string in the options" };
     }
     cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
     return {};

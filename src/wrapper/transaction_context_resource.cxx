@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "common.hxx"
 #include "conversion_utilities.hxx"
@@ -26,7 +26,7 @@
 #include <couchbase/transactions/internal/transaction_context.hxx>
 #include <couchbase/transactions/internal/utils.hxx>
 
-#include <couchbase/document_id_fmt.hxx>
+#include <core/document_id_fmt.hxx>
 
 #include <fmt/core.h>
 
@@ -174,16 +174,14 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             transaction_context_.new_attempt_context();
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      fmt::format("unable to create new attempt context: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
                      build_error_context(e) };
         } catch (const std::exception& e) {
-            return { transactions_errc::std_exception,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("unable to create new attempt context: {}", e.what()) };
+            return { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to create new attempt context: {}", e.what()) };
         } catch (...) {
             return { transactions_errc::unexpected_exception,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      "unable to create new attempt context: unexpected C++ exception" };
         }
         return {};
@@ -203,17 +201,13 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             f.get();
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      fmt::format("unable to rollback transaction: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
                      build_error_context(e) };
         } catch (const std::exception& e) {
-            return { transactions_errc::std_exception,
-                     { __LINE__, __FILE__, __func__ },
-                     fmt::format("unable to rollback transaction: {}", e.what()) };
+            return { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to rollback transaction: {}", e.what()) };
         } catch (...) {
-            return { transactions_errc::unexpected_exception,
-                     { __LINE__, __FILE__, __func__ },
-                     "unable to rollback transaction: unexpected C++ exception" };
+            return { transactions_errc::unexpected_exception, ERROR_LOCATION, "unable to rollback transaction: unexpected C++ exception" };
         }
         return {};
     }
@@ -234,24 +228,20 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const couchbase::transactions::transaction_exception& e) {
             return { {},
                      { failure_type_to_error_code(e.type()),
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to commit transaction: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
                        build_error_context(e) } };
         } catch (const std::exception& e) {
-            return { {},
-                     { transactions_errc::std_exception,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to commit transaction: {}", e.what()) } };
+            return { {}, { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to commit transaction: {}", e.what()) } };
         } catch (...) {
-            return { {},
-                     { transactions_errc::unexpected_exception,
-                       { __LINE__, __FILE__, __func__ },
-                       "unable to commit transaction: unexpected C++ exception" } };
+            return {
+                {}, { transactions_errc::unexpected_exception, ERROR_LOCATION, "unable to commit transaction: unexpected C++ exception" }
+            };
         }
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> get_optional(const document_id& id)
+    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> get_optional(const core::document_id& id)
     {
         try {
             auto barrier = std::make_shared<std::promise<std::optional<transactions::transaction_get_result>>>();
@@ -266,25 +256,24 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format(
                          "unable to get document: {}, cause: {}, id=\"{}\"", e.what(), external_exception_to_string(e.cause()), id),
                        build_error_context(e) } };
         } catch (const std::exception& e) {
-            return { {},
-                     { transactions_errc::std_exception,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to get document: {}, id=\"{}\"", e.what(), id) } };
+            return {
+                {}, { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to get document: {}, id=\"{}\"", e.what(), id) }
+            };
         } catch (...) {
             return { {},
                      { transactions_errc::unexpected_exception,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to get document: unexpected C++ exception, id=\"{}\"", id) } };
         }
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> insert(const document_id& id,
+    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> insert(const core::document_id& id,
                                                                                                          const std::string& content)
     {
         try {
@@ -301,19 +290,19 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format(
                          "unable to insert document: {}, cause: {}, id=\"{}\"", e.what(), external_exception_to_string(e.cause()), id),
                        build_error_context(e) } };
         } catch (const std::exception& e) {
-            return { {},
-                     { transactions_errc::std_exception,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("unable to insert document: {}, id=\"{}\"", e.what(), id) } };
+            return {
+                {},
+                { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to insert document: {}, id=\"{}\"", e.what(), id) }
+            };
         } catch (...) {
             return { {},
                      { transactions_errc::unexpected_exception,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to insert document: unexpected C++ exception, id=\"{}\"", id) } };
         }
         return {};
@@ -337,7 +326,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to replace document: {}, cause: {}, id=\"{}\"",
                                    e.what(),
                                    external_exception_to_string(e.cause()),
@@ -346,12 +335,12 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         } catch (const std::exception& e) {
             return { {},
                      { transactions_errc::std_exception,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to replace document: {}, id=\"{}\"", e.what(), document.id()) } };
         } catch (...) {
             return { {},
                      { transactions_errc::unexpected_exception,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to replace document: unexpected C++ exception, id=\"{}\"", document.id()) } };
         }
         return {};
@@ -371,7 +360,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             f.get();
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      fmt::format("unable to remove document: {}, cause: {}, id=\"{}\"",
                                  e.what(),
                                  external_exception_to_string(e.cause()),
@@ -379,46 +368,41 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                      build_error_context(e) };
         } catch (const std::exception& e) {
             return { transactions_errc::std_exception,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      fmt::format("unable to remove document: {}, id=\"{}\"", e.what(), document.id()) };
         } catch (...) {
             return { transactions_errc::unexpected_exception,
-                     { __LINE__, __FILE__, __func__ },
+                     ERROR_LOCATION,
                      fmt::format("unable to remove document: unexpected C++ exception, id=\"{}\"", document.id()) };
         }
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<operations::query_response>, core_error_info> query(
+    [[nodiscard]] std::pair<std::optional<core::operations::query_response>, core_error_info> query(
       const std::string& statement,
       const transactions::transaction_query_options& options)
     {
         try {
-            auto barrier = std::make_shared<std::promise<std::optional<operations::query_response>>>();
+            auto barrier = std::make_shared<std::promise<std::optional<core::operations::query_response>>>();
             auto f = barrier->get_future();
-            transaction_context_.query(statement, options, [barrier](std::exception_ptr e, std::optional<operations::query_response> res) {
-                if (e) {
-                    return barrier->set_exception(e);
-                }
-                return barrier->set_value(std::move(res));
-            });
+            transaction_context_.query(
+              statement, options, [barrier](std::exception_ptr e, std::optional<core::operations::query_response> res) {
+                  if (e) {
+                      return barrier->set_exception(e);
+                  }
+                  return barrier->set_value(std::move(res));
+              });
             return { f.get(), {} };
         } catch (const couchbase::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
-                       { __LINE__, __FILE__, __func__ },
+                       ERROR_LOCATION,
                        fmt::format("unable to execute query: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
                        build_error_context(e) } };
         } catch (const std::exception& e) {
-            return {
-                {},
-                { transactions_errc::std_exception, { __LINE__, __FILE__, __func__ }, fmt::format("unable to execute query: {}", e.what()) }
-            };
+            return { {}, { transactions_errc::std_exception, ERROR_LOCATION, fmt::format("unable to execute query: {}", e.what()) } };
         } catch (...) {
-            return { {},
-                     { transactions_errc::unexpected_exception,
-                       { __LINE__, __FILE__, __func__ },
-                       "unable to execute query: unexpected C++ exception" } };
+            return { {}, { transactions_errc::unexpected_exception, ERROR_LOCATION, "unable to execute query: unexpected C++ exception" } };
         }
         return { {}, {} };
     }
@@ -545,7 +529,7 @@ transaction_get_result_to_zval(zval* return_value, const transactions::transacti
     }
 }
 
-static couchbase::document_id
+static couchbase::core::document_id
 zval_to_document_id(const zval* document)
 {
     std::string bucket;
@@ -567,9 +551,7 @@ zval_to_links(const zval* document)
         return { {}, {} };
     }
     if (Z_TYPE_P(links) != IS_ARRAY) {
-        return {
-            {}, { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected links to be an array in the document" }
-        };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected links to be an array in the document" } };
     }
     std::optional<std::string> atr_id;
     std::optional<std::string> atr_bucket_name;
@@ -631,10 +613,7 @@ zval_to_metadata(const zval* document)
         return { {}, {} };
     }
     if (Z_TYPE_P(links) != IS_ARRAY) {
-        return {
-            {},
-            { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected metadata to be an array in the document" }
-        };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected metadata to be an array in the document" } };
     }
     std::optional<std::string> cas;
     std::optional<std::string> revid;
@@ -653,8 +632,7 @@ static std::pair<transactions::transaction_get_result, core_error_info>
 zval_to_transaction_get_result(const zval* document)
 {
     if (document == nullptr || Z_TYPE_P(document) != IS_ARRAY) {
-        return { {},
-                 { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for transaction document" } };
+        return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected array for transaction document" } };
     }
 
     couchbase::cas cas{};
@@ -672,7 +650,7 @@ zval_to_transaction_get_result(const zval* document)
         return { {}, err };
     }
 
-    return { transactions::transaction_get_result(zval_to_document_id(document), content, cas.value, links, metadata), {} };
+    return { transactions::transaction_get_result(zval_to_document_id(document), content, cas.value(), links, metadata), {} };
 }
 
 COUCHBASE_API
@@ -683,7 +661,7 @@ transaction_context_resource::get(zval* return_value,
                                   const zend_string* collection,
                                   const zend_string* id)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
@@ -695,9 +673,7 @@ transaction_context_resource::get(zval* return_value,
         return err;
     }
     if (!resp) {
-        return { error::key_value_errc::document_not_found,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("unable to find document {} retrieve", doc_id) };
+        return { errc::key_value::document_not_found, ERROR_LOCATION, fmt::format("unable to find document {} retrieve", doc_id) };
     }
     transaction_get_result_to_zval(return_value, resp.value());
     return {};
@@ -712,7 +688,7 @@ transaction_context_resource::insert(zval* return_value,
                                      const zend_string* id,
                                      const zend_string* value)
 {
-    couchbase::document_id doc_id{
+    couchbase::core::document_id doc_id{
         cb_string_new(bucket),
         cb_string_new(scope),
         cb_string_new(collection),
@@ -724,9 +700,7 @@ transaction_context_resource::insert(zval* return_value,
         return err;
     }
     if (!resp) {
-        return { error::key_value_errc::document_not_found,
-                 { __LINE__, __FILE__, __func__ },
-                 fmt::format("unable to find document {} to insert", doc_id) };
+        return { errc::key_value::document_not_found, ERROR_LOCATION, fmt::format("unable to find document {} to insert", doc_id) };
     }
     transaction_get_result_to_zval(return_value, resp.value());
     return {};
@@ -745,8 +719,8 @@ transaction_context_resource::replace(zval* return_value, const zval* document, 
         return err;
     }
     if (!resp) {
-        return { error::key_value_errc::document_not_found,
-                 { __LINE__, __FILE__, __func__ },
+        return { errc::key_value::document_not_found,
+                 ERROR_LOCATION,
                  fmt::format("unable to find document {} to replace its content", doc.id()) };
     }
     transaction_get_result_to_zval(return_value, resp.value());
@@ -791,14 +765,14 @@ transaction_context_resource::query(zval* return_value, const zend_string* state
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_LONG) {                                                                                                  \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                     \
         }                                                                                                                                  \
         zend_long ms = Z_LVAL_P(value);                                                                                                    \
         if (ms < 0) {                                                                                                                      \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a positive number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };            \
         }                                                                                                                                  \
         (setter)(std::chrono::milliseconds(ms));                                                                                           \
@@ -808,9 +782,7 @@ static core_error_info
 apply_options(couchbase::transactions::per_transaction_config& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument,
-                 { __LINE__, __FILE__, __func__ },
-                 "expected array for per transaction configuration" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for per transaction configuration" };
     }
 
     const zend_string* key;
@@ -824,9 +796,7 @@ apply_options(couchbase::transactions::per_transaction_config& config, zval* opt
                 continue;
             }
             if (Z_TYPE_P(value) != IS_STRING) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         "expected durabilityLevel to be a string" };
+                return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string" };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
                 config.durability_level(couchbase::transactions::durability_level::NONE);
@@ -837,8 +807,8 @@ apply_options(couchbase::transactions::per_transaction_config& config, zval* opt
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
                 config.durability_level(couchbase::transactions::durability_level::PERSIST_TO_MAJORITY);
             } else {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
             }
         }

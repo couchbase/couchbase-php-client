@@ -18,24 +18,30 @@
 
 #include "common.hxx"
 
+#include <core/operations/document_query.hxx>
 #include <couchbase/cas.hxx>
-#include <couchbase/operations/document_query.hxx>
 
 #include <Zend/zend_API.h>
 
 namespace couchbase::php
 {
+std::vector<std::byte>
+cb_binary_new(const zend_string* value);
+
+std::vector<std::byte>
+cb_binary_new(const zval* value);
+
 std::string
 cb_string_new(const zend_string* value);
 
 std::string
 cb_string_new(const zval* value);
 
-std::pair<operations::query_request, core_error_info>
+std::pair<core::operations::query_request, core_error_info>
 zval_to_query_request(const zend_string* statement, const zval* options);
 
 void
-query_response_to_zval(zval* return_value, const operations::query_response& resp);
+query_response_to_zval(zval* return_value, const core::operations::query_response& resp);
 
 template<typename Integer>
 static std::pair<core_error_info, std::optional<Integer>>
@@ -45,7 +51,7 @@ cb_get_integer(const zval* options, std::string_view name)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" }, {} };
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
@@ -58,10 +64,10 @@ cb_get_integer(const zval* options, std::string_view name)
         case IS_LONG:
             break;
         default:
-            return { { error::common_errc::invalid_argument,
-                       { __LINE__, __FILE__, __func__ },
-                       fmt::format("expected {} to be a integer value in the options", name) },
-                     {} };
+            return {
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a integer value in the options", name) },
+                {}
+            };
     }
 
     return { {}, Z_LVAL_P(value) };
@@ -106,7 +112,7 @@ cb_get_timeout(Duration& timeout, const zval* options)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("timeoutMilliseconds"));
@@ -119,9 +125,7 @@ cb_get_timeout(Duration& timeout, const zval* options)
         case IS_LONG:
             break;
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
-                     "expected timeoutMilliseconds to be a number in the options" };
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected timeoutMilliseconds to be a number in the options" };
     }
     timeout = std::chrono::milliseconds(Z_LVAL_P(value));
     return {};
@@ -142,7 +146,7 @@ cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
         return {};
     }
     if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for options argument" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" };
     }
 
     const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
@@ -159,8 +163,8 @@ cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
             field = false;
             break;
         default:
-            return { error::common_errc::invalid_argument,
-                     { __LINE__, __FILE__, __func__ },
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
                      fmt::format("expected {} to be a boolean value in the options", name) };
     }
     return {};

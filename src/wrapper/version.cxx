@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
-#include "version.hxx"
 #include "ext_build_version.hxx"
+#include "version.hxx"
 
-#include <couchbase/meta/version.hxx>
+#include <core/meta/version.hxx>
 
 namespace couchbase::php
 {
@@ -33,7 +33,7 @@ core_version(zval* return_value)
     add_assoc_string(return_value, "cxx_client_revision", COUCHBASE_CXX_CLIENT_GIT_REVISION);
     add_assoc_string(return_value, "cxx_transactions_revision", COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION);
 
-    for (const auto& [name, value] : couchbase::meta::sdk_build_info()) {
+    for (const auto& [name, value] : core::meta::sdk_build_info()) {
         if (name == "version_major" || name == "version_minor" || name == "version_patch" || name == "version_build") {
             add_assoc_long_ex(return_value, name.c_str(), name.size(), std::stoi(value));
         } else if (name == "snapshot" || name == "static_stdlib" || name == "static_openssl") {

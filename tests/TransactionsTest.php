@@ -30,6 +30,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 {
     public function testSimpleTransaction()
     {
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
         $idToInsert = $this->uniqueId();
         $idToReplace = $this->uniqueId();
         $idToRemove = $this->uniqueId();
@@ -127,6 +129,8 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 
     public function testFailsWithApplicationErrors()
     {
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
         $idToInsert = $this->uniqueId();
         $idToReplace = $this->uniqueId();
         $idToRemove = $this->uniqueId();
