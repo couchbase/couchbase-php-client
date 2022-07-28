@@ -39,7 +39,8 @@ class ServerVersion
         int $build = 0,
         string $edition = self::EDITION_ENTERPRISE,
         bool $developerPreview = false
-    ) {
+    )
+    {
         $this->major = $major;
         $this->minor = $minor;
         $this->micro = $micro;

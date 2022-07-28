@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "common.hxx"
 #include "logger.hxx"
 
-#include <couchbase/logger/logger.hxx>
+#include <core/logger/logger.hxx>
 
 #include <spdlog/details/os.h>
 #include <spdlog/spdlog.h>
@@ -33,9 +33,9 @@ void
 initialize_logger()
 {
     auto spd_log_evel = spdlog::level::off;
-    auto cbpp_log_level = couchbase::logger::level::off;
+    auto cbpp_log_level = couchbase::core::logger::level::off;
     if (auto env_val = spdlog::details::os::getenv("COUCHBASE_LOG_LEVEL"); !env_val.empty()) {
-        cbpp_log_level = couchbase::logger::level_from_str(env_val);
+        cbpp_log_level = couchbase::core::logger::level_from_str(env_val);
         spd_log_evel = spdlog::level::from_str(env_val);
     }
     if (const char* ini_val = COUCHBASE_G(log_level); ini_val != nullptr) {
@@ -51,14 +51,14 @@ initialize_logger()
             } else if (log_level == "eror") {
                 log_level = "error";
             }
-            cbpp_log_level = couchbase::logger::level_from_str(log_level);
+            cbpp_log_level = couchbase::core::logger::level_from_str(log_level);
             spd_log_evel = spdlog::level::from_str(log_level);
         }
     }
-    if (cbpp_log_level != couchbase::logger::level::off) {
-        couchbase::logger::create_console_logger();
+    if (cbpp_log_level != couchbase::core::logger::level::off) {
+        couchbase::core::logger::create_console_logger();
     }
     spdlog::set_level(spd_log_evel);
-    couchbase::logger::set_log_levels(cbpp_log_level);
+    couchbase::core::logger::set_log_levels(cbpp_log_level);
 }
 } // namespace couchbase::php

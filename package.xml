@@ -316,6 +316,7 @@
                 <file role="php" name="TransactionAttemptContext.php"/>
                 <file role="php" name="TransactionAttemptContextDetails.php"/>
                 <file role="php" name="TransactionGetResult.php"/>
+                <file role="php" name="TransactionKeyspace.php"/>
                 <file role="php" name="TransactionOptions.php"/>
                 <file role="php" name="TransactionQueryOptions.php"/>
                 <file role="php" name="TransactionResult.php"/>
@@ -341,29 +342,6 @@
             <dir name="src">
                 <dir name="cmake">
                     <file role="src" name="ext_build_version.hxx.in"/>
-                    <file role="src" name="revisions.cmake"/>
-                </dir>
-                <dir name="core">
-                    <file role="src" name="api_visibility.hxx"/>
-                    <file role="src" name="common.cxx"/>
-                    <file role="src" name="common.hxx"/>
-                    <file role="src" name="connection_handle.cxx"/>
-                    <file role="src" name="connection_handle.hxx"/>
-                    <file role="src" name="conversion_utilites.cxx"/>
-                    <file role="src" name="conversion_utilities.hxx"/>
-                    <file role="src" name="core.hxx"/>
-                    <file role="src" name="core_error_info.hxx"/>
-                    <file role="src" name="logger.cxx"/>
-                    <file role="src" name="logger.hxx"/>
-                    <file role="src" name="persistent_connections_cache.cxx"/>
-                    <file role="src" name="persistent_connections_cache.hxx"/>
-                    <file role="src" name="php_7_api_layer.hxx"/>
-                    <file role="src" name="transaction_context_resource.cxx"/>
-                    <file role="src" name="transaction_context_resource.hxx"/>
-                    <file role="src" name="transactions_resource.cxx"/>
-                    <file role="src" name="transactions_resource.hxx"/>
-                    <file role="src" name="version.cxx"/>
-                    <file role="src" name="version.hxx"/>
                 </dir>
                 <dir name="deps">
                     <dir name="couchbase-cxx-client">
@@ -373,6 +351,7 @@
                             <file role="src" name="Cache.cmake"/>
                             <file role="src" name="CompilerWarnings.cmake"/>
                             <file role="src" name="DetectStandardFilesystem.cmake"/>
+                            <file role="src" name="Documentation.cmake"/>
                             <file role="src" name="OpenSSL.cmake"/>
                             <file role="src" name="PreventInSourceBuilds.cmake"/>
                             <file role="src" name="Sanitizers.cmake"/>
@@ -385,7 +364,7 @@
                             <file role="src" name="build_version.hxx.in"/>
                             <file role="src" name="test_filesystem.cpp.in"/>
                         </dir>
-                        <dir name="couchbase">
+                        <dir name="core">
                             <dir name="crypto">
                                 <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="cbcrypto.cc"/>
@@ -394,10 +373,29 @@
                             <dir name="error_context">
                                 <file role="src" name="analytics.hxx"/>
                                 <file role="src" name="http.hxx"/>
+                                <file role="src" name="key_value.cxx"/>
                                 <file role="src" name="key_value.hxx"/>
                                 <file role="src" name="query.hxx"/>
                                 <file role="src" name="search.hxx"/>
                                 <file role="src" name="view.hxx"/>
+                            </dir>
+                            <dir name="impl">
+                                <file role="src" name="analytics_error_category.cxx"/>
+                                <file role="src" name="common_error_category.cxx"/>
+                                <file role="src" name="field_level_encryption_error_category.cxx"/>
+                                <file role="src" name="get_all_replicas.cxx"/>
+                                <file role="src" name="get_all_replicas.hxx"/>
+                                <file role="src" name="get_any_replica.cxx"/>
+                                <file role="src" name="get_any_replica.hxx"/>
+                                <file role="src" name="get_replica.cxx"/>
+                                <file role="src" name="get_replica.hxx"/>
+                                <file role="src" name="key_value_error_category.cxx"/>
+                                <file role="src" name="management_error_category.cxx"/>
+                                <file role="src" name="network_error_category.cxx"/>
+                                <file role="src" name="query_error_category.cxx"/>
+                                <file role="src" name="search_error_category.cxx"/>
+                                <file role="src" name="streaming_json_lexter_error_category.cxx"/>
+                                <file role="src" name="view_error_category.cxx"/>
                             </dir>
                             <dir name="io">
                                 <file role="src" name="CMakeLists.txt"/>
@@ -427,7 +425,6 @@
                                 <file role="src" name="retry_context.hxx"/>
                                 <file role="src" name="retry_orchestrator.hxx"/>
                                 <file role="src" name="retry_reason.hxx"/>
-                                <file role="src" name="retry_reason_fmt.hxx"/>
                                 <file role="src" name="retry_strategy.hxx"/>
                                 <file role="src" name="streams.hxx"/>
                             </dir>
@@ -440,7 +437,6 @@
                                 <file role="src" name="logger.hxx"/>
                             </dir>
                             <dir name="management">
-                                <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="analytics_dataset.hxx"/>
                                 <file role="src" name="analytics_index.hxx"/>
                                 <file role="src" name="analytics_link.hxx"/>
@@ -633,7 +629,6 @@
                                     <file role="src" name="view_index_upsert.cxx"/>
                                     <file role="src" name="view_index_upsert.hxx"/>
                                 </dir>
-                                <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="document_analytics.cxx"/>
                                 <file role="src" name="document_analytics.hxx"/>
                                 <file role="src" name="document_append.cxx"/>
@@ -699,7 +694,6 @@
                                 <file role="src" name="uuid.h"/>
                             </dir>
                             <dir name="protocol">
-                                <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="client_opcode.hxx"/>
                                 <file role="src" name="client_opcode_fmt.hxx"/>
                                 <file role="src" name="client_request.cxx"/>
@@ -730,6 +724,8 @@
                                 <file role="src" name="cmd_get_error_map.hxx"/>
                                 <file role="src" name="cmd_get_meta.cxx"/>
                                 <file role="src" name="cmd_get_meta.hxx"/>
+                                <file role="src" name="cmd_get_replica.cxx"/>
+                                <file role="src" name="cmd_get_replica.hxx"/>
                                 <file role="src" name="cmd_hello.cxx"/>
                                 <file role="src" name="cmd_hello.hxx"/>
                                 <file role="src" name="cmd_increment.cxx"/>
@@ -767,9 +763,10 @@
                                 <file role="src" name="durability_level.hxx"/>
                                 <file role="src" name="durability_level_fmt.hxx"/>
                                 <file role="src" name="enhanced_error_info.hxx"/>
-                                <file role="src" name="enhanced_error_info_fmt.hxx"/>
                                 <file role="src" name="frame_info_id.hxx"/>
                                 <file role="src" name="frame_info_id_fmt.hxx"/>
+                                <file role="src" name="frame_info_utils.cxx"/>
+                                <file role="src" name="frame_info_utils.hxx"/>
                                 <file role="src" name="hello_feature.hxx"/>
                                 <file role="src" name="hello_feature_fmt.hxx"/>
                                 <file role="src" name="magic.hxx"/>
@@ -779,7 +776,6 @@
                                 <file role="src" name="server_request.hxx"/>
                                 <file role="src" name="status.cxx"/>
                                 <file role="src" name="status.hxx"/>
-                                <file role="src" name="status_fmt.hxx"/>
                             </dir>
                             <dir name="sasl">
                                 <dir name="plain">
@@ -803,7 +799,6 @@
                                 <file role="src" name="mechanism.h"/>
                             </dir>
                             <dir name="topology">
-                                <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="capabilities.hxx"/>
                                 <file role="src" name="capabilities_fmt.hxx"/>
                                 <file role="src" name="collections_manifest.hxx"/>
@@ -827,8 +822,8 @@
                                 <file role="src" name="threshold_logging_tracer.hxx"/>
                             </dir>
                             <dir name="utils">
-                                <file role="src" name="CMakeLists.txt"/>
-                                <file role="src" name="byteswap.cxx"/>
+                                <file role="src" name="binary.cxx"/>
+                                <file role="src" name="binary.hxx"/>
                                 <file role="src" name="byteswap.hxx"/>
                                 <file role="src" name="connection_string.cxx"/>
                                 <file role="src" name="connection_string.hxx"/>
@@ -850,8 +845,6 @@
                             <file role="src" name="analytics_scan_consistency.hxx"/>
                             <file role="src" name="bucket.hxx"/>
                             <file role="src" name="capella_ca.hxx"/>
-                            <file role="src" name="cas.hxx"/>
-                            <file role="src" name="cas_fmt.hxx"/>
                             <file role="src" name="cluster.cxx"/>
                             <file role="src" name="cluster.hxx"/>
                             <file role="src" name="cluster_options.cxx"/>
@@ -864,7 +857,6 @@
                             <file role="src" name="document_id.cxx"/>
                             <file role="src" name="document_id.hxx"/>
                             <file role="src" name="document_id_fmt.hxx"/>
-                            <file role="src" name="errors.hxx"/>
                             <file role="src" name="json_string.hxx"/>
                             <file role="src" name="mutation_token.hxx"/>
                             <file role="src" name="mutation_token_fmt.hxx"/>
@@ -877,8 +869,34 @@
                             <file role="src" name="service_type.hxx"/>
                             <file role="src" name="service_type_fmt.hxx"/>
                             <file role="src" name="timeout_defaults.hxx"/>
+                            <file role="src" name="view_on_error.hxx"/>
                             <file role="src" name="view_scan_consistency.hxx"/>
                             <file role="src" name="view_sort_order.hxx"/>
+                        </dir>
+                        <dir name="couchbase">
+                            <dir name="fmt">
+                                <file role="src" name="cas.hxx"/>
+                                <file role="src" name="key_value_extended_error_info.hxx"/>
+                                <file role="src" name="key_value_status_code.hxx"/>
+                                <file role="src" name="retry_reason.hxx"/>
+                            </dir>
+                            <file role="src" name="bucket.hxx"/>
+                            <file role="src" name="cas.hxx"/>
+                            <file role="src" name="cluster.hxx"/>
+                            <file role="src" name="collection.hxx"/>
+                            <file role="src" name="error_codes.hxx"/>
+                            <file role="src" name="error_context.hxx"/>
+                            <file role="src" name="get_all_replicas.hxx"/>
+                            <file role="src" name="get_any_replica.hxx"/>
+                            <file role="src" name="get_replica_result.hxx"/>
+                            <file role="src" name="key_value_error_context.hxx"/>
+                            <file role="src" name="key_value_error_map_attribute.hxx"/>
+                            <file role="src" name="key_value_error_map_info.hxx"/>
+                            <file role="src" name="key_value_extended_error_info.hxx"/>
+                            <file role="src" name="key_value_status_code.hxx"/>
+                            <file role="src" name="result.hxx"/>
+                            <file role="src" name="retry_reason.hxx"/>
+                            <file role="src" name="scope.hxx"/>
                         </dir>
                         <dir name="third_party">
                             <dir name="asio">
@@ -1791,7 +1809,6 @@
                                                         <file role="src" name="cstream_reader.hpp"/>
                                                         <file role="src" name="cstring_reader.hpp"/>
                                                         <file role="src" name="dependent_false.hpp"/>
-                                                        <file role="src" name="dependent_true.hpp"/>
                                                         <file role="src" name="disable.hpp"/>
                                                         <file role="src" name="discard.hpp"/>
                                                         <file role="src" name="enable.hpp"/>
@@ -1965,6 +1982,7 @@
                                                 <file role="src" name="array_traits.hpp"/>
                                                 <file role="src" name="deque_traits.hpp"/>
                                                 <file role="src" name="diff.hpp"/>
+                                                <file role="src" name="from_nlohmann.hpp"/>
                                                 <file role="src" name="get.hpp"/>
                                                 <file role="src" name="list_traits.hpp"/>
                                                 <file role="src" name="map_traits.hpp"/>
@@ -1978,6 +1996,7 @@
                                                 <file role="src" name="schema.hpp"/>
                                                 <file role="src" name="set_traits.hpp"/>
                                                 <file role="src" name="shared_ptr_traits.hpp"/>
+                                                <file role="src" name="to_nlohmann.hpp"/>
                                                 <file role="src" name="traits.hpp"/>
                                                 <file role="src" name="tuple_traits.hpp"/>
                                                 <file role="src" name="unique_ptr_traits.hpp"/>
@@ -1993,6 +2012,7 @@
                                                 <file role="src" name="binary_to_base64url.hpp"/>
                                                 <file role="src" name="binary_to_exception.hpp"/>
                                                 <file role="src" name="binary_to_hex.hpp"/>
+                                                <file role="src" name="capture.hpp"/>
                                                 <file role="src" name="compare.hpp"/>
                                                 <file role="src" name="debug.hpp"/>
                                                 <file role="src" name="discard.hpp"/>
@@ -2016,6 +2036,7 @@
                                                 <file role="src" name="prefer_unsigned.hpp"/>
                                                 <file role="src" name="produce.hpp"/>
                                                 <file role="src" name="ref.hpp"/>
+                                                <file role="src" name="set_value.hpp"/>
                                                 <file role="src" name="statistics.hpp"/>
                                                 <file role="src" name="tee.hpp"/>
                                                 <file role="src" name="to_pretty_stream.hpp"/>
@@ -2028,6 +2049,7 @@
                                                 <file role="src" name="virtual_base.hpp"/>
                                                 <file role="src" name="virtual_ref.hpp"/>
                                                 <file role="src" name="virtual_wrap.hpp"/>
+                                                <file role="src" name="virtualize.hpp"/>
                                             </dir>
                                             <dir name="external">
                                                 <file role="src" name="double.hpp"/>
@@ -2375,6 +2397,7 @@
                                     <file role="src" name="per_transaction_config.hxx"/>
                                     <file role="src" name="transaction_config.hxx"/>
                                     <file role="src" name="transaction_get_result.hxx"/>
+                                    <file role="src" name="transaction_keyspace.hxx"/>
                                     <file role="src" name="transaction_links.hxx"/>
                                     <file role="src" name="transaction_query_options.hxx"/>
                                     <file role="src" name="transaction_result.hxx"/>
@@ -2419,6 +2442,28 @@
                         </dir>
                         <file role="src" name="CMakeLists.txt"/>
                     </dir>
+                </dir>
+                <dir name="wrapper">
+                    <file role="src" name="api_visibility.hxx"/>
+                    <file role="src" name="common.cxx"/>
+                    <file role="src" name="common.hxx"/>
+                    <file role="src" name="connection_handle.cxx"/>
+                    <file role="src" name="connection_handle.hxx"/>
+                    <file role="src" name="conversion_utilities.cxx"/>
+                    <file role="src" name="conversion_utilities.hxx"/>
+                    <file role="src" name="core_error_info.hxx"/>
+                    <file role="src" name="logger.cxx"/>
+                    <file role="src" name="logger.hxx"/>
+                    <file role="src" name="persistent_connections_cache.cxx"/>
+                    <file role="src" name="persistent_connections_cache.hxx"/>
+                    <file role="src" name="php_7_api_layer.hxx"/>
+                    <file role="src" name="transaction_context_resource.cxx"/>
+                    <file role="src" name="transaction_context_resource.hxx"/>
+                    <file role="src" name="transactions_resource.cxx"/>
+                    <file role="src" name="transactions_resource.hxx"/>
+                    <file role="src" name="version.cxx"/>
+                    <file role="src" name="version.hxx"/>
+                    <file role="src" name="wrapper.hxx"/>
                 </dir>
                 <file role="src" name="CMakeLists.txt"/>
                 <file role="src" name="php_couchbase.cxx"/>

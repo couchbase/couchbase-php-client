@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "core/common.hxx"
-#include "core/logger.hxx"
-#include "core/persistent_connections_cache.hxx"
-#include "core/transaction_context_resource.hxx"
-#include "core/transactions_resource.hxx"
-#include "core/version.hxx"
+#include "wrapper/common.hxx"
+#include "wrapper/logger.hxx"
+#include "wrapper/persistent_connections_cache.hxx"
+#include "wrapper/transaction_context_resource.hxx"
+#include "wrapper/transactions_resource.hxx"
+#include "wrapper/version.hxx"
 
 #include "php_couchbase.hxx"
 

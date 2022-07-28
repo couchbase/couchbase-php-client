@@ -36,14 +36,14 @@ if (PHP_COUCHBASE != "no") {
     STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
     STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
 
-    DEFINE("LIBS_COUCHBASE", "$(BUILD_DIR)\\couchbase_php_core.lib");
+    DEFINE("LIBS_COUCHBASE", "$(BUILD_DIR)\\couchbase_php_wrapper.lib");
     DEFINE("DEPS_COUCHBASE", get_define("LIBS_COUCHBASE"));
     EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
 
-    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_core.lib: $(BUILD_DIR)\\$(PHPDLL)");
+    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_wrapper.lib: $(BUILD_DIR)\\$(PHPDLL)");
     MFO.WriteLine("\t" + CMAKE + " --build " + COUCHBASE_CMAKE_BUILD_DIRECTORY + " --parallel 4 --verbose");
-    MFO.WriteLine("couchbase_php_core.lib: $(BUILD_DIR)\\couchbase_php_core.lib");
-    MFO.WriteLine("\t@echo EXT couchbase core build complete");
+    MFO.WriteLine("couchbase_php_wrapper.lib: $(BUILD_DIR)\\couchbase_php_wrapper.lib");
+    MFO.WriteLine("\t@echo EXT couchbase wrapper build complete");
 
     cmake_command =
         'cmd /c ' + CMAKE +
