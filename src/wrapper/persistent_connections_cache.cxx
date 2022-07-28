@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "common.hxx"
 #include "connection_handle.hxx"

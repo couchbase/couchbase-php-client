@@ -106,6 +106,18 @@ struct transactions_error_context {
     std::optional<transaction_result> result{};
 };
 
+#if defined(__GNUC__) || defined(__clang__)
+#define ERROR_LOCATION                                                                                                                     \
+    {                                                                                                                                      \
+        __LINE__, __FILE__, __PRETTY_FUNCTION__                                                                                            \
+    }
+#else
+#define ERROR_LOCATION                                                                                                                     \
+    {                                                                                                                                      \
+        __LINE__, __FILE__, __FUNCTION__                                                                                                   \
+    }
+#endif
+
 struct core_error_info {
     std::error_code ec{};
     source_location location{};

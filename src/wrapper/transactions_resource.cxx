@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "core.hxx"
+#include "wrapper.hxx"
 
 #include "common.hxx"
 #include "transactions_resource.hxx"
@@ -67,7 +67,7 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
     }
 
   private:
-    std::shared_ptr<couchbase::cluster> cluster_;
+    std::shared_ptr<couchbase::core::cluster> cluster_;
     couchbase::transactions::transactions transactions_;
 };
 
@@ -90,14 +90,14 @@ transactions_resource::transactions()
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_LONG) {                                                                                                  \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                     \
         }                                                                                                                                  \
         zend_long ms = Z_LVAL_P(value);                                                                                                    \
         if (ms < 0) {                                                                                                                      \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected duration as a positive number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };            \
         }                                                                                                                                  \
         (setter)(std::chrono::milliseconds(ms));                                                                                           \
@@ -116,8 +116,8 @@ transactions_resource::transactions()
                 (setter)(true);                                                                                                            \
                 break;                                                                                                                     \
             default:                                                                                                                       \
-                return { error::common_errc::invalid_argument,                                                                             \
-                         { __LINE__, __FILE__, __func__ },                                                                                 \
+                return { errc::common::invalid_argument,                                                                                   \
+                         ERROR_LOCATION,                                                                                                   \
                          fmt::format("expected boolean for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                              \
         }                                                                                                                                  \
     }
@@ -128,13 +128,13 @@ transactions_resource::transactions()
             continue;                                                                                                                      \
         }                                                                                                                                  \
         if (Z_TYPE_P(value) != IS_STRING) {                                                                                                \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                                   \
         }                                                                                                                                  \
         if (Z_STRLEN_P(value) == 0) {                                                                                                      \
-            return { error::common_errc::invalid_argument,                                                                                 \
-                     { __LINE__, __FILE__, __func__ },                                                                                     \
+            return { errc::common::invalid_argument,                                                                                       \
+                     ERROR_LOCATION,                                                                                                       \
                      fmt::format("expected non-empty string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                         \
         }                                                                                                                                  \
         (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                                                              \
@@ -144,7 +144,7 @@ static core_error_info
 apply_options(couchbase::transactions::transaction_config& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
-        return { error::common_errc::invalid_argument, { __LINE__, __FILE__, __func__ }, "expected array for transactions configuration" };
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for transactions configuration" };
     }
 
     const zend_string* key;
@@ -158,9 +158,7 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 continue;
             }
             if (Z_TYPE_P(value) != IS_STRING) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
-                         "expected durabilityLevel to be a string" };
+                return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string" };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
                 config.durability_level(couchbase::transactions::durability_level::NONE);
@@ -171,8 +169,8 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
                 config.durability_level(couchbase::transactions::durability_level::PERSIST_TO_MAJORITY);
             } else {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
             }
         }
@@ -182,8 +180,8 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 continue;
             }
             if (Z_TYPE_P(value) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected array for {} as query options for transactions",
                                      std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
@@ -197,17 +195,15 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                         continue;
                     }
                     if (Z_TYPE_P(v) != IS_STRING) {
-                        return { error::common_errc::invalid_argument,
-                                 { __LINE__, __FILE__, __func__ },
-                                 "expected scanConsistency to be a string" };
+                        return { errc::common::invalid_argument, ERROR_LOCATION, "expected scanConsistency to be a string" };
                     }
                     if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("notBounded")) == 0) {
-                        config.scan_consistency(couchbase::query_scan_consistency::not_bounded);
+                        config.scan_consistency(couchbase::core::query_scan_consistency::not_bounded);
                     } else if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("requestPlus")) == 0) {
-                        config.scan_consistency(couchbase::query_scan_consistency::request_plus);
+                        config.scan_consistency(couchbase::core::query_scan_consistency::request_plus);
                     } else {
-                        return { error::common_errc::invalid_argument,
-                                 { __LINE__, __FILE__, __func__ },
+                        return { errc::common::invalid_argument,
+                                 ERROR_LOCATION,
                                  fmt::format("unknown scanConsistency: {}", std::string_view(Z_STRVAL_P(v), Z_STRLEN_P(v))) };
                     }
                 }
@@ -220,8 +216,8 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 continue;
             }
             if (Z_TYPE_P(value) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected array for {} as cleanup options for transactions",
                                      std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
@@ -242,8 +238,8 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 continue;
             }
             if (Z_TYPE_P(value) != IS_ARRAY) {
-                return { error::common_errc::invalid_argument,
-                         { __LINE__, __FILE__, __func__ },
+                return { errc::common::invalid_argument,
+                         ERROR_LOCATION,
                          fmt::format("expected array for {} as metadata collection for transactions",
                                      std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
             }
@@ -278,8 +274,8 @@ create_transactions_resource(connection_handle* connection, zval* options)
         return { nullptr, e };
     }
     // ensure that metadata collection is opened
-    if (auto metadata_collection = config.custom_metadata_collection(); metadata_collection && !metadata_collection->bucket().empty()) {
-        if (auto e = connection->bucket_open(metadata_collection->bucket()); e.ec) {
+    if (auto metadata_collection = config.custom_metadata_collection(); metadata_collection && !metadata_collection->bucket.empty()) {
+        if (auto e = connection->bucket_open(metadata_collection->bucket); e.ec) {
             return { nullptr, e };
         }
     }
