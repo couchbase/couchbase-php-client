@@ -22,6 +22,7 @@ namespace Couchbase;
 
 use Couchbase\Exception\CasMismatchException;
 use Couchbase\Exception\DocumentExistsException;
+use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
@@ -215,14 +216,23 @@ class Collection
      * @param GetAnyReplicaOptions|null $options the options to use for the operation
      *
      * @return GetReplicaResult
-     * @throws UnsupportedOperationException
+     *
+     * @throws DocumentIrretrievableException
      * @throws CouchbaseException
      * @throws TimeoutException
-     * @since 4.0.0
+     * @since 4.0.1
      */
     public function getAnyReplica(string $id, GetAnyReplicaOptions $options = null): GetReplicaResult
     {
-        throw new UnsupportedOperationException();
+        $response = Extension\documentGetAnyReplica(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            GetAnyReplicaOptions::export($options)
+        );
+        return new GetReplicaResult($response, GetAnyReplicaOptions::getTranscoder($options));
     }
 
     /**
@@ -233,14 +243,26 @@ class Collection
      * @param GetAllReplicasOptions|null $options the options to use for the operation
      *
      * @return array
-     * @throws UnsupportedOperationException
      * @throws CouchbaseException
      * @throws TimeoutException
      * @since 4.0.0
      */
     public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
     {
-        throw new UnsupportedOperationException();
+        $responses = Extension\documentGetAllReplicas(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            GetAllReplicasOptions::export($options)
+        );
+        return array_map(
+            function (array $response) use ($options) {
+                return new GetReplicaResult($response, GetAllReplicasOptions::getTranscoder($options));
+            },
+            $responses
+        );
     }
 
     /**

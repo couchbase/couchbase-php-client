@@ -51,6 +51,9 @@ class connection_handle
     std::string cluster_version(const zend_string* name);
 
     COUCHBASE_API
+    bool replicas_configured_for_bucket(const zend_string* bucket_name);
+
+    COUCHBASE_API
     core_error_info open();
 
     COUCHBASE_API
@@ -133,6 +136,22 @@ class connection_handle
                                  const zend_string* collection,
                                  const zend_string* id,
                                  const zval* options);
+
+    COUCHBASE_API
+    core_error_info document_get_any_replica(zval* return_value,
+                                             const zend_string* bucket,
+                                             const zend_string* scope,
+                                             const zend_string* collection,
+                                             const zend_string* id,
+                                             const zval* options);
+
+    COUCHBASE_API
+    core_error_info document_get_all_replicas(zval* return_value,
+                                              const zend_string* bucket,
+                                              const zend_string* scope,
+                                              const zend_string* collection,
+                                              const zend_string* id,
+                                              const zval* options);
 
     COUCHBASE_API
     core_error_info document_get_and_lock(zval* return_value,
