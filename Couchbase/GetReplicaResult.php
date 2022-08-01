@@ -23,19 +23,60 @@ namespace Couchbase;
 /**
  * Interface for results created by the getReplica operation.
  */
-interface GetReplicaResult extends Result
+class GetReplicaResult extends Result
 {
-    /**
-     * Returns the content of the document fetched
-     *
-     * @return array|null
-     */
-    public function content(): ?array;
+    private Transcoder $transcoder;
+    private string $value;
+    private int $flags;
+    private bool $isReplica;
 
     /**
-     * Returns whether or not the document came from a replica server
+     * @internal
+     *
+     * @param array $response
+     * @param Transcoder $transcoder
+     *
+     * @since 4.0.0
+     */
+    public function __construct(array $response, Transcoder $transcoder)
+    {
+        parent::__construct($response);
+        $this->transcoder = $transcoder;
+        $this->flags = $response["flags"];
+        $this->value = $response["value"];
+        $this->isReplica = $response["isReplica"];
+    }
+
+    /**
+     * Returns whether the document came from a replica server
      *
      * @return bool
+     * @since 4.0.1
      */
-    public function isReplica(): bool;
+    public function isReplica(): bool
+    {
+        return $this->isReplica;
+    }
+
+    /**
+     * Returns the content of the document decoded using associated transcoder
+     *
+     * @return mixed
+     * @since 4.0.1
+     */
+    public function content()
+    {
+        return $this->transcoder->decode($this->value, $this->flags);
+    }
+
+    /**
+     * Returns the content of the document decoded using custom transcoder
+     *
+     * @return mixed
+     * @since 4.0.1
+     */
+    public function contentAs(Transcoder $transcoder, ?int $overrideFlags = null)
+    {
+        return $transcoder->decode($this->value, $overrideFlags == null ? $this->flags : $overrideFlags);
+    }
 }

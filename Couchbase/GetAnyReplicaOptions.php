@@ -22,25 +22,87 @@ namespace Couchbase;
 
 class GetAnyReplicaOptions
 {
+    private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * @since 4.0.1
+     */
+    public function __construct()
+    {
+        $this->transcoder = JsonTranscoder::getInstance();
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return GetAnyReplicaOptions
+     * @since 4.0.1
+     */
+    public static function build(): GetAnyReplicaOptions
+    {
+        return new GetAnyReplicaOptions();
+    }
+
     /**
      * Sets the operation timeout in milliseconds.
      *
-     * @param int $arg the operation timeout to apply
+     * @param int $milliseconds the operation timeout to apply
      *
      * @return GetAnyReplicaOptions
+     * @since 4.0.1
      */
-    public function timeout(int $arg): GetAnyReplicaOptions
+    public function timeout(int $milliseconds): GetAnyReplicaOptions
     {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
     }
 
     /**
      * Associate custom transcoder with the request.
      *
-     * @param callable $arg decoding function with signature (returns decoded value):
+     * @param Transcoder $transcoder
      *
-     *   `function decoder(string $bytes, int $flags, int $datatype): mixed`
+     * @return GetAnyReplicaOptions
+     * @since 4.0.1
      */
-    public function decoder(callable $arg): GetAnyReplicaOptions
+    public function transcoder(Transcoder $transcoder): GetAnyReplicaOptions
     {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    /**
+     * Returns associated transcoder.
+     *
+     * @param GetAnyReplicaOptions|null $options
+     *
+     * @return Transcoder
+     * @since 4.0.1
+     */
+    public static function getTranscoder(?GetAnyReplicaOptions $options): Transcoder
+    {
+        if ($options == null) {
+            return JsonTranscoder::getInstance();
+        }
+        return $options->transcoder;
+    }
+
+    /**
+     * @param GetAnyReplicaOptions|null $options
+     *
+     * @return array
+     * @internal
+     *
+     * @since 4.0.1
+     */
+    public static function export(?GetAnyReplicaOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

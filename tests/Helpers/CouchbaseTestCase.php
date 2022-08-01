@@ -136,6 +136,21 @@ class CouchbaseTestCase extends TestCase
         }
     }
 
+    public function skipIfReplicasAreNotConfigured(): void
+    {
+        if (!$this->connectCluster()->replicasConfiguredFor($this->env()->bucketName())) {
+            $caller = debug_backtrace()[1];
+            $this->markTestSkipped(
+                sprintf(
+                    "%s::%s is not supported on %s, because replicas are not properly configured",
+                    $caller["class"],
+                    $caller["function"],
+                    $this->env()->useCouchbase() ? "Couchbase Server " . $this->version() : "CAVES"
+                )
+            );
+        }
+    }
+
     /**
      * @throws Exception
      */

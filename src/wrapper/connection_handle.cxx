@@ -30,6 +30,8 @@
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
 
+#include <couchbase/cluster.hxx>
+#include <couchbase/collection.hxx>
 #include <couchbase/retry_reason.hxx>
 
 #include <fmt/core.h>
@@ -409,6 +411,20 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return resp.info.nodes.front().version;
     }
 
+    bool replicas_configured_for_bucket(const std::string& bucket_name)
+    {
+        if (auto e = bucket_open(bucket_name); e.ec) {
+            return false;
+        }
+        auto barrier = std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
+        auto f = barrier->get_future();
+        cluster_->with_bucket_configuration(bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
+            barrier->set_value({ ec, config });
+        });
+        auto [ec, config] = f.get();
+        return !ec && config.num_replicas && config.num_replicas > 0 && config.nodes.size() > config.num_replicas;
+    }
+
     core_error_info open()
     {
         auto barrier = std::make_shared<std::promise<std::error_code>>();
@@ -453,7 +469,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             return { std::move(resp),
                      { resp.ctx.ec(),
                        ERROR_LOCATION,
-                       fmt::format(R"(unable to execute KV operation "{}": ec={})", operation, resp.ctx.ec().message()),
+                       fmt::format(R"(unable to execute KV operation "{}")", operation),
                        build_error_context(resp.ctx) } };
         }
         return { std::move(resp), {} };
@@ -470,7 +486,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             return { std::move(resp),
                      { resp.ctx.ec,
                        ERROR_LOCATION,
-                       fmt::format(R"(unable to execute HTTP operation "{}": ec={})", operation, resp.ctx.ec.message()),
+                       fmt::format(R"(unable to execute HTTP operation "{}")", operation),
                        build_error_context(resp.ctx) } };
         }
         return { std::move(resp), {} };
@@ -516,6 +532,11 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
+    couchbase::collection collection(std::string bucket, std::string scope, std::string collection)
+    {
+        return couchbase::cluster(cluster_).bucket(std::move(bucket)).scope(std::move(scope)).collection(std::move(collection));
+    }
+
   private:
     asio::io_context ctx_{};
     std::shared_ptr<couchbase::core::cluster> cluster_{ couchbase::core::cluster::create(ctx_) };
@@ -544,6 +565,13 @@ std::string
 connection_handle::cluster_version(const zend_string* bucket_name)
 {
     return impl_->cluster_version(cb_string_new(bucket_name));
+}
+
+COUCHBASE_API
+bool
+connection_handle::replicas_configured_for_bucket(const zend_string* bucket_name)
+{
+    return impl_->replicas_configured_for_bucket(cb_string_new(bucket_name));
 }
 
 COUCHBASE_API
@@ -1082,6 +1110,67 @@ connection_handle::document_get(zval* return_value,
 
 COUCHBASE_API
 core_error_info
+connection_handle::document_get_any_replica(zval* return_value,
+                                            const zend_string* bucket,
+                                            const zend_string* scope,
+                                            const zend_string* collection,
+                                            const zend_string* id,
+                                            const zval* options)
+{
+    couchbase::get_any_replica_options o;
+    if (auto e = cb_assign_timeout(o, options); e.ec) {
+        return e;
+    }
+    auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
+    auto [ctx, resp] = c.get_any_replica(cb_string_new(id), o).get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, fmt::format(R"(unable to execute KV operation "get_any_replica")"), build_error_context(ctx) };
+    }
+    array_init(return_value);
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    add_assoc_long(return_value, "flags", resp.flags());
+    add_assoc_bool(return_value, "isReplica", resp.is_replica());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.content().data()), resp.content().size());
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::document_get_all_replicas(zval* return_value,
+                                             const zend_string* bucket,
+                                             const zend_string* scope,
+                                             const zend_string* collection,
+                                             const zend_string* id,
+                                             const zval* options)
+{
+    couchbase::get_all_replicas_options o;
+    if (auto e = cb_assign_timeout(o, options); e.ec) {
+        return e;
+    }
+    auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
+    auto [ctx, responses] = c.get_all_replicas(cb_string_new(id), o).get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, fmt::format(R"(unable to execute KV operation "get_all_replicas")"), build_error_context(ctx) };
+    }
+    array_init_size(return_value, responses.size());
+    for (const auto& resp : responses) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+        auto cas = fmt::format("{:x}", resp.cas().value());
+        add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
+        add_assoc_long(&entry, "flags", resp.flags());
+        add_assoc_bool(&entry, "isReplica", resp.is_replica());
+        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(resp.content().data()), resp.content().size());
+        add_next_index_zval(return_value, &entry);
+    }
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::document_get_and_lock(zval* return_value,
                                          const zend_string* bucket,
                                          const zend_string* scope,
@@ -1434,10 +1523,9 @@ connection_handle::document_mutate_in(zval* return_value,
             create_exception(&ex,
                              { field.ec,
                                ERROR_LOCATION,
-                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: ec={}, status={}, index={})",
+                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: status={}, index={})",
                                            subdoc_opcode_to_string(field.opcode),
                                            field.path,
-                                           field.ec.message(),
                                            field.status,
                                            field.original_index),
                                build_error_context(resp.ctx) });
@@ -1522,10 +1610,9 @@ connection_handle::document_lookup_in(zval* return_value,
             create_exception(&ex,
                              { field.ec,
                                ERROR_LOCATION,
-                               fmt::format(R"(lookupIn operation "{}" for path "{}" failed: ec={}, status={}, index={})",
+                               fmt::format(R"(lookupIn operation "{}" for path "{}" failed: status={}, index={})",
                                            subdoc_opcode_to_string(field.opcode),
                                            field.path,
-                                           field.ec.message(),
                                            field.status,
                                            field.original_index),
                                build_error_context(resp.ctx) });
@@ -1584,7 +1671,7 @@ connection_handle::document_get_multi(zval* return_value,
             create_exception(&ex,
                              { resp.ctx.ec(),
                                ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
                                build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
@@ -1689,7 +1776,7 @@ connection_handle::document_remove_multi(zval* return_value,
             create_exception(&ex,
                              { resp.ctx.ec(),
                                ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
                                build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
@@ -1784,7 +1871,7 @@ connection_handle::document_upsert_multi(zval* return_value,
             create_exception(&ex,
                              { resp.ctx.ec(),
                                ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}": ec={})", __func__, resp.ctx.ec().message()),
+                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
                                build_error_context(resp.ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }

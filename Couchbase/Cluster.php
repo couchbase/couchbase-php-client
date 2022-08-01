@@ -253,6 +253,18 @@ class Cluster
     }
 
     /**
+     * @param string $bucketName
+     *
+     * @return bool if replicas enabled, and cluster has enough nodes to use them
+     * @internal
+     *
+     */
+    public function replicasConfiguredFor(string $bucketName): bool
+    {
+        return Extension\replicasConfiguredForBucket($this->core, $bucketName);
+    }
+
+    /**
      * @internal
      * @deprecated will be removed once all managers will be implemented
      */
