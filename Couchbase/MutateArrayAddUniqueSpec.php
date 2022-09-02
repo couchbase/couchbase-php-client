@@ -29,7 +29,7 @@ use Couchbase\Exception\InvalidArgumentException;
 class MutateArrayAddUniqueSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private bool $expandMacros;
     private string $path;
     private $value;
@@ -38,7 +38,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
      * @param string $path
      * @param int|float|bool|string|null $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @throws InvalidArgumentException
@@ -48,7 +48,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
         string $path,
         $value,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     )
     {
@@ -56,7 +56,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
             throw new InvalidArgumentException("value for add unique operation must be of primitive type");
         }
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
         $this->value = $value;
@@ -66,7 +66,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
      * @param string $path
      * @param int|float|bool|string|null $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @return MutateArrayAddUniqueSpec
@@ -77,11 +77,11 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
         string $path,
         $value,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     ): MutateArrayAddUniqueSpec
     {
-        return new MutateArrayAddUniqueSpec($path, $value, $isXattr, $createParents, $expandMacros);
+        return new MutateArrayAddUniqueSpec($path, $value, $isXattr, $createPath, $expandMacros);
     }
 
     /**
@@ -97,14 +97,14 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateArrayAddUniqueSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateArrayAddUniqueSpec
+    public function createPath(bool $createPath): MutateArrayAddUniqueSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -133,7 +133,7 @@ class MutateArrayAddUniqueSpec implements MutateInSpec
         return [
             'opcode' => 'arrayAddUnique',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
             'value' => MutateInOptions::encodeValue($options, $this->value),

@@ -84,7 +84,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
             Role::build()->setName('bucket_full_access')->setBucket('beer-sample'),
             ]
         );
-        ;
+
         $this->manager->upsertGroup($group);
 
         $result = $this->retryFor(
@@ -151,7 +151,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
             Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
             ]
         );
-        ;
+
         $this->manager->upsertGroup($group);
 
         $role = Role::build()->setName('bucket_full_access')->setBucket('*');

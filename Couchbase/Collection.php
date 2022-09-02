@@ -506,12 +506,7 @@ class Collection
             $encoded,
             MutateInOptions::export($options)
         );
-        $result = new MutateInResult($response);
-        $error = $result->error();
-        if ($error != null) {
-            throw $error;
-        }
-        return $result;
+        return new MutateInResult($response);
     }
 
     /**

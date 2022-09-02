@@ -63,6 +63,12 @@ struct key_value_error_context : public common_error_context {
     std::optional<std::string> enhanced_error_context{};
 };
 
+struct subdocument_error_context : public key_value_error_context {
+    bool deleted;
+    std::optional<std::size_t> first_error_index{};
+    std::optional<std::string> first_error_path{};
+};
+
 struct query_error_context : public common_http_error_context {
     std::uint64_t first_error_code{};
     std::string first_error_message{};

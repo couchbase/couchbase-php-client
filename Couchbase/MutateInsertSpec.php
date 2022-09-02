@@ -26,7 +26,7 @@ namespace Couchbase;
 class MutateInsertSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private bool $expandMacros;
     private string $path;
     private $value;
@@ -35,7 +35,7 @@ class MutateInsertSpec implements MutateInSpec
      * @param string $path
      * @param mixed $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @since 4.0.0
@@ -44,12 +44,12 @@ class MutateInsertSpec implements MutateInSpec
         string $path,
         $value,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     )
     {
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
         $this->value = $value;
@@ -59,7 +59,7 @@ class MutateInsertSpec implements MutateInSpec
      * @param string $path
      * @param mixed $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @return MutateInsertSpec
@@ -69,11 +69,11 @@ class MutateInsertSpec implements MutateInSpec
         string $path,
         $value,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     ): MutateInsertSpec
     {
-        return new MutateInsertSpec($path, $value, $isXattr, $createParents, $expandMacros);
+        return new MutateInsertSpec($path, $value, $isXattr, $createPath, $expandMacros);
     }
 
     /**
@@ -89,14 +89,14 @@ class MutateInsertSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateInsertSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateInsertSpec
+    public function createPath(bool $createPath): MutateInsertSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -125,7 +125,7 @@ class MutateInsertSpec implements MutateInSpec
         return [
             'opcode' => 'dictionaryAdd',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
             'value' => MutateInOptions::encodeValue($options, $this->value),

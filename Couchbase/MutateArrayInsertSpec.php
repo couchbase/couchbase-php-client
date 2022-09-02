@@ -26,7 +26,7 @@ namespace Couchbase;
 class MutateArrayInsertSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private bool $expandMacros;
     private string $path;
     private array $values;
@@ -35,7 +35,7 @@ class MutateArrayInsertSpec implements MutateInSpec
      * @param string $path
      * @param array $values
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @since 4.0.0
@@ -44,12 +44,12 @@ class MutateArrayInsertSpec implements MutateInSpec
         string $path,
         array $values,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     )
     {
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
         $this->values = $values;
@@ -59,7 +59,7 @@ class MutateArrayInsertSpec implements MutateInSpec
      * @param string $path
      * @param array $values
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @return MutateArrayInsertSpec
@@ -69,11 +69,11 @@ class MutateArrayInsertSpec implements MutateInSpec
         string $path,
         array $values,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     ): MutateArrayInsertSpec
     {
-        return new MutateArrayInsertSpec($path, $values, $isXattr, $createParents, $expandMacros);
+        return new MutateArrayInsertSpec($path, $values, $isXattr, $createPath, $expandMacros);
     }
 
     /**
@@ -89,14 +89,14 @@ class MutateArrayInsertSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateArrayInsertSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateArrayInsertSpec
+    public function createPath(bool $createPath): MutateArrayInsertSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -125,7 +125,7 @@ class MutateArrayInsertSpec implements MutateInSpec
         return [
             'opcode' => 'arrayInsert',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
             'value' => join(

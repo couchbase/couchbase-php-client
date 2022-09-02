@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\PathNotFoundException;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OutOfBoundsException;
@@ -34,9 +35,9 @@ class LookupInResult extends Result
     private array $fields;
 
     /**
-     * @internal
-     *
      * @param array $response raw response from the extension
+     *
+     * @internal
      *
      * @since 4.0.0
      */
@@ -54,14 +55,15 @@ class LookupInResult extends Result
      *
      * @return mixed
      * @throws OutOfBoundsException
+     * @throws PathNotFoundException
      * @since 4.0.0
      */
     public function content(int $index)
     {
         if (array_key_exists($index, $this->fields)) {
             $field = $this->fields[$index];
-            if (array_key_exists('error', $field)) {
-                throw $field['error'];
+            if (!array_key_exists('exists', $field) || !$field['exists']) {
+                throw new PathNotFoundException(sprintf("LookupIn path is not found for index: %d", $index));
             }
             return $this->transcoder->decode($field['value'], 0);
         }
@@ -73,14 +75,15 @@ class LookupInResult extends Result
      *
      * @return mixed
      * @throws OutOfBoundsException
+     * @throws PathNotFoundException
      * @since 4.0.0
      */
     public function contentByPath(string $path)
     {
         foreach ($this->fields as $field) {
             if ($field['path'] == $path) {
-                if (array_key_exists('error', $field)) {
-                    throw $field['error'];
+                if (!array_key_exists('exists', $field) || !$field['exists']) {
+                    throw new PathNotFoundException(sprintf("LookupIn path is not found for path: %s", $path));
                 }
                 return $this->transcoder->decode($field['value'], 0);
             }
@@ -132,24 +135,6 @@ class LookupInResult extends Result
             return $this->fields[$index]['path'];
         }
         return null;
-    }
-
-    /**
-     * @param int $index
-     *
-     * @return CouchbaseException|null
-     * @since 4.0.0
-     */
-    public function errorCode(int $index): ?CouchbaseException
-    {
-        if (array_key_exists($index, $this->fields)) {
-            $field = $this->fields[$index];
-            if (array_key_exists('error', $field)) {
-                return $field['error'];
-            }
-            return null;
-        }
-        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
 
     /**

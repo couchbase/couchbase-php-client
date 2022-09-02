@@ -26,7 +26,7 @@ namespace Couchbase;
 class MutateCounterSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private string $path;
     private int $value;
 
@@ -34,14 +34,14 @@ class MutateCounterSpec implements MutateInSpec
      * @param string $path
      * @param int $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @since 4.0.0
      */
-    public function __construct(string $path, int $value, bool $isXattr = false, bool $createParents = false)
+    public function __construct(string $path, int $value, bool $isXattr = false, bool $createPath = false)
     {
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->path = $path;
         $this->value = $value;
     }
@@ -50,14 +50,14 @@ class MutateCounterSpec implements MutateInSpec
      * @param string $path
      * @param mixed $value
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateCounterSpec
      * @since 4.0.0
      */
-    public static function build(string $path, $value, bool $isXattr = false, bool $createParents = false): MutateCounterSpec
+    public static function build(string $path, $value, bool $isXattr = false, bool $createPath = false): MutateCounterSpec
     {
-        return new MutateCounterSpec($path, $value, $isXattr, $createParents);
+        return new MutateCounterSpec($path, $value, $isXattr, $createPath);
     }
 
     /**
@@ -73,14 +73,14 @@ class MutateCounterSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateCounterSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateCounterSpec
+    public function createPath(bool $createPath): MutateCounterSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -97,7 +97,7 @@ class MutateCounterSpec implements MutateInSpec
         return [
             'opcode' => 'counter',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'path' => $this->path,
             'value' => $this->value,
         ];
