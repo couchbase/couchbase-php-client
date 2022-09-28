@@ -28,6 +28,7 @@ class UpsertOptions
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
 
@@ -76,7 +77,7 @@ class UpsertOptions
     public function expiry($seconds): UpsertOptions
     {
         if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
+            $this->expiryTimestamp = $seconds->getTimestamp();
         } else {
             $this->expirySeconds = (int)$seconds;
         }
@@ -101,7 +102,6 @@ class UpsertOptions
      * Sets the durability level to enforce when writing the document.
      *
      * @param string|int $level the durability level to enforce
-     * @param int|null $timeoutSeconds
      *
      * @return UpsertOptions
      * @throws Exception\InvalidArgumentException
@@ -164,6 +164,7 @@ class UpsertOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,
             'durabilityLevel' => $options->durabilityLevel,
         ];

@@ -26,14 +26,14 @@ namespace Couchbase;
 class MutateRemoveSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private bool $expandMacros;
     private string $path;
 
     /**
      * @param string $path
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @since 4.0.0
@@ -41,12 +41,12 @@ class MutateRemoveSpec implements MutateInSpec
     public function __construct(
         string $path,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     )
     {
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
     }
@@ -54,7 +54,7 @@ class MutateRemoveSpec implements MutateInSpec
     /**
      * @param string $path
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @return MutateRemoveSpec
@@ -63,11 +63,11 @@ class MutateRemoveSpec implements MutateInSpec
     public static function build(
         string $path,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     ): MutateRemoveSpec
     {
-        return new MutateRemoveSpec($path, $isXattr, $createParents, $expandMacros);
+        return new MutateRemoveSpec($path, $isXattr, $createPath, $expandMacros);
     }
 
     /**
@@ -83,14 +83,14 @@ class MutateRemoveSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateRemoveSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateRemoveSpec
+    public function createPath(bool $createPath): MutateRemoveSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -119,7 +119,7 @@ class MutateRemoveSpec implements MutateInSpec
         return [
             'opcode' => 'remove',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
         ];

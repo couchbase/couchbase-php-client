@@ -82,12 +82,70 @@ cb_get_string(const zval* options, std::string_view name)
             break;
         default:
             return {
-                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a integer value in the options", name) },
-                {}
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a string value in the options", name) }, {}
             };
     }
 
     return { {}, cb_string_new(value) };
+}
+
+std::pair<core_error_info, std::optional<bool>>
+cb_get_boolean(const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_TRUE:
+            return { {}, true };
+        case IS_FALSE:
+            return { {}, false };
+        default:
+            return {
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a boolean value in the options", name) },
+                {}
+            };
+    }
+
+    return {};
+}
+
+std::pair<core_error_info, std::optional<std::vector<std::byte>>>
+cb_get_binary(const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return {
+                { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a string value in the options", name) }, {}
+            };
+    }
+
+    return { {}, cb_binary_new(value) };
 }
 
 std::pair<core::operations::query_request, core_error_info>
@@ -190,25 +248,28 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<core::mutation_token> vectors{};
+        std::vector<mutation_token> vectors{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            core::mutation_token token{};
-            if (auto e = cb_assign_integer(token.partition_id, item, "partitionId"); e.ec) {
+            std::uint64_t partition_uuid{ 0 };
+            std::uint64_t sequence_number{ 0 };
+            std::uint16_t partition_id{ 0 };
+            std::string bucket_name{};
+            if (auto e = cb_assign_integer(partition_id, item, "partitionId"); e.ec) {
                 return { {}, e };
             }
-            if (auto e = cb_assign_integer(token.partition_uuid, item, "partitionUuid"); e.ec) {
+            if (auto e = cb_assign_integer(partition_uuid, item, "partitionUuid"); e.ec) {
                 return { {}, e };
             }
-            if (auto e = cb_assign_integer(token.sequence_number, item, "sequenceNumber"); e.ec) {
+            if (auto e = cb_assign_integer(sequence_number, item, "sequenceNumber"); e.ec) {
                 return { {}, e };
             }
-            if (auto e = cb_assign_string(token.bucket_name, item, "bucketName"); e.ec) {
+            if (auto e = cb_assign_string(bucket_name, item, "bucketName"); e.ec) {
                 return { {}, e };
             }
-            vectors.emplace_back(token);
+            vectors.emplace_back(partition_uuid, sequence_number, partition_id, bucket_name);
         }
         ZEND_HASH_FOREACH_END();
 
@@ -336,6 +397,29 @@ cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
     return {};
 }
 
+std::pair<core_error_info, std::optional<couchbase::cas>>
+cb_get_cas(const zval* options)
+{
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("cas"));
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING: {
+            couchbase::cas cas;
+            if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas); e.ec) {
+                return { e, {} };
+            }
+            return { {}, cas };
+        }
+        default:
+            return { { errc::common::invalid_argument, ERROR_LOCATION, "expected CAS to be a string in the options" }, {} };
+    }
+    return {};
+}
+
 core_error_info
 cb_assign_cas(couchbase::cas& cas, const zval* document)
 {
@@ -353,5 +437,161 @@ cb_assign_cas(couchbase::cas& cas, const zval* document)
     }
     cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
     return {};
+}
+
+std::pair<core_error_info, std::optional<std::chrono::milliseconds>>
+cb_get_timeout(const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("timeoutMilliseconds"));
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_LONG:
+            break;
+        default:
+            return { { errc::common::invalid_argument, ERROR_LOCATION, "expected timeoutMilliseconds to be a number in the options" }, {} };
+    }
+    return { {}, std::chrono::milliseconds(Z_LVAL_P(value)) };
+}
+
+std::pair<core_error_info, std::optional<durability_level>>
+cb_get_durability_level(const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityLevel"));
+    if (value == nullptr) {
+        return {};
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return {};
+        case IS_STRING:
+            break;
+        default:
+            return { { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string in the options" }, {} };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
+        return { {}, durability_level::none };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
+        return { {}, durability_level::majority };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
+        return { {}, durability_level::majority_and_persist_to_active };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
+        return { {}, durability_level::persist_to_majority };
+    }
+    return { { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) },
+             {} };
+}
+
+std::pair<core_error_info, std::optional<couchbase::persist_to>>
+cb_get_legacy_durability_persist_to(const zval* options)
+{
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("persistTo"));
+    if (value == nullptr) {
+        return { {}, couchbase::persist_to::none };
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return { {}, couchbase::persist_to::none };
+        case IS_STRING:
+            break;
+        default:
+            return { { errc::common::invalid_argument, ERROR_LOCATION, "expected persistTo to be a string in the options" }, {} };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
+        return { {}, couchbase::persist_to::none };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("active")) == 0) {
+        return { {}, couchbase::persist_to::active };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("one")) == 0) {
+        return { {}, couchbase::persist_to::one };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("two")) == 0) {
+        return { {}, couchbase::persist_to::two };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("three")) == 0) {
+        return { {}, couchbase::persist_to::three };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("four")) == 0) {
+        return { {}, couchbase::persist_to::four };
+    }
+    return {};
+}
+
+std::pair<core_error_info, std::optional<couchbase::replicate_to>>
+cb_get_legacy_durability_replicate_to(const zval* options)
+{
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("replicateTo"));
+    if (value == nullptr) {
+        return { {}, couchbase::replicate_to::none };
+    }
+    switch (Z_TYPE_P(value)) {
+        case IS_NULL:
+            return { {}, couchbase::replicate_to::none };
+        case IS_STRING:
+            break;
+        default:
+            return { { errc::common::invalid_argument, ERROR_LOCATION, "expected replicateTo to be a string in the options" }, {} };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
+        return { {}, couchbase::replicate_to::none };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("one")) == 0) {
+        return { {}, couchbase::replicate_to::one };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("two")) == 0) {
+        return { {}, couchbase::replicate_to::two };
+    }
+    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("three")) == 0) {
+        return { {}, couchbase::replicate_to::three };
+    }
+    return {};
+}
+
+std::pair<core_error_info, std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>
+cb_get_legacy_durability_constraints(const zval* options)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {} };
+    }
+
+    auto [e1, persist_to] = cb_get_legacy_durability_persist_to(options);
+    if (e1.ec) {
+        return { e1, {} };
+    }
+    auto [e2, replicate_to] = cb_get_legacy_durability_replicate_to(options);
+    if (e2.ec) {
+        return { e2, {} };
+    }
+    if (!persist_to && !replicate_to) {
+        return {};
+    }
+
+    return { {}, std::make_pair(persist_to.value_or(couchbase::persist_to::none), replicate_to.value_or(couchbase::replicate_to::none)) };
 }
 } // namespace couchbase::php

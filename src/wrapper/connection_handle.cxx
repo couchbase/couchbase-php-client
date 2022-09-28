@@ -19,10 +19,11 @@
 #include "common.hxx"
 #include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
+#include "core/utils/json.hxx"
+#include "passthrough_transcoder.hxx"
 
 #include <core/cluster.hxx>
 #include <core/management/bucket_settings.hxx>
-#include <core/mutation_token.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
 #include <core/operations/management/query.hxx>
@@ -32,6 +33,7 @@
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/collection.hxx>
+#include <couchbase/mutation_token.hxx>
 #include <couchbase/retry_reason.hxx>
 
 #include <fmt/core.h>
@@ -212,10 +214,9 @@ decode_mutation_subdoc_opcode(const zval* spec)
                fmt::format("unexpected opcode field of the spec: \"{}\"", std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 
-static key_value_error_context
-build_error_context(const couchbase::key_value_error_context& ctx)
+static void
+build_error_context(const couchbase::key_value_error_context& ctx, key_value_error_context& out)
 {
-    key_value_error_context out;
     out.bucket = ctx.bucket();
     out.scope = ctx.scope();
     out.collection = ctx.collection();
@@ -241,6 +242,24 @@ build_error_context(const couchbase::key_value_error_context& ctx)
             out.retry_reasons.insert(retry_reason_to_string(reason));
         }
     }
+}
+
+static key_value_error_context
+build_error_context(const couchbase::key_value_error_context& ctx)
+{
+    key_value_error_context out;
+    build_error_context(ctx, out);
+    return out;
+}
+
+static subdocument_error_context
+build_error_context(const couchbase::subdocument_error_context& ctx)
+{
+    subdocument_error_context out;
+    build_error_context(ctx, out);
+    out.deleted = ctx.deleted();
+    out.first_error_index = ctx.first_error_index();
+    out.first_error_path = ctx.first_error_path();
     return out;
 }
 
@@ -532,9 +551,9 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return { {}, std::move(resp) };
     }
 
-    couchbase::collection collection(std::string bucket, std::string scope, std::string collection)
+    couchbase::collection collection(std::string_view bucket, std::string_view scope, std::string_view collection)
     {
-        return couchbase::cluster(cluster_).bucket(std::move(bucket)).scope(std::move(scope)).collection(std::move(collection));
+        return couchbase::cluster(cluster_).bucket(bucket).scope(scope).collection(collection);
     }
 
   private:
@@ -593,49 +612,6 @@ core_error_info
 connection_handle::bucket_close(const zend_string* name)
 {
     return impl_->bucket_close(cb_string_new(name));
-}
-
-struct durability_holder {
-    core::protocol::durability_level durability_level{ core::protocol::durability_level::none };
-};
-
-template<typename Request>
-static core_error_info
-cb_assign_durability(Request& req, const zval* options)
-{
-    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
-        return {};
-    }
-    if (Z_TYPE_P(options) != IS_ARRAY) {
-        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" };
-    }
-
-    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("durabilityLevel"));
-    if (value == nullptr) {
-        return {};
-    }
-    switch (Z_TYPE_P(value)) {
-        case IS_NULL:
-            return {};
-        case IS_STRING:
-            break;
-        default:
-            return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string in the options" };
-    }
-    if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-        req.durability_level = core::protocol::durability_level::none;
-    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-        req.durability_level = core::protocol::durability_level::majority;
-    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-        req.durability_level = core::protocol::durability_level::majority_and_persist_to_active;
-    } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-        req.durability_level = core::protocol::durability_level::persist_to_majority;
-    } else {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 fmt::format("unknown durabilityLevel: {}", std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) };
-    }
-    return {};
 }
 
 static core_error_info
@@ -707,21 +683,21 @@ cb_assign_user_domain(Request& req, const zval* options)
 }
 
 static inline void
-mutation_token_to_zval(const core::mutation_token& token, zval* return_value)
+mutation_token_to_zval(const mutation_token& token, zval* return_value)
 {
     array_init(return_value);
-    add_assoc_stringl(return_value, "bucketName", token.bucket_name.data(), token.bucket_name.size());
-    add_assoc_long(return_value, "partitionId", token.partition_id);
-    auto val = fmt::format("{:x}", token.partition_uuid);
+    add_assoc_stringl(return_value, "bucketName", token.bucket_name().data(), token.bucket_name().size());
+    add_assoc_long(return_value, "partitionId", token.partition_id());
+    auto val = fmt::format("{:x}", token.partition_uuid());
     add_assoc_stringl(return_value, "partitionUuid", val.data(), val.size());
-    val = fmt::format("{:x}", token.sequence_number);
+    val = fmt::format("{:x}", token.sequence_number());
     add_assoc_stringl(return_value, "sequenceNumber", val.data(), val.size());
 }
 
 static inline bool
-is_mutation_token_valid(const core::mutation_token& token)
+is_mutation_token_valid(const mutation_token& token)
 {
-    return !token.bucket_name.empty() && token.partition_uuid > 0;
+    return !token.bucket_name().empty() && token.partition_uuid() > 0;
 }
 
 COUCHBASE_API
@@ -735,38 +711,35 @@ connection_handle::document_upsert(zval* return_value,
                                    zend_long flags,
                                    const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::upsert_request request{ doc_id, cb_binary_new(value) };
-    request.flags = static_cast<std::uint32_t>(flags);
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::upsert_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+    if (auto e = cb_set_preserve_expiry(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] =
+      impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+        .upsert<couchbase::php::passthrough_transcoder>(
+          cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
+        .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute upsert", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -783,35 +756,32 @@ connection_handle::document_insert(zval* return_value,
                                    zend_long flags,
                                    const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::insert_request request{ doc_id, cb_binary_new(value) };
-    request.flags = static_cast<std::uint32_t>(flags);
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::insert_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] =
+      impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+        .insert<couchbase::php::passthrough_transcoder>(
+          cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
+        .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute insert", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -828,41 +798,38 @@ connection_handle::document_replace(zval* return_value,
                                     zend_long flags,
                                     const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::replace_request request{ doc_id, cb_binary_new(value) };
-    request.flags = static_cast<std::uint32_t>(flags);
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::replace_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+    if (auto e = cb_set_preserve_expiry(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_cas(request.cas, options); e.ec) {
+    if (auto e = cb_set_cas(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] =
+      impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+        .replace<couchbase::php::passthrough_transcoder>(
+          cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
+        .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute replace", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -878,31 +845,28 @@ connection_handle::document_append(zval* return_value,
                                    const zend_string* value,
                                    const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::append_request request{ doc_id, cb_binary_new(value) };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::append_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .binary()
+                         .append(cb_string_new(id), cb_binary_new(value), opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute append", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -918,31 +882,28 @@ connection_handle::document_prepend(zval* return_value,
                                     const zend_string* value,
                                     const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::prepend_request request{ doc_id, cb_binary_new(value) };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::prepend_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .binary()
+                         .prepend(cb_string_new(id), cb_binary_new(value), opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute prepend", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -957,40 +918,38 @@ connection_handle::document_increment(zval* return_value,
                                       const zend_string* id,
                                       const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::increment_request request{ doc_id };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::increment_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.delta, options, "delta"); e.ec) {
+    if (auto e = cb_set_delta(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.initial_value, options, "initialValue"); e.ec) {
+    if (auto e = cb_set_initial_value(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .binary()
+                         .increment(cb_string_new(id), opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute increment", build_error_context(ctx) };
     }
+
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    add_assoc_long(return_value, "value", resp.content);
-    auto value_str = fmt::format("{}", resp.content);
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_long(return_value, "value", resp.content());
+    auto value_str = fmt::format("{}", resp.content());
     add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -1005,40 +964,38 @@ connection_handle::document_decrement(zval* return_value,
                                       const zend_string* id,
                                       const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-    couchbase::core::operations::decrement_request request{ doc_id };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::decrement_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.delta, options, "delta"); e.ec) {
+    if (auto e = cb_set_delta(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.initial_value, options, "initialValue"); e.ec) {
+    if (auto e = cb_set_initial_value(opts, options); e.ec) {
         return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .binary()
+                         .decrement(cb_string_new(id), opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute decrement", build_error_context(ctx) };
     }
+
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    add_assoc_long(return_value, "value", resp.content);
-    auto value_str = fmt::format("{}", resp.content);
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_long(return_value, "value", resp.content());
+    auto value_str = fmt::format("{}", resp.content());
     add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -1118,7 +1075,7 @@ connection_handle::document_get_any_replica(zval* return_value,
                                             const zval* options)
 {
     couchbase::get_any_replica_options o;
-    if (auto e = cb_assign_timeout(o, options); e.ec) {
+    if (auto e = cb_set_timeout(o, options); e.ec) {
         return e;
     }
     auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
@@ -1130,9 +1087,10 @@ connection_handle::document_get_any_replica(zval* return_value,
     add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
     auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    add_assoc_long(return_value, "flags", resp.flags());
+    auto encoded = resp.content_as<passthrough_transcoder>();
+    add_assoc_long(return_value, "flags", encoded.flags);
     add_assoc_bool(return_value, "isReplica", resp.is_replica());
-    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(resp.content().data()), resp.content().size());
+    add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(encoded.data.data()), encoded.data.size());
     return {};
 }
 
@@ -1146,7 +1104,7 @@ connection_handle::document_get_all_replicas(zval* return_value,
                                              const zval* options)
 {
     couchbase::get_all_replicas_options o;
-    if (auto e = cb_assign_timeout(o, options); e.ec) {
+    if (auto e = cb_set_timeout(o, options); e.ec) {
         return e;
     }
     auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
@@ -1161,9 +1119,10 @@ connection_handle::document_get_all_replicas(zval* return_value,
         add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
         auto cas = fmt::format("{:x}", resp.cas().value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
-        add_assoc_long(&entry, "flags", resp.flags());
         add_assoc_bool(&entry, "isReplica", resp.is_replica());
-        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(resp.content().data()), resp.content().size());
+        auto encoded = resp.content_as<passthrough_transcoder>();
+        add_assoc_long(&entry, "flags", encoded.flags);
+        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(encoded.data.data()), encoded.data.size());
         add_next_index_zval(return_value, &entry);
     }
     return {};
@@ -1320,34 +1279,29 @@ connection_handle::document_remove(zval* return_value,
                                    const zend_string* id,
                                    const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
+    couchbase::remove_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_set_durability(opts, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_set_cas(opts, options); e.ec) {
+        return e;
+    }
 
-    couchbase::core::operations::remove_request request{ doc_id };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_cas(request.cas, options); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
-        return e;
-    }
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    auto [ctx, resp] =
+      impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection)).remove(cb_string_new(id), opts).get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute remove", build_error_context(ctx) };
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
     return {};
@@ -1401,135 +1355,149 @@ connection_handle::document_mutate_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-
-    couchbase::core::operations::mutate_in_request request{ doc_id };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::mutate_in_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_durability(request, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_boolean(request.access_deleted, options, "accessDeleted"); e.ec) {
+    if (auto e = cb_set_access_deleted(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_boolean(request.create_as_deleted, options, "createAsDeleted"); e.ec) {
+    if (auto e = cb_set_create_as_deleted(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_integer(request.expiry, options, "expirySeconds"); e.ec) {
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_cas(request.cas, options); e.ec) {
+    if (auto e = cb_set_cas(opts, options); e.ec) {
         return e;
     }
-    std::string store_semantics;
-    if (auto e = cb_assign_string(store_semantics, options, "storeSemantics"); e.ec) {
+    if (auto e = cb_set_store_semantics(opts, options); e.ec) {
         return e;
-    }
-    if (store_semantics == "replace") {
-        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::replace;
-    } else if (store_semantics == "insert") {
-        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::insert;
-    } else if (store_semantics == "upsert") {
-        request.store_semantics = core::protocol::mutate_in_request_body::store_semantics_type::upsert;
-    } else if (!store_semantics.empty()) {
-        return { errc::common::invalid_argument, ERROR_LOCATION, "unexpected value for storeSemantics option" };
     }
 
-    if (Z_TYPE_P(specs) == IS_ARRAY) {
-        const zval* item = nullptr;
-        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
-        {
-            auto [operation, e] = decode_mutation_subdoc_opcode(item);
-            if (e.ec) {
-                return e;
-            }
-            bool xattr = false;
-            if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
-                return e;
-            }
-            bool create_parents = false;
-            if (e = cb_assign_boolean(create_parents, item, "createParents"); e.ec) {
-                return e;
-            }
-            bool expand_macros = false;
-            if (e = cb_assign_boolean(expand_macros, item, "expandMacros"); e.ec) {
-                return e;
-            }
-            std::string path;
-            if (e = cb_assign_string(path, item, "path"); e.ec) {
-                return e;
-            }
-            switch (operation) {
-                case core::protocol::subdoc_opcode::counter: {
-                    std::int64_t delta = 0;
-                    if (e = cb_assign_integer(delta, item, "value"); e.ec) {
-                        return e;
-                    }
-                    request.specs.add_spec(operation, xattr, create_parents, expand_macros, path, delta);
-                } break;
-                case core::protocol::subdoc_opcode::remove:
-                case core::protocol::subdoc_opcode::remove_doc: {
-                    request.specs.add_spec(operation, xattr, path);
-                } break;
-                default: {
-                    std::string param;
-                    if (e = cb_assign_string(param, item, "value"); e.ec) {
-                        return e;
-                    }
-                    request.specs.add_spec(operation, xattr, create_parents, expand_macros, path, param);
-                }
-            }
-        }
-        ZEND_HASH_FOREACH_END();
-    } else {
+    if (Z_TYPE_P(specs) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
     }
-
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec) {
-        return err;
+    couchbase::mutate_in_specs cxx_specs;
+    const zval* item = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+    {
+        auto [operation, e] = decode_mutation_subdoc_opcode(item);
+        if (e.ec) {
+            return e;
+        }
+        bool xattr = false;
+        if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+            return e;
+        }
+        bool create_path = false;
+        if (e = cb_assign_boolean(create_path, item, "createPath"); e.ec) {
+            return e;
+        }
+        bool expand_macros = false;
+        if (e = cb_assign_boolean(expand_macros, item, "expandMacros"); e.ec) {
+            return e;
+        }
+        std::string path;
+        if (e = cb_assign_string(path, item, "path"); e.ec) {
+            return e;
+        }
+        switch (operation) {
+            case core::protocol::subdoc_opcode::counter: {
+                std::int64_t delta = 0;
+                if (e = cb_assign_integer(delta, item, "value"); e.ec) {
+                    return e;
+                }
+                if (delta < 0) {
+                    cxx_specs.push_back(mutate_in_specs::decrement(path, -1 * delta).xattr(xattr).create_path(create_path));
+                } else {
+                    cxx_specs.push_back(mutate_in_specs::increment(path, delta).xattr(xattr).create_path(create_path));
+                }
+            } break;
+            case core::protocol::subdoc_opcode::remove:
+            case core::protocol::subdoc_opcode::remove_doc:
+                cxx_specs.push_back(mutate_in_specs::remove(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::set_doc:
+            case core::protocol::subdoc_opcode::dict_upsert:
+            case core::protocol::subdoc_opcode::dict_add:
+            case core::protocol::subdoc_opcode::replace:
+            case core::protocol::subdoc_opcode::array_push_last:
+            case core::protocol::subdoc_opcode::array_push_first:
+            case core::protocol::subdoc_opcode::array_insert:
+            case core::protocol::subdoc_opcode::array_add_unique: {
+                auto [err, value] = cb_get_binary(item, "value");
+                if (err.ec) {
+                    return e;
+                }
+                if (!value) {
+                    return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("unexpected value for \"{}\" spec", path) };
+                }
+                switch (operation) {
+                    case core::protocol::subdoc_opcode::set_doc:
+                    case core::protocol::subdoc_opcode::dict_upsert:
+                        cxx_specs.push_back(mutate_in_specs::upsert_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    case core::protocol::subdoc_opcode::dict_add:
+                        cxx_specs.push_back(mutate_in_specs::insert_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    case core::protocol::subdoc_opcode::replace:
+                        cxx_specs.push_back(mutate_in_specs::replace_raw(path, value.value()).xattr(xattr));
+                        break;
+                    case core::protocol::subdoc_opcode::array_add_unique:
+                        cxx_specs.push_back(
+                          mutate_in_specs::array_add_unique_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    case core::protocol::subdoc_opcode::array_push_last:
+                        cxx_specs.push_back(mutate_in_specs::array_append_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    case core::protocol::subdoc_opcode::array_push_first:
+                        cxx_specs.push_back(mutate_in_specs::array_prepend_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    case core::protocol::subdoc_opcode::array_insert:
+                        cxx_specs.push_back(mutate_in_specs::array_insert_raw(path, value.value()).xattr(xattr).create_path(create_path));
+                        break;
+                    default:
+                        break;
+                }
+            } break;
+            default:
+                break;
+        }
     }
+    ZEND_HASH_FOREACH_END();
+
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .mutate_in(cb_string_new(id), cxx_specs, opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute mutate_in", build_error_context(ctx) };
+    }
+
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    add_assoc_bool(return_value, "deleted", resp.deleted);
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_bool(return_value, "deleted", resp.is_deleted());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
-    if (is_mutation_token_valid(resp.token)) {
+    if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
         zval token_val;
-        mutation_token_to_zval(resp.token, &token_val);
+        mutation_token_to_zval(resp.mutation_token().value(), &token_val);
         add_assoc_zval(return_value, "mutationToken", &token_val);
     }
-    if (resp.first_error_index) {
-        add_assoc_long(return_value, "firstErrorIndex", resp.first_error_index.value());
-    }
+
     zval fields;
-    array_init_size(&fields, resp.fields.size());
-    for (const auto& field : resp.fields) {
+    array_init_size(&fields, cxx_specs.specs().size());
+    for (std::size_t idx = 0; idx < cxx_specs.specs().size(); ++idx) {
         zval entry;
         array_init(&entry);
-        add_assoc_long(&entry, "originalIndex", field.original_index);
-        add_assoc_stringl(&entry, "path", field.path.data(), field.path.size());
-        add_assoc_stringl(&entry, "value", field.value.data(), field.value.size());
-        add_assoc_string(&entry, "opcode", subdoc_opcode_to_string(field.opcode));
-        add_assoc_long(&entry, "status", std::uint16_t(field.status));
-        if (field.ec) {
-            zval ex;
-            create_exception(&ex,
-                             { field.ec,
-                               ERROR_LOCATION,
-                               fmt::format(R"(mutateIn operation "{}" for path "{}" failed: status={}, index={})",
-                                           subdoc_opcode_to_string(field.opcode),
-                                           field.path,
-                                           field.status,
-                                           field.original_index),
-                               build_error_context(resp.ctx) });
-            add_assoc_zval(&entry, "error", &ex);
+        add_assoc_stringl(&entry, "path", cxx_specs.specs()[idx].path_.data(), cxx_specs.specs()[idx].path_.size());
+        if (resp.has_value(idx)) {
+            auto value = resp.content_as<tao::json::value>(idx);
+            auto str = core::utils::json::generate(value);
+            add_assoc_stringl(&entry, "value", str.data(), str.size());
         }
         add_next_index_zval(&fields, &entry);
     }
@@ -1547,76 +1515,74 @@ connection_handle::document_lookup_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options)
 {
-    couchbase::core::document_id doc_id{
-        cb_string_new(bucket),
-        cb_string_new(scope),
-        cb_string_new(collection),
-        cb_string_new(id),
-    };
-
-    couchbase::core::operations::lookup_in_request request{ doc_id };
-    if (auto e = cb_assign_timeout(request, options); e.ec) {
+    couchbase::lookup_in_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    if (auto e = cb_assign_boolean(request.access_deleted, options, "accessDeleted"); e.ec) {
+    if (auto e = cb_set_access_deleted(opts, options); e.ec) {
         return e;
     }
 
-    if (Z_TYPE_P(specs) == IS_ARRAY) {
-        const zval* item = nullptr;
-        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
-        {
-            auto [operation, e] = decode_lookup_subdoc_opcode(item);
-            if (e.ec) {
-                return e;
-            }
-            bool xattr = false;
-            if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
-                return e;
-            }
-            std::string path;
-            if (e = cb_assign_string(path, item, "path"); e.ec) {
-                return e;
-            }
-            request.specs.add_spec(operation, xattr, path);
-        }
-        ZEND_HASH_FOREACH_END();
-    } else {
+    if (Z_TYPE_P(specs) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
     }
+    couchbase::lookup_in_specs cxx_specs;
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
-    if (err.ec && resp.ctx.ec() != errc::key_value::document_not_found) {
-        return err;
+    const zval* item = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+    {
+        auto [operation, e] = decode_lookup_subdoc_opcode(item);
+        if (e.ec) {
+            return e;
+        }
+        bool xattr = false;
+        if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+            return e;
+        }
+        std::string path;
+        if (e = cb_assign_string(path, item, "path"); e.ec) {
+            return e;
+        }
+        switch (operation) {
+            case core::protocol::subdoc_opcode::get_doc:
+            case core::protocol::subdoc_opcode::get:
+                cxx_specs.push_back(lookup_in_specs::get(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::exists:
+                cxx_specs.push_back(lookup_in_specs::exists(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::get_count:
+                cxx_specs.push_back(lookup_in_specs::count(path).xattr(xattr));
+                break;
+            default:
+                break;
+        }
     }
+    ZEND_HASH_FOREACH_END();
+
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .lookup_in(cb_string_new(id), cxx_specs, opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute lookup_in", build_error_context(ctx) };
+    }
+
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
-    add_assoc_bool(return_value, "deleted", resp.deleted);
-    auto cas = fmt::format("{:x}", resp.cas.value());
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_bool(return_value, "deleted", resp.is_deleted());
+    auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     zval fields;
-    array_init_size(&fields, resp.fields.size());
-    for (const auto& field : resp.fields) {
+    array_init_size(&fields, cxx_specs.specs().size());
+    for (std::size_t idx = 0; idx < cxx_specs.specs().size(); ++idx) {
         zval entry;
         array_init(&entry);
-        add_assoc_long(&entry, "originalIndex", field.original_index);
-        add_assoc_stringl(&entry, "path", field.path.data(), field.path.size());
-        add_assoc_stringl(&entry, "value", field.value.data(), field.value.size());
-        add_assoc_bool(&entry, "exists", field.exists);
-        add_assoc_string(&entry, "opcode", subdoc_opcode_to_string(field.opcode));
-        add_assoc_long(&entry, "status", std::uint16_t(field.status));
-        if (field.ec) {
-            zval ex;
-            create_exception(&ex,
-                             { field.ec,
-                               ERROR_LOCATION,
-                               fmt::format(R"(lookupIn operation "{}" for path "{}" failed: status={}, index={})",
-                                           subdoc_opcode_to_string(field.opcode),
-                                           field.path,
-                                           field.status,
-                                           field.original_index),
-                               build_error_context(resp.ctx) });
-            add_assoc_zval(&entry, "error", &ex);
+        add_assoc_stringl(&entry, "path", cxx_specs.specs()[idx].path_.data(), cxx_specs.specs()[idx].path_.size());
+        add_assoc_bool(&entry, "exists", resp.exists(idx));
+        if (resp.has_value(idx)) {
+            auto value = resp.content_as<tao::json::value>(idx);
+            auto str = core::utils::json::generate(value);
+            add_assoc_stringl(&entry, "value", str.data(), str.size());
         }
         add_next_index_zval(&fields, &entry);
     }
@@ -1636,49 +1602,47 @@ connection_handle::document_get_multi(zval* return_value,
     if (Z_TYPE_P(ids) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected ids to be an array" };
     }
-
-    std::optional<std::chrono::milliseconds> timeout;
-    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+    couchbase::get_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
 
-    std::vector<couchbase::core::operations::get_request> requests;
+    std::vector<std::string> requests{};
     requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
+
     const zval* id = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
     {
-        couchbase::core::document_id doc_id{
-            cb_string_new(bucket),
-            cb_string_new(scope),
-            cb_string_new(collection),
-            cb_string_new(id),
-        };
-
-        couchbase::core::operations::get_request request{ doc_id };
-        request.timeout = timeout;
-        requests.emplace_back(request);
+        requests.emplace_back(cb_string_new(id));
     }
     ZEND_HASH_FOREACH_END();
 
-    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    std::vector<std::future<std::pair<couchbase::key_value_error_context, couchbase::get_result>>> futures;
+    futures.reserve(requests.size());
+
+    auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
+
+    for (auto&& request : requests) {
+        futures.emplace_back(c.get(std::move(request), opts));
+    }
+
     array_init(return_value);
-    for (const auto& resp : responses) {
+    for (auto& f : futures) {
+        auto [ctx, resp] = f.get();
+
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
-        if (resp.ctx.ec()) {
+        add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+        if (ctx.ec()) {
             zval ex;
-            create_exception(&ex,
-                             { resp.ctx.ec(),
-                               ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
-                               build_error_context(resp.ctx) });
+            create_exception(&ex, { ctx.ec(), ERROR_LOCATION, "unable to execute KV operation getMulti", build_error_context(ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value());
+        auto cas = fmt::format("{:x}", resp.cas().value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
-        add_assoc_long(&entry, "flags", resp.flags);
-        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
+        auto encoded = resp.content_as<passthrough_transcoder>();
+        add_assoc_long(&entry, "flags", encoded.flags);
+        add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(encoded.data.data()), encoded.data.size());
         add_next_index_zval(return_value, &entry);
     }
     return {};
@@ -1696,33 +1660,23 @@ connection_handle::document_remove_multi(zval* return_value,
     if (Z_TYPE_P(entries) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
     }
-
-    std::optional<std::chrono::milliseconds> timeout;
-    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+    couchbase::remove_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    durability_holder durability{};
-    if (auto e = cb_assign_durability(durability, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
 
-    std::vector<couchbase::core::operations::remove_request> requests;
+    std::vector<std::pair<std::string, couchbase::cas>> requests{};
     requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
+
     const zval* tuple = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
     {
         switch (Z_TYPE_P(tuple)) {
             case IS_STRING: {
-                couchbase::core::document_id doc_id{
-                    cb_string_new(bucket),
-                    cb_string_new(scope),
-                    cb_string_new(collection),
-                    cb_string_new(tuple),
-                };
-                couchbase::core::operations::remove_request request{ doc_id };
-                request.timeout = timeout;
-                request.durability_level = durability.durability_level;
-                requests.emplace_back(request);
+                requests.emplace_back(cb_string_new(tuple), couchbase::cas{});
             } break;
             case IS_ARRAY: {
                 if (zend_array_count(Z_ARRVAL_P(tuple)) != 2) {
@@ -1742,19 +1696,11 @@ connection_handle::document_remove_multi(zval* return_value,
                              ERROR_LOCATION,
                              "expected that removeMulti second member (CAS) of ID-CAS tuple be a string" };
                 }
-                couchbase::core::document_id doc_id{
-                    cb_string_new(bucket),
-                    cb_string_new(scope),
-                    cb_string_new(collection),
-                    cb_string_new(id),
-                };
-                couchbase::core::operations::remove_request request{ doc_id };
-                request.timeout = timeout;
-                request.durability_level = durability.durability_level;
-                if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(cas), Z_STRLEN_P(cas)), request.cas); e.ec) {
+                couchbase::cas cas_value{};
+                if (auto e = cb_string_to_cas(std::string(Z_STRVAL_P(cas), Z_STRLEN_P(cas)), cas_value); e.ec) {
                     return e;
                 }
-                requests.emplace_back(request);
+                requests.emplace_back(cb_string_new(tuple), cas_value);
             } break;
             default:
                 return { errc::common::invalid_argument,
@@ -1765,26 +1711,32 @@ connection_handle::document_remove_multi(zval* return_value,
     }
     ZEND_HASH_FOREACH_END();
 
-    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    std::vector<std::future<std::pair<couchbase::key_value_error_context, couchbase::mutation_result>>> futures;
+    futures.reserve(requests.size());
+
+    auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
+
+    for (auto& [id, content] : requests) {
+        futures.emplace_back(c.remove(std::move(id), opts));
+    }
+
     array_init(return_value);
-    for (const auto& resp : responses) {
+    for (auto& f : futures) {
+        auto [ctx, resp] = f.get();
+
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
-        if (resp.ctx.ec()) {
+        add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+        if (ctx.ec()) {
             zval ex;
-            create_exception(&ex,
-                             { resp.ctx.ec(),
-                               ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
-                               build_error_context(resp.ctx) });
+            create_exception(&ex, { ctx.ec(), ERROR_LOCATION, "unable to execute KV operation removeMulti", build_error_context(ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value());
+        auto cas = fmt::format("{:x}", resp.cas().value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
-        if (is_mutation_token_valid(resp.token)) {
+        if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
             zval token_val;
-            mutation_token_to_zval(resp.token, &token_val);
+            mutation_token_to_zval(resp.mutation_token().value(), &token_val);
             add_assoc_zval(&entry, "mutationToken", &token_val);
         }
         add_next_index_zval(return_value, &entry);
@@ -1804,21 +1756,20 @@ connection_handle::document_upsert_multi(zval* return_value,
     if (Z_TYPE_P(entries) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
     }
-    std::optional<std::chrono::milliseconds> timeout;
-    if (auto e = cb_get_timeout(timeout, options); e.ec) {
+    couchbase::upsert_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
         return e;
     }
-    durability_holder durability{};
-    if (auto e = cb_assign_durability(durability, options); e.ec) {
+    if (auto e = cb_set_durability(opts, options); e.ec) {
         return e;
     }
-    bool preserve_expiry{ false };
-    if (auto e = cb_assign_boolean(preserve_expiry, options, "preserveExpiry"); e.ec) {
+    if (auto e = cb_set_preserve_expiry(opts, options); e.ec) {
         return e;
     }
 
-    std::vector<couchbase::core::operations::upsert_request> requests;
+    std::vector<std::pair<std::string, codec::encoded_value>> requests{};
     requests.reserve(zend_array_count(Z_ARRVAL_P(entries)));
+
     const zval* tuple = nullptr;
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(entries), tuple)
     {
@@ -1845,41 +1796,36 @@ connection_handle::document_upsert_multi(zval* return_value,
                      ERROR_LOCATION,
                      "expected that core upsertMulti third member (FLAGS) of ID-VALUE-FLAGS tuple be an integer" };
         }
-        couchbase::core::document_id doc_id{
-            cb_string_new(bucket),
-            cb_string_new(scope),
-            cb_string_new(collection),
-            cb_string_new(id),
-        };
-        couchbase::core::operations::upsert_request request{ doc_id, cb_binary_new(value) };
-        request.timeout = timeout;
-        request.flags = static_cast<std::uint32_t>(Z_LVAL_P(flags));
-        request.durability_level = durability.durability_level;
-        request.preserve_expiry = preserve_expiry;
-        requests.emplace_back(request);
+        requests.emplace_back(cb_string_new(id), codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(Z_LVAL_P(flags)) });
     }
     ZEND_HASH_FOREACH_END();
 
-    auto responses = impl_->key_value_execute_multi(std::move(requests));
+    std::vector<std::future<std::pair<couchbase::key_value_error_context, couchbase::mutation_result>>> futures;
+    futures.reserve(requests.size());
+
+    auto c = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
+
+    for (auto& [id, content] : requests) {
+        futures.emplace_back(c.upsert<php::passthrough_transcoder>(std::move(id), content, opts));
+    }
+
     array_init(return_value);
-    for (const auto& resp : responses) {
+    for (auto& f : futures) {
+        auto [ctx, resp] = f.get();
+
         zval entry;
         array_init(&entry);
-        add_assoc_stringl(&entry, "id", resp.ctx.id().data(), resp.ctx.id().size());
-        if (resp.ctx.ec()) {
+        add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+        if (ctx.ec()) {
             zval ex;
-            create_exception(&ex,
-                             { resp.ctx.ec(),
-                               ERROR_LOCATION,
-                               fmt::format(R"(unable to execute KV operation "{}")", __func__),
-                               build_error_context(resp.ctx) });
+            create_exception(&ex, { ctx.ec(), ERROR_LOCATION, "unable to execute KV operation upsertMulti", build_error_context(ctx) });
             add_assoc_zval(&entry, "error", &ex);
         }
-        auto cas = fmt::format("{:x}", resp.cas.value());
+        auto cas = fmt::format("{:x}", resp.cas().value());
         add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
-        if (is_mutation_token_valid(resp.token)) {
+        if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
             zval token_val;
-            mutation_token_to_zval(resp.token, &token_val);
+            mutation_token_to_zval(resp.mutation_token().value(), &token_val);
             add_assoc_zval(&entry, "mutationToken", &token_val);
         }
         add_next_index_zval(return_value, &entry);
@@ -2111,12 +2057,10 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
     }
 
     if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); !e.ec) {
-        if (highlight_style == "html") {
+        if (highlight_style == "html" || highlight_style == "simple") {
             request.highlight_style = core::search_highlight_style::html;
         } else if (highlight_style == "ansi") {
             request.highlight_style = core::search_highlight_style::ansi;
-        } else if (highlight_style == "simple") {
-            request.highlight_style = core::search_highlight_style::html;
         } else if (highlight_style) {
             return { errc::common::invalid_argument,
                      ERROR_LOCATION,
@@ -2127,25 +2071,28 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::vector<core::mutation_token> vectors{};
+        std::vector<mutation_token> vectors{};
         const zval* item = nullptr;
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            core::mutation_token token{};
-            if (auto e = cb_assign_integer(token.partition_id, options, "partitionId"); e.ec) {
+            std::uint64_t partition_uuid;
+            std::uint64_t sequence_number;
+            std::uint16_t partition_id;
+            std::string bucket_name;
+            if (auto e = cb_assign_integer(partition_id, options, "partitionId"); e.ec) {
                 return e;
             }
-            if (auto e = cb_assign_integer(token.partition_uuid, options, "partitionUuid"); e.ec) {
+            if (auto e = cb_assign_integer(partition_uuid, options, "partitionUuid"); e.ec) {
                 return e;
             }
-            if (auto e = cb_assign_integer(token.sequence_number, options, "sequenceNumber"); e.ec) {
+            if (auto e = cb_assign_integer(sequence_number, options, "sequenceNumber"); e.ec) {
                 return e;
             }
-            if (auto e = cb_assign_string(token.bucket_name, options, "bucketName"); e.ec) {
+            if (auto e = cb_assign_string(bucket_name, options, "bucketName"); e.ec) {
                 return e;
             }
-            vectors.emplace_back(token);
+            vectors.emplace_back(mutation_token{ partition_uuid, sequence_number, partition_id, bucket_name });
         }
         ZEND_HASH_FOREACH_END();
 
@@ -2220,7 +2167,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
                 zval z_array_positions;
                 array_init(&z_array_positions);
                 for (const auto& position : location.array_positions.value()) {
-                    add_next_index_long(&z_array_positions, position);
+                    add_next_index_long(&z_array_positions, static_cast<zend_long>(position));
                 }
 
                 add_assoc_zval(&z_location, "arrayPositions", &z_array_positions);
@@ -2622,7 +2569,7 @@ connection_handle::ping(zval* return_value, const zval* options)
 
 COUCHBASE_API
 core_error_info
-connection_handle::diagnostics(zval* return_value, const zend_string* report_id, const zval* options)
+connection_handle::diagnostics(zval* return_value, const zend_string* report_id, const zval* /* options */)
 {
     auto [err, resp] = impl_->diagnostics(cb_string_new(report_id));
     if (err.ec) {
@@ -2865,13 +2812,13 @@ zval_to_bucket_settings(const zval* bucket_settings)
     }
     if (auto [e, durability_level] = cb_get_string(bucket_settings, "minimumDurabilityLevel"); !e.ec) {
         if (durability_level == "none") {
-            bucket.minimum_durability_level = core::protocol::durability_level::none;
+            bucket.minimum_durability_level = durability_level::none;
         } else if (durability_level == "majority") {
-            bucket.minimum_durability_level = core::protocol::durability_level::majority;
+            bucket.minimum_durability_level = durability_level::majority;
         } else if (durability_level == "majorityAndPersistToActive") {
-            bucket.minimum_durability_level = core::protocol::durability_level::majority_and_persist_to_active;
+            bucket.minimum_durability_level = durability_level::majority_and_persist_to_active;
         } else if (durability_level == "persistToMajority") {
-            bucket.minimum_durability_level = core::protocol::durability_level::persist_to_majority;
+            bucket.minimum_durability_level = durability_level::persist_to_majority;
         } else if (durability_level) {
             return { { errc::common::invalid_argument,
                        ERROR_LOCATION,
@@ -3035,16 +2982,16 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
     if (bucket_settings.minimum_durability_level) {
         std::string durability_level;
         switch (*bucket_settings.minimum_durability_level) {
-            case core::protocol::durability_level::none:
+            case durability_level::none:
                 durability_level = "none";
                 break;
-            case core::protocol::durability_level::majority:
+            case durability_level::majority:
                 durability_level = "majority";
                 break;
-            case core::protocol::durability_level::majority_and_persist_to_active:
+            case durability_level::majority_and_persist_to_active:
                 durability_level = "majorityAndPersistToActive";
                 break;
-            case core::protocol::durability_level::persist_to_majority:
+            case durability_level::persist_to_majority:
                 durability_level = "persistToMajority";
                 break;
         }

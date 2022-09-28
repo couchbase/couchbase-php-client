@@ -269,6 +269,7 @@
                 <file role="php" name="NumericRangeSearchFacet.php"/>
                 <file role="php" name="NumericRangeSearchQuery.php"/>
                 <file role="php" name="PasswordAuthenticator.php"/>
+                <file role="php" name="PersistTo.php"/>
                 <file role="php" name="PhraseSearchQuery.php"/>
                 <file role="php" name="PrefixSearchQuery.php"/>
                 <file role="php" name="PrependOptions.php"/>
@@ -285,6 +286,7 @@
                 <file role="php" name="RegexpSearchQuery.php"/>
                 <file role="php" name="RemoveOptions.php"/>
                 <file role="php" name="ReplaceOptions.php"/>
+                <file role="php" name="ReplicateTo.php"/>
                 <file role="php" name="RequestSpan.php"/>
                 <file role="php" name="RequestTracer.php"/>
                 <file role="php" name="Result.php"/>
@@ -380,22 +382,66 @@
                                 <file role="src" name="view.hxx"/>
                             </dir>
                             <dir name="impl">
+                                <dir name="subdoc">
+                                    <file role="src" name="array_add_unique.cxx"/>
+                                    <file role="src" name="array_append.cxx"/>
+                                    <file role="src" name="array_insert.cxx"/>
+                                    <file role="src" name="array_prepend.cxx"/>
+                                    <file role="src" name="command.hxx"/>
+                                    <file role="src" name="command_bundle.hxx"/>
+                                    <file role="src" name="count.cxx"/>
+                                    <file role="src" name="counter.cxx"/>
+                                    <file role="src" name="exists.cxx"/>
+                                    <file role="src" name="get.cxx"/>
+                                    <file role="src" name="insert.cxx"/>
+                                    <file role="src" name="join_values.cxx"/>
+                                    <file role="src" name="join_values.hxx"/>
+                                    <file role="src" name="lookup_in_macro.cxx"/>
+                                    <file role="src" name="lookup_in_specs.cxx"/>
+                                    <file role="src" name="mutate_in_macro.cxx"/>
+                                    <file role="src" name="mutate_in_specs.cxx"/>
+                                    <file role="src" name="opcode.hxx"/>
+                                    <file role="src" name="path_flags.hxx"/>
+                                    <file role="src" name="remove.cxx"/>
+                                    <file role="src" name="replace.cxx"/>
+                                    <file role="src" name="upsert.cxx"/>
+                                </dir>
                                 <file role="src" name="analytics_error_category.cxx"/>
+                                <file role="src" name="append.cxx"/>
+                                <file role="src" name="build_deferred_query_indexes.cxx"/>
                                 <file role="src" name="common_error_category.cxx"/>
+                                <file role="src" name="decrement.cxx"/>
+                                <file role="src" name="expiry.cxx"/>
                                 <file role="src" name="field_level_encryption_error_category.cxx"/>
+                                <file role="src" name="get.cxx"/>
                                 <file role="src" name="get_all_replicas.cxx"/>
                                 <file role="src" name="get_all_replicas.hxx"/>
+                                <file role="src" name="get_and_touch.cxx"/>
                                 <file role="src" name="get_any_replica.cxx"/>
                                 <file role="src" name="get_any_replica.hxx"/>
                                 <file role="src" name="get_replica.cxx"/>
                                 <file role="src" name="get_replica.hxx"/>
+                                <file role="src" name="increment.cxx"/>
+                                <file role="src" name="insert.cxx"/>
                                 <file role="src" name="key_value_error_category.cxx"/>
+                                <file role="src" name="lookup_in.cxx"/>
                                 <file role="src" name="management_error_category.cxx"/>
+                                <file role="src" name="mutate_in.cxx"/>
                                 <file role="src" name="network_error_category.cxx"/>
+                                <file role="src" name="observe_poll.cxx"/>
+                                <file role="src" name="observe_poll.hxx"/>
+                                <file role="src" name="observe_seqno.cxx"/>
+                                <file role="src" name="observe_seqno.hxx"/>
+                                <file role="src" name="prepend.cxx"/>
                                 <file role="src" name="query_error_category.cxx"/>
+                                <file role="src" name="remove.cxx"/>
+                                <file role="src" name="replace.cxx"/>
                                 <file role="src" name="search_error_category.cxx"/>
                                 <file role="src" name="streaming_json_lexter_error_category.cxx"/>
+                                <file role="src" name="touch.cxx"/>
+                                <file role="src" name="upsert.cxx"/>
                                 <file role="src" name="view_error_category.cxx"/>
+                                <file role="src" name="with_legacy_durability.hxx"/>
                             </dir>
                             <dir name="io">
                                 <file role="src" name="CMakeLists.txt"/>
@@ -571,7 +617,8 @@
                                     <file role="src" name="group_upsert.cxx"/>
                                     <file role="src" name="group_upsert.hxx"/>
                                     <file role="src" name="query.hxx"/>
-                                    <file role="src" name="query_index_build_deferred.cxx"/>
+                                    <file role="src" name="query_index_build.cxx"/>
+                                    <file role="src" name="query_index_build.hxx"/>
                                     <file role="src" name="query_index_build_deferred.hxx"/>
                                     <file role="src" name="query_index_create.cxx"/>
                                     <file role="src" name="query_index_create.hxx"/>
@@ -579,6 +626,8 @@
                                     <file role="src" name="query_index_drop.hxx"/>
                                     <file role="src" name="query_index_get_all.cxx"/>
                                     <file role="src" name="query_index_get_all.hxx"/>
+                                    <file role="src" name="query_index_get_all_deferred.cxx"/>
+                                    <file role="src" name="query_index_get_all_deferred.hxx"/>
                                     <file role="src" name="role_get_all.cxx"/>
                                     <file role="src" name="role_get_all.hxx"/>
                                     <file role="src" name="scope_create.cxx"/>
@@ -639,10 +688,12 @@
                                 <file role="src" name="document_exists.hxx"/>
                                 <file role="src" name="document_get.cxx"/>
                                 <file role="src" name="document_get.hxx"/>
+                                <file role="src" name="document_get_all_replicas.hxx"/>
                                 <file role="src" name="document_get_and_lock.cxx"/>
                                 <file role="src" name="document_get_and_lock.hxx"/>
                                 <file role="src" name="document_get_and_touch.cxx"/>
                                 <file role="src" name="document_get_and_touch.hxx"/>
+                                <file role="src" name="document_get_any_replica.hxx"/>
                                 <file role="src" name="document_get_projected.cxx"/>
                                 <file role="src" name="document_get_projected.hxx"/>
                                 <file role="src" name="document_increment.cxx"/>
@@ -675,6 +726,7 @@
                                 <file role="src" name="http_noop.hxx"/>
                                 <file role="src" name="mcbp_noop.cxx"/>
                                 <file role="src" name="mcbp_noop.hxx"/>
+                                <file role="src" name="operation_traits.hxx"/>
                             </dir>
                             <dir name="platform">
                                 <file role="src" name="CMakeLists.txt"/>
@@ -706,8 +758,6 @@
                                 <file role="src" name="cmd_cluster_map_change_notification.hxx"/>
                                 <file role="src" name="cmd_decrement.cxx"/>
                                 <file role="src" name="cmd_decrement.hxx"/>
-                                <file role="src" name="cmd_exists.cxx"/>
-                                <file role="src" name="cmd_exists.hxx"/>
                                 <file role="src" name="cmd_get.cxx"/>
                                 <file role="src" name="cmd_get.hxx"/>
                                 <file role="src" name="cmd_get_and_lock.cxx"/>
@@ -739,6 +789,8 @@
                                 <file role="src" name="cmd_mutate_in.hxx"/>
                                 <file role="src" name="cmd_noop.cxx"/>
                                 <file role="src" name="cmd_noop.hxx"/>
+                                <file role="src" name="cmd_observe_seqno.cxx"/>
+                                <file role="src" name="cmd_observe_seqno.hxx"/>
                                 <file role="src" name="cmd_prepend.cxx"/>
                                 <file role="src" name="cmd_prepend.hxx"/>
                                 <file role="src" name="cmd_remove.cxx"/>
@@ -760,8 +812,6 @@
                                 <file role="src" name="cmd_upsert.cxx"/>
                                 <file role="src" name="cmd_upsert.hxx"/>
                                 <file role="src" name="datatype.hxx"/>
-                                <file role="src" name="durability_level.hxx"/>
-                                <file role="src" name="durability_level_fmt.hxx"/>
                                 <file role="src" name="enhanced_error_info.hxx"/>
                                 <file role="src" name="frame_info_id.hxx"/>
                                 <file role="src" name="frame_info_id_fmt.hxx"/>
@@ -837,6 +887,8 @@
                                 <file role="src" name="json_streaming_lexer.cxx"/>
                                 <file role="src" name="json_streaming_lexer.hxx"/>
                                 <file role="src" name="movable_function.hxx"/>
+                                <file role="src" name="mutation_token.cxx"/>
+                                <file role="src" name="mutation_token.hxx"/>
                                 <file role="src" name="name_codec.hxx"/>
                                 <file role="src" name="unsigned_leb128.hxx"/>
                                 <file role="src" name="url_codec.cxx"/>
@@ -858,8 +910,6 @@
                             <file role="src" name="document_id.hxx"/>
                             <file role="src" name="document_id_fmt.hxx"/>
                             <file role="src" name="json_string.hxx"/>
-                            <file role="src" name="mutation_token.hxx"/>
-                            <file role="src" name="mutation_token_fmt.hxx"/>
                             <file role="src" name="operations.hxx"/>
                             <file role="src" name="origin.hxx"/>
                             <file role="src" name="query_profile_mode.hxx"/>
@@ -874,29 +924,97 @@
                             <file role="src" name="view_sort_order.hxx"/>
                         </dir>
                         <dir name="couchbase">
+                            <dir name="codec">
+                                <file role="src" name="codec_flags.hxx"/>
+                                <file role="src" name="encoded_value.hxx"/>
+                                <file role="src" name="json_transcoder.hxx"/>
+                                <file role="src" name="raw_binary_transcoder.hxx"/>
+                                <file role="src" name="transcoder_traits.hxx"/>
+                            </dir>
                             <dir name="fmt">
                                 <file role="src" name="cas.hxx"/>
+                                <file role="src" name="durability_level.hxx"/>
                                 <file role="src" name="key_value_extended_error_info.hxx"/>
                                 <file role="src" name="key_value_status_code.hxx"/>
+                                <file role="src" name="mutation_token.hxx"/>
                                 <file role="src" name="retry_reason.hxx"/>
                             </dir>
+                            <dir name="metrics">
+                                <file role="src" name="otel_meter.hxx"/>
+                            </dir>
+                            <dir name="subdoc">
+                                <dir name="fwd">
+                                    <file role="src" name="command.hxx"/>
+                                    <file role="src" name="command_bundle.hxx"/>
+                                </dir>
+                                <file role="src" name="array_add_unique.hxx"/>
+                                <file role="src" name="array_append.hxx"/>
+                                <file role="src" name="array_insert.hxx"/>
+                                <file role="src" name="array_prepend.hxx"/>
+                                <file role="src" name="count.hxx"/>
+                                <file role="src" name="counter.hxx"/>
+                                <file role="src" name="exists.hxx"/>
+                                <file role="src" name="get.hxx"/>
+                                <file role="src" name="insert.hxx"/>
+                                <file role="src" name="lookup_in_macro.hxx"/>
+                                <file role="src" name="mutate_in_macro.hxx"/>
+                                <file role="src" name="remove.hxx"/>
+                                <file role="src" name="replace.hxx"/>
+                                <file role="src" name="upsert.hxx"/>
+                            </dir>
+                            <dir name="tracing">
+                                <file role="src" name="otel_tracer.hxx"/>
+                            </dir>
+                            <file role="src" name="append_options.hxx"/>
+                            <file role="src" name="binary_collection.hxx"/>
                             <file role="src" name="bucket.hxx"/>
+                            <file role="src" name="build_query_index_options.hxx"/>
                             <file role="src" name="cas.hxx"/>
                             <file role="src" name="cluster.hxx"/>
                             <file role="src" name="collection.hxx"/>
+                            <file role="src" name="common_durability_options.hxx"/>
+                            <file role="src" name="common_options.hxx"/>
+                            <file role="src" name="counter_result.hxx"/>
+                            <file role="src" name="decrement_options.hxx"/>
+                            <file role="src" name="durability_level.hxx"/>
                             <file role="src" name="error_codes.hxx"/>
                             <file role="src" name="error_context.hxx"/>
-                            <file role="src" name="get_all_replicas.hxx"/>
-                            <file role="src" name="get_any_replica.hxx"/>
+                            <file role="src" name="expiry.hxx"/>
+                            <file role="src" name="get_all_replicas_options.hxx"/>
+                            <file role="src" name="get_and_touch_options.hxx"/>
+                            <file role="src" name="get_any_replica_options.hxx"/>
+                            <file role="src" name="get_options.hxx"/>
                             <file role="src" name="get_replica_result.hxx"/>
+                            <file role="src" name="get_result.hxx"/>
+                            <file role="src" name="increment_options.hxx"/>
+                            <file role="src" name="insert_options.hxx"/>
                             <file role="src" name="key_value_error_context.hxx"/>
                             <file role="src" name="key_value_error_map_attribute.hxx"/>
                             <file role="src" name="key_value_error_map_info.hxx"/>
                             <file role="src" name="key_value_extended_error_info.hxx"/>
                             <file role="src" name="key_value_status_code.hxx"/>
+                            <file role="src" name="lookup_in_options.hxx"/>
+                            <file role="src" name="lookup_in_result.hxx"/>
+                            <file role="src" name="lookup_in_specs.hxx"/>
+                            <file role="src" name="manager_error_context.hxx"/>
+                            <file role="src" name="mutate_in_options.hxx"/>
+                            <file role="src" name="mutate_in_result.hxx"/>
+                            <file role="src" name="mutate_in_specs.hxx"/>
+                            <file role="src" name="mutation_result.hxx"/>
+                            <file role="src" name="mutation_token.hxx"/>
+                            <file role="src" name="persist_to.hxx"/>
+                            <file role="src" name="prepend_options.hxx"/>
+                            <file role="src" name="query_index_manager.hxx"/>
+                            <file role="src" name="remove_options.hxx"/>
+                            <file role="src" name="replace_options.hxx"/>
+                            <file role="src" name="replicate_to.hxx"/>
                             <file role="src" name="result.hxx"/>
                             <file role="src" name="retry_reason.hxx"/>
                             <file role="src" name="scope.hxx"/>
+                            <file role="src" name="store_semantics.hxx"/>
+                            <file role="src" name="subdocument_error_context.hxx"/>
+                            <file role="src" name="touch_options.hxx"/>
+                            <file role="src" name="upsert_options.hxx"/>
                         </dir>
                         <dir name="third_party">
                             <dir name="asio">
@@ -2418,6 +2536,8 @@
                                 <file role="src" name="attempt_context_impl.cxx"/>
                                 <file role="src" name="attempt_context_impl.hxx"/>
                                 <file role="src" name="attempt_context_testing_hooks.hxx"/>
+                                <file role="src" name="binary_utils.cxx"/>
+                                <file role="src" name="binary_utils.hxx"/>
                                 <file role="src" name="cleanup_testing_hooks.hxx"/>
                                 <file role="src" name="error_list.hxx"/>
                                 <file role="src" name="exceptions.cxx"/>
@@ -2454,6 +2574,7 @@
                     <file role="src" name="core_error_info.hxx"/>
                     <file role="src" name="logger.cxx"/>
                     <file role="src" name="logger.hxx"/>
+                    <file role="src" name="passthrough_transcoder.hxx"/>
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>
                     <file role="src" name="php_7_api_layer.hxx"/>

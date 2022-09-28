@@ -28,7 +28,7 @@ use Couchbase\Exception\InvalidArgumentException;
 class MutateArrayAppendSpec implements MutateInSpec
 {
     private bool $isXattr;
-    private bool $createParents;
+    private bool $createPath;
     private bool $expandMacros;
     private string $path;
     private array $values;
@@ -37,7 +37,7 @@ class MutateArrayAppendSpec implements MutateInSpec
      * @param string $path
      * @param array $values
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @since 4.0.0
@@ -46,12 +46,12 @@ class MutateArrayAppendSpec implements MutateInSpec
         string $path,
         array $values,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     )
     {
         $this->isXattr = $isXattr;
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         $this->expandMacros = $expandMacros;
         $this->path = $path;
         $this->values = $values;
@@ -61,7 +61,7 @@ class MutateArrayAppendSpec implements MutateInSpec
      * @param string $path
      * @param array $values
      * @param bool $isXattr
-     * @param bool $createParents
+     * @param bool $createPath
      * @param bool $expandMacros
      *
      * @return MutateArrayAppendSpec
@@ -71,11 +71,11 @@ class MutateArrayAppendSpec implements MutateInSpec
         string $path,
         array $values,
         bool $isXattr = false,
-        bool $createParents = false,
+        bool $createPath = false,
         bool $expandMacros = false
     ): MutateArrayAppendSpec
     {
-        return new MutateArrayAppendSpec($path, $values, $isXattr, $createParents, $expandMacros);
+        return new MutateArrayAppendSpec($path, $values, $isXattr, $createPath, $expandMacros);
     }
 
     /**
@@ -91,14 +91,14 @@ class MutateArrayAppendSpec implements MutateInSpec
     }
 
     /**
-     * @param bool $createParents
+     * @param bool $createPath
      *
      * @return MutateArrayAppendSpec
      * @since 4.0.0
      */
-    public function createParents(bool $createParents): MutateArrayAppendSpec
+    public function createPath(bool $createPath): MutateArrayAppendSpec
     {
-        $this->createParents = $createParents;
+        $this->createPath = $createPath;
         return $this;
     }
 
@@ -127,7 +127,7 @@ class MutateArrayAppendSpec implements MutateInSpec
         return [
             'opcode' => 'arrayPushLast',
             'isXattr' => $this->isXattr,
-            'createParents' => $this->createParents,
+            'createPath' => $this->createPath,
             'expandMacros' => $this->expandMacros,
             'path' => $this->path,
             'value' => join(

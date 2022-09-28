@@ -29,13 +29,12 @@ use OutOfBoundsException;
 class MutateInResult extends MutationResult
 {
     private bool $deleted;
-    private ?int $firstErrorIndex = null;
     private array $fields;
 
     /**
-     * @internal
-     *
      * @param array $response raw response from the extension
+     *
+     * @internal
      *
      * @since 4.0.0
      */
@@ -44,9 +43,6 @@ class MutateInResult extends MutationResult
         parent::__construct($response);
         $this->deleted = $response['deleted'];
         $this->fields = $response['fields'];
-        if (array_key_exists('firstErrorIndex', $response)) {
-            $this->firstErrorIndex = $response['firstErrorIndex'];
-        }
     }
 
     /**
@@ -71,10 +67,7 @@ class MutateInResult extends MutationResult
     {
         if (array_key_exists($index, $this->fields)) {
             $field = $this->fields[$index];
-            if (array_key_exists('error', $field)) {
-                throw $field['error'];
-            }
-            return $field['value'];
+            return JsonTranscoder::getInstance()->decode($field['value'], 0);
         }
         throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
@@ -90,25 +83,10 @@ class MutateInResult extends MutationResult
     {
         foreach ($this->fields as $field) {
             if ($field['path'] == $path) {
-                if (array_key_exists('error', $field)) {
-                    throw $field['error'];
-                }
-                return $field['value'];
+                return JsonTranscoder::getInstance()->decode($field['value'], 0);
             }
         }
         throw new OutOfBoundsException(sprintf("MutateIn result does not have entry for path: %s", $path));
-    }
-
-    /**
-     * Returns first error for the mutation or null
-     * @return CouchbaseException|null
-     */
-    public function error(): ?CouchbaseException
-    {
-        if ($this->firstErrorIndex != null) {
-            return $this->fields[$this->firstErrorIndex]['error'];
-        }
-        return null;
     }
 
     /**
@@ -121,24 +99,6 @@ class MutateInResult extends MutationResult
     {
         if (array_key_exists($index, $this->fields)) {
             return $this->fields[$index]['path'];
-        }
-        throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
-    }
-
-    /**
-     * @param int $index
-     *
-     * @return CouchbaseException|null
-     * @since 4.0.0
-     */
-    public function errorCode(int $index): ?CouchbaseException
-    {
-        if (array_key_exists($index, $this->fields)) {
-            $field = $this->fields[$index];
-            if (array_key_exists('error', $field)) {
-                return $field['error'];
-            }
-            return null;
         }
         throw new OutOfBoundsException(sprintf("MutateIn result index is out of bounds: %d", $index));
     }
