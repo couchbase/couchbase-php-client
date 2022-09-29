@@ -490,6 +490,79 @@ class ClusterOptions
     }
 
     /**
+     * @param string $profile name of config profile to apply (e.g. wan_development)
+     * @throws InvalidArgumentException
+     */
+    public function applyProfile(string $profile): void
+    {
+        ConfigProfiles::getInstance()->checkProfiles($profile, $this);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getConnectTimeoutMilliseconds(): ?int
+    {
+        return $this->connectTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getKeyValueTimeoutMilliseconds(): ?int
+    {
+        return $this->keyValueTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getKeyValueDurableTimeoutMilliseconds(): ?int
+    {
+        return $this->keyValueDurableTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getViewTimeoutMilliseconds(): ?int
+    {
+        return $this->viewTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getQueryTimeoutMilliseconds(): ?int
+    {
+        return $this->queryTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAnalyticsTimeoutMilliseconds(): ?int
+    {
+        return $this->analyticsTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getSearchTimeoutMilliseconds(): ?int
+    {
+        return $this->searchTimeoutMilliseconds;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getManagementTimeoutMilliseconds(): ?int
+    {
+        return $this->managementTimeoutMilliseconds;
+    }
+
+    /**
      * @return TransactionsConfiguration|null
      * @since 4.0.0
      */
