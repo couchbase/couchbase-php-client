@@ -41,7 +41,7 @@ class ConfigProfiles
      */
     public function registerProfile(string $profileName, ConfigProfile $profile): void
     {
-        ConfigProfiles::$knownProfiles[$profileName] = $profile;
+        self::$knownProfiles[$profileName] = $profile;
     }
 
     /**
@@ -49,15 +49,15 @@ class ConfigProfiles
      */
     public function checkProfiles(string $profileName, ClusterOptions $options): void
     {
-        if(isset(ConfigProfiles::$knownProfiles[$profileName]))
+        if(isset(self::$knownProfiles[$profileName]))
         {
-            ConfigProfiles::$knownProfiles[$profileName]->apply($options);
+            self::$knownProfiles[$profileName]->apply($options);
             return;
         }
         throw new InvalidArgumentException("unregistered profile: " . $profileName);
     }
 
-    public static function getInstance()
+    public static function getInstance(): ConfigProfiles
     {
         if(self::$instance == null)
         {
