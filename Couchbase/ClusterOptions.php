@@ -173,7 +173,7 @@ class ClusterOptions
      */
     public function managementTimeout(int $milliseconds): ClusterOptions
     {
-        $this->searchTimeoutMilliseconds = $milliseconds;
+        $this->managementTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
