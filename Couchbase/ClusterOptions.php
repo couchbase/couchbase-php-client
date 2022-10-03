@@ -490,6 +490,17 @@ class ClusterOptions
     }
 
     /**
+     * Applies configuration profile to ClusterOptions associating string to range of options
+     * @param string $profile name of config profile to apply (e.g. wan_development)
+     * @throws InvalidArgumentException
+     * @since 4.0.1
+     */
+    public function applyProfile(string $profile): void
+    {
+        ConfigProfiles::getInstance()->checkProfiles($profile, $this);
+    }
+
+    /**
      * @return TransactionsConfiguration|null
      * @since 4.0.0
      */
