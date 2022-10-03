@@ -20,12 +20,16 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-
 /**
  * Definition of the wan_development profile from RFC-0074
  */
-class DevelopmentProfile implements ConfigProfile
+class WanDevelopmentProfile implements ConfigProfile
 {
+    /**
+     * @param ClusterOptions $options
+     * @return void
+     * @since 4.0.1
+     */
     public function apply(ClusterOptions $options): void
     {
         $options->connectTimeout(20_000);

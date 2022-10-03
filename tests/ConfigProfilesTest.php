@@ -23,23 +23,24 @@ use Couchbase\ConfigProfile;
 use Couchbase\ConfigProfiles;
 use Couchbase\Exception\InvalidArgumentException;
 
-
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class ConfigProfilesTest extends Helpers\CouchbaseTestCase
 {
     public function testDevelopmentProfile()
     {
+        $expectedOptions = new ClusterOptions();
+        $expectedOptions->connectTimeout(20_000);
+        $expectedOptions->keyValueTimeout(20_000);
+        $expectedOptions->keyValueDurableTimeout(20_000);
+        $expectedOptions->viewTimeout(120_000);
+        $expectedOptions->queryTimeout(120_000);
+        $expectedOptions->analyticsTimeout(120_000);
+        $expectedOptions->searchTimeout(120_000);
+        $expectedOptions->managementTimeout(120_000);
         $options = new ClusterOptions();
         $options->applyProfile("wan_development");
-        $this->assertEquals(20000, $options->getConnectTimeoutMilliseconds());
-        $this->assertEquals(20000, $options->getKeyValueTimeoutMilliseconds());
-        $this->assertEquals(20000, $options->getKeyValueDurableTimeoutMilliseconds());
-        $this->assertEquals(120000, $options->getViewTimeoutMilliseconds());
-        $this->assertEquals(120000, $options->getQueryTimeoutMilliseconds());
-        $this->assertEquals(120000, $options->getAnalyticsTimeoutMilliseconds());
-        $this->assertEquals(120000, $options->getSearchTimeoutMilliseconds());
-        $this->assertEquals(120000, $options->getManagementTimeoutMilliseconds());
+        $this->assertEquals(true, $options == $expectedOptions);
     }
 
     public function testUnregisteredProfile()
@@ -59,10 +60,12 @@ class ConfigProfilesTest extends Helpers\CouchbaseTestCase
                 $options->analyticsTimeout(80000);
             }
         };
-        $options = new ClusterOptions();
+        $expectedOptions = new ClusterOptions();
+        $expectedOptions->connectTimeout(40_000);
+        $expectedOptions->analyticsTimeout(80_000);
         ConfigProfiles::getInstance()->registerProfile("test_profile", $testProfile);
+        $options = new ClusterOptions();
         $options->applyProfile("test_profile");
-        $this->assertEquals(40000, $options->getConnectTimeoutMilliseconds());
-        $this->assertEquals(80000, $options->getAnalyticsTimeoutMilliseconds());
+        $this->assertEquals(true, $options == $expectedOptions);
     }
 }

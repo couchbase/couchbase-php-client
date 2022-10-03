@@ -28,42 +28,48 @@ use Couchbase\Exception\InvalidArgumentException;
 class ConfigProfiles
 {
     private static ?ConfigProfiles $instance = null;
-    public static array $knownProfiles = [];
+    private array $knownProfiles = [];
 
     public function __construct()
     {
-        $this->registerProfile('wan_development', new DevelopmentProfile());
+        $this->registerProfile('wan_development', new WanDevelopmentProfile());
     }
 
     /**
      * @param string $profileName Name of new profile to be registered
      * @param ConfigProfile $profile Instance of new profile
+     * @since 4.0.1
      */
     public function registerProfile(string $profileName, ConfigProfile $profile): void
     {
-        self::$knownProfiles[$profileName] = $profile;
+        $this->knownProfiles[$profileName] = $profile;
     }
 
     /**
+     * Goes through registered profiles and applies it if it exists, else throws an exception
      * @throws InvalidArgumentException
+     * @internal
+     * @since 4.0.1
      */
     public function checkProfiles(string $profileName, ClusterOptions $options): void
     {
-        if(isset(self::$knownProfiles[$profileName]))
-        {
-            self::$knownProfiles[$profileName]->apply($options);
+        if (isset($this->knownProfiles[$profileName])) {
+            $this->knownProfiles[$profileName]->apply($options);
             return;
         }
         throw new InvalidArgumentException("unregistered profile: " . $profileName);
     }
 
+    /**
+     * Returns static instance of ConfigProfiles
+     * @return ConfigProfiles
+     * @since 4.0.1
+     */
     public static function getInstance(): ConfigProfiles
     {
-        if(self::$instance == null)
-        {
+        if (self::$instance == null) {
             self::$instance = new ConfigProfiles();
         }
         return self::$instance;
     }
-
 }

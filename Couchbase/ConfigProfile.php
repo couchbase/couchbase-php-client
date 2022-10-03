@@ -26,8 +26,10 @@ namespace Couchbase;
 interface ConfigProfile
 {
     /**
+     * Updates given $options with the settings defined in the profile.
      * @param ClusterOptions $options
      * @return void
+     * @since 4.0.1
      */
     public function apply(ClusterOptions $options): void;
 }
