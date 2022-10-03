@@ -40,7 +40,7 @@ class ConfigProfilesTest extends Helpers\CouchbaseTestCase
         $expectedOptions->managementTimeout(120_000);
         $options = new ClusterOptions();
         $options->applyProfile("wan_development");
-        $this->assertEquals(true, $options == $expectedOptions);
+        $this->assertEquals($expectedOptions, $options);
     }
 
     public function testUnregisteredProfile()
@@ -66,6 +66,6 @@ class ConfigProfilesTest extends Helpers\CouchbaseTestCase
         ConfigProfiles::getInstance()->registerProfile("test_profile", $testProfile);
         $options = new ClusterOptions();
         $options->applyProfile("test_profile");
-        $this->assertEquals(true, $options == $expectedOptions);
+        $this->assertEquals($expectedOptions, $options);
     }
 }
