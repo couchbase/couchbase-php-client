@@ -21,10 +21,10 @@
 #include "transaction_context_resource.hxx"
 #include "transactions_resource.hxx"
 
-#include <couchbase/transactions.hxx>
-#include <couchbase/transactions/internal/exceptions_internal.hxx>
-#include <couchbase/transactions/internal/transaction_context.hxx>
-#include <couchbase/transactions/internal/utils.hxx>
+#include <core/transactions.hxx>
+#include <core/transactions/internal/exceptions_internal.hxx>
+#include <core/transactions/internal/transaction_context.hxx>
+#include <core/transactions/internal/utils.hxx>
 
 #include <core/document_id_fmt.hxx>
 
@@ -50,59 +50,59 @@ get_transaction_context_destructor_id()
 }
 
 static std::string
-external_exception_to_string(couchbase::transactions::external_exception cause)
+external_exception_to_string(core::transactions::external_exception cause)
 {
     switch (cause) {
-        case transactions::UNKNOWN:
+        case core::transactions::UNKNOWN:
             return "unknown";
-        case transactions::ACTIVE_TRANSACTION_RECORD_ENTRY_NOT_FOUND:
+        case core::transactions::ACTIVE_TRANSACTION_RECORD_ENTRY_NOT_FOUND:
             return "activeTransactionRecordEntryNotFound";
-        case transactions::ACTIVE_TRANSACTION_RECORD_FULL:
+        case core::transactions::ACTIVE_TRANSACTION_RECORD_FULL:
             return "activeTransactionRecordFull";
-        case transactions::ACTIVE_TRANSACTION_RECORD_NOT_FOUND:
+        case core::transactions::ACTIVE_TRANSACTION_RECORD_NOT_FOUND:
             return "activeTransactionRecordNotFound";
-        case transactions::DOCUMENT_ALREADY_IN_TRANSACTION:
+        case core::transactions::DOCUMENT_ALREADY_IN_TRANSACTION:
             return "documentAlreadyInTransaction";
-        case transactions::DOCUMENT_EXISTS_EXCEPTION:
+        case core::transactions::DOCUMENT_EXISTS_EXCEPTION:
             return "documentExistsException";
-        case transactions::DOCUMENT_NOT_FOUND_EXCEPTION:
+        case core::transactions::DOCUMENT_NOT_FOUND_EXCEPTION:
             return "documentNotFoundException";
-        case transactions::NOT_SET:
+        case core::transactions::NOT_SET:
             return "notSet";
-        case transactions::FEATURE_NOT_AVAILABLE_EXCEPTION:
+        case core::transactions::FEATURE_NOT_AVAILABLE_EXCEPTION:
             return "featureNotAvailableException";
-        case transactions::TRANSACTION_ABORTED_EXTERNALLY:
+        case core::transactions::TRANSACTION_ABORTED_EXTERNALLY:
             return "transactionAbortedExternally";
-        case transactions::PREVIOUS_OPERATION_FAILED:
+        case core::transactions::PREVIOUS_OPERATION_FAILED:
             return "previousOperationFailed";
-        case transactions::FORWARD_COMPATIBILITY_FAILURE:
+        case core::transactions::FORWARD_COMPATIBILITY_FAILURE:
             return "forwardCompatibilityFailure";
-        case transactions::PARSING_FAILURE:
+        case core::transactions::PARSING_FAILURE:
             return "parsingFailure";
-        case transactions::ILLEGAL_STATE_EXCEPTION:
+        case core::transactions::ILLEGAL_STATE_EXCEPTION:
             return "illegalStateException";
-        case transactions::COUCHBASE_EXCEPTION:
+        case core::transactions::COUCHBASE_EXCEPTION:
             return "couchbaseException";
-        case transactions::SERVICE_NOT_AVAILABLE_EXCEPTION:
+        case core::transactions::SERVICE_NOT_AVAILABLE_EXCEPTION:
             return "serviceNotAvailableException";
-        case transactions::REQUEST_CANCELED_EXCEPTION:
+        case core::transactions::REQUEST_CANCELED_EXCEPTION:
             return "requestCanceledException";
-        case transactions::CONCURRENT_OPERATIONS_DETECTED_ON_SAME_DOCUMENT:
+        case core::transactions::CONCURRENT_OPERATIONS_DETECTED_ON_SAME_DOCUMENT:
             return "concurrentOperationsDetectedOnSameDocument";
-        case transactions::COMMIT_NOT_PERMITTED:
+        case core::transactions::COMMIT_NOT_PERMITTED:
             return "commitNotPermitted";
-        case transactions::ROLLBACK_NOT_PERMITTED:
+        case core::transactions::ROLLBACK_NOT_PERMITTED:
             return "rollbackNotPermitted";
-        case transactions::TRANSACTION_ALREADY_ABORTED:
+        case core::transactions::TRANSACTION_ALREADY_ABORTED:
             return "transactionAlreadyAborted";
-        case transactions::TRANSACTION_ALREADY_COMMITTED:
+        case core::transactions::TRANSACTION_ALREADY_COMMITTED:
             return "transactionAlreadyCommitted";
     }
     return "unexpectedCause";
 }
 
 static transactions_error_context
-build_error_context(const couchbase::transactions::transaction_operation_failed& ctx)
+build_error_context(const core::transactions::transaction_operation_failed& ctx)
 {
     transactions_error_context out;
     out.should_not_retry = !ctx.should_retry();
@@ -112,21 +112,21 @@ build_error_context(const couchbase::transactions::transaction_operation_failed&
 }
 
 static std::string
-failure_type_to_string(couchbase::transactions::failure_type failure)
+failure_type_to_string(core::transactions::failure_type failure)
 {
     switch (failure) {
-        case transactions::failure_type::FAIL:
+        case core::transactions::failure_type::FAIL:
             return "fail";
-        case transactions::failure_type::EXPIRY:
+        case core::transactions::failure_type::EXPIRY:
             return "expiry";
-        case transactions::failure_type::COMMIT_AMBIGUOUS:
+        case core::transactions::failure_type::COMMIT_AMBIGUOUS:
             return "commit_ambiguous";
     }
     return "unknown";
 }
 
 static transactions_error_context
-build_error_context(const couchbase::transactions::transaction_exception& e)
+build_error_context(const core::transactions::transaction_exception& e)
 {
     transactions_error_context out;
     out.type = failure_type_to_string(e.type());
@@ -139,14 +139,14 @@ build_error_context(const couchbase::transactions::transaction_exception& e)
 }
 
 static std::error_code
-failure_type_to_error_code(couchbase::transactions::failure_type failure)
+failure_type_to_error_code(core::transactions::failure_type failure)
 {
     switch (failure) {
-        case transactions::failure_type::FAIL:
+        case core::transactions::failure_type::FAIL:
             return transactions_errc::failed;
-        case transactions::failure_type::EXPIRY:
+        case core::transactions::failure_type::EXPIRY:
             return transactions_errc::expired;
-        case transactions::failure_type::COMMIT_AMBIGUOUS:
+        case core::transactions::failure_type::COMMIT_AMBIGUOUS:
             return transactions_errc::commit_ambiguous;
     }
     return transactions_errc::unexpected_exception;
@@ -155,7 +155,7 @@ failure_type_to_error_code(couchbase::transactions::failure_type failure)
 class transaction_context_resource::impl : public std::enable_shared_from_this<transaction_context_resource::impl>
 {
   public:
-    impl(couchbase::transactions::transactions& transactions, couchbase::transactions::per_transaction_config&& configuration)
+    impl(core::transactions::transactions& transactions, transactions::per_transaction_config&& configuration)
       : transaction_context_(transactions, configuration)
     {
     }
@@ -172,7 +172,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
     {
         try {
             transaction_context_.new_attempt_context();
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
                      ERROR_LOCATION,
                      fmt::format("unable to create new attempt context: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
@@ -199,7 +199,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                 return barrier->set_value();
             });
             f.get();
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
                      ERROR_LOCATION,
                      fmt::format("unable to rollback transaction: {}, cause: {}", e.what(), external_exception_to_string(e.cause())),
@@ -218,14 +218,14 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             auto barrier = std::make_shared<std::promise<std::optional<transactions::transaction_result>>>();
             auto f = barrier->get_future();
             transaction_context_.finalize(
-              [barrier](std::optional<transactions::transaction_exception> e, std::optional<transactions::transaction_result> res) {
+              [barrier](std::optional<core::transactions::transaction_exception> e, std::optional<transactions::transaction_result> res) {
                   if (e) {
                       return barrier->set_exception(std::make_exception_ptr(e.value()));
                   }
                   return barrier->set_value(std::move(res));
               });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_exception& e) {
+        } catch (const core::transactions::transaction_exception& e) {
             return { {},
                      { failure_type_to_error_code(e.type()),
                        ERROR_LOCATION,
@@ -253,7 +253,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                 return barrier->set_value(std::move(res));
             });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
                        ERROR_LOCATION,
@@ -287,7 +287,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                   return barrier->set_value(std::move(res));
               });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
                        ERROR_LOCATION,
@@ -323,7 +323,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                   return barrier->set_value(std::move(res));
               });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
                        ERROR_LOCATION,
@@ -358,7 +358,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                 return barrier->set_value();
             });
             f.get();
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { transactions_errc::operation_failed,
                      ERROR_LOCATION,
                      fmt::format("unable to remove document: {}, cause: {}, id=\"{}\"",
@@ -380,7 +380,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
 
     [[nodiscard]] std::pair<std::optional<core::operations::query_response>, core_error_info> query(
       const std::string& statement,
-      const transactions::transaction_query_options& options)
+      const core::transactions::transaction_query_options& options)
     {
         try {
             auto barrier = std::make_shared<std::promise<std::optional<core::operations::query_response>>>();
@@ -393,7 +393,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                   return barrier->set_value(std::move(res));
               });
             return { f.get(), {} };
-        } catch (const couchbase::transactions::transaction_operation_failed& e) {
+        } catch (const core::transactions::transaction_operation_failed& e) {
             return { {},
                      { transactions_errc::operation_failed,
                        ERROR_LOCATION,
@@ -408,12 +408,12 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
     }
 
   private:
-    couchbase::transactions::transaction_context transaction_context_;
+    core::transactions::transaction_context transaction_context_;
 };
 
 COUCHBASE_API
 transaction_context_resource::transaction_context_resource(transactions_resource* transactions,
-                                                           couchbase::transactions::per_transaction_config&& configuration)
+                                                           core::transactions::per_transaction_config&& configuration)
   : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(), std::move(configuration)) }
 {
 }
@@ -543,7 +543,7 @@ zval_to_document_id(const zval* document)
     return { bucket, scope, collection, id };
 }
 
-static std::pair<couchbase::transactions::transaction_links, core_error_info>
+static std::pair<core::transactions::transaction_links, core_error_info>
 zval_to_links(const zval* document)
 {
     const zval* links = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("links"));
@@ -605,7 +605,7 @@ zval_to_links(const zval* document)
              {} };
 }
 
-static std::pair<std::optional<couchbase::transactions::document_metadata>, core_error_info>
+static std::pair<std::optional<core::transactions::document_metadata>, core_error_info>
 zval_to_metadata(const zval* document)
 {
     const zval* links = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("links"));
@@ -625,7 +625,7 @@ zval_to_metadata(const zval* document)
     cb_assign_string(crc32, links, "crc32");
     cb_assign_integer(exptime, links, "exptime");
 
-    return { couchbase::transactions::document_metadata{ cas, revid, exptime, crc32 }, {} };
+    return { core::transactions::document_metadata{ cas, revid, exptime, crc32 }, {} };
 }
 
 static std::pair<transactions::transaction_get_result, core_error_info>
@@ -779,7 +779,7 @@ transaction_context_resource::query(zval* return_value, const zend_string* state
     }
 
 static core_error_info
-apply_options(couchbase::transactions::per_transaction_config& config, zval* options)
+apply_options(core::transactions::per_transaction_config& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for per transaction configuration" };
@@ -799,13 +799,13 @@ apply_options(couchbase::transactions::per_transaction_config& config, zval* opt
                 return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string" };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::NONE);
+                config.durability_level(core::transactions::durability_level::NONE);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::MAJORITY);
+                config.durability_level(core::transactions::durability_level::MAJORITY);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::MAJORITY_AND_PERSIST_TO_ACTIVE);
+                config.durability_level(core::transactions::durability_level::MAJORITY_AND_PERSIST_TO_ACTIVE);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::PERSIST_TO_MAJORITY);
+                config.durability_level(core::transactions::durability_level::PERSIST_TO_MAJORITY);
             } else {
                 return { errc::common::invalid_argument,
                          ERROR_LOCATION,
@@ -822,7 +822,7 @@ COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transaction_context_resource(transactions_resource* connection, zval* options)
 {
-    couchbase::transactions::per_transaction_config configuration{};
+    core::transactions::per_transaction_config configuration{};
     if (auto e = apply_options(configuration, options); e.ec) {
         return { nullptr, e };
     }
