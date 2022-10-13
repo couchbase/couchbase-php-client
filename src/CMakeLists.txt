@@ -26,7 +26,6 @@ set(COUCHBASE_TXNS_CXX_BUILD_DOC
 set(COUCHBASE_TXNS_CXX_CLIENT_EXTERNAL
     ON
     CACHE BOOL "" FORCE)
-add_subdirectory(deps/couchbase-cxx-transactions)
 
 string(
   REGEX
