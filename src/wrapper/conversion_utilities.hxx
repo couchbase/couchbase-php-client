@@ -114,6 +114,20 @@ cb_assign_string(String& field, const zval* options, std::string_view name)
 std::pair<core_error_info, std::optional<std::vector<std::byte>>>
 cb_get_binary(const zval* options, std::string_view name);
 
+template<typename Binary>
+core_error_info
+cb_assign_binary(Binary& field, const zval* options, std::string_view name)
+{
+    auto [e, value] = cb_get_binary(options, name);
+    if (e.ec) {
+        return e;
+    }
+    if (value) {
+        field = *value;
+    }
+    return {};
+}
+
 std::pair<core_error_info, std::optional<std::chrono::milliseconds>>
 cb_get_timeout(const zval* options);
 
