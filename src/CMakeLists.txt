@@ -54,22 +54,11 @@ if(NOT COUCHBASE_CXX_CLIENT_GIT_REVISION)
   if(GIT)
     execute_process(
       COMMAND git rev-parse HEAD
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-transactions
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client
       OUTPUT_STRIP_TRAILING_WHITESPACE
       OUTPUT_VARIABLE COUCHBASE_CXX_CLIENT_GIT_REVISION)
   else()
     set(COUCHBASE_CXX_CLIENT_GIT_REVISION "unknown")
-  endif()
-endif()
-if(NOT COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION)
-  if(GIT)
-    execute_process(
-      COMMAND git rev-parse HEAD
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-transactions
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      OUTPUT_VARIABLE COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION)
-  else()
-    set(COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION "unknown")
   endif()
 endif()
 configure_file(${PROJECT_SOURCE_DIR}/cmake/ext_build_version.hxx.in
@@ -78,14 +67,8 @@ configure_file(${PROJECT_SOURCE_DIR}/cmake/ext_build_version.hxx.in
 file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/wrapper/*.cxx)
 add_library(couchbase_php_wrapper SHARED ${SOURCE_FILES})
 target_include_directories(couchbase_php_wrapper PRIVATE ${PROJECT_BINARY_DIR}/generated)
-target_include_directories(couchbase_php_wrapper PRIVATE ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-transactions/include)
 target_include_directories(couchbase_php_wrapper PRIVATE ${PHP_INCLUDE_DIRS})
-target_link_libraries(
-  couchbase_php_wrapper
-  PRIVATE project_options
-          project_warnings
-          couchbase_cxx_client
-          transactions_cxx)
+target_link_libraries(couchbase_php_wrapper PRIVATE project_options project_warnings couchbase_cxx_client)
 if(APPLE)
   target_link_libraries(couchbase_php_wrapper PRIVATE -Wl,-undefined,dynamic_lookup)
 endif()
@@ -98,8 +81,7 @@ if(COUCHBASE_PHP_LIBDIR)
   add_custom_command(
     TARGET couchbase_php_wrapper
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_wrapper>" "$<TARGET_LINKER_FILE:couchbase_php_wrapper>"
-            "${COUCHBASE_PHP_LIBDIR}/"
-
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_wrapper>"
+            "$<TARGET_LINKER_FILE:couchbase_php_wrapper>" "${COUCHBASE_PHP_LIBDIR}/"
     VERBATIM)
 endif()

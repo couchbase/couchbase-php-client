@@ -38,7 +38,7 @@ class transaction_context_resource
 {
   public:
     COUCHBASE_API
-    transaction_context_resource(transactions_resource* transactions, couchbase::transactions::per_transaction_config&& configuration);
+    transaction_context_resource(transactions_resource* transactions, const couchbase::transactions::per_transaction_config& configuration);
 
     COUCHBASE_API
     core_error_info new_attempt();

@@ -19,7 +19,7 @@
 #include "common.hxx"
 #include "transactions_resource.hxx"
 
-#include <couchbase/transactions.hxx>
+#include <core/transactions.hxx>
 
 #include <fmt/core.h>
 
@@ -47,9 +47,9 @@ get_transactions_destructor_id()
 class transactions_resource::impl : public std::enable_shared_from_this<transactions_resource::impl>
 {
   public:
-    impl(connection_handle* connection, couchbase::transactions::transaction_config&& config)
+    impl(connection_handle* connection, const couchbase::transactions::transaction_config& config)
       : cluster_{ connection->cluster() }
-      , transactions_(*cluster_, config)
+      , transactions_(cluster_, config)
     {
     }
 
@@ -61,24 +61,25 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
 
     const impl& operator=(const impl& other) = delete;
 
-    [[nodiscard]] couchbase::transactions::transactions& transactions()
+    [[nodiscard]] couchbase::core::transactions::transactions& transactions()
     {
         return transactions_;
     }
 
   private:
     std::shared_ptr<couchbase::core::cluster> cluster_;
-    couchbase::transactions::transactions transactions_;
+    couchbase::core::transactions::transactions transactions_;
 };
 
 COUCHBASE_API
-transactions_resource::transactions_resource(connection_handle* connection, couchbase::transactions::transaction_config&& configuration)
-  : impl_{ std::make_shared<transactions_resource::impl>(connection, std::move(configuration)) }
+transactions_resource::transactions_resource(connection_handle* connection,
+                                             const couchbase::transactions::transaction_config& configuration)
+  : impl_{ std::make_shared<transactions_resource::impl>(connection, configuration) }
 {
 }
 
 COUCHBASE_API
-couchbase::transactions::transactions&
+core::transactions::transactions&
 transactions_resource::transactions()
 {
     return impl_->transactions();
@@ -161,13 +162,13 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string" };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::NONE);
+                config.durability_level(couchbase::durability_level::none);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::MAJORITY);
+                config.durability_level(couchbase::durability_level::majority);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::MAJORITY_AND_PERSIST_TO_ACTIVE);
+                config.durability_level(couchbase::durability_level::majority_and_persist_to_active);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-                config.durability_level(couchbase::transactions::durability_level::PERSIST_TO_MAJORITY);
+                config.durability_level(couchbase::durability_level::persist_to_majority);
             } else {
                 return { errc::common::invalid_argument,
                          ERROR_LOCATION,

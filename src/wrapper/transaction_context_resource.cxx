@@ -155,7 +155,7 @@ failure_type_to_error_code(core::transactions::failure_type failure)
 class transaction_context_resource::impl : public std::enable_shared_from_this<transaction_context_resource::impl>
 {
   public:
-    impl(core::transactions::transactions& transactions, transactions::per_transaction_config&& configuration)
+    impl(core::transactions::transactions& transactions, const transactions::per_transaction_config& configuration)
       : transaction_context_(transactions, configuration)
     {
     }
@@ -241,17 +241,19 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> get_optional(const core::document_id& id)
+    [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info> get_optional(
+      const core::document_id& id)
     {
         try {
-            auto barrier = std::make_shared<std::promise<std::optional<transactions::transaction_get_result>>>();
+            auto barrier = std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
             auto f = barrier->get_future();
-            transaction_context_.get_optional(id, [barrier](std::exception_ptr e, std::optional<transactions::transaction_get_result> res) {
-                if (e) {
-                    return barrier->set_exception(e);
-                }
-                return barrier->set_value(std::move(res));
-            });
+            transaction_context_.get_optional(
+              id, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
+                  if (e) {
+                      return barrier->set_exception(e);
+                  }
+                  return barrier->set_value(std::move(res));
+              });
             return { f.get(), {} };
         } catch (const core::transactions::transaction_operation_failed& e) {
             return { {},
@@ -273,14 +275,15 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> insert(const core::document_id& id,
-                                                                                                         const std::string& content)
+    [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info> insert(
+      const core::document_id& id,
+      const std::vector<std::byte>& content)
     {
         try {
-            auto barrier = std::make_shared<std::promise<std::optional<transactions::transaction_get_result>>>();
+            auto barrier = std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
             auto f = barrier->get_future();
             transaction_context_.insert(
-              id, content, [barrier](std::exception_ptr e, std::optional<transactions::transaction_get_result> res) {
+              id, content, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
                   if (e) {
                       return barrier->set_exception(e);
                   }
@@ -308,15 +311,15 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
         return {};
     }
 
-    [[nodiscard]] std::pair<std::optional<transactions::transaction_get_result>, core_error_info> replace(
-      const transactions::transaction_get_result& document,
-      const std::string& content)
+    [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info> replace(
+      const core::transactions::transaction_get_result& document,
+      const std::vector<std::byte>& content)
     {
         try {
-            auto barrier = std::make_shared<std::promise<std::optional<transactions::transaction_get_result>>>();
+            auto barrier = std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
             auto f = barrier->get_future();
             transaction_context_.replace(
-              document, content, [barrier](std::exception_ptr e, std::optional<transactions::transaction_get_result> res) {
+              document, content, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
                   if (e) {
                       return barrier->set_exception(e);
                   }
@@ -330,23 +333,23 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                        fmt::format("unable to replace document: {}, cause: {}, id=\"{}\"",
                                    e.what(),
                                    external_exception_to_string(e.cause()),
-                                   document.id()),
+                                   document.key()),
                        build_error_context(e) } };
         } catch (const std::exception& e) {
             return { {},
                      { transactions_errc::std_exception,
                        ERROR_LOCATION,
-                       fmt::format("unable to replace document: {}, id=\"{}\"", e.what(), document.id()) } };
+                       fmt::format("unable to replace document: {}, id=\"{}\"", e.what(), document.key()) } };
         } catch (...) {
             return { {},
                      { transactions_errc::unexpected_exception,
                        ERROR_LOCATION,
-                       fmt::format("unable to replace document: unexpected C++ exception, id=\"{}\"", document.id()) } };
+                       fmt::format("unable to replace document: unexpected C++ exception, id=\"{}\"", document.key()) } };
         }
         return {};
     }
 
-    [[nodiscard]] core_error_info remove(const transactions::transaction_get_result& document)
+    [[nodiscard]] core_error_info remove(const core::transactions::transaction_get_result& document)
     {
         try {
             auto barrier = std::make_shared<std::promise<void>>();
@@ -364,16 +367,16 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
                      fmt::format("unable to remove document: {}, cause: {}, id=\"{}\"",
                                  e.what(),
                                  external_exception_to_string(e.cause()),
-                                 document.id()),
+                                 document.key()),
                      build_error_context(e) };
         } catch (const std::exception& e) {
             return { transactions_errc::std_exception,
                      ERROR_LOCATION,
-                     fmt::format("unable to remove document: {}, id=\"{}\"", e.what(), document.id()) };
+                     fmt::format("unable to remove document: {}, id=\"{}\"", e.what(), document.key()) };
         } catch (...) {
             return { transactions_errc::unexpected_exception,
                      ERROR_LOCATION,
-                     fmt::format("unable to remove document: unexpected C++ exception, id=\"{}\"", document.id()) };
+                     fmt::format("unable to remove document: unexpected C++ exception, id=\"{}\"", document.key()) };
         }
         return {};
     }
@@ -413,8 +416,8 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
 
 COUCHBASE_API
 transaction_context_resource::transaction_context_resource(transactions_resource* transactions,
-                                                           core::transactions::per_transaction_config&& configuration)
-  : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(), std::move(configuration)) }
+                                                           const transactions::per_transaction_config& configuration)
+  : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(), configuration) }
 {
 }
 
@@ -451,15 +454,15 @@ transaction_context_resource::rollback()
 }
 
 static void
-transaction_get_result_to_zval(zval* return_value, const transactions::transaction_get_result& res)
+transaction_get_result_to_zval(zval* return_value, const core::transactions::transaction_get_result& res)
 {
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", res.id().key().data(), res.id().key().size());
-    add_assoc_stringl(return_value, "collectionName", res.id().collection().data(), res.id().collection().size());
-    add_assoc_stringl(return_value, "scopeName", res.id().scope().data(), res.id().scope().size());
-    add_assoc_stringl(return_value, "bucketName", res.id().bucket().data(), res.id().bucket().size());
+    add_assoc_stringl(return_value, "id", res.key().data(), res.key().size());
+    add_assoc_stringl(return_value, "collectionName", res.collection().data(), res.collection().size());
+    add_assoc_stringl(return_value, "scopeName", res.scope().data(), res.scope().size());
+    add_assoc_stringl(return_value, "bucketName", res.bucket().data(), res.bucket().size());
     {
-        auto cas = fmt::format("{:x}", res.cas());
+        auto cas = fmt::format("{:x}", res.cas().value());
         add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     }
     {
@@ -507,7 +510,10 @@ transaction_get_result_to_zval(zval* return_value, const transactions::transacti
             add_assoc_stringl(
               &links, "staged_attempt_id", res.links().staged_attempt_id()->data(), res.links().staged_attempt_id()->size());
         }
-        add_assoc_stringl(&links, "staged_content", res.links().staged_content().data(), res.links().staged_content().size());
+        add_assoc_stringl(&links,
+                          "staged_content",
+                          reinterpret_cast<const char*>(res.links().staged_content().data()),
+                          res.links().staged_content().size());
         if (res.links().cas_pre_txn()) {
             add_assoc_stringl(&links, "cas_pre_txn", res.links().cas_pre_txn()->data(), res.links().cas_pre_txn()->size());
         }
@@ -521,7 +527,7 @@ transaction_get_result_to_zval(zval* return_value, const transactions::transacti
             add_assoc_stringl(&links, "op", res.links().op()->data(), res.links().op()->size());
         }
         if (res.links().forward_compat()) {
-            auto encoded = res.links().forward_compat()->dump();
+            auto encoded = core::utils::json::generate(res.links().forward_compat().value());
             add_assoc_stringl(&links, "forward_compat", encoded.data(), encoded.size());
         }
         add_assoc_bool(&links, "is_deleted", res.links().is_deleted());
@@ -559,7 +565,7 @@ zval_to_links(const zval* document)
     std::optional<std::string> atr_collection_name;
     std::optional<std::string> staged_transaction_id;
     std::optional<std::string> staged_attempt_id;
-    std::optional<std::string> staged_content;
+    std::optional<std::vector<std::byte>> staged_content;
     std::optional<std::string> cas_pre_txn;
     std::optional<std::string> revid_pre_txn;
     std::optional<uint32_t> exptime_pre_txn;
@@ -574,7 +580,7 @@ zval_to_links(const zval* document)
     cb_assign_string(atr_collection_name, links, "atr_collection_name");
     cb_assign_string(staged_transaction_id, links, "staged_transaction_id");
     cb_assign_string(staged_attempt_id, links, "staged_attempt_id");
-    cb_assign_string(staged_content, links, "staged_content");
+    cb_assign_binary(staged_content, links, "staged_content");
     cb_assign_string(cas_pre_txn, links, "cas_pre_txn");
     cb_assign_string(revid_pre_txn, links, "revid_pre_txn");
     cb_assign_string(crc32_of_staging, links, "crc32_of_staging");
@@ -583,26 +589,26 @@ zval_to_links(const zval* document)
     cb_assign_string(forward_compat, links, "forward_compat");
     cb_assign_boolean(is_deleted, links, "is_deleted");
 
-    std::optional<nlohmann::json> forward_compat_json;
+    std::optional<tao::json::value> forward_compat_json;
     if (forward_compat) {
-        forward_compat_json = nlohmann::json::parse(forward_compat->begin(), forward_compat->end());
+        forward_compat_json = core::utils::json::parse(forward_compat.value());
     }
 
-    return { { atr_id,
-               atr_bucket_name,
-               atr_scope_name,
-               atr_collection_name,
-               staged_transaction_id,
-               staged_attempt_id,
-               staged_content,
-               cas_pre_txn,
-               revid_pre_txn,
-               exptime_pre_txn,
-               crc32_of_staging,
-               op,
-               forward_compat_json,
-               is_deleted },
-             {} };
+    core::transactions::transaction_links links_(atr_id,
+                                                 atr_bucket_name,
+                                                 atr_scope_name,
+                                                 atr_collection_name,
+                                                 staged_transaction_id,
+                                                 staged_attempt_id,
+                                                 staged_content,
+                                                 cas_pre_txn,
+                                                 revid_pre_txn,
+                                                 exptime_pre_txn,
+                                                 crc32_of_staging,
+                                                 op,
+                                                 forward_compat_json,
+                                                 is_deleted);
+    return { links_, {} };
 }
 
 static std::pair<std::optional<core::transactions::document_metadata>, core_error_info>
@@ -628,7 +634,7 @@ zval_to_metadata(const zval* document)
     return { core::transactions::document_metadata{ cas, revid, exptime, crc32 }, {} };
 }
 
-static std::pair<transactions::transaction_get_result, core_error_info>
+static std::pair<core::transactions::transaction_get_result, core_error_info>
 zval_to_transaction_get_result(const zval* document)
 {
     if (document == nullptr || Z_TYPE_P(document) != IS_ARRAY) {
@@ -639,8 +645,8 @@ zval_to_transaction_get_result(const zval* document)
     if (auto e = cb_assign_cas(cas, document); e.ec) {
         return { {}, e };
     }
-    std::string content;
-    cb_assign_string(content, document, "value");
+    std::vector<std::byte> content;
+    cb_assign_binary(content, document, "value");
     auto [links, e] = zval_to_links(document);
     if (e.ec) {
         return { {}, e };
@@ -650,7 +656,7 @@ zval_to_transaction_get_result(const zval* document)
         return { {}, err };
     }
 
-    return { transactions::transaction_get_result(zval_to_document_id(document), content, cas.value(), links, metadata), {} };
+    return { core::transactions::transaction_get_result(zval_to_document_id(document), content, cas.value(), links, metadata), {} };
 }
 
 COUCHBASE_API
@@ -695,7 +701,7 @@ transaction_context_resource::insert(zval* return_value,
         cb_string_new(id),
     };
 
-    auto [resp, err] = impl_->insert(doc_id, cb_string_new(value));
+    auto [resp, err] = impl_->insert(doc_id, cb_binary_new(value));
     if (err.ec) {
         return err;
     }
@@ -714,7 +720,7 @@ transaction_context_resource::replace(zval* return_value, const zval* document, 
     if (e.ec) {
         return e;
     }
-    auto [resp, err] = impl_->replace(doc, cb_string_new(value));
+    auto [resp, err] = impl_->replace(doc, cb_binary_new(value));
     if (err.ec) {
         return err;
     }
@@ -749,7 +755,7 @@ transaction_context_resource::query(zval* return_value, const zend_string* state
     if (e.ec) {
         return e;
     }
-    auto [resp, err] = impl_->query(cb_string_new(statement), transactions::transaction_query_options(request));
+    auto [resp, err] = impl_->query(cb_string_new(statement), core::transactions::transaction_query_options(request));
     if (err.ec) {
         return err;
     }
@@ -779,7 +785,7 @@ transaction_context_resource::query(zval* return_value, const zend_string* state
     }
 
 static core_error_info
-apply_options(core::transactions::per_transaction_config& config, zval* options)
+apply_options(transactions::per_transaction_config& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for per transaction configuration" };
@@ -799,13 +805,13 @@ apply_options(core::transactions::per_transaction_config& config, zval* options)
                 return { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string" };
             }
             if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-                config.durability_level(core::transactions::durability_level::NONE);
+                config.durability_level(couchbase::durability_level::none);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-                config.durability_level(core::transactions::durability_level::MAJORITY);
+                config.durability_level(couchbase::durability_level::majority);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-                config.durability_level(core::transactions::durability_level::MAJORITY_AND_PERSIST_TO_ACTIVE);
+                config.durability_level(couchbase::durability_level::majority_and_persist_to_active);
             } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-                config.durability_level(core::transactions::durability_level::PERSIST_TO_MAJORITY);
+                config.durability_level(couchbase::durability_level::persist_to_majority);
             } else {
                 return { errc::common::invalid_argument,
                          ERROR_LOCATION,
@@ -822,11 +828,11 @@ COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transaction_context_resource(transactions_resource* connection, zval* options)
 {
-    core::transactions::per_transaction_config configuration{};
+    transactions::per_transaction_config configuration{};
     if (auto e = apply_options(configuration, options); e.ec) {
         return { nullptr, e };
     }
-    auto* handle = new transaction_context_resource(connection, std::move(configuration));
+    auto* handle = new transaction_context_resource(connection, configuration);
     return { zend_register_resource(handle, transaction_context_destructor_id_), {} };
 }
 
