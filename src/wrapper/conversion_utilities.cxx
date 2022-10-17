@@ -157,9 +157,9 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
         if (scan_consistency == "notBounded") {
-            request.scan_consistency = core::query_scan_consistency::not_bounded;
+            request.scan_consistency = query_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
-            request.scan_consistency = core::query_scan_consistency::request_plus;
+            request.scan_consistency = query_scan_consistency::request_plus;
         } else if (scan_consistency) {
             return { {},
                      { errc::common::invalid_argument,
@@ -183,11 +183,11 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (auto [e, profile] = cb_get_string(options, "profile"); !e.ec) {
         if (profile == "off") {
-            request.profile = core::query_profile_mode::off;
+            request.profile = query_profile::off;
         } else if (profile == "phases") {
-            request.profile = core::query_profile_mode::phases;
+            request.profile = query_profile::phases;
         } else if (profile == "timings") {
-            request.profile = core::query_profile_mode::timings;
+            request.profile = query_profile::timings;
         } else if (profile) {
             return { {}, { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for profile: {}", *profile) } };
         }
@@ -220,7 +220,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, core::json_string> params{};
+        std::map<std::string, couchbase::core::json_string, std::less<>> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
@@ -234,7 +234,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
-        std::map<std::string, core::json_string> params{};
+        std::map<std::string, couchbase::core::json_string, std::less<>> params{};
         const zend_string* key = nullptr;
         const zval* item = nullptr;
 
