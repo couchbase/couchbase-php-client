@@ -54,12 +54,12 @@ Build the module:
 
 # Verification steps Windows
 
-The aforementioned build process will generade command-line version of `php.exe` and DLLs for PHP extension:
+The aforementioned build process will generate a command-line version of `php.exe` and DLLs for PHP extension:
 
     c:\users\user\php-src\x64\Release_TS\php.exe
     c:\users\user\php-src\x64\Release_TS\php8ts.dll
     c:\users\user\php-src\x64\Release_TS\php_couchbase.dll
-    c:\users\user\php-src\x64\Release_TS\couchbase_php_core.dll
+    c:\users\user\php-src\x64\Release_TS\couchbase_php_wrapper.dll
 
 Lets create another directory and copy these three files so that the following file tree will be in result:
 
@@ -67,7 +67,7 @@ Lets create another directory and copy these three files so that the following f
     |- php.exe
     |- php8ts.dll
     |- php_couchbase.dll
-    +- couchbase_php_core.dll
+    +- couchbase_php_wrapper.dll
 
 Now navigate to verification directory and check that it can load the extension successfully:
 
