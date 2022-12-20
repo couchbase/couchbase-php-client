@@ -1,0 +1,21 @@
+{
+    "name": "couchbase/couchbase-stellar-nebula",
+    "description": "WIP. Library to connect to Couchbase using gRPC transport",
+    "type": "library",
+    "require": {
+        "grpc/grpc": "^1.42"
+    },
+    "license": "Apache-2.0",
+    "autoload": {
+        "psr-4": {
+            "Couchbase\\StellarNebula\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Sergey Avseyev",
+            "email": "sergey.avseyev@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
