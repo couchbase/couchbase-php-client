@@ -3,12 +3,17 @@
     "description": "WIP. Library to connect to Couchbase using gRPC transport",
     "type": "library",
     "require": {
-        "grpc/grpc": "^1.42"
+        "google/protobuf": "^3.21",
+        "grpc/grpc": "^1.42",
+        "ext-grpc": "^1.15",
+        "ext-protobuf": "^3.21",
+        "google/common-protos": "^3.1"
     },
     "license": "Apache-2.0",
     "autoload": {
         "psr-4": {
-            "Couchbase\\StellarNebula\\": "src/"
+            "Couchbase\\StellarNebula\\": "src/Couchbase/StellarNebula",
+            "GPBMetadata\\Couchbase\\": "src/GPBMetadata/Couchbase"
         }
     },
     "authors": [
@@ -19,6 +24,7 @@
     ],
     "minimum-stability": "stable",
     "require-dev": {
-        "phpunit/phpunit": "^9"
+        "phpunit/phpunit": "^9",
+        "squizlabs/php_codesniffer": "3.*"
     }
 }

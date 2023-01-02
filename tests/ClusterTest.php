@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+
 /*
  * Copyright 2022-Present Couchbase, Inc.
  *
@@ -15,12 +16,42 @@
  * limitations under the License.
  */
 
+declare(strict_types=1);
+
+use Couchbase\StellarNebula\Bucket;
+use Couchbase\StellarNebula\Cluster;
+use Couchbase\StellarNebula\Collection;
 use PHPUnit\Framework\TestCase;
 
 final class ClusterTest extends TestCase
 {
-    public function testCanBeCreatedWithDefaultAguments(): void
+    private const CONNECTION_STRING_ENV = "TEST_CONNECTION_STRING";
+    private const BUCKET_NAME_ENV = "TEST_BUCKET";
+
+    private const DEFAULT_CONNECTION_STRING = "localhost";
+    private const DEFAULT_BUCKET_NAME = "default";
+
+    private Cluster $cluster;
+    private Collection $defaultCollection;
+    private Bucket $bucket;
+
+    protected function setUp(): void
     {
-        $this->assertTrue(true);
+        parent::setUp();
+        $this->cluster = new Cluster(getenv(self::CONNECTION_STRING_ENV) ?: self::DEFAULT_CONNECTION_STRING);
+        $this->bucket = $this->cluster->bucket(getenv(self::BUCKET_NAME_ENV) ?: self::DEFAULT_BUCKET_NAME);
+        $this->defaultCollection = $this->bucket->defaultCollection();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->cluster->close();
+        parent::tearDown();
+    }
+
+    public function testCanDoKvUpsert(): void
+    {
+        $res = $this->defaultCollection->upsert("foo", ["value" => 42]);
+        $this->assertNotNull($res->cas());
     }
 }
