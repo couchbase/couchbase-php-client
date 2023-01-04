@@ -169,6 +169,26 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
+    public function testSearchWithSkip()
+    {
+        $this->skipIfCaves();
+
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options_none = SearchOptions::build()->limit(3);
+        $options_low = SearchOptions::build()->limit(3)->skip(10);
+        $options_excess = SearchOptions::build()->limit(3)->skip(7000);
+
+        $result_none = $this->cluster->searchQuery("beer-search", $query, $options_none);
+        $result_low = $this->cluster->searchQuery("beer-search", $query, $options_low);
+        $result_excess = $this->cluster->searchQuery("beer-search", $query, $options_excess);
+
+        $this->assertNotNull($result_none);
+        $this->assertNotNull($result_low);
+        $this->assertNotNull($result_excess);
+        $this->assertNotEquals($result_none->rows(), $result_low->rows());
+        $this->assertEmpty($result_excess->rows());
+    }
+
     public function testSearchWithSort()
     {
         $this->skipIfCaves();
