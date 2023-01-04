@@ -317,7 +317,7 @@ class SearchOptions implements JsonSerializable
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'limit' => $options->limit,
-            'from' => $options->skip,
+            'skip' => $options->skip,
             'explain' => $options->explain,
             'disableScoring' => $options->disableScoring,
             'fields' => $options->fields,
