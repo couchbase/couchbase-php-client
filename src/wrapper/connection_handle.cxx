@@ -56,20 +56,20 @@ retry_reason_to_string(retry_reason reason)
             return "service_not_available";
         case retry_reason::node_not_available:
             return "node_not_available";
-        case retry_reason::kv_not_my_vbucket:
-            return "kv_not_my_vbucket";
-        case retry_reason::kv_collection_outdated:
-            return "kv_collection_outdated";
-        case retry_reason::kv_error_map_retry_indicated:
-            return "kv_error_map_retry_indicated";
-        case retry_reason::kv_locked:
-            return "kv_locked";
-        case retry_reason::kv_temporary_failure:
-            return "kv_temporary_failure";
-        case retry_reason::kv_sync_write_in_progress:
-            return "kv_sync_write_in_progress";
-        case retry_reason::kv_sync_write_re_commit_in_progress:
-            return "kv_sync_write_re_commit_in_progress";
+        case retry_reason::key_value_not_my_vbucket:
+            return "key_value_not_my_vbucket";
+        case retry_reason::key_value_collection_outdated:
+            return "key_value_collection_outdated";
+        case retry_reason::key_value_error_map_retry_indicated:
+            return "key_value_error_map_retry_indicated";
+        case retry_reason::key_value_locked:
+            return "key_value_locked";
+        case retry_reason::key_value_temporary_failure:
+            return "key_value_temporary_failure";
+        case retry_reason::key_value_sync_write_in_progress:
+            return "key_value_sync_write_in_progress";
+        case retry_reason::key_value_sync_write_re_commit_in_progress:
+            return "key_value_sync_write_re_commit_in_progress";
         case retry_reason::service_response_code_indicated:
             return "service_response_code_indicated";
         case retry_reason::socket_closed_while_in_flight:

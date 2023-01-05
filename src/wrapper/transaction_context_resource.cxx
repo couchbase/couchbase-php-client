@@ -155,7 +155,7 @@ failure_type_to_error_code(core::transactions::failure_type failure)
 class transaction_context_resource::impl : public std::enable_shared_from_this<transaction_context_resource::impl>
 {
   public:
-    impl(core::transactions::transactions& transactions, const transactions::per_transaction_config& configuration)
+    impl(core::transactions::transactions& transactions, const transactions::transaction_options& configuration)
       : transaction_context_(transactions, configuration)
     {
     }
@@ -194,7 +194,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             auto f = barrier->get_future();
             transaction_context_.rollback([barrier](std::exception_ptr e) {
                 if (e) {
-                    return barrier->set_exception(e);
+                    return barrier->set_exception(std::move(e));
                 }
                 return barrier->set_value();
             });
@@ -250,7 +250,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             transaction_context_.get_optional(
               id, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
                   if (e) {
-                      return barrier->set_exception(e);
+                      return barrier->set_exception(std::move(e));
                   }
                   return barrier->set_value(std::move(res));
               });
@@ -285,7 +285,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             transaction_context_.insert(
               id, content, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
                   if (e) {
-                      return barrier->set_exception(e);
+                      return barrier->set_exception(std::move(e));
                   }
                   return barrier->set_value(std::move(res));
               });
@@ -321,7 +321,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             transaction_context_.replace(
               document, content, [barrier](std::exception_ptr e, std::optional<core::transactions::transaction_get_result> res) mutable {
                   if (e) {
-                      return barrier->set_exception(e);
+                      return barrier->set_exception(std::move(e));
                   }
                   return barrier->set_value(std::move(res));
               });
@@ -356,7 +356,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             auto f = barrier->get_future();
             transaction_context_.remove(document, [barrier](std::exception_ptr e) {
                 if (e) {
-                    return barrier->set_exception(e);
+                    return barrier->set_exception(std::move(e));
                 }
                 return barrier->set_value();
             });
@@ -383,7 +383,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
 
     [[nodiscard]] std::pair<std::optional<core::operations::query_response>, core_error_info> query(
       const std::string& statement,
-      const core::transactions::transaction_query_options& options)
+      const transactions::transaction_query_options& options)
     {
         try {
             auto barrier = std::make_shared<std::promise<std::optional<core::operations::query_response>>>();
@@ -391,7 +391,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
             transaction_context_.query(
               statement, options, [barrier](std::exception_ptr e, std::optional<core::operations::query_response> res) {
                   if (e) {
-                      return barrier->set_exception(e);
+                      return barrier->set_exception(std::move(e));
                   }
                   return barrier->set_value(std::move(res));
               });
@@ -416,7 +416,7 @@ class transaction_context_resource::impl : public std::enable_shared_from_this<t
 
 COUCHBASE_API
 transaction_context_resource::transaction_context_resource(transactions_resource* transactions,
-                                                           const transactions::per_transaction_config& configuration)
+                                                           const transactions::transaction_options& configuration)
   : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(), configuration) }
 {
 }
@@ -466,8 +466,8 @@ transaction_get_result_to_zval(zval* return_value, const core::transactions::tra
         add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     }
     {
-        auto value = res.content<std::string>();
-        add_assoc_stringl(return_value, "value", value.data(), value.size());
+        const auto& value = res.content();
+        add_assoc_stringl(return_value, "value", reinterpret_cast<const char*>(value.data()), value.size());
     }
     if (res.metadata()) {
         zval meta;
@@ -751,11 +751,11 @@ COUCHBASE_API
 core_error_info
 transaction_context_resource::query(zval* return_value, const zend_string* statement, const zval* options)
 {
-    auto [request, e] = zval_to_query_request(statement, options);
+    auto [query_options, e] = zval_to_transactions_query_options(options);
     if (e.ec) {
         return e;
     }
-    auto [resp, err] = impl_->query(cb_string_new(statement), core::transactions::transaction_query_options(request));
+    auto [resp, err] = impl_->query(cb_string_new(statement), query_options);
     if (err.ec) {
         return err;
     }
@@ -785,7 +785,7 @@ transaction_context_resource::query(zval* return_value, const zend_string* state
     }
 
 static core_error_info
-apply_options(transactions::per_transaction_config& config, zval* options)
+apply_options(transactions::transaction_options& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for per transaction configuration" };
@@ -828,7 +828,7 @@ COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transaction_context_resource(transactions_resource* connection, zval* options)
 {
-    transactions::per_transaction_config configuration{};
+    transactions::transaction_options configuration{};
     if (auto e = apply_options(configuration, options); e.ec) {
         return { nullptr, e };
     }
