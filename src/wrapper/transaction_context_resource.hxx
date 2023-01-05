@@ -29,7 +29,7 @@
 
 namespace couchbase::transactions
 {
-class per_transaction_config;
+class transaction_options;
 }
 
 namespace couchbase::php
@@ -38,7 +38,7 @@ class transaction_context_resource
 {
   public:
     COUCHBASE_API
-    transaction_context_resource(transactions_resource* transactions, const couchbase::transactions::per_transaction_config& configuration);
+    transaction_context_resource(transactions_resource* transactions, const couchbase::transactions::transaction_options& configuration);
 
     COUCHBASE_API
     core_error_info new_attempt();

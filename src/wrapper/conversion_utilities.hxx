@@ -30,6 +30,11 @@
 
 #include <chrono>
 
+namespace couchbase::transactions
+{
+class transaction_query_options;
+} // namespace couchbase::transactions
+
 namespace couchbase::php
 {
 std::vector<std::byte>
@@ -46,6 +51,9 @@ cb_string_new(const zval* value);
 
 std::pair<core::operations::query_request, core_error_info>
 zval_to_query_request(const zend_string* statement, const zval* options);
+
+std::pair<transactions::transaction_query_options, core_error_info>
+zval_to_transactions_query_options(const zval* options);
 
 void
 query_response_to_zval(zval* return_value, const core::operations::query_response& resp);

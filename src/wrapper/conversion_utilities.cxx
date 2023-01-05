@@ -19,6 +19,9 @@
 #include "conversion_utilities.hxx"
 
 #include <core/utils/binary.hxx>
+#include <core/utils/json.hxx>
+
+#include <couchbase/transactions/transaction_query_options.hxx>
 
 #include <chrono>
 
@@ -146,6 +149,140 @@ cb_get_binary(const zval* options, std::string_view name)
     }
 
     return { {}, cb_binary_new(value) };
+}
+
+std::pair<transactions::transaction_query_options, core_error_info>
+zval_to_transactions_query_options(const zval* options)
+{
+    transactions::transaction_query_options query_options{};
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+        if (scan_consistency == "notBounded") {
+            query_options.scan_consistency(query_scan_consistency::not_bounded);
+        } else if (scan_consistency == "requestPlus") {
+            query_options.scan_consistency(query_scan_consistency::request_plus);
+        } else if (scan_consistency) {
+            return { {},
+                     { errc::common::invalid_argument,
+                       ERROR_LOCATION,
+                       fmt::format("invalid value used for scan consistency: {}", *scan_consistency) } };
+        }
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "scanCap"); !e.ec) {
+        query_options.scan_cap(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineCap"); !e.ec) {
+        query_options.pipeline_cap(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineBatch"); !e.ec) {
+        query_options.pipeline_batch(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "maxParallelism"); !e.ec) {
+        query_options.max_parallelism(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, profile] = cb_get_string(options, "profile"); !e.ec) {
+        if (profile == "off") {
+            query_options.profile(query_profile::off);
+        } else if (profile == "phases") {
+            query_options.profile(query_profile::phases);
+        } else if (profile == "timings") {
+            query_options.profile(query_profile::timings);
+        } else if (profile) {
+            return { {}, { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for profile: {}", *profile) } };
+        }
+    } else {
+        return { {}, e };
+    }
+
+    if (auto [e, val] = cb_get_boolean(options, "readonly"); !e.ec) {
+        query_options.readonly(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_boolean(options, "flexIndex"); !e.ec) {
+        query_options.readonly(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_boolean(options, "adHoc"); !e.ec) {
+        query_options.readonly(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (auto [e, val] = cb_get_string(options, "clientContextId"); !e.ec) {
+        query_options.client_context_id(val.value());
+    } else {
+        return { {}, e };
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<codec::binary> params{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            if (Z_TYPE_P(item) == IS_STRING) {
+                params.emplace_back(cb_binary_new(item));
+            } else {
+                return { {}, { errc::common::invalid_argument, ERROR_LOCATION, "expected encoded positional parameter to be a string" } };
+            }
+        }
+        ZEND_HASH_FOREACH_END();
+
+        query_options.encoded_positional_parameters(params);
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("namedParameters"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, codec::binary, std::less<>> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            if (Z_TYPE_P(item) == IS_STRING) {
+                params[cb_string_new(key)] = cb_binary_new(item);
+            } else {
+                return { {},
+                         { errc::common::invalid_argument,
+                           ERROR_LOCATION,
+                           fmt::format("expected encoded named parameter to be a string: {}", cb_string_new(key)) } };
+            }
+        }
+        ZEND_HASH_FOREACH_END();
+
+        query_options.encoded_named_parameters(std::move(params));
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, codec::binary, std::less<>> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            if (Z_TYPE_P(item) == IS_STRING) {
+                params[cb_string_new(key)] = cb_binary_new(item);
+            } else {
+                return { {},
+                         { errc::common::invalid_argument,
+                           ERROR_LOCATION,
+                           fmt::format("expected encoded raw parameter to be a string: {}", cb_string_new(key)) } };
+            }
+        }
+        ZEND_HASH_FOREACH_END();
+
+        query_options.encoded_raw_options(std::move(params));
+    }
+    return { query_options, {} };
 }
 
 std::pair<core::operations::query_request, core_error_info>

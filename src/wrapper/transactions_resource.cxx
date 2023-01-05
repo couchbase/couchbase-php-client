@@ -47,7 +47,7 @@ get_transactions_destructor_id()
 class transactions_resource::impl : public std::enable_shared_from_this<transactions_resource::impl>
 {
   public:
-    impl(connection_handle* connection, const couchbase::transactions::transaction_config& config)
+    impl(connection_handle* connection, const couchbase::transactions::transactions_config& config)
       : cluster_{ connection->cluster() }
       , transactions_(cluster_, config)
     {
@@ -73,7 +73,7 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
 
 COUCHBASE_API
 transactions_resource::transactions_resource(connection_handle* connection,
-                                             const couchbase::transactions::transaction_config& configuration)
+                                             const couchbase::transactions::transactions_config& configuration)
   : impl_{ std::make_shared<transactions_resource::impl>(connection, configuration) }
 {
 }
@@ -142,7 +142,7 @@ transactions_resource::transactions()
     }
 
 static core_error_info
-apply_options(couchbase::transactions::transaction_config& config, zval* options)
+apply_options(couchbase::transactions::transactions_config& config, zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for transactions configuration" };
@@ -199,9 +199,9 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                         return { errc::common::invalid_argument, ERROR_LOCATION, "expected scanConsistency to be a string" };
                     }
                     if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("notBounded")) == 0) {
-                        config.scan_consistency(query_scan_consistency::not_bounded);
+                        config.query_config().scan_consistency(query_scan_consistency::not_bounded);
                     } else if (zend_binary_strcmp(Z_STRVAL_P(v), Z_STRLEN_P(v), ZEND_STRL("requestPlus")) == 0) {
-                        config.scan_consistency(query_scan_consistency::request_plus);
+                        config.query_config().scan_consistency(query_scan_consistency::request_plus);
                     } else {
                         return { errc::common::invalid_argument,
                                  ERROR_LOCATION,
@@ -227,9 +227,9 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
             const zval* v;
             ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
             {
-                ASSIGN_DURATION_OPTION("cleanupWindow", config.cleanup_window, k, v);
-                ASSIGN_NEGATED_BOOLEAN_OPTION("disableLostAttemptCleanup", config.cleanup_lost_attempts, k, v);
-                ASSIGN_NEGATED_BOOLEAN_OPTION("disableClientAttemptCleanup", config.cleanup_client_attempts, k, v);
+                ASSIGN_DURATION_OPTION("cleanupWindow", config.cleanup_config().cleanup_window, k, v);
+                ASSIGN_NEGATED_BOOLEAN_OPTION("disableLostAttemptCleanup", config.cleanup_config().cleanup_lost_attempts, k, v);
+                ASSIGN_NEGATED_BOOLEAN_OPTION("disableClientAttemptCleanup", config.cleanup_config().cleanup_client_attempts, k, v);
             }
             ZEND_HASH_FOREACH_END();
         }
@@ -257,8 +257,7 @@ apply_options(couchbase::transactions::transaction_config& config, zval* options
                 ASSIGN_STRING_OPTION("collection", collection, k, v);
             }
             ZEND_HASH_FOREACH_END();
-            fprintf(stderr, "bucket: %s, scope: %s, collection: %s\n", bucket.c_str(), scope.c_str(), collection.c_str());
-            config.custom_metadata_collection(bucket, scope, collection);
+            config.metadata_collection({ bucket, scope, collection });
         }
     }
     ZEND_HASH_FOREACH_END();
@@ -270,17 +269,17 @@ COUCHBASE_API
 std::pair<zend_resource*, core_error_info>
 create_transactions_resource(connection_handle* connection, zval* options)
 {
-    couchbase::transactions::transaction_config config{};
+    couchbase::transactions::transactions_config config{};
     if (auto e = apply_options(config, options); e.ec) {
         return { nullptr, e };
     }
     // ensure that metadata collection is opened
-    if (auto metadata_collection = config.custom_metadata_collection(); metadata_collection && !metadata_collection->bucket.empty()) {
+    if (auto metadata_collection = config.metadata_collection(); metadata_collection && !metadata_collection->bucket.empty()) {
         if (auto e = connection->bucket_open(metadata_collection->bucket); e.ec) {
             return { nullptr, e };
         }
     }
-    auto* handle = new transactions_resource(connection, std::move(config));
+    auto* handle = new transactions_resource(connection, config);
     return { zend_register_resource(handle, transactions_destructor_id_), {} };
 }
 

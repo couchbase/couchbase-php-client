@@ -31,12 +31,12 @@ namespace couchbase
 {
 namespace transactions
 {
-class transaction_config;
-}
+class transactions_config;
+} // namespace transactions
 namespace core::transactions
 {
 class transactions;
-}
+} // namespace core::transactions
 } // namespace couchbase
 
 namespace couchbase::php
@@ -45,7 +45,7 @@ class transactions_resource
 {
   public:
     COUCHBASE_API
-    transactions_resource(connection_handle* connection, const couchbase::transactions::transaction_config& configuration);
+    transactions_resource(connection_handle* connection, const couchbase::transactions::transactions_config& configuration);
 
     COUCHBASE_API
     core::transactions::transactions& transactions();
