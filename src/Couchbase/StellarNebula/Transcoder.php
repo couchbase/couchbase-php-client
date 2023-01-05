@@ -20,10 +20,17 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class UpsertResult extends Result
+interface Transcoder
 {
-    public function __construct(string $bucket, string $scope, string $collection, ?string $id = null, int|string|null $cas = null)
-    {
-        parent::__construct($bucket, $scope, $collection, $id, $cas);
-    }
+    /**
+     * @return array {
+     *     Pair representing encoded value.
+     *
+     *     @type string $bytes
+     *     @type int $contentType
+     * }
+     */
+    public function encode($value): array;
+
+    public function decode(string $bytes, int $contentType);
 }

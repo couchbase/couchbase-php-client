@@ -23,7 +23,7 @@ use Couchbase\StellarNebula\Cluster;
 use Couchbase\StellarNebula\Collection;
 use PHPUnit\Framework\TestCase;
 
-final class ClusterTest extends TestCase
+final class KeyValueIntegrationTest extends TestCase
 {
     private const CONNECTION_STRING_ENV = "TEST_CONNECTION_STRING";
     private const BUCKET_NAME_ENV = "TEST_BUCKET";
@@ -49,9 +49,32 @@ final class ClusterTest extends TestCase
         parent::tearDown();
     }
 
-    public function testCanDoKvUpsert(): void
+    public function testInsertAndGet(): void
     {
-        $res = $this->defaultCollection->upsert("foo", ["value" => 42]);
-        $this->assertNotNull($res->cas());
+        $id = uniqid();
+
+        $insertResult = $this->defaultCollection->insert($id, ["stringValue" => "Hello, World"]);
+
+        $this->assertIsNumeric($insertResult->cas());
+        $this->assertGreaterThan(0, $insertResult->cas());
+
+        $this->assertEquals($this->bucket->name(), $insertResult->bucket());
+        $this->assertEquals($this->bucket->name(), $insertResult->mutationToken()->bucket());
+
+        $this->assertGreaterThan(0, $insertResult->mutationToken()->vbucketId());
+
+        $this->assertIsNumeric($insertResult->mutationToken()->vbucketId());
+        $this->assertGreaterThan(0, $insertResult->mutationToken()->vbucketUuid());
+
+        $this->assertIsNumeric($insertResult->mutationToken()->vbucketUuid());
+        $this->assertGreaterThan(0, $insertResult->mutationToken()->sequenceNumber());
+
+        $getResult = $this->defaultCollection->get($id);
+
+        $this->assertEquals($getResult->cas(), $insertResult->cas());
+
+        $getContent = $getResult->content();
+        $this->assertIsArray($getContent);
+        $this->assertEquals(["stringValue" => "Hello, World"], $getContent);
     }
 }

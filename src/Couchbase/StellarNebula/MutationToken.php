@@ -20,45 +20,43 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class Result
+class MutationToken
 {
-    private string $bucket;
-    private string $scope;
-    private string $collection;
-    private string $id;
-    private int|string $cas;
+    private string $bucketName;
+    private int $vbucketId;
+    private string|int $vbucketUuid;
+    private string|int $sequenceNumber;
 
-    public function __construct(string $bucket, string $scope, string $collection, string $id, int|string $cas)
+    public function __construct(
+        string $bucketName,
+        int $vbucketId,
+        int|string $vbucketUuid,
+        int|string $sequenceNumber
+    )
     {
-        $this->bucket = $bucket;
-        $this->scope = $scope;
-        $this->collection = $collection;
-        $this->id = $id;
-        $this->cas = $cas;
+        $this->bucketName = $bucketName;
+        $this->vbucketId = $vbucketId;
+        $this->vbucketUuid = $vbucketUuid;
+        $this->sequenceNumber = $sequenceNumber;
     }
 
     public function bucket(): string
     {
-        return $this->bucket;
+        return $this->bucketName;
     }
 
-    public function scope(): string
+    public function vbucketId(): int
     {
-        return $this->scope;
+        return $this->vbucketId;
     }
 
-    public function collection(): string
+    public function vbucketUuid(): string|int
     {
-        return $this->collection;
+        return $this->vbucketUuid;
     }
 
-    public function id(): string
+    public function sequenceNumber(): string|int
     {
-        return $this->id;
-    }
-
-    public function cas(): int|string
-    {
-        return $this->cas;
+        return $this->sequenceNumber;
     }
 }
