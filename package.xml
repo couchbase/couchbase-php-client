@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2022-05-11</date>
+    <date>2023-01-05</date>
     <version>
         <release>4.0.0</release>
         <api>4.0.0</api>
@@ -207,6 +207,8 @@
                 <file role="php" name="Cluster.php"/>
                 <file role="php" name="ClusterOptions.php"/>
                 <file role="php" name="Collection.php"/>
+                <file role="php" name="ConfigProfile.php"/>
+                <file role="php" name="ConfigProfiles.php"/>
                 <file role="php" name="ConjunctionSearchQuery.php"/>
                 <file role="php" name="Coordinate.php"/>
                 <file role="php" name="CounterResult.php"/>
@@ -338,12 +340,14 @@
                 <file role="php" name="ViewOrdering.php"/>
                 <file role="php" name="ViewResult.php"/>
                 <file role="php" name="ViewRow.php"/>
+                <file role="php" name="WanDevelopmentProfile.php"/>
                 <file role="php" name="WildcardSearchQuery.php"/>
                 <file role="php" name="autoload.php"/>
             </dir>
             <dir name="src">
                 <dir name="cmake">
                     <file role="src" name="ext_build_version.hxx.in"/>
+                    <file role="src" name="revisions.cmake"/>
                 </dir>
                 <dir name="deps">
                     <dir name="couchbase-cxx-client">
@@ -408,14 +412,23 @@
                                 </dir>
                                 <file role="src" name="analytics_error_category.cxx"/>
                                 <file role="src" name="append.cxx"/>
+                                <file role="src" name="best_effort_retry_strategy.cxx"/>
+                                <file role="src" name="bootstrap_state_listener.hxx"/>
                                 <file role="src" name="build_deferred_query_indexes.cxx"/>
+                                <file role="src" name="cluster.cxx"/>
                                 <file role="src" name="common_error_category.cxx"/>
+                                <file role="src" name="configuration_profiles_registry.cxx"/>
                                 <file role="src" name="decrement.cxx"/>
+                                <file role="src" name="dns_srv_tracker.cxx"/>
+                                <file role="src" name="dns_srv_tracker.hxx"/>
+                                <file role="src" name="exists.cxx"/>
                                 <file role="src" name="expiry.cxx"/>
+                                <file role="src" name="fail_fast_retry_strategy.cxx"/>
                                 <file role="src" name="field_level_encryption_error_category.cxx"/>
                                 <file role="src" name="get.cxx"/>
                                 <file role="src" name="get_all_replicas.cxx"/>
                                 <file role="src" name="get_all_replicas.hxx"/>
+                                <file role="src" name="get_and_lock.cxx"/>
                                 <file role="src" name="get_and_touch.cxx"/>
                                 <file role="src" name="get_any_replica.cxx"/>
                                 <file role="src" name="get_any_replica.hxx"/>
@@ -433,20 +446,26 @@
                                 <file role="src" name="observe_seqno.cxx"/>
                                 <file role="src" name="observe_seqno.hxx"/>
                                 <file role="src" name="prepend.cxx"/>
+                                <file role="src" name="query.cxx"/>
                                 <file role="src" name="query_error_category.cxx"/>
                                 <file role="src" name="remove.cxx"/>
                                 <file role="src" name="replace.cxx"/>
+                                <file role="src" name="retry_action.cxx"/>
+                                <file role="src" name="retry_reason.cxx"/>
                                 <file role="src" name="search_error_category.cxx"/>
                                 <file role="src" name="streaming_json_lexter_error_category.cxx"/>
                                 <file role="src" name="touch.cxx"/>
+                                <file role="src" name="transaction_error_category.cxx"/>
+                                <file role="src" name="transaction_op_error_category.cxx"/>
+                                <file role="src" name="unlock.cxx"/>
                                 <file role="src" name="upsert.cxx"/>
                                 <file role="src" name="view_error_category.cxx"/>
                                 <file role="src" name="with_legacy_durability.hxx"/>
                             </dir>
                             <dir name="io">
-                                <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="dns_client.hxx"/>
                                 <file role="src" name="dns_codec.hxx"/>
+                                <file role="src" name="dns_config.cxx"/>
                                 <file role="src" name="dns_config.hxx"/>
                                 <file role="src" name="dns_message.hxx"/>
                                 <file role="src" name="http_command.hxx"/>
@@ -464,14 +483,12 @@
                                 <file role="src" name="mcbp_message.hxx"/>
                                 <file role="src" name="mcbp_parser.cxx"/>
                                 <file role="src" name="mcbp_parser.hxx"/>
+                                <file role="src" name="mcbp_session.cxx"/>
                                 <file role="src" name="mcbp_session.hxx"/>
                                 <file role="src" name="mcbp_traits.hxx"/>
                                 <file role="src" name="query_cache.hxx"/>
-                                <file role="src" name="retry_action.hxx"/>
                                 <file role="src" name="retry_context.hxx"/>
                                 <file role="src" name="retry_orchestrator.hxx"/>
-                                <file role="src" name="retry_reason.hxx"/>
-                                <file role="src" name="retry_strategy.hxx"/>
                                 <file role="src" name="streams.hxx"/>
                             </dir>
                             <dir name="logger">
@@ -509,6 +526,44 @@
                                 <file role="src" name="search_index.hxx"/>
                                 <file role="src" name="search_index_json.hxx"/>
                             </dir>
+                            <dir name="mcbp">
+                                <file role="src" name="barrier_frame.hxx"/>
+                                <file role="src" name="big_endian.cxx"/>
+                                <file role="src" name="big_endian.hxx"/>
+                                <file role="src" name="buffer_writer.cxx"/>
+                                <file role="src" name="buffer_writer.hxx"/>
+                                <file role="src" name="codec.cxx"/>
+                                <file role="src" name="codec.hxx"/>
+                                <file role="src" name="command_code.cxx"/>
+                                <file role="src" name="command_code.hxx"/>
+                                <file role="src" name="completion_token.hxx"/>
+                                <file role="src" name="datatype.hxx"/>
+                                <file role="src" name="durability_level.hxx"/>
+                                <file role="src" name="durability_level_frame.hxx"/>
+                                <file role="src" name="durability_timeout_frame.hxx"/>
+                                <file role="src" name="frame_type.hxx"/>
+                                <file role="src" name="open_tracing_frame.hxx"/>
+                                <file role="src" name="operation_consumer.cxx"/>
+                                <file role="src" name="operation_consumer.hxx"/>
+                                <file role="src" name="operation_queue.cxx"/>
+                                <file role="src" name="operation_queue.hxx"/>
+                                <file role="src" name="packet.cxx"/>
+                                <file role="src" name="packet.hxx"/>
+                                <file role="src" name="preserve_expiry_frame.hxx"/>
+                                <file role="src" name="queue_callback.hxx"/>
+                                <file role="src" name="queue_request.cxx"/>
+                                <file role="src" name="queue_request.hxx"/>
+                                <file role="src" name="queue_request_connection_info.hxx"/>
+                                <file role="src" name="queue_response.hxx"/>
+                                <file role="src" name="read_units_frame.hxx"/>
+                                <file role="src" name="server_duration.cxx"/>
+                                <file role="src" name="server_duration.hxx"/>
+                                <file role="src" name="server_duration_frame.hxx"/>
+                                <file role="src" name="stream_id_frame.hxx"/>
+                                <file role="src" name="unsupported_frame.hxx"/>
+                                <file role="src" name="user_impersonation_frame.hxx"/>
+                                <file role="src" name="write_units_frame.hxx"/>
+                            </dir>
                             <dir name="meta">
                                 <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="version.cxx"/>
@@ -519,7 +574,6 @@
                                 <file role="src" name="logging_meter.cxx"/>
                                 <file role="src" name="logging_meter.hxx"/>
                                 <file role="src" name="logging_meter_options.hxx"/>
-                                <file role="src" name="meter.hxx"/>
                                 <file role="src" name="noop_meter.hxx"/>
                             </dir>
                             <dir name="operations">
@@ -866,10 +920,63 @@
                                 <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="constants.hxx"/>
                                 <file role="src" name="noop_tracer.hxx"/>
-                                <file role="src" name="request_tracer.hxx"/>
                                 <file role="src" name="threshold_logging_options.hxx"/>
                                 <file role="src" name="threshold_logging_tracer.cxx"/>
                                 <file role="src" name="threshold_logging_tracer.hxx"/>
+                            </dir>
+                            <dir name="transactions">
+                                <dir name="internal">
+                                    <file role="src" name="atr_cleanup_entry.hxx"/>
+                                    <file role="src" name="atr_entry.hxx"/>
+                                    <file role="src" name="binary.hxx"/>
+                                    <file role="src" name="client_record.hxx"/>
+                                    <file role="src" name="doc_record.hxx"/>
+                                    <file role="src" name="exceptions_internal.hxx"/>
+                                    <file role="src" name="logging.hxx"/>
+                                    <file role="src" name="transaction_attempt.hxx"/>
+                                    <file role="src" name="transaction_context.hxx"/>
+                                    <file role="src" name="transaction_fields.hxx"/>
+                                    <file role="src" name="transactions_cleanup.hxx"/>
+                                    <file role="src" name="utils.hxx"/>
+                                </dir>
+                                <file role="src" name="active_transaction_record.hxx"/>
+                                <file role="src" name="async_attempt_context.hxx"/>
+                                <file role="src" name="atr_cleanup_entry.cxx"/>
+                                <file role="src" name="atr_ids.cxx"/>
+                                <file role="src" name="atr_ids.hxx"/>
+                                <file role="src" name="attempt_context.hxx"/>
+                                <file role="src" name="attempt_context_impl.cxx"/>
+                                <file role="src" name="attempt_context_impl.hxx"/>
+                                <file role="src" name="attempt_context_testing_hooks.hxx"/>
+                                <file role="src" name="attempt_state.hxx"/>
+                                <file role="src" name="binary.cxx"/>
+                                <file role="src" name="cleanup_testing_hooks.hxx"/>
+                                <file role="src" name="document_metadata.hxx"/>
+                                <file role="src" name="durability_level.hxx"/>
+                                <file role="src" name="error_class.hxx"/>
+                                <file role="src" name="error_list.hxx"/>
+                                <file role="src" name="exceptions.cxx"/>
+                                <file role="src" name="exceptions.hxx"/>
+                                <file role="src" name="forward_compat.hxx"/>
+                                <file role="src" name="logging.cxx"/>
+                                <file role="src" name="result.cxx"/>
+                                <file role="src" name="result.hxx"/>
+                                <file role="src" name="staged_mutation.cxx"/>
+                                <file role="src" name="staged_mutation.hxx"/>
+                                <file role="src" name="transaction_attempt.cxx"/>
+                                <file role="src" name="transaction_context.cxx"/>
+                                <file role="src" name="transaction_get_result.cxx"/>
+                                <file role="src" name="transaction_get_result.hxx"/>
+                                <file role="src" name="transaction_links.cxx"/>
+                                <file role="src" name="transaction_links.hxx"/>
+                                <file role="src" name="transaction_options.cxx"/>
+                                <file role="src" name="transactions.cxx"/>
+                                <file role="src" name="transactions_cleanup.cxx"/>
+                                <file role="src" name="transactions_config.cxx"/>
+                                <file role="src" name="uid_generator.cxx"/>
+                                <file role="src" name="uid_generator.hxx"/>
+                                <file role="src" name="utils.cxx"/>
+                                <file role="src" name="waitable_op_list.hxx"/>
                             </dir>
                             <dir name="utils">
                                 <file role="src" name="binary.cxx"/>
@@ -890,45 +997,110 @@
                                 <file role="src" name="mutation_token.cxx"/>
                                 <file role="src" name="mutation_token.hxx"/>
                                 <file role="src" name="name_codec.hxx"/>
+                                <file role="src" name="split_string.cxx"/>
+                                <file role="src" name="split_string.hxx"/>
                                 <file role="src" name="unsigned_leb128.hxx"/>
                                 <file role="src" name="url_codec.cxx"/>
                                 <file role="src" name="url_codec.hxx"/>
                             </dir>
+                            <file role="src" name="CMakeLists.txt"/>
+                            <file role="src" name="agent.cxx"/>
+                            <file role="src" name="agent.hxx"/>
+                            <file role="src" name="agent_config.cxx"/>
+                            <file role="src" name="agent_config.hxx"/>
+                            <file role="src" name="agent_group.cxx"/>
+                            <file role="src" name="agent_group.hxx"/>
+                            <file role="src" name="agent_group_config.cxx"/>
+                            <file role="src" name="agent_group_config.hxx"/>
+                            <file role="src" name="agent_unit_test_api.hxx"/>
+                            <file role="src" name="analytics_query_options.cxx"/>
+                            <file role="src" name="analytics_query_options.hxx"/>
                             <file role="src" name="analytics_scan_consistency.hxx"/>
+                            <file role="src" name="bucket.cxx"/>
                             <file role="src" name="bucket.hxx"/>
                             <file role="src" name="capella_ca.hxx"/>
                             <file role="src" name="cluster.cxx"/>
                             <file role="src" name="cluster.hxx"/>
+                            <file role="src" name="cluster_agent.cxx"/>
+                            <file role="src" name="cluster_agent.hxx"/>
+                            <file role="src" name="cluster_agent_config.cxx"/>
+                            <file role="src" name="cluster_agent_config.hxx"/>
                             <file role="src" name="cluster_options.cxx"/>
                             <file role="src" name="cluster_options.hxx"/>
+                            <file role="src" name="cluster_state.hxx"/>
+                            <file role="src" name="collection_id_cache_entry.hxx"/>
+                            <file role="src" name="collections_component.cxx"/>
+                            <file role="src" name="collections_component.hxx"/>
+                            <file role="src" name="collections_component_unit_test_api.hxx"/>
+                            <file role="src" name="collections_options.hxx"/>
+                            <file role="src" name="config_listener.hxx"/>
+                            <file role="src" name="config_profile.cxx"/>
+                            <file role="src" name="config_profile.hxx"/>
+                            <file role="src" name="core_sdk_shim.cxx"/>
+                            <file role="src" name="core_sdk_shim.hxx"/>
+                            <file role="src" name="crud_component.cxx"/>
+                            <file role="src" name="crud_component.hxx"/>
+                            <file role="src" name="crud_options.hxx"/>
                             <file role="src" name="design_document_namespace.hxx"/>
                             <file role="src" name="design_document_namespace_fmt.hxx"/>
                             <file role="src" name="diagnostics.hxx"/>
                             <file role="src" name="diagnostics_fmt.hxx"/>
                             <file role="src" name="diagnostics_json.hxx"/>
+                            <file role="src" name="diagntostics_options.hxx"/>
+                            <file role="src" name="dispatcher.cxx"/>
+                            <file role="src" name="dispatcher.hxx"/>
                             <file role="src" name="document_id.cxx"/>
                             <file role="src" name="document_id.hxx"/>
                             <file role="src" name="document_id_fmt.hxx"/>
+                            <file role="src" name="durability_options.hxx"/>
+                            <file role="src" name="free_form_http_request.cxx"/>
+                            <file role="src" name="free_form_http_request.hxx"/>
                             <file role="src" name="json_string.hxx"/>
+                            <file role="src" name="key_value_config.cxx"/>
+                            <file role="src" name="key_value_config.hxx"/>
+                            <file role="src" name="n1ql_query_options.cxx"/>
+                            <file role="src" name="n1ql_query_options.hxx"/>
+                            <file role="src" name="operation_map.hxx"/>
                             <file role="src" name="operations.hxx"/>
                             <file role="src" name="origin.hxx"/>
-                            <file role="src" name="query_profile_mode.hxx"/>
-                            <file role="src" name="query_scan_consistency.hxx"/>
+                            <file role="src" name="pending_operation.hxx"/>
+                            <file role="src" name="ping_collector.hxx"/>
+                            <file role="src" name="ping_options.hxx"/>
+                            <file role="src" name="ping_reporter.hxx"/>
+                            <file role="src" name="range_scan_options.hxx"/>
+                            <file role="src" name="resource_units.hxx"/>
+                            <file role="src" name="response_handler.hxx"/>
+                            <file role="src" name="retry_orchestrator.cxx"/>
+                            <file role="src" name="retry_orchestrator.hxx"/>
                             <file role="src" name="search_highlight_style.hxx"/>
+                            <file role="src" name="search_query_options.cxx"/>
+                            <file role="src" name="search_query_options.hxx"/>
                             <file role="src" name="search_scan_consistency.hxx"/>
+                            <file role="src" name="seed_config.cxx"/>
+                            <file role="src" name="seed_config.hxx"/>
                             <file role="src" name="service_type.hxx"/>
                             <file role="src" name="service_type_fmt.hxx"/>
+                            <file role="src" name="stats_options.hxx"/>
+                            <file role="src" name="subdoc_options.hxx"/>
                             <file role="src" name="timeout_defaults.hxx"/>
+                            <file role="src" name="transactions.hxx"/>
                             <file role="src" name="view_on_error.hxx"/>
+                            <file role="src" name="view_query_options.cxx"/>
+                            <file role="src" name="view_query_options.hxx"/>
                             <file role="src" name="view_scan_consistency.hxx"/>
                             <file role="src" name="view_sort_order.hxx"/>
+                            <file role="src" name="wait_until_ready_options.hxx"/>
                         </dir>
                         <dir name="couchbase">
                             <dir name="codec">
+                                <file role="src" name="binary_noop_serializer.hxx"/>
                                 <file role="src" name="codec_flags.hxx"/>
+                                <file role="src" name="default_json_transcoder.hxx"/>
                                 <file role="src" name="encoded_value.hxx"/>
                                 <file role="src" name="json_transcoder.hxx"/>
                                 <file role="src" name="raw_binary_transcoder.hxx"/>
+                                <file role="src" name="serializer_traits.hxx"/>
+                                <file role="src" name="tao_json_serializer.hxx"/>
                                 <file role="src" name="transcoder_traits.hxx"/>
                             </dir>
                             <dir name="fmt">
@@ -940,6 +1112,7 @@
                                 <file role="src" name="retry_reason.hxx"/>
                             </dir>
                             <dir name="metrics">
+                                <file role="src" name="meter.hxx"/>
                                 <file role="src" name="otel_meter.hxx"/>
                             </dir>
                             <dir name="subdoc">
@@ -964,23 +1137,49 @@
                             </dir>
                             <dir name="tracing">
                                 <file role="src" name="otel_tracer.hxx"/>
+                                <file role="src" name="request_tracer.hxx"/>
+                            </dir>
+                            <dir name="transactions">
+                                <file role="src" name="async_attempt_context.hxx"/>
+                                <file role="src" name="attempt_context.hxx"/>
+                                <file role="src" name="transaction_get_result.hxx"/>
+                                <file role="src" name="transaction_keyspace.hxx"/>
+                                <file role="src" name="transaction_options.hxx"/>
+                                <file role="src" name="transaction_query_options.hxx"/>
+                                <file role="src" name="transaction_query_result.hxx"/>
+                                <file role="src" name="transaction_result.hxx"/>
+                                <file role="src" name="transactions_cleanup_config.hxx"/>
+                                <file role="src" name="transactions_config.hxx"/>
+                                <file role="src" name="transactions_query_config.hxx"/>
                             </dir>
                             <file role="src" name="append_options.hxx"/>
+                            <file role="src" name="behavior_options.hxx"/>
+                            <file role="src" name="best_effort_retry_strategy.hxx"/>
                             <file role="src" name="binary_collection.hxx"/>
                             <file role="src" name="bucket.hxx"/>
                             <file role="src" name="build_query_index_options.hxx"/>
                             <file role="src" name="cas.hxx"/>
+                            <file role="src" name="certificate_authenticator.hxx"/>
                             <file role="src" name="cluster.hxx"/>
+                            <file role="src" name="cluster_options.hxx"/>
                             <file role="src" name="collection.hxx"/>
                             <file role="src" name="common_durability_options.hxx"/>
                             <file role="src" name="common_options.hxx"/>
+                            <file role="src" name="compression_options.hxx"/>
+                            <file role="src" name="configuration_profile.hxx"/>
+                            <file role="src" name="configuration_profiles_registry.hxx"/>
                             <file role="src" name="counter_result.hxx"/>
                             <file role="src" name="decrement_options.hxx"/>
+                            <file role="src" name="dns_options.hxx"/>
                             <file role="src" name="durability_level.hxx"/>
                             <file role="src" name="error_codes.hxx"/>
                             <file role="src" name="error_context.hxx"/>
+                            <file role="src" name="exists_options.hxx"/>
+                            <file role="src" name="exists_result.hxx"/>
                             <file role="src" name="expiry.hxx"/>
+                            <file role="src" name="fail_fast_retry_strategy.hxx"/>
                             <file role="src" name="get_all_replicas_options.hxx"/>
+                            <file role="src" name="get_and_lock_options.hxx"/>
                             <file role="src" name="get_and_touch_options.hxx"/>
                             <file role="src" name="get_any_replica_options.hxx"/>
                             <file role="src" name="get_options.hxx"/>
@@ -988,6 +1187,7 @@
                             <file role="src" name="get_result.hxx"/>
                             <file role="src" name="increment_options.hxx"/>
                             <file role="src" name="insert_options.hxx"/>
+                            <file role="src" name="ip_protocol.hxx"/>
                             <file role="src" name="key_value_error_context.hxx"/>
                             <file role="src" name="key_value_error_map_attribute.hxx"/>
                             <file role="src" name="key_value_error_map_info.hxx"/>
@@ -997,24 +1197,49 @@
                             <file role="src" name="lookup_in_result.hxx"/>
                             <file role="src" name="lookup_in_specs.hxx"/>
                             <file role="src" name="manager_error_context.hxx"/>
+                            <file role="src" name="metrics_options.hxx"/>
                             <file role="src" name="mutate_in_options.hxx"/>
                             <file role="src" name="mutate_in_result.hxx"/>
                             <file role="src" name="mutate_in_specs.hxx"/>
                             <file role="src" name="mutation_result.hxx"/>
+                            <file role="src" name="mutation_state.hxx"/>
                             <file role="src" name="mutation_token.hxx"/>
+                            <file role="src" name="network_options.hxx"/>
+                            <file role="src" name="password_authenticator.hxx"/>
                             <file role="src" name="persist_to.hxx"/>
                             <file role="src" name="prepend_options.hxx"/>
+                            <file role="src" name="query_error_context.hxx"/>
                             <file role="src" name="query_index_manager.hxx"/>
+                            <file role="src" name="query_meta_data.hxx"/>
+                            <file role="src" name="query_metrics.hxx"/>
+                            <file role="src" name="query_options.hxx"/>
+                            <file role="src" name="query_profile.hxx"/>
+                            <file role="src" name="query_result.hxx"/>
+                            <file role="src" name="query_scan_consistency.hxx"/>
+                            <file role="src" name="query_status.hxx"/>
+                            <file role="src" name="query_warning.hxx"/>
                             <file role="src" name="remove_options.hxx"/>
                             <file role="src" name="replace_options.hxx"/>
                             <file role="src" name="replicate_to.hxx"/>
                             <file role="src" name="result.hxx"/>
+                            <file role="src" name="retry_action.hxx"/>
                             <file role="src" name="retry_reason.hxx"/>
+                            <file role="src" name="retry_request.hxx"/>
+                            <file role="src" name="retry_strategy.hxx"/>
                             <file role="src" name="scope.hxx"/>
+                            <file role="src" name="security_options.hxx"/>
                             <file role="src" name="store_semantics.hxx"/>
                             <file role="src" name="subdocument_error_context.hxx"/>
+                            <file role="src" name="timeout_options.hxx"/>
+                            <file role="src" name="tls_verify_mode.hxx"/>
                             <file role="src" name="touch_options.hxx"/>
+                            <file role="src" name="tracing_options.hxx"/>
+                            <file role="src" name="transaction_error_context.hxx"/>
+                            <file role="src" name="transaction_op_error_context.hxx"/>
+                            <file role="src" name="transactions.hxx"/>
+                            <file role="src" name="unlock_options.hxx"/>
                             <file role="src" name="upsert_options.hxx"/>
+                            <file role="src" name="wan_development_configuration_profile.hxx"/>
                         </dir>
                         <dir name="third_party">
                             <dir name="asio">
@@ -1114,6 +1339,7 @@
                                                 <file role="src" name="epoll_reactor.hpp"/>
                                                 <file role="src" name="event.hpp"/>
                                                 <file role="src" name="eventfd_select_interrupter.hpp"/>
+                                                <file role="src" name="exception.hpp"/>
                                                 <file role="src" name="executor_function.hpp"/>
                                                 <file role="src" name="executor_op.hpp"/>
                                                 <file role="src" name="fd_set_adapter.hpp"/>
@@ -1257,6 +1483,7 @@
                                                 <file role="src" name="timer_scheduler_fwd.hpp"/>
                                                 <file role="src" name="tss_ptr.hpp"/>
                                                 <file role="src" name="type_traits.hpp"/>
+                                                <file role="src" name="utility.hpp"/>
                                                 <file role="src" name="variadic_templates.hpp"/>
                                                 <file role="src" name="wait_handler.hpp"/>
                                                 <file role="src" name="wait_op.hpp"/>
@@ -1368,14 +1595,10 @@
                                                     <file role="src" name="partial_promise.hpp"/>
                                                 </dir>
                                                 <dir name="impl">
-                                                    <file role="src" name="append.hpp"/>
                                                     <file role="src" name="as_single.hpp"/>
-                                                    <file role="src" name="as_tuple.hpp"/>
                                                     <file role="src" name="channel_error.ipp"/>
                                                     <file role="src" name="coro.hpp"/>
-                                                    <file role="src" name="deferred.hpp"/>
                                                     <file role="src" name="parallel_group.hpp"/>
-                                                    <file role="src" name="prepend.hpp"/>
                                                     <file role="src" name="promise.hpp"/>
                                                     <file role="src" name="use_coro.hpp"/>
                                                 </dir>
@@ -1414,16 +1637,18 @@
                                             </dir>
                                             <dir name="impl">
                                                 <file role="src" name="any_io_executor.ipp"/>
+                                                <file role="src" name="append.hpp"/>
+                                                <file role="src" name="as_tuple.hpp"/>
                                                 <file role="src" name="awaitable.hpp"/>
                                                 <file role="src" name="buffered_read_stream.hpp"/>
                                                 <file role="src" name="buffered_write_stream.hpp"/>
                                                 <file role="src" name="cancellation_signal.ipp"/>
                                                 <file role="src" name="co_spawn.hpp"/>
-                                                <file role="src" name="compose.hpp"/>
                                                 <file role="src" name="connect.hpp"/>
                                                 <file role="src" name="connect_pipe.hpp"/>
                                                 <file role="src" name="connect_pipe.ipp"/>
                                                 <file role="src" name="defer.hpp"/>
+                                                <file role="src" name="deferred.hpp"/>
                                                 <file role="src" name="detached.hpp"/>
                                                 <file role="src" name="dispatch.hpp"/>
                                                 <file role="src" name="error.ipp"/>
@@ -1437,6 +1662,7 @@
                                                 <file role="src" name="io_context.ipp"/>
                                                 <file role="src" name="multiple_exceptions.ipp"/>
                                                 <file role="src" name="post.hpp"/>
+                                                <file role="src" name="prepend.hpp"/>
                                                 <file role="src" name="read.hpp"/>
                                                 <file role="src" name="read_at.hpp"/>
                                                 <file role="src" name="read_until.hpp"/>
@@ -1614,6 +1840,8 @@
                                                 <file role="src" name="stream_handle.hpp"/>
                                             </dir>
                                             <file role="src" name="any_io_executor.hpp"/>
+                                            <file role="src" name="append.hpp"/>
+                                            <file role="src" name="as_tuple.hpp"/>
                                             <file role="src" name="associated_allocator.hpp"/>
                                             <file role="src" name="associated_cancellation_slot.hpp"/>
                                             <file role="src" name="associated_executor.hpp"/>
@@ -1640,6 +1868,7 @@
                                             <file role="src" name="basic_streambuf_fwd.hpp"/>
                                             <file role="src" name="basic_waitable_timer.hpp"/>
                                             <file role="src" name="basic_writable_pipe.hpp"/>
+                                            <file role="src" name="bind_allocator.hpp"/>
                                             <file role="src" name="bind_cancellation_slot.hpp"/>
                                             <file role="src" name="bind_executor.hpp"/>
                                             <file role="src" name="buffer.hpp"/>
@@ -1662,6 +1891,7 @@
                                             <file role="src" name="coroutine.hpp"/>
                                             <file role="src" name="deadline_timer.hpp"/>
                                             <file role="src" name="defer.hpp"/>
+                                            <file role="src" name="deferred.hpp"/>
                                             <file role="src" name="detached.hpp"/>
                                             <file role="src" name="dispatch.hpp"/>
                                             <file role="src" name="error.hpp"/>
@@ -1680,6 +1910,7 @@
                                             <file role="src" name="io_service.hpp"/>
                                             <file role="src" name="io_service_strand.hpp"/>
                                             <file role="src" name="is_applicable_property.hpp"/>
+                                            <file role="src" name="is_contiguous_iterator.hpp"/>
                                             <file role="src" name="is_executor.hpp"/>
                                             <file role="src" name="is_read_buffered.hpp"/>
                                             <file role="src" name="is_write_buffered.hpp"/>
@@ -1688,12 +1919,14 @@
                                             <file role="src" name="placeholders.hpp"/>
                                             <file role="src" name="post.hpp"/>
                                             <file role="src" name="prefer.hpp"/>
+                                            <file role="src" name="prepend.hpp"/>
                                             <file role="src" name="query.hpp"/>
                                             <file role="src" name="random_access_file.hpp"/>
                                             <file role="src" name="read.hpp"/>
                                             <file role="src" name="read_at.hpp"/>
                                             <file role="src" name="read_until.hpp"/>
                                             <file role="src" name="readable_pipe.hpp"/>
+                                            <file role="src" name="recycling_allocator.hpp"/>
                                             <file role="src" name="redirect_error.hpp"/>
                                             <file role="src" name="registered_buffer.hpp"/>
                                             <file role="src" name="require.hpp"/>
@@ -1732,6 +1965,14 @@
                                     </dir>
                                 </dir>
                             </dir>
+                            <dir name="expected">
+                                <dir name="include">
+                                    <dir name="tl">
+                                        <file role="src" name="expected.hpp"/>
+                                    </dir>
+                                </dir>
+                                <file role="doc" name="COPYING"/>
+                            </dir>
                             <dir name="fmt">
                                 <dir name="include">
                                     <dir name="fmt">
@@ -1767,7 +2008,7 @@
                                 <file role="src" name="CMakeLists.txt"/>
                                 <file role="src" name="ChangeLog.rst"/>
                                 <file role="doc" name="LICENSE.rst"/>
-                                <file role="doc" name="README.rst"/>
+                                <file role="src" name="README.rst"/>
                             </dir>
                             <dir name="gsl">
                                 <dir name="cmake">
@@ -2473,94 +2714,6 @@
                         </dir>
                         <file role="src" name="CMakeLists.txt"/>
                         <file role="doc" name="LICENSE.txt"/>
-                    </dir>
-                    <dir name="couchbase-cxx-transactions">
-                        <dir name="deps">
-                            <dir name="json">
-                                <dir name="single_include">
-                                    <dir name="nlohmann">
-                                        <file role="src" name="json.hpp"/>
-                                    </dir>
-                                </dir>
-                                <file role="src" name="CMakeLists.txt"/>
-                            </dir>
-                        </dir>
-                        <dir name="include">
-                            <dir name="couchbase">
-                                <dir name="internal">
-                                    <dir name="nlohmann">
-                                        <file role="src" name="json.hpp"/>
-                                    </dir>
-                                </dir>
-                                <dir name="transactions">
-                                    <dir name="internal">
-                                        <file role="src" name="atr_cleanup_entry.hxx"/>
-                                        <file role="src" name="atr_entry.hxx"/>
-                                        <file role="src" name="client_record.hxx"/>
-                                        <file role="src" name="doc_record.hxx"/>
-                                        <file role="src" name="exceptions_internal.hxx"/>
-                                        <file role="src" name="logging.hxx"/>
-                                        <file role="src" name="transaction_attempt.hxx"/>
-                                        <file role="src" name="transaction_context.hxx"/>
-                                        <file role="src" name="transaction_fields.hxx"/>
-                                        <file role="src" name="transactions_cleanup.hxx"/>
-                                        <file role="src" name="utils.hxx"/>
-                                    </dir>
-                                    <file role="src" name="async_attempt_context.hxx"/>
-                                    <file role="src" name="attempt_context.hxx"/>
-                                    <file role="src" name="attempt_state.hxx"/>
-                                    <file role="src" name="document_metadata.hxx"/>
-                                    <file role="src" name="durability_level.hxx"/>
-                                    <file role="src" name="exceptions.hxx"/>
-                                    <file role="src" name="per_transaction_config.hxx"/>
-                                    <file role="src" name="transaction_config.hxx"/>
-                                    <file role="src" name="transaction_get_result.hxx"/>
-                                    <file role="src" name="transaction_keyspace.hxx"/>
-                                    <file role="src" name="transaction_links.hxx"/>
-                                    <file role="src" name="transaction_query_options.hxx"/>
-                                    <file role="src" name="transaction_result.hxx"/>
-                                    <file role="src" name="transcoder.hxx"/>
-                                </dir>
-                                <file role="src" name="support.hxx"/>
-                                <file role="src" name="support.hxx.in"/>
-                                <file role="src" name="transactions.hxx"/>
-                            </dir>
-                        </dir>
-                        <dir name="src">
-                            <dir name="transactions">
-                                <file role="src" name="active_transaction_record.cxx"/>
-                                <file role="src" name="active_transaction_record.hxx"/>
-                                <file role="src" name="atr_cleanup_entry.cxx"/>
-                                <file role="src" name="atr_ids.cxx"/>
-                                <file role="src" name="atr_ids.hxx"/>
-                                <file role="src" name="attempt_context_impl.cxx"/>
-                                <file role="src" name="attempt_context_impl.hxx"/>
-                                <file role="src" name="attempt_context_testing_hooks.hxx"/>
-                                <file role="src" name="binary_utils.cxx"/>
-                                <file role="src" name="binary_utils.hxx"/>
-                                <file role="src" name="cleanup_testing_hooks.hxx"/>
-                                <file role="src" name="error_list.hxx"/>
-                                <file role="src" name="exceptions.cxx"/>
-                                <file role="src" name="forward_compat.hxx"/>
-                                <file role="src" name="logging.cxx"/>
-                                <file role="src" name="result.cxx"/>
-                                <file role="src" name="result.hxx"/>
-                                <file role="src" name="staged_mutation.cxx"/>
-                                <file role="src" name="staged_mutation.hxx"/>
-                                <file role="src" name="transaction_attempt.cxx"/>
-                                <file role="src" name="transaction_config.cxx"/>
-                                <file role="src" name="transaction_context.cxx"/>
-                                <file role="src" name="transaction_get_result.cxx"/>
-                                <file role="src" name="transaction_links.cxx"/>
-                                <file role="src" name="transaction_query_options.cxx"/>
-                                <file role="src" name="transactions.cxx"/>
-                                <file role="src" name="transactions_cleanup.cxx"/>
-                                <file role="src" name="uid_generator.cxx"/>
-                                <file role="src" name="uid_generator.hxx"/>
-                                <file role="src" name="waitable_op_list.hxx"/>
-                            </dir>
-                        </dir>
-                        <file role="src" name="CMakeLists.txt"/>
                     </dir>
                 </dir>
                 <dir name="wrapper">

@@ -31,7 +31,6 @@ core_version(zval* return_value)
 
     add_assoc_string(return_value, "extension_revision", COUCHBASE_EXTENSION_GIT_REVISION);
     add_assoc_string(return_value, "cxx_client_revision", COUCHBASE_CXX_CLIENT_GIT_REVISION);
-    add_assoc_string(return_value, "cxx_transactions_revision", COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION);
 
     for (const auto& [name, value] : core::meta::sdk_build_info()) {
         if (name == "version_major" || name == "version_minor" || name == "version_patch" || name == "version_build") {
@@ -56,12 +55,5 @@ const char*
 cxx_client_revision()
 {
     return COUCHBASE_CXX_CLIENT_GIT_REVISION;
-}
-
-COUCHBASE_API
-const char*
-cxx_transactions_revision()
-{
-    return COUCHBASE_CXX_TRANSACTIONS_GIT_REVISION;
 }
 } // namespace couchbase::php
