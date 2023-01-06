@@ -1828,7 +1828,6 @@ static PHP_MINFO_FUNCTION(couchbase)
     php_info_print_table_row(2, "couchbase_extension_version", PHP_COUCHBASE_VERSION);
     php_info_print_table_row(2, "couchbase_extension_revision", couchbase::php::extension_revision());
     php_info_print_table_row(2, "couchbase_client_revision", couchbase::php::cxx_client_revision());
-    php_info_print_table_row(2, "couchbase_transactions_revision", couchbase::php::cxx_transactions_revision());
     php_info_print_table_end();
     DISPLAY_INI_ENTRIES();
 }

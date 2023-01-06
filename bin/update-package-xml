@@ -25,6 +25,8 @@ files = [
     "src/deps/couchbase-cxx-client/third_party/asio/asio/include/*.hpp",
     "src/deps/couchbase-cxx-client/third_party/asio/asio/include/asio/**/*.[hi]pp",
     "src/deps/couchbase-cxx-client/third_party/cxx_function/cxx_function.hpp",
+    "src/deps/couchbase-cxx-client/third_party/expected/COPYING",
+    "src/deps/couchbase-cxx-client/third_party/expected/include/**/*.hpp",
     "src/deps/couchbase-cxx-client/third_party/fmt/CMakeLists.txt",
     "src/deps/couchbase-cxx-client/third_party/fmt/ChangeLog.rst",
     "src/deps/couchbase-cxx-client/third_party/fmt/LICENSE.rst",
@@ -96,6 +98,7 @@ files.sort.uniq.each do |file|
     else
       "src"
     end
+  role = "src" if filename == "README.rst" && parents.last == "fmt"
   cursor[:files] << {name: filename, role: role}
 end
 

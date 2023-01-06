@@ -33,8 +33,4 @@ extension_revision();
 COUCHBASE_API
 const char*
 cxx_client_revision();
-
-COUCHBASE_API
-const char*
-cxx_transactions_revision();
 } // namespace couchbase::php
