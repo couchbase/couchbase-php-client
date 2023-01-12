@@ -36,4 +36,8 @@ namespace couchbase::php
 COUCHBASE_API
 void
 initialize_logger();
+
+COUCHBASE_API
+void
+flush_logger();
 } // namespace couchbase::php

@@ -50,6 +50,7 @@ PHP_RSHUTDOWN_FUNCTION(couchbase)
     /* Check persistent connections and do the necessary actions if needed. */
     zend_hash_apply(&EG(persistent_list), couchbase::php::check_persistent_connection);
 
+    couchbase::php::flush_logger();
     return SUCCESS;
 }
 
@@ -67,6 +68,15 @@ PHP_METHOD(CouchbaseException, getContext)
     ZVAL_COPY_DEREF(return_value, prop);
 }
 
+PHP_RINIT_FUNCTION(couchbase)
+{
+    if (!COUCHBASE_G(initialized)) {
+        couchbase::php::initialize_logger();
+        COUCHBASE_G(initialized) = 1;
+    }
+    return SUCCESS;
+}
+
 // clang-format off
 static const zend_function_entry exception_functions[] = {
         PHP_ME(CouchbaseException, getContext, ai_Exception_getContext, ZEND_ACC_PUBLIC)
@@ -77,6 +87,10 @@ PHP_INI_BEGIN()
 STD_PHP_INI_ENTRY("couchbase.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong, max_persistent, zend_couchbase_globals, couchbase_globals)
 STD_PHP_INI_ENTRY("couchbase.persistent_timeout", "-1", PHP_INI_SYSTEM, OnUpdateLong, persistent_timeout, zend_couchbase_globals, couchbase_globals)
 STD_PHP_INI_ENTRY("couchbase.log_level", "", PHP_INI_ALL, OnUpdateString, log_level, zend_couchbase_globals, couchbase_globals)
+/* use php_error() for logging */
+STD_PHP_INI_ENTRY("couchbase.log_use_php_error", "1", PHP_INI_SYSTEM, OnUpdateBool, log_use_php_error, zend_couchbase_globals, couchbase_globals)
+/* write logs to given file (does not override couchbase.log_use_php_error) */
+STD_PHP_INI_ENTRY("couchbase.log_path", "", PHP_INI_SYSTEM, OnUpdateString, log_path, zend_couchbase_globals, couchbase_globals)
 PHP_INI_END()
 // clang-format on
 
@@ -84,8 +98,6 @@ PHP_MINIT_FUNCTION(couchbase)
 {
     (void)type;
     REGISTER_INI_ENTRIES();
-
-    couchbase::php::initialize_logger();
 
     couchbase::php::initialize_exceptions(exception_functions);
 
@@ -98,6 +110,14 @@ PHP_MINIT_FUNCTION(couchbase)
 
     return SUCCESS;
 }
+
+struct logger_flusher {
+    logger_flusher() = default;
+    ~logger_flusher()
+    {
+        couchbase::php::flush_logger();
+    }
+};
 
 static void
 couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
@@ -113,6 +133,8 @@ couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
 
 PHP_MSHUTDOWN_FUNCTION(couchbase)
 {
+    couchbase::php::flush_logger();
+
     (void)type;
     (void)module_number;
     return SUCCESS;
@@ -137,6 +159,8 @@ PHP_FUNCTION(createConnection)
     Z_PARAM_STR(connection_string)
     Z_PARAM_ARRAY(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto [resource, e] = couchbase::php::create_persistent_connection(connection_hash, connection_string, options);
     if (e.ec) {
@@ -165,6 +189,8 @@ PHP_FUNCTION(clusterVersion)
     Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -188,6 +214,8 @@ PHP_FUNCTION(replicasConfiguredForBucket)
     Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -198,6 +226,7 @@ PHP_FUNCTION(replicasConfiguredForBucket)
     }
     RETURN_FALSE;
 }
+
 PHP_FUNCTION(openBucket)
 {
     zval* connection = nullptr;
@@ -208,6 +237,8 @@ PHP_FUNCTION(openBucket)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -230,6 +261,8 @@ PHP_FUNCTION(closeBucket)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(name)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -265,6 +298,8 @@ PHP_FUNCTION(documentUpsert)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -298,6 +333,8 @@ PHP_FUNCTION(documentInsert)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -333,6 +370,8 @@ PHP_FUNCTION(documentReplace)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -364,6 +403,8 @@ PHP_FUNCTION(documentAppend)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -397,6 +438,8 @@ PHP_FUNCTION(documentPrepend)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -426,6 +469,8 @@ PHP_FUNCTION(documentIncrement)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -457,6 +502,8 @@ PHP_FUNCTION(documentDecrement)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -486,6 +533,8 @@ PHP_FUNCTION(documentGet)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -517,6 +566,8 @@ PHP_FUNCTION(documentGetAnyReplica)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -546,6 +597,8 @@ PHP_FUNCTION(documentGetAllReplicas)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -579,6 +632,8 @@ PHP_FUNCTION(documentGetAndLock)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -611,6 +666,8 @@ PHP_FUNCTION(documentUnlock)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -640,6 +697,8 @@ PHP_FUNCTION(documentRemove)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -673,6 +732,8 @@ PHP_FUNCTION(documentGetAndTouch)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -705,6 +766,8 @@ PHP_FUNCTION(documentTouch)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -734,6 +797,8 @@ PHP_FUNCTION(documentExists)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -767,6 +832,8 @@ PHP_FUNCTION(documentMutateIn)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -799,6 +866,8 @@ PHP_FUNCTION(documentLookupIn)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -828,6 +897,8 @@ PHP_FUNCTION(documentGetMulti)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -859,6 +930,8 @@ PHP_FUNCTION(documentRemoveMulti)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -889,6 +962,8 @@ PHP_FUNCTION(documentUpsertMulti)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -913,6 +988,8 @@ PHP_FUNCTION(query)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -935,6 +1012,8 @@ PHP_FUNCTION(analyticsQuery)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -966,6 +1045,8 @@ PHP_FUNCTION(viewQuery)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -992,6 +1073,8 @@ PHP_FUNCTION(searchQuery)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1012,6 +1095,8 @@ PHP_FUNCTION(ping)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1037,6 +1122,8 @@ PHP_FUNCTION(diagnostics)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1060,6 +1147,8 @@ PHP_FUNCTION(searchIndexUpsert)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1089,6 +1178,8 @@ PHP_FUNCTION(viewIndexUpsert)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1112,6 +1203,8 @@ PHP_FUNCTION(bucketCreate)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1134,6 +1227,8 @@ PHP_FUNCTION(bucketGet)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1179,6 +1274,8 @@ PHP_FUNCTION(bucketDrop)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1202,6 +1299,8 @@ PHP_FUNCTION(bucketFlush)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1224,6 +1323,8 @@ PHP_FUNCTION(bucketUpdate)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1252,6 +1353,8 @@ PHP_FUNCTION(createTransactions)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(configuration)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1283,6 +1386,8 @@ PHP_FUNCTION(createTransactionContext)
     Z_PARAM_ARRAY_OR_NULL(configuration)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_transactions_from_resource(transactions);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1303,6 +1408,8 @@ PHP_FUNCTION(transactionNewAttempt)
     Z_PARAM_RESOURCE(transaction)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
         RETURN_THROWS();
@@ -1322,6 +1429,8 @@ PHP_FUNCTION(transactionCommit)
     Z_PARAM_RESOURCE(transaction)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
         RETURN_THROWS();
@@ -1339,6 +1448,8 @@ PHP_FUNCTION(transactionRollback)
     ZEND_PARSE_PARAMETERS_START(1, 1)
     Z_PARAM_RESOURCE(transaction)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
@@ -1366,6 +1477,8 @@ PHP_FUNCTION(transactionGet)
     Z_PARAM_STR(collection)
     Z_PARAM_STR(id)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
@@ -1395,6 +1508,8 @@ PHP_FUNCTION(transactionInsert)
     Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
         RETURN_THROWS();
@@ -1417,6 +1532,8 @@ PHP_FUNCTION(transactionReplace)
     Z_PARAM_STR(value)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
         RETURN_THROWS();
@@ -1437,6 +1554,8 @@ PHP_FUNCTION(transactionRemove)
     Z_PARAM_RESOURCE(transaction)
     Z_PARAM_ARRAY(document)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
@@ -1461,6 +1580,8 @@ PHP_FUNCTION(transactionQuery)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
     if (context == nullptr) {
         RETURN_THROWS();
@@ -1483,6 +1604,8 @@ PHP_FUNCTION(userUpsert)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1507,6 +1630,8 @@ PHP_FUNCTION(userGet)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1527,6 +1652,8 @@ PHP_FUNCTION(userGetAll)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1551,6 +1678,8 @@ PHP_FUNCTION(userDrop)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1573,6 +1702,8 @@ PHP_FUNCTION(groupUpsert)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1597,6 +1728,8 @@ PHP_FUNCTION(groupGet)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1617,6 +1750,8 @@ PHP_FUNCTION(groupGetAll)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1641,6 +1776,8 @@ PHP_FUNCTION(groupDrop)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1661,6 +1798,8 @@ PHP_FUNCTION(roleGetAll)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1684,6 +1823,8 @@ PHP_FUNCTION(queryIndexGetAll)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1712,6 +1853,8 @@ PHP_FUNCTION(queryIndexCreate)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1735,6 +1878,8 @@ PHP_FUNCTION(queryIndexCreatePrimary)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -1762,6 +1907,8 @@ PHP_FUNCTION(queryIndexDrop)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1787,6 +1934,8 @@ PHP_FUNCTION(queryIndexDropPrimary)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
+    logger_flusher guard;
+
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
         RETURN_THROWS();
@@ -1810,6 +1959,8 @@ PHP_FUNCTION(queryIndexBuildDeferred)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
 
     auto* handle = fetch_couchbase_connection_from_resource(connection);
     if (handle == nullptr) {
@@ -2386,7 +2537,7 @@ zend_module_entry couchbase_module_entry = {
     couchbase_functions,      /* extension function list */
     PHP_MINIT(couchbase),     /* extension-wide startup function */
     PHP_MSHUTDOWN(couchbase), /* extension-wide shutdown function */
-    nullptr,                  /* per-request startup function */
+    PHP_RINIT(couchbase),     /* per-request startup function */
     PHP_RSHUTDOWN(couchbase), /* per-request shutdown function */
     PHP_MINFO(couchbase),     /* information function */
     PHP_COUCHBASE_VERSION,

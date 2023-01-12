@@ -28,10 +28,15 @@
 #include <Zend/zend_API.h>
 
 ZEND_BEGIN_MODULE_GLOBALS(couchbase)
-const char* log_level{};
-zend_long max_persistent{};     /* maximum number of persistent connections per process */
-zend_long num_persistent{};     /* number of existing persistent connections */
-zend_long persistent_timeout{}; /* time period after which idle persistent connection is considered expired */
+/* INI settings */
+char* log_level{ nullptr };
+char* log_path{ nullptr };
+zend_bool log_use_php_error{ 1 };
+zend_long max_persistent{ -1 };     /* maximum number of persistent connections per process */
+zend_long persistent_timeout{ -1 }; /* time period after which idle persistent connection is considered expired */
+/* module variables */
+zend_bool initialized{ 0 };
+zend_long num_persistent{ 0 }; /* number of existing persistent connections */
 ZEND_END_MODULE_GLOBALS(couchbase)
 
 COUCHBASE_API
