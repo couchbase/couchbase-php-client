@@ -1067,11 +1067,18 @@
                             <file role="src" name="ping_collector.hxx"/>
                             <file role="src" name="ping_options.hxx"/>
                             <file role="src" name="ping_reporter.hxx"/>
+                            <file role="src" name="range_scan_options.cxx"/>
                             <file role="src" name="range_scan_options.hxx"/>
+                            <file role="src" name="range_scan_orchestrator.cxx"/>
+                            <file role="src" name="range_scan_orchestrator.hxx"/>
+                            <file role="src" name="range_scan_orchestrator_options.hxx"/>
                             <file role="src" name="resource_units.hxx"/>
                             <file role="src" name="response_handler.hxx"/>
                             <file role="src" name="retry_orchestrator.cxx"/>
                             <file role="src" name="retry_orchestrator.hxx"/>
+                            <file role="src" name="scan_options.hxx"/>
+                            <file role="src" name="scan_result.cxx"/>
+                            <file role="src" name="scan_result.hxx"/>
                             <file role="src" name="search_highlight_style.hxx"/>
                             <file role="src" name="search_query_options.cxx"/>
                             <file role="src" name="search_query_options.hxx"/>
