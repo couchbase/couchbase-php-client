@@ -564,11 +564,15 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 };
 
 COUCHBASE_API
-connection_handle::connection_handle(couchbase::core::origin origin, std::chrono::steady_clock::time_point idle_expiry)
+connection_handle::connection_handle(std::string connection_string,
+                                     std::string connection_hash,
+                                     couchbase::core::origin origin,
+                                     std::chrono::system_clock::time_point idle_expiry)
   : idle_expiry_{ idle_expiry }
   , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
+  , connection_string_(std::move(connection_string))
+  , connection_hash_(std::move(connection_hash))
 {
-
     impl_->start();
 }
 
@@ -3809,7 +3813,7 @@ connection_handle::query_index_build_deferred(zval* return_value, const zend_str
 }
 
 bool
-connection_handle::is_expired(std::chrono::steady_clock::time_point now) const
+connection_handle::is_expired(std::chrono::system_clock::time_point now) const
 {
     return idle_expiry_ < now;
 }
@@ -4108,9 +4112,13 @@ extract_credentials(couchbase::core::cluster_credentials& credentials, zval* opt
 
 COUCHBASE_API
 std::pair<connection_handle*, core_error_info>
-create_connection_handle(const zend_string* connection_string, zval* options, std::chrono::steady_clock::time_point idle_expiry)
+create_connection_handle(const zend_string* connection_string,
+                         const zend_string* connection_hash,
+                         zval* options,
+                         std::chrono::system_clock::time_point idle_expiry)
 {
-    auto connstr = core::utils::parse_connection_string(std::string(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string)));
+    std::string connection_str(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string));
+    auto connstr = core::utils::parse_connection_string(connection_str);
     if (connstr.error) {
         return { nullptr, { couchbase::errc::common::parsing_failure, ERROR_LOCATION, connstr.error.value() } };
     }
@@ -4122,6 +4130,8 @@ create_connection_handle(const zend_string* connection_string, zval* options, st
         return { nullptr, e };
     }
     couchbase::core::origin origin{ credentials, connstr };
-    return { new connection_handle(origin, idle_expiry), {} };
+    return { new connection_handle(
+               std::move(connection_str), std::string(ZSTR_VAL(connection_hash), ZSTR_LEN(connection_hash)), origin, idle_expiry),
+             {} };
 }
 } // namespace couchbase::php
