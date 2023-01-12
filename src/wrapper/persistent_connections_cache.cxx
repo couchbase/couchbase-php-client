@@ -19,6 +19,10 @@
 #include "common.hxx"
 #include "connection_handle.hxx"
 
+#include <core/logger/logger.hxx>
+
+#include <fmt/chrono.h>
+
 namespace couchbase::php
 {
 
@@ -43,7 +47,7 @@ int
 check_persistent_connection(zval* zv)
 {
     zend_resource* res = Z_RES_P(zv);
-    auto now = std::chrono::steady_clock::now();
+    auto now = std::chrono::system_clock::now();
 
     if (res->type == persistent_connection_destructor_id_) {
         auto const* connection = static_cast<connection_handle*>(res->ptr);
@@ -69,33 +73,76 @@ create_persistent_connection(zend_string* connection_hash, zend_string* connecti
             handle = static_cast<connection_handle*>(res->ptr);
         }
     }
+    auto now = std::chrono::system_clock::now();
+    auto expires_at = COUCHBASE_G(persistent_timeout) > 0 ? now + std::chrono::milliseconds(COUCHBASE_G(persistent_timeout)) : now;
     if (handle != nullptr) {
+        handle->expires_at(expires_at);
+        CB_LOG_DEBUG("persistent connection hit: handle={}, connection_hash={}, connection_string=\"{}\", "
+                     "expires_at=\"{}\" ({}), destructor_id={}",
+                     static_cast<const void*>(handle),
+                     ZSTR_VAL(connection_hash),
+                     ZSTR_VAL(connection_string),
+                     expires_at,
+                     (expires_at - now),
+                     persistent_connection_destructor_id_);
         return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
     }
     if (found) {
         /* found something, which is not our resource */
+        CB_LOG_DEBUG("persistent connection hit, but handle=nullptr: connection_hash={}, connection_string=\"{}\", destructor_id={}",
+                     ZSTR_VAL(connection_hash),
+                     ZSTR_VAL(connection_string),
+                     persistent_connection_destructor_id_);
         zend_hash_del(&EG(persistent_list), connection_hash);
     }
 
     if (COUCHBASE_G(max_persistent) != -1 && COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
         /* try to find an idle connection and kill it */
+        CB_LOG_DEBUG("cleanup idle connections. max_persistent({}) != -1, num_persistent({}) >= max_persistent",
+                     COUCHBASE_G(max_persistent),
+                     COUCHBASE_G(num_persistent));
         zend_hash_apply(&EG(persistent_list), check_persistent_connection);
+    } else {
+        CB_LOG_DEBUG(
+          "don't cleanup idle connections. max_persistent={}, num_persistent={}", COUCHBASE_G(max_persistent), COUCHBASE_G(num_persistent));
     }
 
-    auto now = std::chrono::steady_clock::now();
-    auto idle_expire_at = COUCHBASE_G(persistent_timeout) > 0 ? now + std::chrono::milliseconds(COUCHBASE_G(persistent_timeout)) : now;
     core_error_info rc;
-    std::tie(handle, rc) = create_connection_handle(connection_string, options, idle_expire_at);
+    std::tie(handle, rc) = create_connection_handle(connection_string, connection_hash, options, expires_at);
     if (rc.ec) {
+        CB_LOG_DEBUG(
+          "persistent connection miss, failed to create new connection: rc={} ({}), connection_hash={}, connection_string=\"{}\", "
+          "destructor_id={}",
+          rc.ec.message(),
+          rc.message,
+          ZSTR_VAL(connection_hash),
+          ZSTR_VAL(connection_string),
+          persistent_connection_destructor_id_);
         return { nullptr, rc };
     }
 
     if (rc = handle->open(); rc.ec) {
+        CB_LOG_DEBUG("persistent connection miss, failed to open new connection: rc={} ({}), connection_hash={}, connection_string=\"{}\", "
+                     "destructor_id={}",
+                     rc.ec.message(),
+                     rc.message,
+                     ZSTR_VAL(connection_hash),
+                     ZSTR_VAL(connection_string),
+                     persistent_connection_destructor_id_);
         delete handle;
         return { nullptr, rc };
     }
     zend_register_persistent_resource_ex(zend_string_dup(connection_hash, 1), handle, persistent_connection_destructor_id_);
-    ++COUCHBASE_G(num_persistent);
+    auto current_persistent = ++COUCHBASE_G(num_persistent);
+    CB_LOG_DEBUG("persistent connection miss, created new connection: handle={}, connection_hash={}, connection_string=\"{}\", "
+                 "expires_at=\"{}\" ({}), destructor_id={}, num_persistent={}",
+                 static_cast<const void*>(handle),
+                 ZSTR_VAL(connection_hash),
+                 ZSTR_VAL(connection_string),
+                 expires_at,
+                 (expires_at - now),
+                 persistent_connection_destructor_id_,
+                 current_persistent);
     return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
 }
 
@@ -105,9 +152,22 @@ destroy_persistent_connection(zend_resource* res)
 {
     if (res->type == persistent_connection_destructor_id_ && res->ptr != nullptr) {
         auto* handle = static_cast<connection_handle*>(res->ptr);
+        const std::string connection_string = handle->connection_string();
+        const std::string connection_hash = handle->connection_hash();
+        const auto expires_at = handle->expires_at();
+        auto now = std::chrono::system_clock::now();
         delete handle;
         res->ptr = nullptr;
-        --COUCHBASE_G(num_persistent);
+        auto current_persistent = --COUCHBASE_G(num_persistent);
+        CB_LOG_DEBUG("persistent connection destroyed: handle={}, connection_hash={}, connection_string=\"{}\", "
+                     "expires_at=\"{}\" ({}), destructor_id={}, num_persistent={}",
+                     static_cast<const void*>(handle),
+                     connection_hash,
+                     connection_string,
+                     expires_at,
+                     (expires_at - now),
+                     persistent_connection_destructor_id_,
+                     current_persistent);
     }
 }
 

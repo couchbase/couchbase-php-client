@@ -39,13 +39,38 @@ class connection_handle
 {
   public:
     COUCHBASE_API
-    explicit connection_handle(couchbase::core::origin origin, std::chrono::steady_clock::time_point idle_expiry);
+    connection_handle(std::string connection_string,
+                      std::string connection_hash,
+                      couchbase::core::origin origin,
+                      std::chrono::system_clock::time_point idle_expiry);
 
     COUCHBASE_API
     std::shared_ptr<couchbase::core::cluster> cluster() const;
 
     COUCHBASE_API
-    bool is_expired(std::chrono::steady_clock::time_point now) const;
+    bool is_expired(std::chrono::system_clock::time_point now) const;
+
+    const std::chrono::system_clock::time_point& expires_at() const
+    {
+        return idle_expiry_;
+    }
+
+    void expires_at(const std::chrono::system_clock::time_point& at)
+    {
+        idle_expiry_ = at;
+    }
+
+    COUCHBASE_API
+    const std::string& connection_string() const
+    {
+        return connection_string_;
+    }
+
+    COUCHBASE_API
+    const std::string& connection_hash() const
+    {
+        return connection_hash_;
+    }
 
     COUCHBASE_API
     std::string cluster_version(const zend_string* name);
@@ -349,12 +374,18 @@ class connection_handle
   private:
     class impl;
 
-    std::chrono::steady_clock::time_point idle_expiry_; /* time when the connection will be considered as expired */
+    std::chrono::system_clock::time_point idle_expiry_; /* time when the connection will be considered as expired */
 
     std::shared_ptr<impl> impl_;
+
+    std::string connection_string_;
+    std::string connection_hash_;
 };
 
 COUCHBASE_API
 std::pair<connection_handle*, core_error_info>
-create_connection_handle(const zend_string* connection_string, zval* options, std::chrono::steady_clock::time_point idle_expiry);
+create_connection_handle(const zend_string* connection_string,
+                         const zend_string* connection_hash,
+                         zval* options,
+                         std::chrono::system_clock::time_point idle_expiry);
 } // namespace couchbase::php
