@@ -88,7 +88,8 @@ STD_PHP_INI_ENTRY("couchbase.max_persistent", "-1", PHP_INI_SYSTEM, OnUpdateLong
 STD_PHP_INI_ENTRY("couchbase.persistent_timeout", "-1", PHP_INI_SYSTEM, OnUpdateLong, persistent_timeout, zend_couchbase_globals, couchbase_globals)
 STD_PHP_INI_ENTRY("couchbase.log_level", "", PHP_INI_ALL, OnUpdateString, log_level, zend_couchbase_globals, couchbase_globals)
 /* use php_error() for logging */
-STD_PHP_INI_ENTRY("couchbase.log_use_php_error", "1", PHP_INI_SYSTEM, OnUpdateBool, log_use_php_error, zend_couchbase_globals, couchbase_globals)
+STD_PHP_INI_ENTRY("couchbase.log_php_log_err", "1", PHP_INI_SYSTEM, OnUpdateBool, log_php_log_err, zend_couchbase_globals, couchbase_globals)
+STD_PHP_INI_ENTRY("couchbase.log_stderr", "0", PHP_INI_SYSTEM, OnUpdateBool, log_stderr, zend_couchbase_globals, couchbase_globals)
 /* write logs to given file (does not override couchbase.log_use_php_error) */
 STD_PHP_INI_ENTRY("couchbase.log_path", "", PHP_INI_SYSTEM, OnUpdateString, log_path, zend_couchbase_globals, couchbase_globals)
 PHP_INI_END()

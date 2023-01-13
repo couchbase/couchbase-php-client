@@ -31,7 +31,8 @@ ZEND_BEGIN_MODULE_GLOBALS(couchbase)
 /* INI settings */
 char* log_level{ nullptr };
 char* log_path{ nullptr };
-zend_bool log_use_php_error{ 1 };
+zend_bool log_php_log_err{ 1 };
+zend_bool log_stderr{ 0 };
 zend_long max_persistent{ -1 };     /* maximum number of persistent connections per process */
 zend_long persistent_timeout{ -1 }; /* time period after which idle persistent connection is considered expired */
 /* module variables */

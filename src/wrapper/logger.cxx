@@ -146,9 +146,12 @@ initialize_logger()
         if (const char* ini_val = COUCHBASE_G(log_path); ini_val != nullptr && std::strlen(ini_val) > 0) {
             configuration.filename = ini_val;
         }
-        configuration.console = false;
+        if (COUCHBASE_G(log_stderr)) {
+            configuration.console = true;
+            configuration.unit_test = true;
+        }
         configuration.log_level = cbpp_log_level;
-        if (COUCHBASE_G(log_use_php_error)) {
+        if (COUCHBASE_G(log_php_log_err)) {
             configuration.sink = global_php_log_err_sink;
             global_php_log_err_sink->include_source_info(cbpp_log_level == couchbase::core::logger::level::trace);
         }
