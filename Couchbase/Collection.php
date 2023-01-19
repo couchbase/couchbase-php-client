@@ -33,7 +33,7 @@ use DateTimeInterface;
 /**
  * Collection is an object containing functionality for performing KeyValue operations against the server.
  */
-class Collection
+class Collection implements CollectionInterface
 {
     private string $bucketName;
     private string $scopeName;

@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
@@ -37,7 +38,7 @@ use Couchbase\Management\UserManager;
  *
  * @since 4.0.0
  */
-class Cluster
+class Cluster implements ClusterInterface
 {
     private ClusterOptions $options;
 
@@ -58,6 +59,18 @@ class Cluster
     }
 
     /**
+     * @throws InvalidArgumentException
+     * @throws FeatureNotAvailableException
+     */
+    public static function connect(string $connectionString, ClusterOptions $options): ClusterInterface
+    {
+        if (preg_match("/^couchbases?:\/\//", $connectionString)) {
+            return new Cluster($connectionString, $options);
+        }
+        return ClusterRegistry::connect($connectionString, $options);
+    }
+
+    /**
      * Returns a new bucket object.
      *
      * @param string $name the name of the bucket
@@ -65,7 +78,7 @@ class Cluster
      * @return Bucket
      * @since 4.0.0
      */
-    public function bucket(string $name): Bucket
+    public function bucket(string $name): BucketInterface
     {
         return new Bucket($name, $this->core);
     }
