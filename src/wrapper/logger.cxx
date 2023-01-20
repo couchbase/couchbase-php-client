@@ -95,7 +95,12 @@ class php_log_err_sink : public spdlog::sinks::base_sink<Mutex>
   private:
     void write_message(const tao::json::value& msg)
     {
+#if PHP_VERSION_ID >= 80000
         php_log_err(core::utils::json::generate(msg).c_str());
+#else
+        auto data = core::utils::json::generate(msg);
+        php_log_err(const_cast<char*>(data.c_str()));
+#endif
     }
 
     std::queue<tao::json::value> deferred_messages_{};
