@@ -28,7 +28,7 @@ use Couchbase\Exception\TimeoutException;
  * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with
  * binary documents.
  */
-class BinaryCollection
+class BinaryCollection implements BinaryCollectionInterface
 {
     private string $bucketName;
     private string $scopeName;

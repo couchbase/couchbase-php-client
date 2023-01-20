@@ -30,7 +30,7 @@ use Couchbase\Management\ViewIndexManager;
  *
  * @since 4.0.0
  */
-class Bucket
+class Bucket implements BucketInterface
 {
     private string $name;
     /**
@@ -59,7 +59,7 @@ class Bucket
      * @return Scope
      * @since 4.0.0
      */
-    public function defaultScope(): Scope
+    public function defaultScope(): ScopeInterface
     {
         return new Scope("_default", $this->name, $this->core);
     }
@@ -70,7 +70,7 @@ class Bucket
      * @return Collection
      * @since 4.0.0
      */
-    public function defaultCollection(): Collection
+    public function defaultCollection(): CollectionInterface
     {
         return new Collection("_default", "_default", $this->name, $this->core);
     }
@@ -83,7 +83,7 @@ class Bucket
      * @return Scope
      * @since 4.0.0
      */
-    public function scope(string $name): Scope
+    public function scope(string $name): ScopeInterface
     {
         return new Scope($name, $this->name, $this->core);
     }
