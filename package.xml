@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-01-11</date>
+    <date>2023-01-20</date>
     <version>
-        <release>4.0.0</release>
+        <release>4.1.0</release>
         <api>4.0.0</api>
     </version>
     <stability>
@@ -24,9 +24,11 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        * Migrate core to C++ SDK
-        * Update query index management API to accept collections
-        * PCBC-836: implemented Transactions API
+        * PCBC-824: implement replica reads
+        * PCBC-630: implement legacy durability for mutations
+        * PCBC-880 support for configuration profiles
+        * PCBC-889 'Skip' SearchOption has no effect
+        * Bug fixes, logger and build improvements
     </notes>
     <contents>
         <dir name="/">
@@ -200,13 +202,18 @@
                 <file role="php" name="AppendOptions.php"/>
                 <file role="php" name="Authenticator.php"/>
                 <file role="php" name="BinaryCollection.php"/>
+                <file role="php" name="BinaryCollectionInterface.php"/>
                 <file role="php" name="BooleanFieldSearchQuery.php"/>
                 <file role="php" name="BooleanSearchQuery.php"/>
                 <file role="php" name="Bucket.php"/>
+                <file role="php" name="BucketInterface.php"/>
                 <file role="php" name="CertificateAuthenticator.php"/>
                 <file role="php" name="Cluster.php"/>
+                <file role="php" name="ClusterInterface.php"/>
                 <file role="php" name="ClusterOptions.php"/>
+                <file role="php" name="ClusterRegistry.php"/>
                 <file role="php" name="Collection.php"/>
+                <file role="php" name="CollectionInterface.php"/>
                 <file role="php" name="ConfigProfile.php"/>
                 <file role="php" name="ConfigProfiles.php"/>
                 <file role="php" name="ConjunctionSearchQuery.php"/>
@@ -293,6 +300,7 @@
                 <file role="php" name="RequestTracer.php"/>
                 <file role="php" name="Result.php"/>
                 <file role="php" name="Scope.php"/>
+                <file role="php" name="ScopeInterface.php"/>
                 <file role="php" name="SearchFacet.php"/>
                 <file role="php" name="SearchFacetResult.php"/>
                 <file role="php" name="SearchHighlightMode.php"/>
@@ -2768,6 +2776,23 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2022-05-11</date>
+            <version>
+                <release>4.0.0</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * Migrate core to C++ SDK
+                * Update query index management API to accept collections
+                * PCBC-836: implemented Transactions API
+            </notes>
+        </release>
     </changelog>
 </package>
 <!--
