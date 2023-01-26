@@ -635,6 +635,8 @@
                                     <file role="src" name="bucket_get_all.hxx"/>
                                     <file role="src" name="bucket_update.cxx"/>
                                     <file role="src" name="bucket_update.hxx"/>
+                                    <file role="src" name="change_password.cxx"/>
+                                    <file role="src" name="change_password.hxx"/>
                                     <file role="src" name="cluster_describe.cxx"/>
                                     <file role="src" name="cluster_describe.hxx"/>
                                     <file role="src" name="cluster_developer_preview_enable.cxx"/>
