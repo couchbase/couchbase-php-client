@@ -336,6 +336,9 @@ class connection_handle
     core_error_info user_drop(zval* return_value, const zend_string* name, const zval* options);
 
     COUCHBASE_API
+    core_error_info change_password(zval* return_value, const zend_string* new_password, const zval* options);
+
+    COUCHBASE_API
     core_error_info group_upsert(zval* return_value, const zval* group, const zval* options);
 
     COUCHBASE_API

@@ -169,4 +169,15 @@ class UserManager
     {
         Extension\groupDrop($this->core, $name, DropGroupOptions::export($options));
     }
+
+    /**
+     * Changes password of the currently authenticated user,
+     * @param string $newPassword new password
+     * @param ChangePasswordOptions|null $options the options to use when changing the password of the user
+     * @since 4.1.1
+     */
+    public function changePassword(string $newPassword, ChangePasswordOptions $options = null)
+    {
+        Extension\passwordChange($this->core, $newPassword, ChangePasswordOptions::export($options));
+    }
 }

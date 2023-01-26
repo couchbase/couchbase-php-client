@@ -1,5 +1,8 @@
 <?php
 
+use Couchbase\Cluster;
+use Couchbase\ClusterOptions;
+use Couchbase\Exception\AuthenticationFailureException;
 use Couchbase\Exception\GroupNotFoundException;
 use Couchbase\Exception\UserNotFoundException;
 use Couchbase\Management\AuthDomain;
@@ -188,5 +191,40 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->dropUser($username);
         $this->expectException(UserNotFoundException::class);
         $this->manager->getUser($username);
+    }
+
+    public function testChangePassword()
+    {
+        $this->skipIfCaves();
+        $role = Role::build()->setName('bucket_full_access')->setBucket('*');
+
+        $username = $this->uniqueId('test');
+        $display = 'Test User';
+        $user = User::build()->setUsername($username)->setPassword("secret")->setDisplayName($display)->setRoles([$role]);
+        $this->manager->upsertUser($user);
+
+        $result = $this->retryFor(
+            5,
+            100,
+            function () use ($username) {
+                return $this->manager->getUser($username);
+            }
+        );
+
+        $options = new ClusterOptions();
+        $options->credentials($username, "secret");
+        $newOptions = new ClusterOptions();
+        $newOptions->credentials($username, "newPassword");
+
+        $cluster = new Cluster(self::env()->connectionString(), $options);
+
+        $this->expectException(AuthenticationFailureException::class);
+        $newCluster = new Cluster(self::env()->connectionString(), $newOptions);
+
+        $manager = $cluster->users();
+        $manager->changePassword("newPassword");
+
+        $newCluster = new Cluster(self::env()->connectionString(), $newOptions);
+        $this->assertNotNull($newCluster);
     }
 }
