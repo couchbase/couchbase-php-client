@@ -3425,6 +3425,25 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
 
 COUCHBASE_API
 core_error_info
+connection_handle::change_password(zval* return_value, const zend_string* new_password, const zval* options)
+{
+    couchbase::core::operations::management::change_password_request request{ cb_string_new(new_password) };
+
+    if(auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
 {
     couchbase::core::management::rbac::group cgroup{};

@@ -1691,6 +1691,31 @@ PHP_FUNCTION(userDrop)
     }
 }
 
+PHP_FUNCTION(passwordChange)
+{
+    zval* connection = nullptr;
+    zend_string* new_password = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(new_password)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->change_password(return_value, new_password, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(groupUpsert)
 {
     zval* connection = nullptr;
@@ -2383,6 +2408,12 @@ ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_passwordChange, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, new_password, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_groupUpsert, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, group, IS_ARRAY, 0)
@@ -2509,6 +2540,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", userGet, ai_CouchbaseExtension_userGet)
         ZEND_NS_FE("Couchbase\\Extension", userGetAll, ai_CouchbaseExtension_userGetAll)
         ZEND_NS_FE("Couchbase\\Extension", userDrop, ai_CouchbaseExtension_userDrop)
+        ZEND_NS_FE("Couchbase\\Extension", passwordChange, ai_CouchbaseExtension_passwordChange)
         ZEND_NS_FE("Couchbase\\Extension", groupUpsert, ai_CouchbaseExtension_groupUpsert)
         ZEND_NS_FE("Couchbase\\Extension", groupGet, ai_CouchbaseExtension_groupGet)
         ZEND_NS_FE("Couchbase\\Extension", groupGetAll, ai_CouchbaseExtension_groupGetAll)
