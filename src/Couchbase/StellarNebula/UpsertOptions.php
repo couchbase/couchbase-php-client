@@ -25,6 +25,7 @@ use DateTimeInterface;
 class UpsertOptions
 {
     private Transcoder $transcoder;
+    private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
     private ?string $durabilityLevel = null;
     /**
@@ -91,6 +92,7 @@ class UpsertOptions
         }
         return [
             'expirySeconds' => $options->expirySeconds,
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,
         ];

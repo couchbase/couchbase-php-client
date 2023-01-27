@@ -1,7 +1,7 @@
 <?php
 
-/*
- * Copyright 2022-Present Couchbase, Inc.
+/**
+ * Copyright 2014-Present Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,15 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+/**
+ * LookupInSpec is an interface for providing subdocument lookup operations.
+ */
+interface LookupInSpec
 {
-
+    /**
+     * @internal
+     * @return array
+     * @since 4.0.0
+     */
+    public function export(): array;
 }

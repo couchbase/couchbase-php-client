@@ -22,10 +22,12 @@ namespace Couchbase\StellarNebula;
 
 use DateTimeInterface;
 
-class InsertOptions
+class DecrementOptions
 {
-    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?int $durabilityTimeoutSeconds = null;
+    private int $delta = 1;
+    private ?int $initialValue = null;
     private ?int $expirySeconds = null;
     private ?string $durabilityLevel = null;
     /**
@@ -33,29 +35,24 @@ class InsertOptions
      */
     private ?array $legacyDurability = null;
 
-    public function __construct()
+    public static function build(): DecrementOptions
     {
-        $this->transcoder = JsonTranscoder::getInstance();
+        return new DecrementOptions();
     }
 
-    public static function build(): InsertOptions
+    public function delta(int $decrement): DecrementOptions
     {
-        return new InsertOptions();
-    }
-
-    public function transcoder(Transcoder $transcoder): InsertOptions
-    {
-        $this->transcoder = $transcoder;
+        $this->delta = $decrement;
         return $this;
     }
 
-    public function timeout(int $milliseconds): InsertOptions
+    public function initial(int $initialValue): DecrementOptions
     {
-        $this->timeoutMilliseconds = $milliseconds;
+        $this->initialValue = $initialValue;
         return $this;
     }
 
-    public function expiry($seconds): InsertOptions
+    public function expiry($seconds): DecrementOptions
     {
         if ($seconds instanceof DateTimeInterface) {
             $this->expirySeconds = $seconds->getTimestamp();
@@ -65,16 +62,19 @@ class InsertOptions
         return $this;
     }
 
-    /**
-     * @param string $level see DurabilityLevel enumeration
-     */
-    public function durabilityLevel(string $level): InsertOptions
+    public function timeout(int $milliseconds): DecrementOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    public function durabilityLevel(string $level): DecrementOptions
     {
         $this->durabilityLevel = $level;
         return $this;
     }
 
-    public function durability(int $replicateTo, int $persistTo): InsertOptions
+    public function durability(int $replicateTo, int $persistTo): DecrementOptions
     {
         $this->legacyDurability = [
             'replicate_to' => $replicateTo,
@@ -83,24 +83,19 @@ class InsertOptions
         return $this;
     }
 
-    public static function encodeDocument(?InsertOptions $options, $document): array
-    {
-        if ($options == null) {
-            return JsonTranscoder::getInstance()->encode($document);
-        }
-        return $options->transcoder->encode($document);
-    }
-
-    public static function export(?InsertOptions $options): array
+    public static function export(?DecrementOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
-            'expirySeconds' => $options->expirySeconds,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,
+            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'delta' => $options->delta,
+            'initialValue' => $options->initialValue,
+            'expirySeconds' => $options->expirySeconds
         ];
     }
 }

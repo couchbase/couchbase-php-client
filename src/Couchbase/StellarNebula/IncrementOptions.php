@@ -22,10 +22,11 @@ namespace Couchbase\StellarNebula;
 
 use DateTimeInterface;
 
-class InsertOptions
+class IncrementOptions
 {
-    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private int $delta = 1;
+    private ?int $initialValue = null;
     private ?int $expirySeconds = null;
     private ?string $durabilityLevel = null;
     /**
@@ -33,29 +34,30 @@ class InsertOptions
      */
     private ?array $legacyDurability = null;
 
-    public function __construct()
+    public static function build(): IncrementOptions
     {
-        $this->transcoder = JsonTranscoder::getInstance();
+        return new IncrementOptions();
     }
 
-    public static function build(): InsertOptions
+    public function delta(int $increment): IncrementOptions
     {
-        return new InsertOptions();
-    }
-
-    public function transcoder(Transcoder $transcoder): InsertOptions
-    {
-        $this->transcoder = $transcoder;
+        $this->delta = $increment;
         return $this;
     }
 
-    public function timeout(int $milliseconds): InsertOptions
+    public function initial(int $initialValue): IncrementOptions
+    {
+        $this->initialValue = $initialValue;
+        return $this;
+    }
+
+    public function timeout(int $milliseconds): IncrementOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public function expiry($seconds): InsertOptions
+    public function expiry($seconds): IncrementOptions
     {
         if ($seconds instanceof DateTimeInterface) {
             $this->expirySeconds = $seconds->getTimestamp();
@@ -68,13 +70,13 @@ class InsertOptions
     /**
      * @param string $level see DurabilityLevel enumeration
      */
-    public function durabilityLevel(string $level): InsertOptions
+    public function durabilityLevel(string $level): IncrementOptions
     {
         $this->durabilityLevel = $level;
         return $this;
     }
 
-    public function durability(int $replicateTo, int $persistTo): InsertOptions
+    public function durability(int $replicateTo, int $persistTo): IncrementOptions
     {
         $this->legacyDurability = [
             'replicate_to' => $replicateTo,
@@ -83,21 +85,15 @@ class InsertOptions
         return $this;
     }
 
-    public static function encodeDocument(?InsertOptions $options, $document): array
-    {
-        if ($options == null) {
-            return JsonTranscoder::getInstance()->encode($document);
-        }
-        return $options->transcoder->encode($document);
-    }
-
-    public static function export(?InsertOptions $options): array
+    public static function export(?IncrementOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'delta' => $options->delta,
+            'initialValue' => $options->initialValue,
             'expirySeconds' => $options->expirySeconds,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,

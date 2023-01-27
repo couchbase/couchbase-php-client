@@ -20,7 +20,34 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
-{
+use InvalidArgumentException;
 
+class SamplingScan implements ScanType
+{
+    private int|string $limit;
+    private int|string $seed;
+
+    public function __construct(int|string $limit, int|string $seed = null)
+    {
+        if ($limit < 0) {
+            throw new InvalidArgumentException("Limit cannot be less than 0");
+        }
+        $this->limit = $limit;
+        $this->seed = $seed;
+    }
+
+    public function getLimit(): int|string
+    {
+        return $this->limit;
+    }
+
+    public function getSeed(): int|string
+    {
+        return $this->seed;
+    }
+
+    public function getScanType(): string
+    {
+        return "sampling_scan";
+    }
 }

@@ -20,34 +20,49 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class GetOptions
+class LookupInOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?bool $withExpiry = null;
 
     public function __construct()
     {
         $this->transcoder = JsonTranscoder::getInstance();
     }
 
-    public static function build(): GetOptions
+    public static function build(): LookupInOptions
     {
-        return new GetOptions();
+        return new LookupInOptions();
     }
 
-    public function transcoder(Transcoder $transcoder): GetOptions
-    {
-        $this->transcoder = $transcoder;
-        return $this;
-    }
-
-    public function timeout(int $milliseconds): GetOptions
+    public function timeout(int $milliseconds): LookupInOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public static function getTranscoder(?GetOptions $options): Transcoder
+    public function withExpiry(bool $fetchExpiry): LookupInOptions
+    {
+        $this->withExpiry = $fetchExpiry;
+        return $this;
+    }
+
+    public function needToFetchExpiry(): bool
+    {
+        if ($this->withExpiry == null) {
+            return false;
+        }
+        return $this->withExpiry;
+    }
+
+    public function transcoder(Transcoder $transcoder): LookupInOptions
+    {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    public static function getTranscoder(?LookupInOptions $options): Transcoder
     {
         if ($options == null) {
             return JsonTranscoder::getInstance();
@@ -55,13 +70,14 @@ class GetOptions
         return $options->transcoder;
     }
 
-    public static function export(?GetOptions $options): array
+    public static function export(?LookupInOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
-            'timeoutMilliseconds' => $options->timeoutMilliseconds
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
+
 }

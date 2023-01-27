@@ -20,7 +20,33 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+class ScanTerm
 {
+    private string $term;
+    private ?bool $exclusive;
 
+    public function __construct(string $term, bool $exclusive = false)
+    {
+        $this->term = $term;
+        $this->exclusive = $exclusive;
+    }
+    public static function scanTermMinimum(bool $exclusive = false): ScanTerm
+    {
+        return new ScanTerm("\x00", $exclusive);
+    }
+
+    public static function scanTermMaximum(bool $exclusive = false): ScanTerm
+    {
+        return new ScanTerm("\xFF", $exclusive);
+    }
+
+    public function getTerm(): string
+    {
+        return $this->term;
+    }
+
+    public function getExclusive(): bool
+    {
+        return $this->exclusive;
+    }
 }

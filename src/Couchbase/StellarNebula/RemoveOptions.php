@@ -20,61 +20,43 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-use DateTimeInterface;
-
-class InsertOptions
+class RemoveOptions
 {
-    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
-    private ?int $expirySeconds = null;
+    private string|int|null $cas = null;
     private ?string $durabilityLevel = null;
     /**
      * @var null|array|int[]
      */
     private ?array $legacyDurability = null;
 
-    public function __construct()
+    public static function build(): RemoveOptions
     {
-        $this->transcoder = JsonTranscoder::getInstance();
+        return new RemoveOptions();
     }
 
-    public static function build(): InsertOptions
-    {
-        return new InsertOptions();
-    }
-
-    public function transcoder(Transcoder $transcoder): InsertOptions
-    {
-        $this->transcoder = $transcoder;
-        return $this;
-    }
-
-    public function timeout(int $milliseconds): InsertOptions
+    public function timeout(int $milliseconds): RemoveOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public function expiry($seconds): InsertOptions
+    public function cas(string $cas): RemoveOptions
     {
-        if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
-        } else {
-            $this->expirySeconds = (int)$seconds;
-        }
+        $this->cas = $cas;
         return $this;
     }
 
     /**
      * @param string $level see DurabilityLevel enumeration
      */
-    public function durabilityLevel(string $level): InsertOptions
+    public function durabilityLevel(string $level): RemoveOptions
     {
         $this->durabilityLevel = $level;
         return $this;
     }
 
-    public function durability(int $replicateTo, int $persistTo): InsertOptions
+    public function durability(int $replicateTo, int $persistTo): RemoveOptions
     {
         $this->legacyDurability = [
             'replicate_to' => $replicateTo,
@@ -83,22 +65,14 @@ class InsertOptions
         return $this;
     }
 
-    public static function encodeDocument(?InsertOptions $options, $document): array
-    {
-        if ($options == null) {
-            return JsonTranscoder::getInstance()->encode($document);
-        }
-        return $options->transcoder->encode($document);
-    }
-
-    public static function export(?InsertOptions $options): array
+    public static function export(?RemoveOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
-            'expirySeconds' => $options->expirySeconds,
+            'cas' => $options->cas,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,
         ];

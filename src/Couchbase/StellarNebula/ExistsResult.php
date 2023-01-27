@@ -20,7 +20,25 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+class ExistsResult extends Result
 {
+    private bool $exists;
 
+    public function __construct(
+        string $bucket,
+        string $scope,
+        string $collection,
+        string $id,
+        int|string|null $cas,
+        bool $exists
+    )
+    {
+        parent::__construct($bucket, $scope, $collection, $id, $cas);
+        $this->exists = $exists;
+    }
+
+    public function exists(): bool
+    {
+        return $this->exists;
+    }
 }

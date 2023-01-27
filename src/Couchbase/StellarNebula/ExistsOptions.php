@@ -20,7 +20,28 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+class ExistsOptions
 {
+    private ?int $timeoutMilliseconds = null;
 
+    public static function build(): ExistsOptions
+    {
+        return new ExistsOptions();
+    }
+
+    public function timeout(int $milliseconds): ExistsOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    public static function export(?ExistsOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds
+        ];
+    }
 }

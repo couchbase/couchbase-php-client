@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+interface ScanType
 {
-
+    public function getScanType(): string;
 }

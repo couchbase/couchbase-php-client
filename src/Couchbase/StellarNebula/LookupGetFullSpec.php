@@ -1,7 +1,7 @@
 <?php
 
-/*
- * Copyright 2022-Present Couchbase, Inc.
+/**
+ * Copyright 2014-Present Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,25 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class ClusterOptions
+class LookupGetFullSpec implements LookupInSpec
 {
+    private bool $isXattr;
 
+    public function __construct(bool $isXattr = false)
+    {
+        $this->isXattr = $isXattr;
+    }
+
+    public static function build(bool $isXattr = false): LookupGetFullSpec
+    {
+        return new LookupGetFullSpec($isXattr);
+    }
+
+    public function export(): array
+    {
+        return [
+            'opcode' => 'getDocument',
+            'isXattr' => $this->isXattr,
+        ];
+    }
 }

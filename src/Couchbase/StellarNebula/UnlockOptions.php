@@ -20,48 +20,50 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class GetOptions
+class UnlockOptions
 {
-    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
 
-    public function __construct()
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return UnlockOptions
+     * @since 4.0.0
+     */
+    public static function build(): UnlockOptions
     {
-        $this->transcoder = JsonTranscoder::getInstance();
+        return new UnlockOptions();
     }
 
-    public static function build(): GetOptions
-    {
-        return new GetOptions();
-    }
-
-    public function transcoder(Transcoder $transcoder): GetOptions
-    {
-        $this->transcoder = $transcoder;
-        return $this;
-    }
-
-    public function timeout(int $milliseconds): GetOptions
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return UnlockOptions
+     * @since 4.0.0
+     */
+    public function timeout(int $milliseconds): UnlockOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public static function getTranscoder(?GetOptions $options): Transcoder
-    {
-        if ($options == null) {
-            return JsonTranscoder::getInstance();
-        }
-        return $options->transcoder;
-    }
-
-    public static function export(?GetOptions $options): array
+    /**
+     * @internal
+     *
+     * @param UnlockOptions|null $options
+     *
+     * @return array
+     * @since 4.0.0
+     */
+    public static function export(?UnlockOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
-            'timeoutMilliseconds' => $options->timeoutMilliseconds
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
 }

@@ -1,7 +1,7 @@
 <?php
 
-/*
- * Copyright 2022-Present Couchbase, Inc.
+/**
+ * Copyright 2014-Present Couchbase, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-class GetOptions
+class GetAllReplicasOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
@@ -30,24 +30,24 @@ class GetOptions
         $this->transcoder = JsonTranscoder::getInstance();
     }
 
-    public static function build(): GetOptions
+    public static function build(): GetAllReplicasOptions
     {
-        return new GetOptions();
+        return new GetAllReplicasOptions();
     }
 
-    public function transcoder(Transcoder $transcoder): GetOptions
-    {
-        $this->transcoder = $transcoder;
-        return $this;
-    }
-
-    public function timeout(int $milliseconds): GetOptions
+    public function timeout(int $milliseconds): GetAllReplicasOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public static function getTranscoder(?GetOptions $options): Transcoder
+    public function transcoder(Transcoder $transcoder): GetAllReplicasOptions
+    {
+        $this->transcoder = $transcoder;
+        return $this;
+    }
+
+    public static function getTranscoder(?GetAllReplicasOptions $options): Transcoder
     {
         if ($options == null) {
             return JsonTranscoder::getInstance();
@@ -55,13 +55,13 @@ class GetOptions
         return $options->transcoder;
     }
 
-    public static function export(?GetOptions $options): array
+    public static function export(?GetAllReplicasOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
-            'timeoutMilliseconds' => $options->timeoutMilliseconds
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
 }

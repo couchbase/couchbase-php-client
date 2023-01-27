@@ -20,61 +20,55 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
-use DateTimeInterface;
-
-class InsertOptions
+class PrependOptions
 {
-    private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
-    private ?int $expirySeconds = null;
+    private string|int|null $cas = null;
     private ?string $durabilityLevel = null;
     /**
      * @var null|array|int[]
      */
     private ?array $legacyDurability = null;
 
-    public function __construct()
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return PrependOptions
+     */
+    public static function build(): PrependOptions
     {
-        $this->transcoder = JsonTranscoder::getInstance();
+        return new PrependOptions();
     }
 
-    public static function build(): InsertOptions
-    {
-        return new InsertOptions();
-    }
-
-    public function transcoder(Transcoder $transcoder): InsertOptions
-    {
-        $this->transcoder = $transcoder;
-        return $this;
-    }
-
-    public function timeout(int $milliseconds): InsertOptions
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return PrependOptions
+     */
+    public function timeout(int $milliseconds): PrependOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public function expiry($seconds): InsertOptions
+    public function cas(string $cas): AppendOptions
     {
-        if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
-        } else {
-            $this->expirySeconds = (int)$seconds;
-        }
+        $this->cas = $cas;
         return $this;
     }
 
     /**
      * @param string $level see DurabilityLevel enumeration
      */
-    public function durabilityLevel(string $level): InsertOptions
+    public function durabilityLevel(string $level): PrependOptions
     {
         $this->durabilityLevel = $level;
         return $this;
     }
 
-    public function durability(int $replicateTo, int $persistTo): InsertOptions
+    public function durability(int $replicateTo, int $persistTo): PrependOptions
     {
         $this->legacyDurability = [
             'replicate_to' => $replicateTo,
@@ -83,24 +77,18 @@ class InsertOptions
         return $this;
     }
 
-    public static function encodeDocument(?InsertOptions $options, $document): array
-    {
-        if ($options == null) {
-            return JsonTranscoder::getInstance()->encode($document);
-        }
-        return $options->transcoder->encode($document);
-    }
-
-    public static function export(?InsertOptions $options): array
+    public static function export(?PrependOptions $options): array
     {
         if ($options == null) {
             return [];
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
-            'expirySeconds' => $options->expirySeconds,
+            'cas' => $options->cas,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,
         ];
     }
+
+
 }

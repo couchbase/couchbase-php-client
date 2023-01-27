@@ -28,11 +28,13 @@ class Client
 {
     private Channel $channel;
     private Generated\KV\V1\KvClient $kv;
+    private Generated\Query\V1\QueryClient $query;
 
     public function __construct(string $host, ClientOptions $options = new ClientOptions())
     {
         $this->channel = new Channel($host, $options->channelOptions());
         $this->kv = new Generated\KV\V1\KvClient($host, $options->channelOptions(), $this->channel);
+        $this->query = new Generated\Query\V1\QueryClient($host, $options->channelOptions(), $this->channel);
     }
 
     public function close()
@@ -43,5 +45,10 @@ class Client
     public function kv(): Generated\KV\V1\KvClient
     {
         return $this->kv;
+    }
+
+    public function query(): Generated\Query\V1\QueryClient
+    {
+        return $this->query;
     }
 }

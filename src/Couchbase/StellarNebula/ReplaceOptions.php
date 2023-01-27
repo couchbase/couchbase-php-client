@@ -22,11 +22,12 @@ namespace Couchbase\StellarNebula;
 
 use DateTimeInterface;
 
-class InsertOptions
+class ReplaceOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
+    private string|int|null $cas = null;
     private ?string $durabilityLevel = null;
     /**
      * @var null|array|int[]
@@ -38,24 +39,24 @@ class InsertOptions
         $this->transcoder = JsonTranscoder::getInstance();
     }
 
-    public static function build(): InsertOptions
+    public static function build(): ReplaceOptions
     {
-        return new InsertOptions();
+        return new ReplaceOptions();
     }
 
-    public function transcoder(Transcoder $transcoder): InsertOptions
+    public function transcoder(Transcoder $transcoder): ReplaceOptions
     {
         $this->transcoder = $transcoder;
         return $this;
     }
 
-    public function timeout(int $milliseconds): InsertOptions
+    public function timeout(int $milliseconds): ReplaceOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
 
-    public function expiry($seconds): InsertOptions
+    public function expiry($seconds): ReplaceOptions
     {
         if ($seconds instanceof DateTimeInterface) {
             $this->expirySeconds = $seconds->getTimestamp();
@@ -65,16 +66,22 @@ class InsertOptions
         return $this;
     }
 
+    public function cas(string $cas): ReplaceOptions
+    {
+        $this->cas = $cas;
+        return $this;
+    }
+
     /**
      * @param string $level see DurabilityLevel enumeration
      */
-    public function durabilityLevel(string $level): InsertOptions
+    public function durabilityLevel(string $level): ReplaceOptions
     {
         $this->durabilityLevel = $level;
         return $this;
     }
 
-    public function durability(int $replicateTo, int $persistTo): InsertOptions
+    public function durability(int $replicateTo, int $persistTo): ReplaceOptions
     {
         $this->legacyDurability = [
             'replicate_to' => $replicateTo,
@@ -83,7 +90,7 @@ class InsertOptions
         return $this;
     }
 
-    public static function encodeDocument(?InsertOptions $options, $document): array
+    public static function encodeDocument(?ReplaceOptions $options, $document): array
     {
         if ($options == null) {
             return JsonTranscoder::getInstance()->encode($document);
@@ -91,7 +98,7 @@ class InsertOptions
         return $options->transcoder->encode($document);
     }
 
-    public static function export(?InsertOptions $options): array
+    public static function export(?ReplaceOptions $options): array
     {
         if ($options == null) {
             return [];
@@ -99,6 +106,7 @@ class InsertOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'expirySeconds' => $options->expirySeconds,
+            'cas' => $options->cas,
             'durabilityLevel' => $options->durabilityLevel,
             'legacyDurability' => $options->legacyDurability,
         ];
