@@ -26,7 +26,7 @@ use Couchbase\Exception\TimeoutException;
 /**
  * Scope is an object for providing access to collections.
  */
-class Scope
+class Scope implements ScopeInterface
 {
     private string $bucketName;
     private string $name;
@@ -70,7 +70,7 @@ class Scope
      * @return Collection
      * @since 4.0.0
      */
-    public function collection(string $name): Collection
+    public function collection(string $name): CollectionInterface
     {
         return new Collection($name, $this->name, $this->bucketName, $this->core);
     }
