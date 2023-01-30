@@ -16,11 +16,13 @@
 
 #include "wrapper.hxx"
 
+#include "../php_couchbase.hxx"
 #include "common.hxx"
 #include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
 #include "core/utils/json.hxx"
 #include "passthrough_transcoder.hxx"
+#include "version.hxx"
 
 #include <core/cluster.hxx>
 #include <core/management/bucket_settings.hxx>
@@ -4148,6 +4150,17 @@ create_connection_handle(const zend_string* connection_string,
     if (auto e = extract_credentials(credentials, options); e.ec) {
         return { nullptr, e };
     }
+    connstr.options.user_agent_extra = fmt::format("php_sdk/{}/{};ssl/{:x};php/{}",
+                                                   PHP_COUCHBASE_VERSION,
+                                                   std::string(extension_revision()).substr(0, 8),
+                                                   OpenSSL_version_num(),
+                                                   PHP_VERSION
+#if ZTS
+                                                   "/z"
+#else
+                                                   "/n"
+#endif
+    );
     couchbase::core::origin origin{ credentials, connstr };
     return { new connection_handle(
                std::move(connection_str), std::string(ZSTR_VAL(connection_hash), ZSTR_LEN(connection_hash)), origin, idle_expiry),
