@@ -24,7 +24,7 @@ use Couchbase\ClusterOptions;
 use Couchbase\CollectionInterface;
 use Couchbase\QueryOptions;
 use Couchbase\QueryScanConsistency;
-use Couchbase\StellarNebula\Cluster;
+use Couchbase\Integration;
 use PHPUnit\Framework\TestCase;
 
 final class QueryIntegrationTest extends TestCase
@@ -42,8 +42,9 @@ final class QueryIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Integration::enableProtostellar();
         $options = new ClusterOptions();
-        $this->cluster = Couchbase\ClusterRegistry::connect(
+        $this->cluster = Couchbase\Cluster::connect(
             getenv(self::CONNECTION_STRING_ENV)
                 ?: self::DEFAULT_CONNECTION_STRING,
             $options
@@ -56,26 +57,6 @@ final class QueryIntegrationTest extends TestCase
     {
         $this->cluster->close();
         parent::tearDown();
-    }
-
-    protected function enableProtostellar()
-    {
-        Couchbase\ClusterRegistry::registerConnectionHandler(
-            "/^protostellar:\/\//",
-            function (string $connectionString, ClusterOptions $options) {
-                return new Cluster($connectionString, $options);
-            }
-        );
-    }
-
-    protected function enableClassic()
-    {
-        Couchbase\ClusterRegistry::registerConnectionHandler(
-            "/^couchbase:\/\//",
-            function (string $connectionString, ClusterOptions $options) {
-                return new Couchbase\Cluster($connectionString, $options);
-            }
-        );
     }
 
     public function maybeCreateIndex(string $nameSpace)
@@ -119,4 +100,6 @@ final class QueryIntegrationTest extends TestCase
         $this->assertNotEmpty($rows);
         $this->assertEquals(42, $res->rows()[0][$this->defaultCollection->name()]['bar']);
     }
+
+
 }

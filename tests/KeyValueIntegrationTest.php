@@ -25,8 +25,8 @@ use Couchbase\CollectionInterface;
 use Couchbase\DecrementOptions;
 use Couchbase\GetOptions;
 use Couchbase\IncrementOptions;
+use Couchbase\Integration;
 use Couchbase\RawBinaryTranscoder;
-use Couchbase\StellarNebula\Cluster;
 use Couchbase\StellarNebula\ProtocolException;
 use Couchbase\UpsertOptions;
 use PHPUnit\Framework\TestCase;
@@ -46,7 +46,7 @@ final class KeyValueIntegrationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Cluster::enableProtostellarProtocol();
+        Integration::enableProtostellar();
         $options = new ClusterOptions();
         $this->cluster = Couchbase\Cluster::connect(
             getenv(self::CONNECTION_STRING_ENV)

@@ -25,7 +25,6 @@ use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
-use Couchbase\ClusterRegistry;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
@@ -84,15 +83,5 @@ class Cluster implements ClusterInterface
     {
         // TODO: Implement searchQuery() method.
         return new SearchResult();
-    }
-
-    public static function enableProtostellarProtocol()
-    {
-        ClusterRegistry::registerConnectionHandler(
-            "/^protostellar:\/\//",
-            function (string $connectionString, ClusterOptions $options) {
-                return new Cluster($connectionString, $options);
-            }
-        );
     }
 }

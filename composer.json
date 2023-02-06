@@ -15,7 +15,8 @@
     "autoload": {
         "psr-4": {
             "Couchbase\\StellarNebula\\": "src/Couchbase/StellarNebula",
-            "GPBMetadata\\Couchbase\\": "src/GPBMetadata/Couchbase"
+            "GPBMetadata\\Couchbase\\": "src/GPBMetadata/Couchbase",
+            "Couchbase\\": "src/Couchbase"
         }
     },
     "authors": [
