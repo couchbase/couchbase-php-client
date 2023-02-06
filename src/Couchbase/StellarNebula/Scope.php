@@ -21,9 +21,14 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
+use Couchbase\AnalyticsOptions;
+use Couchbase\AnalyticsResult;
+use Couchbase\QueryOptions;
+use Couchbase\QueryResult;
+use Couchbase\ScopeInterface;
 use Couchbase\StellarNebula\Internal\Client;
 
-class Scope
+class Scope implements ScopeInterface
 {
     public const DEFAULT_NAME = "_default";
 
@@ -46,5 +51,17 @@ class Scope
     public function collection(string $name): Collection
     {
         return new Collection($this->client, $this->bucketName, $this->name, $name);
+    }
+
+    public function query(string $statement, QueryOptions $options = null): QueryResult
+    {
+        // TODO: Implement query() method.
+        return new QueryResult();
+    }
+
+    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    {
+        return new AnalyticsResult();
+        // TODO: Implement analyticsQuery() method.
     }
 }

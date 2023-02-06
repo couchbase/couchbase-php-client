@@ -3,6 +3,8 @@
     "description": "WIP. Library to connect to Couchbase using gRPC transport",
     "type": "library",
     "require": {
+        "ext-couchbase": "^4.1",
+        "couchbase/couchbase": "^4.1",
         "google/protobuf": "^3.21",
         "grpc/grpc": "^1.42",
         "ext-grpc": "^1.15",

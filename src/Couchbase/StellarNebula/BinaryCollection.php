@@ -20,16 +20,23 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
+use Couchbase\AppendOptions;
+use Couchbase\BinaryCollectionInterface;
+use Couchbase\CounterResult;
+use Couchbase\DecrementOptions;
+use Couchbase\IncrementOptions;
+use Couchbase\MutationResult;
+use Couchbase\PrependOptions;
 use Couchbase\StellarNebula\Generated\KV\V1\AppendRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\DecrementRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\IncrementRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\PrependRequest;
 use Couchbase\StellarNebula\Internal\Client;
+use Couchbase\StellarNebula\Internal\KVConverter;
 
-use Google\Protobuf\Timestamp;
 use const Grpc\STATUS_OK;
 
-class BinaryCollection
+class BinaryCollection implements BinaryCollectionInterface
 {
     private Client $client;
     private string $bucketName;
@@ -70,35 +77,27 @@ class BinaryCollection
             "key" => $key,
             "content" => $value,
         ];
-        $timeout = array_key_exists("timeoutMilliseconds", $exportedOptions)
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = Collection::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = Collection::convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
-        if (array_key_exists("cas", $exportedOptions)) {
-            $request["cas"] = $exportedOptions["cas"];
-        }
+        $request = array_merge($request, KVConverter::convertAppendOptions($exportedOptions));
         $pendingCall = $this->client->kv()->Append(new AppendRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to remove the key", $status);
+            throw new ProtocolException("unable to append the key", $status);
         }
         return new MutationResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            )
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
+            ]
         );
     }
 
@@ -115,35 +114,27 @@ class BinaryCollection
             "key" => $key,
             "content" => $value,
         ];
-        $timeout = array_key_exists("timeoutMilliseconds", $exportedOptions)
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = Collection::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = Collection::convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
-        if (array_key_exists("cas", $exportedOptions)) {
-            $request["cas"] = $exportedOptions["cas"];
-        }
+        $request = array_merge($request, KVConverter::convertPrependOptions($exportedOptions));
         $pendingCall = $this->client->kv()->Prepend(new PrependRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to remove the key", $status);
+            throw new ProtocolException("unable to prepend the key", $status);
         }
         return new MutationResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            )
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
+            ]
         );
     }
 
@@ -159,42 +150,28 @@ class BinaryCollection
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = array_key_exists("timeoutMilliseconds", $exportedOptions)
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
-        $request["delta"] = array_key_exists("delta", $exportedOptions)
-            ? $exportedOptions["delta"]
-            : 1;
-        if (array_key_exists("initialValue", $exportedOptions)) {
-            $request["initial"] = $exportedOptions["initialValue"];
-        }
-        if (array_key_exists("expirySeconds", $exportedOptions)) {
-            $request["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
-        }
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = Collection::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = Collection::convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
+        $request = array_merge($request, KVConverter::convertIncrementOptions($exportedOptions));
         $pendingCall = $this->client->kv()->Increment(new IncrementRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to remove the key", $status);
+            throw new ProtocolException("unable to increment the key", $status);
         }
         return new CounterResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            ),
-            $res->getContent()
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ],
+                "value" => $res->getContent()
+            ]
         );
     }
 
@@ -204,49 +181,34 @@ class BinaryCollection
     public function decrement(string $key, DecrementOptions $options = null): CounterResult
     {
         $exportedOptions = DecrementOptions::export($options);
-        // TODO: Old API also has durabilityTimeoutSeconds, not in proto,
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = array_key_exists("timeoutMilliseconds", $exportedOptions)
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
-        $request["delta"] = array_key_exists("delta", $exportedOptions)
-            ? $exportedOptions["delta"]
-            : 1;
-        if (array_key_exists("initialValue", $exportedOptions)) {
-            $request["initial"] = $exportedOptions["initialValue"];
-        }
-        if (array_key_exists("expirySeconds", $exportedOptions)) {
-            $request["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
-        }
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = Collection::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = Collection::convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
+        $request = array_merge($request, KVConverter::convertDecrementOptions($exportedOptions));
         $pendingCall = $this->client->kv()->Decrement(new DecrementRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to remove the key", $status);
+            throw new ProtocolException("unable to decrement the key", $status);
         }
         return new CounterResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            ),
-            $res->getContent()
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ],
+                "value" => $res->getContent()
+            ]
         );
     }
 }

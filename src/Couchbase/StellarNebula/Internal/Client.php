@@ -32,6 +32,7 @@ class Client
 
     public function __construct(string $host, ClientOptions $options = new ClientOptions())
     {
+        $host = substr($host, strpos($host, "/") + 2) . ":18098";
         $this->channel = new Channel($host, $options->channelOptions());
         $this->kv = new Generated\KV\V1\KvClient($host, $options->channelOptions(), $this->channel);
         $this->query = new Generated\Query\V1\QueryClient($host, $options->channelOptions(), $this->channel);
