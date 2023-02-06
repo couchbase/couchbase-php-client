@@ -16,21 +16,17 @@
  * limitations under the License.
  */
 
-declare(strict_types=1);
+namespace Couchbase;
 
-namespace Couchbase\StellarNebula;
-
-interface Transcoder
+class Integration
 {
-    /**
-     * @return array {
-     *     Pair representing encoded value.
-     *
-     *     @type string $bytes
-     *     @type int $contentType
-     * }
-     */
-    public function encode($value): array;
-
-    public function decode(string $bytes, int $contentType);
+    public static function enableProtostellar(): void
+    {
+        ClusterRegistry::registerConnectionHandler(
+            "/^protostellar:\/\//",
+            function (string $connectionString, ClusterOptions $options) {
+                return new \Couchbase\StellarNebula\Cluster($connectionString, $options);
+            }
+        );
+    }
 }

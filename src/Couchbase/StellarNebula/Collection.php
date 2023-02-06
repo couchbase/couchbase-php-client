@@ -20,18 +20,50 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
+use Couchbase\BinaryCollectionInterface;
+use Couchbase\CollectionInterface;
+use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\ExistsOptions;
+use Couchbase\ExistsResult;
+use Couchbase\GetAllReplicasOptions;
+use Couchbase\GetAndLockOptions;
+use Couchbase\GetAndTouchOptions;
+use Couchbase\GetOptions;
+use Couchbase\GetResult;
+use Couchbase\InsertOptions;
+use Couchbase\LookupInOptions;
+use Couchbase\LookupInResult;
+use Couchbase\MutateInOptions;
+use Couchbase\MutateInResult;
+use Couchbase\MutationResult;
+use Couchbase\RemoveOptions;
+use Couchbase\ReplaceOptions;
+use Couchbase\Result;
+use Couchbase\StellarNebula\Generated\KV\V1\ExistsRequest;
+use Couchbase\StellarNebula\Generated\KV\V1\GetAndLockRequest;
+use Couchbase\StellarNebula\Generated\KV\V1\GetAndTouchRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\GetRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\InsertRequest;
-use Couchbase\StellarNebula\Generated\KV\V1\LegacyDurabilitySpec;
+use Couchbase\StellarNebula\Generated\KV\V1\RemoveRequest;
+use Couchbase\StellarNebula\Generated\KV\V1\ReplaceRequest;
+use Couchbase\StellarNebula\Generated\KV\V1\TouchRequest;
+use Couchbase\StellarNebula\Generated\KV\V1\UnlockRequest;
 use Couchbase\StellarNebula\Generated\KV\V1\UpsertRequest;
 use Couchbase\StellarNebula\Internal\Client;
-use Google\Protobuf\Timestamp;
+use Couchbase\StellarNebula\Internal\KVConverter;
+use Couchbase\TouchOptions;
+use Couchbase\TranscoderFlags;
+use Couchbase\UnlockOptions;
+use Couchbase\UpsertOptions;
+use DateTimeInterface;
 
 use const Grpc\STATUS_OK;
 
-class Collection
+class Collection implements CollectionInterface
 {
     public const DEFAULT_NAME = "_default";
+
+    public const DEFAULT_KV_TIMEOUT = 2.5e6;
 
     private Client $client;
     private string $bucketName;
@@ -53,11 +85,13 @@ class Collection
 
     /**
      * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
-    public function upsert(string $key, $document, UpsertOptions $options): MutationResult
+    public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
-        $exportedOptions = InsertOptions::export($options);
+        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
+        $exportedOptions = UpsertOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
@@ -66,42 +100,38 @@ class Collection
             "content" => $encodedDocument,
             "content_type" => $contentType,
         ];
-        if (array_key_exists("expirySeconds", $exportedOptions)) {
-            $request["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
-        }
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = $this->convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = $this->convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
-
-        $pendingCall = $this->client->kv()->Upsert(new UpsertRequest($request));
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertUpsertOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->Upsert(new UpsertRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
             throw new ProtocolException("unable to upsert the key", $status);
         }
         return new MutationResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            )
+            [
+            "id" => $key,
+            "cas" => strval($res->getCas()),
+            "mutationToken" =>
+                [
+                "bucketName" => $res->getMutationToken()->getBucketName(),
+                "partitionId" => $res->getMutationToken()->getVbucketId(),
+                "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                ]
+            ]
         );
     }
 
     /**
      * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function insert(string $key, $document, InsertOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
+        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
         $exportedOptions = InsertOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
@@ -111,89 +141,360 @@ class Collection
             "content" => $encodedDocument,
             "content_type" => $contentType,
         ];
-        if (array_key_exists("expirySeconds", $exportedOptions)) {
-            $request["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
-        }
-        if (array_key_exists("durabilityLevel", $exportedOptions)) {
-            $request["durability_level"] = $this->convertDurabilityLevel($exportedOptions["durabilityLevel"]);
-        }
-        if (array_key_exists("legacyDurability", $exportedOptions)) {
-            $request["legacy_durability_spec"] = $this->convertLegacyDurability($exportedOptions["legacyDurability"]);
-        }
-        $pendingCall = $this->client->kv()->Insert(new InsertRequest($request));
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertInsertOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->Insert(new InsertRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
             throw new ProtocolException("unable to insert the key", $status);
         }
         return new MutationResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            new MutationToken(
-                $res->getMutationToken()->getBucketName(),
-                $res->getMutationToken()->getVbucketId(),
-                $res->getMutationToken()->getVbucketUuid(),
-                $res->getMutationToken()->getSeqNo()
-            )
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
+            ]
         );
     }
 
     /**
      * @throws ProtocolException
      */
-    public function get(string $key, GetOptions $options = null): GetResult
+    public function replace(string $key, $document, ReplaceOptions $options = null): MutationResult
     {
+        [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
+        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
+        $exportedOptions = ReplaceOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "content" => $encodedDocument,
+            "content_type" => $contentType
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertReplaceOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->Replace(new ReplaceRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to replace the key", $status);
+        }
+        return new MutationResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
+            ]
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     */
+    public function remove(string $key, RemoveOptions $options = null): MutationResult
+    {
+        $exportedOptions = RemoveOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $pendingCall = $this->client->kv()->Get(new GetRequest($request));
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertRemoveOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->Remove(new RemoveRequest($request), [], ['timeout' => $timeout]);
         [$res, $status] = $pendingCall->wait();
         if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to insert the key", $status);
+            throw new ProtocolException("unable to remove the key", $status);
         }
-        return new GetResult(
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $key,
-            $res->getCas(),
-            GetOptions::getTranscoder($options),
-            $res->getContent(),
-            $res->getContentType(),
-            $res->getCompressionType(),
-            $res->getExpiry()?->getSeconds(),
-        );
-    }
-
-    private function convertDurabilityLevel(string $durabilityLevel): ?int
-    {
-        if ($durabilityLevel === DurabilityLevel::MAJORITY) {
-            return \Couchbase\StellarNebula\Generated\KV\V1\DurabilityLevel::MAJORITY;
-        }
-        if ($durabilityLevel === DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE) {
-            return \Couchbase\StellarNebula\Generated\KV\V1\DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE;
-        }
-        if ($durabilityLevel === DurabilityLevel::PERSIST_TO_MAJORITY) {
-            return \Couchbase\StellarNebula\Generated\KV\V1\DurabilityLevel::PERSIST_TO_MAJORITY;
-        }
-        return null;
-    }
-
-    private function convertLegacyDurability(?array $legacyDurability): ?LegacyDurabilitySpec
-    {
-        if ($legacyDurability == null) {
-            return null;
-        }
-        return new LegacyDurabilitySpec(
+        return new MutationResult(
             [
-                "num_replicated" => $legacyDurability["replicateTo"],
-                "num_persisted" => $legacyDurability["persistTo"],
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
             ]
         );
+    }
+
+    /**
+     * @throws ProtocolException
+     * @throws InvalidArgumentException
+     */
+    public function get(string $key, GetOptions $options = null): GetResult
+    {
+        $exportedOptions = GetOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->Get(new GetRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to get the key", $status);
+        }
+        $contentType = (new TranscoderFlags(
+            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
+            $res->getCompressionType()
+        ))->encode();
+        return new GetResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "value" => $res->getContent(),
+                "flags" => $contentType,
+                "expiry" => $res->getExpiry()?->getSeconds(),
+            ],
+            GetOptions::getTranscoder($options)
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     */
+    public function exists(string $key, ExistsOptions $options = null): ExistsResult
+    {
+        $exportedOptions = ExistsOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->Exists(new ExistsRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to check if the key exists", $status);
+        }
+        return new ExistsResult( //TODO Other options in ExistsResult not returned by GRPC
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "exists" => $res->getResult()
+            ]
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     * @throws InvalidArgumentException
+     */
+    public function getAndTouch(string $key, $expiry, GetAndTouchOptions $options = null): GetResult
+    {
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+        } else {
+            $expirySeconds = (int)$expiry;
+        }
+        $exportedOptions = GetAndTouchOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "expiry" => $expirySeconds
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->GetAndTouch(new GetAndTouchRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to getAndTouch the key", $status);
+        }
+        $contentType = (new TranscoderFlags(
+            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
+            $res->getCompressionType()
+        ))->encode();
+        return new GetResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "value" => $res->getContent(),
+                "flags" => $contentType,
+                "compression_type" => $res->getCompressionType(),
+                "expiry" => $res->getExpiry()?->getSeconds(),
+            ],
+            GetAndTouchOptions::getTranscoder($options)
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     * @throws InvalidArgumentException
+     */
+    public function getAndLock(string $key, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
+    {
+        $exportedOptions = GetAndLockOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "lock_time" => $lockTimeSeconds
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->GetAndLock(new GetAndLockRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to getAndLock the key", $status);
+        }
+        $contentType = (new TranscoderFlags(
+            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
+            $res->getCompressionType()
+        ))->encode();
+        return new GetResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "value" => $res->getContent(),
+                "flags" => $res->getContentType(),
+                "compression_type" => $contentType,
+                "expiry" => $res->getExpiry()?->getSeconds(),
+            ],
+            GetAndLockOptions::getTranscoder($options)
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     */
+    public function unlock(string $key, string $cas, UnlockOptions $options = null): Result
+    {
+        $exportedOptions = UnlockOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "cas" => $cas,
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->Unlock(new UnlockRequest($request), [], ['timeout' => $timeout]);
+        [, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to unlock the document", $status);
+        }
+        return new Result(
+            [
+                "id" => $key,
+                "cas" => $cas,
+            ]
+        );
+    }
+
+    /**
+     * @throws ProtocolException
+     */
+    public function touch(string $key, $expiry, TouchOptions $options = null): MutationResult
+    {
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+        } else {
+            $expirySeconds = (int)$expiry;
+        }
+        $exportedOptions = TouchOptions::export($options);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "expiry" => $expirySeconds
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $pendingCall = $this->client->kv()->Touch(new TouchRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to touch the document", $status);
+        }
+        return new MutationResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
+            ]
+        );
+    }
+    public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
+    {
+        // TODO: Implement lookupIn() method.
+        return new LookupInResult([], LookupInOptions::getTranscoder($options));
+    }
+
+    public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult
+    {
+        // TODO: Implement mutateIn() method.
+        return new MutateInResult([]);
+    }
+
+    public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): \Couchbase\GetReplicaResult
+    {
+        // TODO: Implement getAnyReplica() method.
+        return new \Couchbase\GetReplicaResult();
+    }
+
+    public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
+    {
+        // TODO: Implement getAllReplicas() method.
+        return [];
+    }
+
+    public function bucketName(): string
+    {
+        return $this->bucketName;
+    }
+
+    public function scopeName(): string
+    {
+        return $this->scopeName;
+    }
+
+    public function binary(): BinaryCollectionInterface
+    {
+        return new BinaryCollection($this->client, $this->bucketName, $this->scopeName, $this->name);
     }
 }

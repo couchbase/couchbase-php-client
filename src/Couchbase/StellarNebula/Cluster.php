@@ -21,11 +21,25 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
+use Couchbase\AnalyticsOptions;
+use Couchbase\AnalyticsResult;
+use Couchbase\ClusterInterface;
+use Couchbase\ClusterOptions;
+use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\QueryOptions;
+use Couchbase\QueryResult;
+use Couchbase\SearchOptions;
+use Couchbase\SearchQuery;
+use Couchbase\SearchResult;
+use Couchbase\StellarNebula\Generated\Query\V1\QueryRequest;
 use Couchbase\StellarNebula\Internal\Client;
+use Couchbase\StellarNebula\Internal\QueryConverter;
 
-class Cluster
+class Cluster implements ClusterInterface
 {
     private Client $client;
+
+    public const DEFAULT_QUERY_TIMEOUT = 7.5e7;
 
     public function __construct(string $connectionString, ClusterOptions $options = new ClusterOptions())
     {
@@ -40,5 +54,34 @@ class Cluster
     public function bucket(string $name): Bucket
     {
         return new Bucket($this->client, $name);
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     * @throws ProtocolException
+     */
+    public function query(string $statement, QueryOptions $options = null): QueryResult
+    {
+        $exportedOptions = QueryOptions::export($options);
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_QUERY_TIMEOUT;
+        $request = QueryConverter::convertQueryOptions($statement, $exportedOptions);
+        $pendingCall = $this->client->query()->Query(new QueryRequest($request), [], ['timeout' => $timeout]);
+        $res = iterator_to_array($pendingCall->responses());
+        $finalArray = QueryConverter::convertQueryResult($res);
+        return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
+    }
+
+    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    {
+        // TODO: Implement analyticsQuery() method.
+        return new AnalyticsResult();
+    }
+
+    public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
+    {
+        // TODO: Implement searchQuery() method.
+        return new SearchResult();
     }
 }

@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\StellarNebula;
 
+use Couchbase\BucketInterface;
 use Couchbase\StellarNebula\Internal\Client;
+use Couchbase\ViewOptions;
+use Couchbase\ViewResult;
 
-class Bucket
+class Bucket implements BucketInterface
 {
     private Client $client;
     private string $name;
@@ -56,5 +59,11 @@ class Bucket
     public function defaultCollection(): Collection
     {
         return $this->collection(Collection::DEFAULT_NAME);
+    }
+
+    public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
+    {
+        // TODO: Implement viewQuery() method.
+        return new ViewResult();
     }
 }
