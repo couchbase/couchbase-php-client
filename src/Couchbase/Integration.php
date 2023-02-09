@@ -25,7 +25,7 @@ class Integration
         ClusterRegistry::registerConnectionHandler(
             "/^protostellar:\/\//",
             function (string $connectionString, ClusterOptions $options) {
-                return new \Couchbase\StellarNebula\Cluster($connectionString, $options);
+                return new \Couchbase\Protostellar\Cluster($connectionString, $options);
             }
         );
     }

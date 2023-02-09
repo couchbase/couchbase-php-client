@@ -27,7 +27,7 @@ use Couchbase\GetOptions;
 use Couchbase\IncrementOptions;
 use Couchbase\Integration;
 use Couchbase\RawBinaryTranscoder;
-use Couchbase\StellarNebula\ProtocolException;
+use Couchbase\Protostellar\ProtocolException;
 use Couchbase\UpsertOptions;
 use PHPUnit\Framework\TestCase;
 
