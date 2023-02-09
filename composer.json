@@ -14,7 +14,7 @@
     "license": "Apache-2.0",
     "autoload": {
         "psr-4": {
-            "Couchbase\\StellarNebula\\": "src/Couchbase/StellarNebula",
+            "Couchbase\\Protostellar\\": "src/Couchbase/Protostellar",
             "GPBMetadata\\Couchbase\\": "src/GPBMetadata/Couchbase",
             "Couchbase\\": "src/Couchbase"
         }

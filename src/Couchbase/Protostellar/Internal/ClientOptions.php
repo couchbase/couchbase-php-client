@@ -16,17 +16,14 @@
  * limitations under the License.
  */
 
-namespace Couchbase;
+declare(strict_types=1);
 
-class Integration
+namespace Couchbase\Protostellar\Internal;
+
+class ClientOptions
 {
-    public static function enableProtostellar(): void
+    public function channelOptions(): array
     {
-        ClusterRegistry::registerConnectionHandler(
-            "/^protostellar:\/\//",
-            function (string $connectionString, ClusterOptions $options) {
-                return new \Couchbase\Protostellar\Cluster($connectionString, $options);
-            }
-        );
+        return [];
     }
 }
