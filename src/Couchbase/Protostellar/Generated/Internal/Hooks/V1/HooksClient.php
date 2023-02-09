@@ -1,20 +1,18 @@
 <?php
-
 // GENERATED CODE -- DO NOT EDIT!
 
 namespace Couchbase\Protostellar\Generated\Internal\Hooks\V1;
 
 /**
  */
-class HooksClient extends \Grpc\BaseStub
-{
+class HooksClient extends \Grpc\BaseStub {
+
     /**
      * @param string $hostname hostname
      * @param array $opts channel options
      * @param \Grpc\Channel $channel (optional) re-use channel object
      */
-    public function __construct($hostname, $opts, $channel = null)
-    {
+    public function __construct($hostname, $opts, $channel = null) {
         parent::__construct($hostname, $opts, $channel);
     }
 
@@ -24,19 +22,12 @@ class HooksClient extends \Grpc\BaseStub
      * @param array $options call options
      * @return \Grpc\UnaryCall
      */
-    public function CreateHooksContext(
-        \Couchbase\Protostellar\Generated\Internal\Hooks\V1\CreateHooksContextRequest $argument,
-                                                                                      $metadata = [],
-                                                                                      $options = []
-    )
-    {
-        return $this->_simpleRequest(
-            '/couchbase.internal.hooks.v1.Hooks/CreateHooksContext',
-            $argument,
-            ['\Couchbase\StellarNebula\Generated\Internal\Hooks\V1\CreateHooksContextResponse', 'decode'],
-            $metadata,
-            $options
-        );
+    public function CreateHooksContext(\Couchbase\Protostellar\Generated\Internal\Hooks\V1\CreateHooksContextRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/couchbase.internal.hooks.v1.Hooks/CreateHooksContext',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\Internal\Hooks\V1\CreateHooksContextResponse', 'decode'],
+        $metadata, $options);
     }
 
     /**
@@ -45,19 +36,12 @@ class HooksClient extends \Grpc\BaseStub
      * @param array $options call options
      * @return \Grpc\UnaryCall
      */
-    public function DestroyHooksContext(
-        \Couchbase\Protostellar\Generated\Internal\Hooks\V1\DestroyHooksContextRequest $argument,
-                                                                                       $metadata = [],
-                                                                                       $options = []
-    )
-    {
-        return $this->_simpleRequest(
-            '/couchbase.internal.hooks.v1.Hooks/DestroyHooksContext',
-            $argument,
-            ['\Couchbase\StellarNebula\Generated\Internal\Hooks\V1\DestroyHooksContextResponse', 'decode'],
-            $metadata,
-            $options
-        );
+    public function DestroyHooksContext(\Couchbase\Protostellar\Generated\Internal\Hooks\V1\DestroyHooksContextRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/couchbase.internal.hooks.v1.Hooks/DestroyHooksContext',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\Internal\Hooks\V1\DestroyHooksContextResponse', 'decode'],
+        $metadata, $options);
     }
 
     /**
@@ -66,19 +50,12 @@ class HooksClient extends \Grpc\BaseStub
      * @param array $options call options
      * @return \Grpc\UnaryCall
      */
-    public function AddHooks(
-        \Couchbase\Protostellar\Generated\Internal\Hooks\V1\AddHooksRequest $argument,
-                                                                            $metadata = [],
-                                                                            $options = []
-    )
-    {
-        return $this->_simpleRequest(
-            '/couchbase.internal.hooks.v1.Hooks/AddHooks',
-            $argument,
-            ['\Couchbase\StellarNebula\Generated\Internal\Hooks\V1\AddHooksResponse', 'decode'],
-            $metadata,
-            $options
-        );
+    public function AddHooks(\Couchbase\Protostellar\Generated\Internal\Hooks\V1\AddHooksRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/couchbase.internal.hooks.v1.Hooks/AddHooks',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\Internal\Hooks\V1\AddHooksResponse', 'decode'],
+        $metadata, $options);
     }
 
     /**
@@ -87,19 +64,12 @@ class HooksClient extends \Grpc\BaseStub
      * @param array $options call options
      * @return \Grpc\ServerStreamingCall
      */
-    public function WatchBarrier(
-        \Couchbase\Protostellar\Generated\Internal\Hooks\V1\WatchBarrierRequest $argument,
-                                                                                $metadata = [],
-                                                                                $options = []
-    )
-    {
-        return $this->_serverStreamRequest(
-            '/couchbase.internal.hooks.v1.Hooks/WatchBarrier',
-            $argument,
-            ['\Couchbase\StellarNebula\Generated\Internal\Hooks\V1\WatchBarrierResponse', 'decode'],
-            $metadata,
-            $options
-        );
+    public function WatchBarrier(\Couchbase\Protostellar\Generated\Internal\Hooks\V1\WatchBarrierRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_serverStreamRequest('/couchbase.internal.hooks.v1.Hooks/WatchBarrier',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\Internal\Hooks\V1\WatchBarrierResponse', 'decode'],
+        $metadata, $options);
     }
 
     /**
@@ -108,18 +78,12 @@ class HooksClient extends \Grpc\BaseStub
      * @param array $options call options
      * @return \Grpc\UnaryCall
      */
-    public function SignalBarrier(
-        \Couchbase\Protostellar\Generated\Internal\Hooks\V1\SignalBarrierRequest $argument,
-                                                                                 $metadata = [],
-                                                                                 $options = []
-    )
-    {
-        return $this->_simpleRequest(
-            '/couchbase.internal.hooks.v1.Hooks/SignalBarrier',
-            $argument,
-            ['\Couchbase\StellarNebula\Generated\Internal\Hooks\V1\SignalBarrierResponse', 'decode'],
-            $metadata,
-            $options
-        );
+    public function SignalBarrier(\Couchbase\Protostellar\Generated\Internal\Hooks\V1\SignalBarrierRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_simpleRequest('/couchbase.internal.hooks.v1.Hooks/SignalBarrier',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\Internal\Hooks\V1\SignalBarrierResponse', 'decode'],
+        $metadata, $options);
     }
+
 }
