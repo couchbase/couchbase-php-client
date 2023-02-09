@@ -4,20 +4,21 @@ PROTOC=${PROTOC:-$(which protoc)}
 GRPC_PHP_PLUGIN=${GRPC_PHP_PLUGIN:-$(which grpc_php_plugin)}
 
 PROJECT_ROOT="$( cd "$(dirname "$0"/..)" >/dev/null 2>&1 ; pwd -P )"
-STELLAR_NEBULA_PATH="${PROJECT_ROOT}/deps/stellar-nebula"
+PROTOSTELLAR_PATH="${PROJECT_ROOT}/deps/protostellar"
+GOOGLE_APIS_PATH="${PROJECT_ROOT}/deps/googleapis"
 SRC_PATH="${PROJECT_ROOT}/src"
-STUBS_PATH="${SRC_PATH}/Couchbase/StellarNebula/Generated"
+STUBS_PATH="${SRC_PATH}/Couchbase/Protostellar/Generated"
 
 set -xe
 
 rm -rf "${STUBS_PATH}"
 mkdir -p "${STUBS_PATH}"
 
-for proto in $(find "${STELLAR_NEBULA_PATH}/proto" -type f -name '*.proto')
+for proto in $(find "${PROTOSTELLAR_PATH}" -type f -name '*.proto')
 do
     ${PROTOC} \
-        --proto_path="${STELLAR_NEBULA_PATH}/proto" \
-        --proto_path="${STELLAR_NEBULA_PATH}/contrib/googleapis" \
+        --proto_path="${PROTOSTELLAR_PATH}" \
+        --proto_path="${GOOGLE_APIS_PATH}" \
         --php_out="${SRC_PATH}" \
         --grpc_out="${SRC_PATH}" \
         --plugin=protoc-gen-grpc="${GRPC_PHP_PLUGIN}" \
