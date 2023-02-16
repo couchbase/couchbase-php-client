@@ -101,8 +101,7 @@ class CollectionQueryIndexManager
     {
         $exported = CreateQueryPrimaryIndexOptions::export($options);
         $this->checkOptions($exported);
-     //   Extension\collectionQueryIndexCreatePrimary($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
-        Extension\queryIndexCreatePrimary($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        Extension\collectionQueryIndexCreatePrimary($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
     }
 
     /**
