@@ -40,7 +40,7 @@ class CollectionQueryIndexManager
      * @param $core
      *
      * @internal
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function __construct(string $collectionName, string $scopeName, string $bucketName, $core)
     {
@@ -57,7 +57,7 @@ class CollectionQueryIndexManager
      *
      * @return array
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function getAllIndexes(GetAllQueryIndexesOptions $options = null): array
     {
@@ -80,7 +80,7 @@ class CollectionQueryIndexManager
      * @param CreateQueryIndexOptions|null $options
      *
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function createIndex(string $indexName, array $fields, CreateQueryIndexOptions $options = null)
     {
@@ -95,7 +95,7 @@ class CollectionQueryIndexManager
      * @param CreateQueryPrimaryIndexOptions|null $options
      *
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function createPrimaryIndex(CreateQueryPrimaryIndexOptions $options = null)
     {
@@ -112,7 +112,7 @@ class CollectionQueryIndexManager
      * @param DropQueryIndexOptions|null $options
      *
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function dropIndex(string $indexName, DropQueryIndexOptions $options = null)
     {
@@ -127,7 +127,7 @@ class CollectionQueryIndexManager
      * @param DropQueryPrimaryIndexOptions|null $options
      *
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function dropPrimaryIndex(DropQueryPrimaryIndexOptions $options = null)
     {
@@ -142,7 +142,7 @@ class CollectionQueryIndexManager
      * @param BuildQueryIndexesOptions|null $options
      *
      * @throws InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function buildDeferredIndexes(BuildQueryIndexesOptions $options = null)
     {
@@ -159,7 +159,7 @@ class CollectionQueryIndexManager
      * @param WatchQueryIndexesOptions|null $options
      *
      * @throws UnambiguousTimeoutException|InvalidArgumentException
-     * @since 4.2.0
+     * @since 4.1.2
      */
     public function watchIndexes(array $indexNames, int $timeoutMilliseconds, WatchQueryIndexesOptions $options = null)
     {
