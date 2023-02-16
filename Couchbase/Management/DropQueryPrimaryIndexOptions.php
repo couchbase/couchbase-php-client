@@ -42,6 +42,7 @@ class DropQueryPrimaryIndexOptions
     /**
      * @param string $scopeName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return DropQueryPrimaryIndexOptions
      * @since 4.0.0
      */
@@ -54,6 +55,7 @@ class DropQueryPrimaryIndexOptions
     /**
      * @param string $collectionName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return DropQueryPrimaryIndexOptions
      * @since 4.0.0
      */

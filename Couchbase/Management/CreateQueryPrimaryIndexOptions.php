@@ -44,6 +44,7 @@ class CreateQueryPrimaryIndexOptions
     /**
      * @param string $scopeName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return CreateQueryPrimaryIndexOptions
      * @since 4.0.0
      */
@@ -56,6 +57,7 @@ class CreateQueryPrimaryIndexOptions
     /**
      * @param string $collectionName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return CreateQueryPrimaryIndexOptions
      * @since 4.0.0
      */

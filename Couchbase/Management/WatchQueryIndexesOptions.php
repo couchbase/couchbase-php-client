@@ -40,6 +40,7 @@ class WatchQueryIndexesOptions
     /**
      * @param string $scopeName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return WatchQueryIndexesOptions
      * @since 4.0.0
      */
@@ -52,6 +53,7 @@ class WatchQueryIndexesOptions
     /**
      * @param string $collectionName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return WatchQueryIndexesOptions
      * @since 4.0.0
      */

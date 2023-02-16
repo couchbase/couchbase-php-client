@@ -28,6 +28,7 @@ use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Management\CollectionQueryIndexManager;
 use DateTimeInterface;
 
 /**
@@ -622,5 +623,16 @@ class Collection implements CollectionInterface
     public function binary(): BinaryCollection
     {
         return new BinaryCollection($this->name, $this->scopeName, $this->bucketName, $this->core);
+    }
+
+    /**
+     * Creates a new manager object for managing N1QL query indexes at the collection level
+     *
+     * @return CollectionQueryIndexManager
+     * @since 4.1.2
+     */
+    public function queryIndexes(): CollectionQueryIndexManager
+    {
+        return new CollectionQueryIndexManager($this->name, $this->scopeName, $this->bucketName, $this->core);
     }
 }

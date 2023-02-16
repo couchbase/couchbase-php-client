@@ -40,6 +40,7 @@ class BuildQueryIndexesOptions
     /**
      * @param string $scopeName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return BuildQueryIndexesOptions
      * @since 4.0.0
      */
@@ -52,6 +53,7 @@ class BuildQueryIndexesOptions
     /**
      * @param string $collectionName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return BuildQueryIndexesOptions
      * @since 4.0.0
      */
