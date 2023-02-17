@@ -74,6 +74,13 @@ CB_CXX = ENV.fetch("CB_CXX", default_cxx)
 
 run("#{CB_PHP_PREFIX}/bin/php --version")
 run("#{CB_PHP_PREFIX}/bin/php --ini")
+run("#{CB_PHP_PREFIX}/bin/php-config")
+
+LOCAL_OPENSSL="/usr/local/openssl"
+CB_OPENSSL_ROOT = ENV.fetch("CB_OPENSSL_ROOT", File.directory?(LOCAL_OPENSSL) ? LOCAL_OPENSSL : nil)
+if CB_OPENSSL_ROOT
+  ENV["COUCHBASE_CMAKE_EXTRA"] = "-DOPENSSL_ROOT_DIR=#{CB_OPENSSL_ROOT}"
+end
 
 Dir.chdir(PROJECT_ROOT) do
   run("#{CB_PHP_PREFIX}/bin/phpize")
