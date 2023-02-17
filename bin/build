@@ -17,6 +17,15 @@
 require "fileutils"
 require "rbconfig"
 
+def echo_env(*var_names)
+  var_names.each do |name|
+    value = ENV[name]
+    puts "#{name}=#{value}" unless value&.empty?
+  end
+end
+
+echo_env("HOSTNAME", "NODE_NAME", "CONTAINER_TAG", "JENKINS_SLAVE_LABELS", "NODE_LABELS")
+
 def which(name)
   ENV.fetch("PATH", "")
      .split(File::PATH_SEPARATOR)
