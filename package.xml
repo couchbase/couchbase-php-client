@@ -133,6 +133,7 @@
                     <file role="php" name="BuildQueryIndexesOptions.php"/>
                     <file role="php" name="ChangePasswordOptions.php"/>
                     <file role="php" name="CollectionManager.php"/>
+                    <file role="php" name="CollectionQueryIndexManager.php"/>
                     <file role="php" name="CollectionSpec.php"/>
                     <file role="php" name="CompressionMode.php"/>
                     <file role="php" name="ConflictResolutionType.php"/>
