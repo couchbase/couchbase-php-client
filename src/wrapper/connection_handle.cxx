@@ -4101,15 +4101,16 @@ extract_credentials(couchbase::core::cluster_credentials& credentials, zval* opt
                          ERROR_LOCATION,
                          "expected allowedSaslMechanisms to be an array in the authenticator" };
             }
-            credentials.allowed_sasl_mechanisms.clear();
+            std::vector<std::string> mechanisms;
             const zval* mech;
             ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(allowed_sasl_mechanisms), mech)
             {
                 if (mech != nullptr && Z_TYPE_P(mech) == IS_STRING) {
-                    credentials.allowed_sasl_mechanisms.emplace_back(Z_STRVAL_P(mech), Z_STRLEN_P(mech));
+                    mechanisms.emplace_back(Z_STRVAL_P(mech), Z_STRLEN_P(mech));
                 }
             }
             ZEND_HASH_FOREACH_END();
+            credentials.allowed_sasl_mechanisms = mechanisms;
         }
         return {};
     }

@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-01-20</date>
+    <date>2023-02-16</date>
     <version>
         <release>4.1.0</release>
         <api>4.0.0</api>
@@ -131,6 +131,7 @@
                     <file role="php" name="BucketSettings.php"/>
                     <file role="php" name="BucketType.php"/>
                     <file role="php" name="BuildQueryIndexesOptions.php"/>
+                    <file role="php" name="ChangePasswordOptions.php"/>
                     <file role="php" name="CollectionManager.php"/>
                     <file role="php" name="CollectionSpec.php"/>
                     <file role="php" name="CompressionMode.php"/>
@@ -504,6 +505,7 @@
                                 <file role="src" name="configuration.hxx"/>
                                 <file role="src" name="custom_rotating_file_sink.cxx"/>
                                 <file role="src" name="custom_rotating_file_sink.hxx"/>
+                                <file role="src" name="level.hxx"/>
                                 <file role="src" name="logger.cxx"/>
                                 <file role="src" name="logger.hxx"/>
                             </dir>
@@ -574,6 +576,7 @@
                             </dir>
                             <dir name="meta">
                                 <file role="src" name="CMakeLists.txt"/>
+                                <file role="src" name="features.hxx"/>
                                 <file role="src" name="version.cxx"/>
                                 <file role="src" name="version.hxx"/>
                             </dir>
@@ -968,7 +971,6 @@
                                 <file role="src" name="exceptions.cxx"/>
                                 <file role="src" name="exceptions.hxx"/>
                                 <file role="src" name="forward_compat.hxx"/>
-                                <file role="src" name="logging.cxx"/>
                                 <file role="src" name="result.cxx"/>
                                 <file role="src" name="result.hxx"/>
                                 <file role="src" name="staged_mutation.cxx"/>
@@ -1126,7 +1128,10 @@
                                 <file role="src" name="key_value_extended_error_info.hxx"/>
                                 <file role="src" name="key_value_status_code.hxx"/>
                                 <file role="src" name="mutation_token.hxx"/>
+                                <file role="src" name="query_scan_consistency.hxx"/>
+                                <file role="src" name="query_status.hxx"/>
                                 <file role="src" name="retry_reason.hxx"/>
+                                <file role="src" name="tls_verify_mode.hxx"/>
                             </dir>
                             <dir name="metrics">
                                 <file role="src" name="meter.hxx"/>
