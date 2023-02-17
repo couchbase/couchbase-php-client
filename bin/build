@@ -20,7 +20,7 @@ require "rbconfig"
 def echo_env(*var_names)
   var_names.each do |name|
     value = ENV[name]
-    puts "#{name}=#{value}" unless value&.empty?
+    puts "#{name}=#{value}" if value && !value.empty?
   end
 end
 
