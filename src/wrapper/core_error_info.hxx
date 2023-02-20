@@ -23,6 +23,7 @@
 #include <system_error>
 #include <variant>
 #include <vector>
+#include <cstdint>
 
 namespace couchbase::php
 {
