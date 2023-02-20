@@ -234,7 +234,7 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
 
         $this->wrapException(
             function () use ($manager) {
-                $manager->dropIndex( "testIndex");
+                $manager->dropIndex("testIndex");
             },
             IndexNotFoundException::class
         );

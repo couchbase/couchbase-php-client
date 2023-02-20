@@ -214,7 +214,7 @@ class CollectionQueryIndexManager
     private function checkOptions(array $exportedOpts)
     {
         if (isset($exportedOpts['scopeName']) || isset($exportedOpts['collectionName'])) {
-            throw new InvalidArgumentException("Scope and Collection cannot be set when using CollectionQueryIndexManager");
+            throw new InvalidArgumentException("Scope and Collection options cannot be set when using the Query Index Manager at the collection level");
         }
     }
 }
