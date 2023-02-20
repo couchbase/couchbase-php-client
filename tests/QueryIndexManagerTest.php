@@ -147,4 +147,105 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
             IndexNotFoundException::class
         );
     }
+
+    public function testCollectionQueryIndexesCrud()
+    {
+        $this->skipIfCaves();
+
+        $manager = $this->defaultCollection()->queryIndexes();
+
+        $deadline = time() + 5; /* 5 seconds from now */
+
+        while (true) {
+            try {
+                $manager->createPrimaryIndex(CreateQueryPrimaryIndexOptions::build()->ignoreIfExists(true));
+                break;
+            } catch (CouchbaseException $ex) {
+                printf("Error during primary index creation: %s, %s", $ex->getMessage(), var_export($ex->getContext(), true));
+                if (time() > $deadline) {
+                    $this->assertFalse("timed out waiting for create index to succeed");
+                }
+                sleep(1);
+            }
+        }
+
+        $this->wrapException(
+            function () use ($manager) {
+                $manager->createPrimaryIndex(CreateQueryPrimaryIndexOptions::build()->ignoreIfExists(false));
+            },
+            IndexExistsException::class
+        );
+
+        $manager->createIndex(
+            "testIndex",
+            ["field"],
+            CreateQueryIndexOptions::build()->ignoreIfExists(true)
+        );
+
+        $this->wrapException(
+            function () use ($manager) {
+                $manager->createIndex(
+                    "testIndex",
+                    ["field"],
+                    CreateQueryIndexOptions::build()->ignoreIfExists(false)
+                );
+            },
+            IndexExistsException::class
+        );
+
+        // We create this first to give it a chance to be created by the time we need it.
+        $manager->createIndex(
+            "testIndexDeferred",
+            ["field"],
+            CreateQueryIndexOptions::build()
+                ->ignoreIfExists(true)
+                ->deferred(true)
+        );
+
+        $manager->buildDeferredIndexes();
+
+        $manager->watchIndexes(["testIndexDeferred"], 60_000);
+
+        $indexes = $manager->getAllIndexes();
+        $this->assertGreaterThanOrEqual(3, count($indexes));
+
+        $index = null;
+        /**
+         * @var QueryIndex $entry
+         */
+        foreach ($indexes as $entry) {
+            if ($entry->name() == "testIndex") {
+                $index = $entry;
+            }
+        }
+        $this->assertNotNull($index);
+
+        $this->assertEquals("testIndex", $index->name());
+        $this->assertFalse($index->isPrimary());
+        $this->assertEquals(QueryIndexType::GSI, $index->type());
+        $this->assertEquals("online", $index->state());
+        $this->assertNull($index->scopeName());
+        $this->assertNull($index->collectionName());
+        $this->assertEquals(["`field`"], $index->indexKey());
+        $this->assertNull($index->condition());
+        $this->assertNull($index->partition());
+
+        $manager->dropIndex("testIndex");
+
+        $this->wrapException(
+            function () use ($manager) {
+                $manager->dropIndex( "testIndex");
+            },
+            IndexNotFoundException::class
+        );
+
+        $manager->dropPrimaryIndex();
+
+        $this->wrapException(
+            function () use ($manager) {
+                $manager->dropPrimaryIndex();
+            },
+            IndexNotFoundException::class
+        );
+    }
 }
