@@ -43,8 +43,7 @@ class QueryOptions
     private ?string $clientContextId = null;
     private ?bool $metrics = null;
     private ?bool $preserveExpiry = null;
-    private ?string $scopeName = null;
-    private ?string $scopeQualifier = null;
+    private ?string $queryContext = null;
     private Transcoder $transcoder;
 
     /**
@@ -332,7 +331,6 @@ class QueryOptions
             'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
             E_USER_DEPRECATED
         );
-        $this->scopeName = $name;
         return $this;
     }
 
@@ -353,7 +351,7 @@ class QueryOptions
             'Method ' . __METHOD__ . ' is deprecated, use scope level query()',
             E_USER_DEPRECATED
         );
-        $this->scopeQualifier = $qualifier;
+        $this->queryContext = $qualifier;
         return $this;
     }
 
@@ -403,10 +401,14 @@ class QueryOptions
 
     public static function export(?QueryOptions $options, string $scopeName = null, string $bucketName = null): array
     {
+        $defaultQueryContext = null;
+        if ($scopeName != null && $bucketName != null) {
+            $defaultQueryContext = sprintf("default:`%s`.`%s`", $bucketName, $scopeName);
+        }
+
         if ($options == null) {
             return [
-                'scopeName' => $scopeName,
-                'bucketName' => $bucketName,
+                'queryContext' => $defaultQueryContext
             ];
         }
 
@@ -427,9 +429,6 @@ class QueryOptions
             foreach ($options->raw as $key => $param) {
                 $raw[$key] = json_encode($param);
             }
-        }
-        if ($scopeName == null && $options->scopeName != null) {
-            $scopeName = $options->scopeName;
         }
 
         return [
@@ -452,9 +451,7 @@ class QueryOptions
             'clientContextId' => $options->clientContextId,
             'metrics' => $options->metrics,
             'preserveExpiry' => $options->preserveExpiry,
-            'scopeName' => $scopeName,
-            'bucketName' => $bucketName,
-            'scopeQualifier' => $options->scopeQualifier,
+            'queryContext' => $options->queryContext == null ? $defaultQueryContext : $options->queryContext,
         ];
     }
 }

@@ -20,7 +20,7 @@ require "rbconfig"
 def echo_env(*var_names)
   var_names.each do |name|
     value = ENV[name]
-    puts "#{name}=#{value}" unless value&.empty?
+    puts "#{name}=#{value}" if value && !value.empty?
   end
 end
 
@@ -72,8 +72,15 @@ CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 CB_CC = ENV.fetch("CB_CC", default_cc)
 CB_CXX = ENV.fetch("CB_CXX", default_cxx)
 
-run("#{CB_PHP_PREFIX}/bin/php --version")
-run("#{CB_PHP_PREFIX}/bin/php --ini")
+run("#{CB_PHP_PREFIX}/bin/php --version || true")
+run("#{CB_PHP_PREFIX}/bin/php --ini || true")
+run("#{CB_PHP_PREFIX}/bin/php-config || true")
+
+LOCAL_OPENSSL="/usr/local/openssl"
+CB_OPENSSL_ROOT = ENV.fetch("CB_OPENSSL_ROOT", File.directory?(LOCAL_OPENSSL) ? LOCAL_OPENSSL : nil)
+if CB_OPENSSL_ROOT
+  ENV["COUCHBASE_CMAKE_EXTRA"] = "-DOPENSSL_ROOT_DIR=#{CB_OPENSSL_ROOT}"
+end
 
 Dir.chdir(PROJECT_ROOT) do
   run("#{CB_PHP_PREFIX}/bin/phpize")

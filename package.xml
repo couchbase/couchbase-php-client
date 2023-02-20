@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-02-16</date>
+    <date>2023-02-19</date>
     <version>
         <release>4.1.0</release>
         <api>4.0.0</api>
@@ -425,16 +425,20 @@
                                 <file role="src" name="bootstrap_state_listener.hxx"/>
                                 <file role="src" name="build_deferred_query_indexes.cxx"/>
                                 <file role="src" name="cluster.cxx"/>
+                                <file role="src" name="collection_query_index_manager.cxx"/>
                                 <file role="src" name="common_error_category.cxx"/>
                                 <file role="src" name="configuration_profiles_registry.cxx"/>
+                                <file role="src" name="create_query_index.cxx"/>
                                 <file role="src" name="decrement.cxx"/>
                                 <file role="src" name="dns_srv_tracker.cxx"/>
                                 <file role="src" name="dns_srv_tracker.hxx"/>
+                                <file role="src" name="drop_query_index.cxx"/>
                                 <file role="src" name="exists.cxx"/>
                                 <file role="src" name="expiry.cxx"/>
                                 <file role="src" name="fail_fast_retry_strategy.cxx"/>
                                 <file role="src" name="field_level_encryption_error_category.cxx"/>
                                 <file role="src" name="get.cxx"/>
+                                <file role="src" name="get_all_query_indexes.cxx"/>
                                 <file role="src" name="get_all_replicas.cxx"/>
                                 <file role="src" name="get_all_replicas.hxx"/>
                                 <file role="src" name="get_and_lock.cxx"/>
@@ -469,6 +473,7 @@
                                 <file role="src" name="unlock.cxx"/>
                                 <file role="src" name="upsert.cxx"/>
                                 <file role="src" name="view_error_category.cxx"/>
+                                <file role="src" name="watch_query_indexes.cxx"/>
                                 <file role="src" name="with_legacy_durability.hxx"/>
                             </dir>
                             <dir name="io">
@@ -529,7 +534,6 @@
                                 <file role="src" name="eventing_function_json.hxx"/>
                                 <file role="src" name="eventing_status.hxx"/>
                                 <file role="src" name="eventing_status_json.hxx"/>
-                                <file role="src" name="query_index.hxx"/>
                                 <file role="src" name="rbac.hxx"/>
                                 <file role="src" name="rbac_fmt.hxx"/>
                                 <file role="src" name="rbac_json.hxx"/>
@@ -1005,6 +1009,7 @@
                                 <file role="src" name="json_stream_control.hxx"/>
                                 <file role="src" name="json_streaming_lexer.cxx"/>
                                 <file role="src" name="json_streaming_lexer.hxx"/>
+                                <file role="src" name="keyspace.hxx"/>
                                 <file role="src" name="movable_function.hxx"/>
                                 <file role="src" name="mutation_token.cxx"/>
                                 <file role="src" name="mutation_token.hxx"/>
@@ -1079,6 +1084,7 @@
                             <file role="src" name="ping_collector.hxx"/>
                             <file role="src" name="ping_options.hxx"/>
                             <file role="src" name="ping_reporter.hxx"/>
+                            <file role="src" name="query_context.hxx"/>
                             <file role="src" name="range_scan_options.cxx"/>
                             <file role="src" name="range_scan_options.hxx"/>
                             <file role="src" name="range_scan_orchestrator.cxx"/>
@@ -1133,6 +1139,9 @@
                                 <file role="src" name="retry_reason.hxx"/>
                                 <file role="src" name="tls_verify_mode.hxx"/>
                             </dir>
+                            <dir name="management">
+                                <file role="src" name="query_index.hxx"/>
+                            </dir>
                             <dir name="metrics">
                                 <file role="src" name="meter.hxx"/>
                                 <file role="src" name="otel_meter.hxx"/>
@@ -1185,14 +1194,19 @@
                             <file role="src" name="cluster.hxx"/>
                             <file role="src" name="cluster_options.hxx"/>
                             <file role="src" name="collection.hxx"/>
+                            <file role="src" name="collection_query_index_manager.hxx"/>
                             <file role="src" name="common_durability_options.hxx"/>
                             <file role="src" name="common_options.hxx"/>
                             <file role="src" name="compression_options.hxx"/>
                             <file role="src" name="configuration_profile.hxx"/>
                             <file role="src" name="configuration_profiles_registry.hxx"/>
                             <file role="src" name="counter_result.hxx"/>
+                            <file role="src" name="create_primary_query_index_options.hxx"/>
+                            <file role="src" name="create_query_index_options.hxx"/>
                             <file role="src" name="decrement_options.hxx"/>
                             <file role="src" name="dns_options.hxx"/>
+                            <file role="src" name="drop_primary_query_index_options.hxx"/>
+                            <file role="src" name="drop_query_index_options.hxx"/>
                             <file role="src" name="durability_level.hxx"/>
                             <file role="src" name="error_codes.hxx"/>
                             <file role="src" name="error_context.hxx"/>
@@ -1200,6 +1214,7 @@
                             <file role="src" name="exists_result.hxx"/>
                             <file role="src" name="expiry.hxx"/>
                             <file role="src" name="fail_fast_retry_strategy.hxx"/>
+                            <file role="src" name="get_all_query_indexes_options.hxx"/>
                             <file role="src" name="get_all_replicas_options.hxx"/>
                             <file role="src" name="get_and_lock_options.hxx"/>
                             <file role="src" name="get_and_touch_options.hxx"/>
@@ -1262,6 +1277,7 @@
                             <file role="src" name="unlock_options.hxx"/>
                             <file role="src" name="upsert_options.hxx"/>
                             <file role="src" name="wan_development_configuration_profile.hxx"/>
+                            <file role="src" name="watch_query_indexes_options.hxx"/>
                         </dir>
                         <dir name="third_party">
                             <dir name="asio">

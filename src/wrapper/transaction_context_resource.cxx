@@ -132,8 +132,9 @@ build_error_context(const core::transactions::transaction_exception& e)
     out.type = failure_type_to_string(e.type());
     out.cause = external_exception_to_string(e.cause());
     transactions_error_context::transaction_result res;
-    res.transaction_id = e.get_transaction_result().transaction_id;
-    res.unstaging_complete = e.get_transaction_result().unstaging_complete;
+    auto [_, core_res] = e.get_transaction_result();
+    res.transaction_id = core_res.transaction_id;
+    res.unstaging_complete = core_res.unstaging_complete;
     out.result = res;
     return out;
 }
