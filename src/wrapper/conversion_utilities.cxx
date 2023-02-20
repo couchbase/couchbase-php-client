@@ -421,10 +421,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_boolean(request.preserve_expiry, options, "preserveExpiry"); e.ec) {
         return { {}, e };
     }
-    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
-        return { {}, e };
-    }
-    if (auto e = cb_assign_string(request.bucket_name, options, "bucketName"); e.ec) {
+    if (auto e = cb_assign_string(request.query_context, options, "queryContext"); e.ec) {
         return { {}, e };
     }
     return { request, {} };
