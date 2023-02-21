@@ -2350,7 +2350,7 @@ connection_handle::view_query(zval* return_value,
 
         ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
         {
-            keys.emplace_back(std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) }));
+            keys.emplace_back(Z_STRVAL_P(item), Z_STRLEN_P(item));
         }
         ZEND_HASH_FOREACH_END();
 
@@ -2457,7 +2457,7 @@ connection_handle::view_query(zval* return_value,
             add_assoc_long(&meta, "totalRows", resp.meta.total_rows.value());
         }
 
-        add_assoc_zval(&meta, "meta", &meta);
+        add_assoc_zval(return_value, "meta", &meta);
     }
 
     return {};
