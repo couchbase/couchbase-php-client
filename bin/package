@@ -15,12 +15,15 @@ def run(*args)
 end
 
 project_root = File.expand_path(File.join(__dir__, ".."))
+cxx_core_root = File.join(project_root, "src", "deps", "couchbase-cxx-client")
 
 library_revision = Dir.chdir(project_root) { `git rev-parse HEAD`.strip }
-core_revision = Dir.chdir(File.join(project_root, "src", "deps", "couchbase-cxx-client")) { `git rev-parse HEAD`.strip }
+core_revision = Dir.chdir(cxx_core_root) { `git rev-parse HEAD`.strip }
+core_describe = Dir.chdir(cxx_core_root) { `git describe --long --always HEAD`.strip }
 File.write(File.join(project_root, "src", "cmake", "revisions.cmake"), <<REVISIONS)
 set(EXT_GIT_REVISION #{library_revision.inspect})
 set(COUCHBASE_CXX_CLIENT_GIT_REVISION #{core_revision.inspect})
+set(COUCHBASE_CXX_CLIENT_GIT_DESCRIBE #{core_describe.inspect})
 REVISIONS
 
 package_xml_path = File.join(project_root, "package.xml")

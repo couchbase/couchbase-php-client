@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-02-19</date>
+    <date>2023-02-21</date>
     <version>
         <release>4.1.0</release>
         <api>4.0.0</api>
