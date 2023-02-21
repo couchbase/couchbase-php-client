@@ -390,16 +390,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 
     ~impl()
     {
-        if (cluster_) {
-            auto barrier = std::make_shared<std::promise<void>>();
-            auto f = barrier->get_future();
-            cluster_->close([barrier]() { barrier->set_value(); });
-            f.wait();
-            if (worker.joinable()) {
-                worker.join();
-            }
-            cluster_.reset();
-        }
+        stop();
     }
 
     [[nodiscard]] std::shared_ptr<couchbase::core::cluster> cluster() const
@@ -410,6 +401,20 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
     void start()
     {
         worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
+    }
+
+    void stop()
+    {
+        if (cluster_) {
+            auto barrier = std::make_shared<std::promise<void>>();
+            auto f = barrier->get_future();
+            cluster_->close([barrier]() { barrier->set_value(); });
+            f.wait();
+            cluster_.reset();
+            if (worker.joinable()) {
+                worker.join();
+            }
+        }
     }
 
     std::string cluster_version(const std::string& bucket_name = "")
@@ -452,6 +457,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         auto f = barrier->get_future();
         cluster_->open(origin_, [barrier](std::error_code ec) { barrier->set_value(ec); });
         if (auto ec = f.get()) {
+            stop();
             return { ec, { __LINE__, __FILE__, __func__ } };
         }
         return {};
@@ -3431,7 +3437,7 @@ connection_handle::change_password(zval* return_value, const zend_string* new_pa
 {
     couchbase::core::operations::management::change_password_request request{ cb_string_new(new_password) };
 
-    if(auto e = cb_assign_timeout(request, options); e.ec) {
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
 

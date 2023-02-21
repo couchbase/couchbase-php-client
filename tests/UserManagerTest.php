@@ -218,8 +218,12 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
 
         $cluster = new Cluster(self::env()->connectionString(), $options);
 
-        $this->expectException(AuthenticationFailureException::class);
-        $newCluster = new Cluster(self::env()->connectionString(), $newOptions);
+        $this->wrapException(
+            function () use ($newOptions) {
+                new Cluster(self::env()->connectionString(), $newOptions);
+            },
+            AuthenticationFailureException::class
+        );
 
         $manager = $cluster->users();
         $manager->changePassword("newPassword");
