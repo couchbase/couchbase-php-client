@@ -154,8 +154,9 @@ class CouchbaseTestCase extends TestCase
     /**
      * @throws Exception
      */
-    public function retryFor(int $failAfterSecs, int $sleepMillis, callable $fn)
+    public function retryFor(int $failAfterSecs, int $sleepMillis, callable $fn, $message = null)
     {
+        $caller = debug_backtrace()[1]['function'];
         $deadline = time() + $failAfterSecs;
         $sleepMicros = $sleepMillis * 1000;
 
@@ -164,7 +165,7 @@ class CouchbaseTestCase extends TestCase
             try {
                 return $fn();
             } catch (Exception $ex) {
-                printf("Function returned exception, will retry: %s\n", $ex->getMessage());
+                printf("%s(%s) returned exception, will retry: %s\n", $caller, $message, $ex->getMessage());
                 $endException = $ex;
             }
 
