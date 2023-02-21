@@ -93,7 +93,7 @@ class QueryConverter
     {
         $finalArray = [];
         foreach ($response as $result) {
-            $finalArray["rows"][] = self::toArray($result->getRows());
+            $finalArray["rows"][] = SharedUtils::toArray($result->getRows());
         }
         $finalArray["rows"] = call_user_func_array('array_merge', $finalArray["rows"]);
         $finalArray["meta"] = self::convertMetaData(end($response)->getMetaData());
@@ -203,7 +203,7 @@ class QueryConverter
         }
         $finalMetaData["status"] = MetaData\MetaDataStatus::name($metadata->getStatus());
         if ($metadata->getWarnings()->count()) {
-            $finalMetaData["warnings"] = self::convertWarnings(self::toArray($metadata->getWarnings()));
+            $finalMetaData["warnings"] = self::convertWarnings(SharedUtils::toArray($metadata->getWarnings()));
         }
         if ($metadata->hasProfile()) {
             $finalMetaData["profile"] = $metadata->getProfile();
@@ -233,18 +233,5 @@ class QueryConverter
         $finalMetrics["errorCount"] = intval($metrics->getErrorCount());
         $finalMetrics["warningCount"] = intval($metrics->getWarningCount());
         return $finalMetrics;
-    }
-
-    /** Convert Protobuf RepeatedField Object to PHP array
-     * @param $rf
-     * @return array
-     */
-    private static function toArray($rf): array
-    {
-        $ret = [];
-        foreach ($rf as $elem) {
-            $ret[] = $elem;
-        }
-        return $ret;
     }
 }

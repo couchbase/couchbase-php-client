@@ -22,6 +22,7 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\BinaryCollectionInterface;
 use Couchbase\CollectionInterface;
+use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\ExistsOptions;
 use Couchbase\ExistsResult;
@@ -31,11 +32,17 @@ use Couchbase\GetAndTouchOptions;
 use Couchbase\GetOptions;
 use Couchbase\GetResult;
 use Couchbase\InsertOptions;
+use Couchbase\LookupInMacro;
 use Couchbase\LookupInOptions;
 use Couchbase\LookupInResult;
+use Couchbase\LookupInSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateInResult;
+use Couchbase\MutateInSpec;
 use Couchbase\MutationResult;
+use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
+use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
+use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\RemoveOptions;
 use Couchbase\ReplaceOptions;
 use Couchbase\Result;
@@ -459,16 +466,90 @@ class Collection implements CollectionInterface
             ]
         );
     }
-    public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
+    public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
     {
-        // TODO: Implement lookupIn() method.
-        return new LookupInResult([], LookupInOptions::getTranscoder($options));
+        $encoded = array_map(
+            function (LookupInSpec $item) {
+                return $item->export();
+            },
+            $specs
+        );
+        if ($options != null && $options->needToFetchExpiry()) {
+            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+        }
+        $exportedOptions = LookupInOptions::export($options);
+        $specsReq = KVConverter::getLookupInSpec($encoded);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "specs" => $specsReq
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertLookupInOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->LookupIn(new LookupInRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to LookupIn the document", $status);
+        }
+        $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
+        return new LookupInResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "fields" => $fields
+            ]
+        );
     }
 
-    public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function mutateIn(string $key, array $specs, MutateInOptions $options = null): MutateInResult
     {
-        // TODO: Implement mutateIn() method.
-        return new MutateInResult([]);
+        $encoded = array_map(
+            function (MutateInSpec $item) use ($options) {
+                return $item->export($options);
+            },
+            $specs
+        );
+        $exportedOptions = MutateInOptions::export($options);
+        $specsReq = KVConverter::getMutateInSpec($encoded);
+        $request = [
+            "bucket_name" => $this->bucketName,
+            "scope_name" => $this->scopeName,
+            "collection_name" => $this->name,
+            "key" => $key,
+            "specs" => $specsReq
+        ];
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_KV_TIMEOUT;
+        $request = array_merge($request, KVConverter::convertMutateInOptions($exportedOptions));
+        $pendingCall = $this->client->kv()->MutateIn(new MutateInRequest($request), [], ['timeout' => $timeout]);
+        [$res, $status] = $pendingCall->wait();
+        if ($status->code !== STATUS_OK) {
+            throw new ProtocolException("unable to mutateIn the document", $status);
+        }
+        $fields = KVConverter::ConvertMutateInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
+        return new MutateInResult(
+            [
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ],
+                "fields" => $fields,
+                "deleted" => false //TODO: No Deleted flag from grpc response
+            ]
+        );
     }
 
     public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): \Couchbase\GetReplicaResult
