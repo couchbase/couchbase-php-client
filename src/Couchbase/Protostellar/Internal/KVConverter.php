@@ -24,6 +24,11 @@ namespace Couchbase\Protostellar\Internal;
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\KV\V1\DocumentContentType;
+use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Flags;
+use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Spec;
+use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Operation;
+use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\StoreSemantic;
+use Couchbase\StoreSemantics;
 use Couchbase\TranscoderFlags;
 use Google\Protobuf\Timestamp;
 
@@ -139,6 +144,135 @@ class KVConverter
             $options["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
         }
         return $options;
+    }
+
+    public static function convertLookupInOptions($exportedOptions): array
+    {
+        $options = [];
+        if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in LookupInOptions
+            $options["flags"] = new Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
+        }
+        return $options;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public static function convertMutateInOptions($exportedOptions): array
+    {
+        $options = [];
+        if (isset($exportedOptions["storeSemantics"])) {
+            $options["store_semantic"] = self::convertStoreSemantic($exportedOptions["storeSemantics"]);
+        }
+        if (isset($exportedOptions["durabilityLevel"])) {
+            $options["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+        }
+        if (isset($exportedOptions["cas"])) {
+            $options["cas"] = $exportedOptions["cas"];
+        }
+        if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in MutateInOptions
+            $options["flags"] = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
+        }
+        return $options;
+    }
+
+    public static function getLookupInSpec(array $exportedSpecs): array
+    {
+        $opcodeToSpecOperation = [
+            'get' => Spec\Operation::GET,
+            'getDocument' => Spec\Operation::GET,
+            'exists' => Spec\Operation::EXISTS,
+            'getCount' => Spec\Operation::COUNT
+        ];
+        $specs = [];
+        foreach ($exportedSpecs as $spec) {
+            $newSpec = new Spec(
+                [
+                    "operation" => $opcodeToSpecOperation[$spec['opcode']],
+                    "path" => $spec["path"] ?? "",
+                    "flags" => new Spec\Flags(["xattr" => $spec["isXattr"]])
+                ]
+            );
+            $specs[] = $newSpec;
+        }
+        return $specs;
+    }
+
+    public static function getMutateInSpec(array $exportedSpecs): array
+    {
+        $opcodeToSpecOperation = [
+            'dictionaryAdd' => Operation::INSERT,
+            'dictionaryUpsert' => Operation::UPSERT,
+            'replace' => Operation::REPLACE,
+            'remove' => Operation::REMOVE,
+            'arrayPushLast' => Operation::ARRAY_APPEND,
+            'arrayPushFirst' => Operation::ARRAY_PREPEND,
+            'arrayInsert' => Operation::ARRAY_INSERT,
+            'arrayAddUnique' => Operation::ARRAY_ADD_UNIQUE,
+            'counter' => Operation::COUNTER
+        ];
+        $specs = [];
+        foreach ($exportedSpecs as $spec) {
+            $newSpec = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec(
+                [
+                    "operation" => $opcodeToSpecOperation[$spec['opcode']],
+                    "path" => $spec['path'],
+                    "content" => $spec["value"] ?? "",
+                    "flags" => new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Flags(
+                        ["xattr" => $spec["isXattr"], "create_path" => $spec["createPath"]]
+                    )
+                ]
+            );
+            $specs[] = $newSpec;
+        }
+        return $specs;
+    }
+
+    private static function convertStoreSemantic(string $storeSemantic): int
+    {
+        switch ($storeSemantic) {
+            case StoreSemantics::INSERT:
+                return StoreSemantic::INSERT;
+            case StoreSemantics::UPSERT:
+                return StoreSemantic::UPSERT;
+            case StoreSemantics::REPLACE:
+                return StoreSemantic::REPLACE;
+            default:
+                throw new InvalidArgumentException("Unknown store semantic option");
+        }
+    }
+
+    public static function convertLookupInRes(array $specs, array $specsReq): array
+    {
+        $fields = [];
+        for ($i = 0; $i < count($specs); $i++) {
+            $res = [];
+            $res["path"] = $specsReq[$i]->getPath();
+            if (!$specs[$i]->getStatus()) { //TODO: exists doesn't work atm, verify this logic works
+                $res["exists"] = "1";
+            } else {
+                $res["exists"] = null;
+            }
+            if (!empty($specs[$i]->getContent())) {
+                $res["value"] = $specs[$i]->getContent();
+            }
+            $fields[] = $res;
+        }
+        return $fields;
+    }
+
+    public static function convertMutateInRes(array $specs, array $specsReq): array
+    {
+        $fields = [];
+        for ($i = 0; $i < count($specs); $i++) {
+            $res = [];
+            $res["path"] = $specsReq[$i]->getPath();
+            if (!empty($specs[$i]->getContent())) {
+                $res["value"] = $specs[$i]->getContent();
+            }
+            $fields[] = $res;
+        }
+        return $fields;
     }
 
     /**
