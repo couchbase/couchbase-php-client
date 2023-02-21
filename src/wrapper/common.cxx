@@ -661,7 +661,6 @@ create_exception(zval* return_value, const core_error_info& error_info)
     }
     couchbase_update_property_string(ex_ce, return_value, "message", message.str().c_str());
     couchbase_update_property_string(ex_ce, return_value, "file", error_info.location.file_name.c_str());
-    couchbase_update_property_string(ex_ce, return_value, "function", error_info.location.function_name.c_str());
     couchbase_update_property_long(ex_ce, return_value, "line", error_info.location.line);
     couchbase_update_property_long(ex_ce, return_value, "code", error_info.ec.value());
     couchbase_update_property(couchbase_exception_ce, return_value, "context", &context);
