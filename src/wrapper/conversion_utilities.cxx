@@ -155,7 +155,7 @@ std::pair<transactions::transaction_query_options, core_error_info>
 zval_to_transactions_query_options(const zval* options)
 {
     transactions::transaction_query_options query_options{};
-    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); scan_consistency) {
         if (scan_consistency == "notBounded") {
             query_options.scan_consistency(query_scan_consistency::not_bounded);
         } else if (scan_consistency == "requestPlus") {
@@ -166,30 +166,30 @@ zval_to_transactions_query_options(const zval* options)
                        ERROR_LOCATION,
                        fmt::format("invalid value used for scan consistency: {}", *scan_consistency) } };
         }
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "scanCap"); !e.ec) {
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "scanCap"); val) {
         query_options.scan_cap(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineCap"); !e.ec) {
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineCap"); val) {
         query_options.pipeline_cap(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineBatch"); !e.ec) {
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "pipelineBatch"); val) {
         query_options.pipeline_batch(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "maxParallelism"); !e.ec) {
+    if (auto [e, val] = cb_get_integer<std::uint64_t>(options, "maxParallelism"); val) {
         query_options.max_parallelism(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, profile] = cb_get_string(options, "profile"); !e.ec) {
+    if (auto [e, profile] = cb_get_string(options, "profile"); profile) {
         if (profile == "off") {
             query_options.profile(query_profile::off);
         } else if (profile == "phases") {
@@ -199,28 +199,28 @@ zval_to_transactions_query_options(const zval* options)
         } else if (profile) {
             return { {}, { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for profile: {}", *profile) } };
         }
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
 
-    if (auto [e, val] = cb_get_boolean(options, "readonly"); !e.ec) {
+    if (auto [e, val] = cb_get_boolean(options, "readonly"); val) {
         query_options.readonly(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_boolean(options, "flexIndex"); !e.ec) {
+    if (auto [e, val] = cb_get_boolean(options, "flexIndex"); val) {
         query_options.readonly(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_boolean(options, "adHoc"); !e.ec) {
+    if (auto [e, val] = cb_get_boolean(options, "adHoc"); val) {
         query_options.readonly(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
-    if (auto [e, val] = cb_get_string(options, "clientContextId"); !e.ec) {
+    if (auto [e, val] = cb_get_string(options, "clientContextId"); val) {
         query_options.client_context_id(val.value());
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
@@ -292,7 +292,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { {}, e };
     }
-    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); scan_consistency) {
         if (scan_consistency == "notBounded") {
             request.scan_consistency = query_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
@@ -303,7 +303,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
                        ERROR_LOCATION,
                        fmt::format("invalid value used for scan consistency: {}", *scan_consistency) } };
         }
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
     if (auto e = cb_assign_integer(request.scan_cap, options, "scanCap"); e.ec) {
@@ -318,7 +318,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_integer(request.max_parallelism, options, "maxParallelism"); e.ec) {
         return { {}, e };
     }
-    if (auto [e, profile] = cb_get_string(options, "profile"); !e.ec) {
+    if (auto [e, profile] = cb_get_string(options, "profile"); profile) {
         if (profile == "off") {
             request.profile = query_profile::off;
         } else if (profile == "phases") {
@@ -328,7 +328,7 @@ zval_to_query_request(const zend_string* statement, const zval* options)
         } else if (profile) {
             return { {}, { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for profile: {}", *profile) } };
         }
-    } else {
+    } else if (e.ec) {
         return { {}, e };
     }
 

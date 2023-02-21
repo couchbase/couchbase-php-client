@@ -1901,7 +1901,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
         return e;
     }
 
-    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); scan_consistency) {
         if (scan_consistency == "notBounded") {
             request.scan_consistency = core::analytics_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
@@ -1911,7 +1911,7 @@ connection_handle::analytics_query(zval* return_value, const zend_string* statem
                      ERROR_LOCATION,
                      fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
-    } else {
+    } else if (e.ec) {
         return e;
     }
 
@@ -2068,7 +2068,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
         return e;
     }
 
-    if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); !e.ec) {
+    if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); highlight_style) {
         if (highlight_style == "html" || highlight_style == "simple") {
             request.highlight_style = core::search_highlight_style::html;
         } else if (highlight_style == "ansi") {
@@ -2078,7 +2078,7 @@ connection_handle::search_query(zval* return_value, const zend_string* index_nam
                      ERROR_LOCATION,
                      fmt::format("invalid value used for highlight style: {}", *highlight_style) };
         }
-    } else {
+    } else if (e.ec) {
         return e;
     }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
@@ -2327,7 +2327,7 @@ connection_handle::view_query(zval* return_value,
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
-    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); !e.ec) {
+    if (auto [e, scan_consistency] = cb_get_string(options, "scanConsistency"); scan_consistency) {
         if (scan_consistency == "notBounded") {
             request.consistency = core::view_scan_consistency::not_bounded;
         } else if (scan_consistency == "requestPlus") {
@@ -2339,7 +2339,7 @@ connection_handle::view_query(zval* return_value,
                      ERROR_LOCATION,
                      fmt::format("invalid value used for scan consistency: {}", *scan_consistency) };
         }
-    } else {
+    } else if (e.ec) {
         return e;
     }
 
@@ -2356,7 +2356,7 @@ connection_handle::view_query(zval* return_value,
 
         request.keys = keys;
     }
-    if (auto [e, order] = cb_get_string(options, "order"); !e.ec) {
+    if (auto [e, order] = cb_get_string(options, "order"); order) {
         if (order == "ascending") {
             request.order = core::view_sort_order::ascending;
         } else if (order == "descending") {
@@ -2364,7 +2364,7 @@ connection_handle::view_query(zval* return_value,
         } else if (order) {
             return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for order: {}", *order) };
         }
-    } else {
+    } else if (e.ec) {
         return e;
     }
     //    {
@@ -2785,7 +2785,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
     if (auto e = cb_assign_string(bucket.name, bucket_settings, "name"); e.ec) {
         return { e, {} };
     }
-    if (auto [e, bucket_type] = cb_get_string(bucket_settings, "bucketType"); !e.ec) {
+    if (auto [e, bucket_type] = cb_get_string(bucket_settings, "bucketType"); bucket_type) {
         if (bucket_type == "couchbase") {
             bucket.bucket_type = couchbase::core::management::cluster::bucket_type::couchbase;
         } else if (bucket_type == "ephemeral") {
@@ -2797,7 +2797,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
                 { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid value used for bucket type: {}", *bucket_type) }, {}
             };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
     if (auto e = cb_assign_integer(bucket.ram_quota_mb, bucket_settings, "ramQuotaMB"); e.ec) {
@@ -2806,7 +2806,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
     if (auto e = cb_assign_integer(bucket.max_expiry, bucket_settings, "maxExpiry"); e.ec) {
         return { e, {} };
     }
-    if (auto [e, compression_mode] = cb_get_string(bucket_settings, "compressionMode"); !e.ec) {
+    if (auto [e, compression_mode] = cb_get_string(bucket_settings, "compressionMode"); compression_mode) {
         if (compression_mode == "off") {
             bucket.compression_mode = couchbase::core::management::cluster::bucket_compression::off;
         } else if (compression_mode == "active") {
@@ -2819,10 +2819,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
                        fmt::format("invalid value used for compression mode: {}", *compression_mode) },
                      {} };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
-    if (auto [e, durability_level] = cb_get_string(bucket_settings, "minimumDurabilityLevel"); !e.ec) {
+    if (auto [e, durability_level] = cb_get_string(bucket_settings, "minimumDurabilityLevel"); durability_level) {
         if (durability_level == "none") {
             bucket.minimum_durability_level = durability_level::none;
         } else if (durability_level == "majority") {
@@ -2837,7 +2837,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
                        fmt::format("invalid value used for durability level: {}", *durability_level) },
                      {} };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
     if (auto e = cb_assign_integer(bucket.num_replicas, bucket_settings, "numReplicas"); e.ec) {
@@ -2849,7 +2849,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
     if (auto e = cb_assign_boolean(bucket.flush_enabled, bucket_settings, "flushEnabled"); e.ec) {
         return { e, {} };
     }
-    if (auto [e, eviction_policy] = cb_get_string(bucket_settings, "evictionPolicy"); !e.ec) {
+    if (auto [e, eviction_policy] = cb_get_string(bucket_settings, "evictionPolicy"); eviction_policy) {
         if (eviction_policy == "noEviction") {
             bucket.eviction_policy = couchbase::core::management::cluster::bucket_eviction_policy::no_eviction;
         } else if (eviction_policy == "fullEviction") {
@@ -2864,10 +2864,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
                        fmt::format("invalid value used for eviction policy: {}", *eviction_policy) },
                      {} };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
-    if (auto [e, resolution_type] = cb_get_string(bucket_settings, "conflictResolutionType"); !e.ec) {
+    if (auto [e, resolution_type] = cb_get_string(bucket_settings, "conflictResolutionType"); resolution_type) {
         if (resolution_type == "sequenceNumber") {
             bucket.conflict_resolution_type = couchbase::core::management::cluster::bucket_conflict_resolution::sequence_number;
         } else if (resolution_type == "timestamp") {
@@ -2880,10 +2880,10 @@ zval_to_bucket_settings(const zval* bucket_settings)
                        fmt::format("invalid value used for custom resolution type: {}", *resolution_type) },
                      {} };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
-    if (auto [e, storage_backend] = cb_get_string(bucket_settings, "storageBackend"); !e.ec) {
+    if (auto [e, storage_backend] = cb_get_string(bucket_settings, "storageBackend"); storage_backend) {
         if (storage_backend == "couchstore") {
             bucket.storage_backend = couchbase::core::management::cluster::bucket_storage_backend::couchstore;
         } else if (storage_backend == "magma") {
@@ -2894,7 +2894,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
                        fmt::format("invalid value used for storage backend: {}", *storage_backend) },
                      {} };
         }
-    } else {
+    } else if (e.ec) {
         return { e, {} };
     }
 
