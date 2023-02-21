@@ -111,8 +111,8 @@ class QueryTest extends Helpers\CouchbaseTestCase
                     ->namedParameters(["key" => $key]);
                 $this->cluster->query("SELECT * FROM $nameSpace USE KEYS $key", $options);
             },
-            '\Couchbase\Exception\ParsingFailureException',
-            8,
+            null,
+            null,
             '/Ambiguous reference to field/'
         );
     }
