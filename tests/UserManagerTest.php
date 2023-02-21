@@ -81,10 +81,10 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $desc = 'Users who have full access to sample buckets';
         $group = Group::build()->setName($groupName)->setDescription($desc)->setRoles(
             [
-            Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
-            Role::build()->setName('bucket_full_access')->setBucket('travel-sample'),
-            Role::build()->setName('bucket_admin')->setBucket('beer-sample'),
-            Role::build()->setName('bucket_full_access')->setBucket('beer-sample'),
+                Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
+                Role::build()->setName('bucket_full_access')->setBucket('travel-sample'),
+                Role::build()->setName('bucket_admin')->setBucket('beer-sample'),
+                Role::build()->setName('bucket_full_access')->setBucket('beer-sample'),
             ]
         );
 
@@ -151,7 +151,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $desc = 'Users who have full access to sample buckets';
         $group = Group::build()->setName($groupName)->setDescription($desc)->setRoles(
             [
-            Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
+                Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
             ]
         );
 
@@ -203,7 +203,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $user = User::build()->setUsername($username)->setPassword("secret")->setDisplayName($display)->setRoles([$role]);
         $this->manager->upsertUser($user);
 
-        $result = $this->retryFor(
+        $this->retryFor(
             5,
             100,
             function () use ($username) {
@@ -213,11 +213,17 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
 
         $options = new ClusterOptions();
         $options->credentials($username, "secret");
+        $cluster = $this->retryFor(
+            5,
+            100,
+            function () use ($options) {
+                return new Cluster(self::env()->connectionString(), $options);
+            },
+            "connect using new user with initial password"
+        );
+
         $newOptions = new ClusterOptions();
         $newOptions->credentials($username, "newPassword");
-
-        $cluster = new Cluster(self::env()->connectionString(), $options);
-
         $this->wrapException(
             function () use ($newOptions) {
                 new Cluster(self::env()->connectionString(), $newOptions);
@@ -225,10 +231,18 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
             AuthenticationFailureException::class
         );
 
+
         $manager = $cluster->users();
         $manager->changePassword("newPassword");
 
-        $newCluster = new Cluster(self::env()->connectionString(), $newOptions);
+        $newCluster = $this->retryFor(
+            5,
+            100,
+            function () use ($newOptions) {
+                return new Cluster(self::env()->connectionString(), $newOptions);
+            },
+            "connect using new user with updated password"
+        );
         $this->assertNotNull($newCluster);
     }
 }
