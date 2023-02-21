@@ -71,6 +71,7 @@ end
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 CB_CC = ENV.fetch("CB_CC", default_cc)
 CB_CXX = ENV.fetch("CB_CXX", default_cxx)
+CB_CMAKE_BUILD_TYPE = ENV.fetch("CMAKE_BUILD_TYPE", "Debug")
 
 run("#{CB_PHP_PREFIX}/bin/php --version || true")
 run("#{CB_PHP_PREFIX}/bin/php --ini || true")
@@ -85,7 +86,7 @@ end
 Dir.chdir(PROJECT_ROOT) do
   run("#{CB_PHP_PREFIX}/bin/phpize")
   run("rm -rf cmake-build") unless ENV.fetch("CB_DO_NOT_CLEAN", false)
-  run("./configure --with-php-config=#{CB_PHP_PREFIX}/bin/php-config CC=#{CB_CC} CXX=#{CB_CXX}")
+  run("./configure --with-php-config=#{CB_PHP_PREFIX}/bin/php-config CC=#{CB_CC} CXX=#{CB_CXX} COUCHBASE_CMAKE_BUILD_TYPE=#{CB_CMAKE_BUILD_TYPE}")
   exit if ENV.fetch("CB_CONFIGURE_ONLY", false)
   run("make clean") unless ENV.fetch("CB_DO_NOT_CLEAN", false)
   ENV["CMAKE_BUILD_PARALLEL_LEVEL"] = ENV.fetch("CB_NUMBER_OF_JOBS", "4")
