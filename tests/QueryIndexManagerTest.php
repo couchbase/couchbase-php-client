@@ -1,9 +1,11 @@
 <?php
 
+use Couchbase\Cluster;
 use Couchbase\Exception\BucketNotFoundException;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\IndexExistsException;
 use Couchbase\Exception\IndexNotFoundException;
+use Couchbase\Management\BucketManager;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\BucketType;
 use Couchbase\Management\CreateQueryIndexOptions;
@@ -15,6 +17,10 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
 {
+    private Cluster $cluster;
+    private ?BucketManager $bucketManager;
+    private ?string $bucketName;
+
     public function setUp(): void
     {
         parent::setUp();
