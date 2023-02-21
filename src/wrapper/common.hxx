@@ -56,8 +56,5 @@ COUCHBASE_API zend_class_entry*
 map_error_to_exception(const core_error_info& info);
 
 COUCHBASE_API void
-error_context_to_zval(const core_error_info& info, zval* return_value);
-
-COUCHBASE_API void
 create_exception(zval* return_value, const couchbase::php::core_error_info& error_info);
 } // namespace couchbase::php

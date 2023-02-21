@@ -17,10 +17,12 @@
 #include "wrapper.hxx"
 
 #include "common.hxx"
+#include "core/utils/json.hxx"
 
 #include <couchbase/error_codes.hxx>
 
 #include <fmt/core.h>
+#include <tao/pegtl/parse_error.hpp>
 
 #include <sstream>
 #include <zend_exceptions.h>
@@ -580,6 +582,15 @@ error_context_to_zval(const http_error_context& ctx, zval* return_value, std::st
 {
     add_assoc_stringl(return_value, "method", ctx.method.data(), ctx.method.size());
     add_assoc_stringl(return_value, "path", ctx.path.data(), ctx.path.size());
+    try {
+        if (auto json_body = core::utils::json::parse(ctx.http_body); json_body.is_object()) {
+            if (const auto* errors = json_body.find("errors"); errors != nullptr) {
+                enhanced_error_message = "errors=" + core::utils::json::generate(*errors);
+            }
+        }
+    } catch (const tao::pegtl::parse_error&) {
+        /* http body is not a JSON */
+    }
     common_http_error_context_to_zval(ctx, return_value, enhanced_error_message);
 }
 
