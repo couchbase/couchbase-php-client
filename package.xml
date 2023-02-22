@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-02-21</date>
+    <date>2023-02-22</date>
     <version>
-        <release>4.1.0</release>
+        <release>4.1.1</release>
         <api>4.0.0</api>
     </version>
     <stability>
@@ -24,11 +24,71 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        * PCBC-824: implement replica reads
-        * PCBC-630: implement legacy durability for mutations
-        * PCBC-880 support for configuration profiles
-        * PCBC-889 'Skip' SearchOption has no effect
-        * Bug fixes, logger and build improvements
+        Enhancements
+        ------------
+
+        * PCBC-869: Implemented `changePassword` for management API (#55, #56)
+        * PCBC-891: Append extension version info to HELLO indentifier (#58)
+        * PCBC-901: Attach error details to management exceptions (#71)
+        * Increase required PHP version up to 8.0 (#76)
+
+        Fixes
+        -----
+
+        * PCBC-890: Scope must implement ScopeInterface (#57)
+        * PCBC-902: Make sure that new account is usable in changePassword test (#72)
+        * PCBC-899: Ensure the connection will be closed on error (#70)
+        * PCBC-900: Don't set "function" property on exceptions. (#74)
+        * PCBC-905: Don't dereference empty optional if option is not set (#75)
+        * PCBC-907: assign meta to view query result (#79)
+        * Fix missing header for GCC 13 (#63)
+
+        Notable changes in core C++ 1.0.0-dp.4
+        --------------------------------------
+
+        * CXXCBC-275: Update implementation query context fields passed to the
+          server. In future versions of the server versions it will become
+          mandatory to specify context of the statement (bucket, scope and
+          collection). This change ensures that both future and current server
+          releases supported transparently.
+
+        * CXXCBC-296: Force PLAIN SASL auth if TLS enabled. Using SCRAM SASL
+          mechanisms over TLS protocol is unnecesary complication, that slows
+          down initial connection bootstrap and potentially limits server
+          ability to improve security and evolve credentials management.
+
+        * CXXCBC-295: The `get with projections` opration should not fail if
+          one of the the paths is missing in the document, because the
+          semantics is "get the partial document" and not "get individual
+          fields" like in `lookup_in` operation.
+
+        * CXXCBC-294: In the Public API, if `get` operation requested to
+          return expiry time, zero expiry should not be interpreted as
+          absolute expiry timestamp (zero seconds from UNIX epoch), but rather
+          as absense of the expiry.
+
+        * CXXCBC-291: Allow to disable mutation tokens for Key/Value mutations
+          (use `enable_mutation_tokens` in connection string).
+
+        * Resource management and performance improvements:
+            * Fix tracer and meter ref-counting
+            * Replace `minstd_rand` with `mt19937_64`, as it gives less
+              collisions.
+            * CXXCBC-285: Write to sockets from IO threads, to eliminate
+              potential race conditions.
+            * Eliminate looping transform in `mcbp_parser::next`.
+            * CXXCBC-205: Use thread-local UUID generator.
+            * CXXCBC-293: Other performance improvements:
+                * Speed up UUID serialization to string
+                * Don't allow to copy `mcbp_message` objects
+                * Avoid extra allocation and initialization
+
+        * Build system fixes:
+            * Fix build with gcc-13
+            * Fix gcc 12 issue
+
+        * Enhancements:
+            * Include OS name in SDK identifier 
     </notes>
     <contents>
         <dir name="/">
@@ -2799,6 +2859,25 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2023-01-20</date>
+            <version>
+                <release>4.1.0</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-824: implement replica reads
+                * PCBC-630: implement legacy durability for mutations
+                * PCBC-880 support for configuration profiles
+                * PCBC-889 'Skip' SearchOption has no effect
+                * Bug fixes, logger and build improvements
+            </notes>
+        </release>
         <release>
             <date>2022-05-11</date>
             <version>
