@@ -1998,6 +1998,191 @@ PHP_FUNCTION(queryIndexBuildDeferred)
     }
 }
 
+PHP_FUNCTION(collectionQueryIndexGetAll)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_get_all(return_value, bucket_name, scope_name, collection_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(collectionQueryIndexCreate)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* fields = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(6, 7)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_ARRAY(fields)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_create(bucket_name, scope_name, collection_name, index_name, fields, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(collectionQueryIndexCreatePrimary)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_create_primary(bucket_name, scope_name, collection_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(collectionQueryIndexDrop)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_drop(bucket_name, scope_name, collection_name, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(collectionQueryIndexDropPrimary)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_drop_primary(bucket_name, scope_name, collection_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+    RETURN_NULL();
+}
+
+PHP_FUNCTION(collectionQueryIndexBuildDeferred)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->collection_query_index_build_deferred(return_value, bucket_name, scope_name, collection_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
     php_info_print_table_start();
@@ -2481,6 +2666,57 @@ ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexGetAll, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexCreate, 0, 0, 6)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, fields, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexCreatePrimary, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexDrop, 0, 0, 5)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexDropPrimary, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionQueryIndexBuildDeferred, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
@@ -2553,6 +2789,12 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", queryIndexDrop, ai_CouchbaseExtension_queryIndexDrop)
         ZEND_NS_FE("Couchbase\\Extension", queryIndexDropPrimary, ai_CouchbaseExtension_queryIndexDropPrimary)
         ZEND_NS_FE("Couchbase\\Extension", queryIndexBuildDeferred, ai_CouchbaseExtension_queryIndexBuildDeferred)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexGetAll, ai_CouchbaseExtension_collectionQueryIndexGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexCreate, ai_CouchbaseExtension_collectionQueryIndexCreate)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexCreatePrimary, ai_CouchbaseExtension_collectionQueryIndexCreatePrimary)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexDrop, ai_CouchbaseExtension_collectionQueryIndexDrop)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexDropPrimary, ai_CouchbaseExtension_collectionQueryIndexDropPrimary)
+        ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexBuildDeferred, ai_CouchbaseExtension_collectionQueryIndexBuildDeferred)
         PHP_FE_END
 };
 

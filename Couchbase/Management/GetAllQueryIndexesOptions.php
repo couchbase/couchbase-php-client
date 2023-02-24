@@ -40,6 +40,7 @@ class GetAllQueryIndexesOptions
     /**
      * @param string $scopeName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return GetAllQueryIndexesOptions
      */
     public function scopeName(string $scopeName): GetAllQueryIndexesOptions
@@ -51,6 +52,7 @@ class GetAllQueryIndexesOptions
     /**
      * @param string $collectionName
      *
+     * @deprecated 'Collection.queryIndexes()' should now be used for collection-related query index operations
      * @return GetAllQueryIndexesOptions
      */
     public function collectionName(string $collectionName): GetAllQueryIndexesOptions

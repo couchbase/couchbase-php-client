@@ -3839,6 +3839,233 @@ connection_handle::query_index_build_deferred(zval* return_value, const zend_str
     return {};
 }
 
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_get_all(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
+{
+    couchbase::core::operations::management::query_index_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& idx : resp.indexes) {
+        zval index;
+        array_init(&index);
+        add_assoc_bool(&index, "isPrimary", idx.is_primary);
+        add_assoc_stringl(&index, "name", idx.name.data(), idx.name.size());
+        add_assoc_stringl(&index, "state", idx.state.data(), idx.state.size());
+        add_assoc_stringl(&index, "type", idx.type.data(), idx.type.size());
+        add_assoc_stringl(&index, "bucketName", idx.bucket_name.data(), idx.bucket_name.size());
+        if (idx.partition) {
+            add_assoc_stringl(&index, "partition", idx.partition->data(), idx.partition->size());
+        }
+        if (idx.condition) {
+            add_assoc_stringl(&index, "condition", idx.condition->data(), idx.condition->size());
+        }
+        if (idx.scope_name) {
+            add_assoc_stringl(&index, "scopeName", idx.scope_name->data(), idx.scope_name->size());
+        }
+        if (idx.collection_name) {
+            add_assoc_stringl(&index, "collectionName", idx.collection_name->data(), idx.collection_name->size());
+        }
+        zval index_key;
+        array_init(&index_key);
+        for (const auto& field : idx.index_key) {
+            add_next_index_stringl(&index_key, field.data(), field.size());
+        }
+        add_assoc_zval(&index, "indexKey", &index_key);
+        add_next_index_zval(return_value, &index);
+    }
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_create(const zend_string* bucket_name,
+                                      const zend_string* scope_name,
+                                      const zend_string* collection_name,
+                                      const zend_string* index_name,
+                                      const zval* fields,
+                                      const zval* options)
+{
+    if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for index fields" };
+    }
+    couchbase::core::operations::management::query_index_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = false;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+    request.index_name = cb_string_new(index_name);
+
+    const zval* value;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(fields), value)
+    {
+        if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
+            return { errc::common::invalid_argument, ERROR_LOCATION, "expected index fields to be array of strings" };
+        }
+        request.fields.emplace_back(cb_string_new(value));
+    }
+    ZEND_HASH_FOREACH_END();
+
+    if (auto e = cb_assign_string(request.condition, options, "condition"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.deferred, options, "deferred"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.num_replicas, options, "numberOfReplicas"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_create_primary(const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
+{
+    couchbase::core::operations::management::query_index_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = true;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+
+    if (auto e = cb_assign_string(request.index_name, options, "indexName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.deferred, options, "deferred"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(request.num_replicas, options, "numberOfReplicas"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_drop(const zend_string* bucket_name,
+                                    const zend_string* scope_name,
+                                    const zend_string* collection_name,
+                                    const zend_string* index_name,
+                                    const zval* options)
+{
+    couchbase::core::operations::management::query_index_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = false;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+    request.index_name = cb_string_new(index_name);
+
+    if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_drop_primary(const zend_string* bucket_name,
+                                                       const zend_string* scope_name,
+                                                       const zend_string* collection_name,
+                                                       const zval* options)
+{
+    couchbase::core::operations::management::query_index_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.is_primary = true;
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+
+    if (auto e = cb_assign_string(request.index_name, options, "indexName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_query_index_build_deferred(zval* return_value,
+                                                        const zend_string* bucket_name,
+                                                        const zend_string* scope_name,
+                                                        const zend_string* collection_name,
+                                                        const zval* options)
+{
+    couchbase::core::operations::management::query_index_build_deferred_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    return {};
+}
+
 bool
 connection_handle::is_expired(std::chrono::system_clock::time_point now) const
 {
