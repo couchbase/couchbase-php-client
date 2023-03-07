@@ -36,7 +36,7 @@ class QueryConverter
      * @throws InvalidArgumentException
      * @internal
      */
-    public static function convertQueryOptions(string $statement, array $exportedOptions): array
+    public static function getQueryRequest(string $statement, array $exportedOptions): array
     {
         $request = [
             'statement' => $statement,
