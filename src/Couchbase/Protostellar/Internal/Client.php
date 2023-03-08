@@ -29,6 +29,7 @@ class Client
     private Channel $channel;
     private Generated\KV\V1\KvClient $kv;
     private Generated\Query\V1\QueryClient $query;
+    private Generated\Search\V1\SearchClient $search;
 
     public function __construct(string $host, ClientOptions $options = new ClientOptions())
     {
@@ -36,6 +37,7 @@ class Client
         $this->channel = new Channel($host, $options->channelOptions());
         $this->kv = new Generated\KV\V1\KvClient($host, $options->channelOptions(), $this->channel);
         $this->query = new Generated\Query\V1\QueryClient($host, $options->channelOptions(), $this->channel);
+        $this->search = new Generated\Search\V1\SearchClient($host, $options->channelOptions(), $this->channel);
     }
 
     public function close()
@@ -51,5 +53,10 @@ class Client
     public function query(): Generated\Query\V1\QueryClient
     {
         return $this->query;
+    }
+
+    public function search(): Generated\Search\V1\SearchClient
+    {
+        return $this->search;
     }
 }

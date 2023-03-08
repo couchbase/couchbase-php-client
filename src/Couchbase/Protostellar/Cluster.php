@@ -26,6 +26,8 @@ use Couchbase\AnalyticsResult;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
+use Couchbase\Protostellar\Internal\SearchConverter;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
@@ -66,7 +68,7 @@ class Cluster implements ClusterInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_QUERY_TIMEOUT;
-        $request = QueryConverter::convertQueryOptions($statement, $exportedOptions);
+        $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
         $pendingCall = $this->client->query()->Query(new QueryRequest($request), [], ['timeout' => $timeout]);
         $res = iterator_to_array($pendingCall->responses());
         $finalArray = QueryConverter::convertQueryResult($res);
@@ -79,9 +81,19 @@ class Cluster implements ClusterInterface
         return new AnalyticsResult();
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
     {
-        // TODO: Implement searchQuery() method.
-        return new SearchResult();
+        $exportedOptions = SearchOptions::export($options);
+        $timeout = isset($exportedOptions["timeoutMilliseconds"])
+            ? $exportedOptions["timeoutMilliseconds"] * 1000
+            : self::DEFAULT_QUERY_TIMEOUT;
+        $request = SearchConverter::getSearchRequest($indexName, $query, $exportedOptions);
+        $pendingCall = $this->client->search()->SearchQuery(new SearchQueryRequest($request), [], ['timeout' => $timeout]);
+        $res = iterator_to_array($pendingCall->responses());
+        $finalArray = SearchConverter::convertSearchResult($res);
+        return new SearchResult($finalArray);
     }
 }
