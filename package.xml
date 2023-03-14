@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-02-22</date>
+    <date>2023-03-14</date>
     <version>
         <release>4.1.1</release>
         <api>4.0.0</api>
@@ -439,6 +439,7 @@
                             <file role="src" name="build_config.hxx.in"/>
                             <file role="src" name="build_version.hxx.in"/>
                             <file role="src" name="test_filesystem.cpp.in"/>
+                            <file role="src" name="test_openssl.cxx"/>
                         </dir>
                         <dir name="core">
                             <dir name="crypto">
@@ -530,6 +531,7 @@
                                 <file role="src" name="streaming_json_lexter_error_category.cxx"/>
                                 <file role="src" name="touch.cxx"/>
                                 <file role="src" name="transaction_error_category.cxx"/>
+                                <file role="src" name="transaction_get_result.cxx"/>
                                 <file role="src" name="transaction_op_error_category.cxx"/>
                                 <file role="src" name="unlock.cxx"/>
                                 <file role="src" name="upsert.cxx"/>

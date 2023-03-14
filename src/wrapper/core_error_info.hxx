@@ -159,13 +159,19 @@ struct transactions_error_category : std::error_category {
 
     [[nodiscard]] std::string message(int ev) const noexcept override
     {
-        switch (transactions_errc(ev)) {
+        switch (static_cast<transactions_errc>(ev)) {
             case transactions_errc::operation_failed:
                 return "operation_failed";
             case transactions_errc::std_exception:
                 return "std_exception";
             case transactions_errc::unexpected_exception:
                 return "unexpected_exception";
+            case transactions_errc::failed:
+                return "failed";
+            case transactions_errc::expired:
+                return "expired";
+            case transactions_errc::commit_ambiguous:
+                return "commit_ambiguous";
         }
         return "FIXME: unknown error code in transactions category (recompile with newer library)";
     }

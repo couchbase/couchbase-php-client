@@ -235,9 +235,7 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
                     function () use ($idToRemove, $collection, $attempt) {
                         $attempt->get($collection, $idToRemove);
                     },
-                    TransactionException::class,
-                    null,
-                    "/doc not found/"
+                    Couchbase\Exception\DocumentNotFoundException::class
                 );
             }
         );
