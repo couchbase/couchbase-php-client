@@ -64,8 +64,6 @@ use Couchbase\UnlockOptions;
 use Couchbase\UpsertOptions;
 use DateTimeInterface;
 
-use const Grpc\STATUS_OK;
-
 class Collection implements CollectionInterface
 {
     public const DEFAULT_NAME = "_default";
@@ -90,10 +88,6 @@ class Collection implements CollectionInterface
         return $this->name;
     }
 
-    /**
-     * @throws ProtocolException
-     * @throws InvalidArgumentException
-     */
     public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
@@ -111,11 +105,10 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertUpsertOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Upsert(new UpsertRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to upsert the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new UpsertRequest($request), false, $timeout),
+            [$this->client->kv(), 'Upsert']
+        );
         return new MutationResult(
             [
             "id" => $key,
@@ -152,11 +145,10 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertInsertOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Insert(new InsertRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to insert the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new InsertRequest($request), false, $timeout),
+            [$this->client->kv(), 'Insert']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -192,11 +184,10 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertReplaceOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Replace(new ReplaceRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to replace the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new ReplaceRequest($request), false, $timeout),
+            [$this->client->kv(), 'Replace']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -228,11 +219,10 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertRemoveOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Remove(new RemoveRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to remove the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new RemoveRequest($request), false, $timeout),
+            [$this->client->kv(), 'Remove']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -248,10 +238,6 @@ class Collection implements CollectionInterface
         );
     }
 
-    /**
-     * @throws ProtocolException
-     * @throws InvalidArgumentException
-     */
     public function get(string $key, GetOptions $options = null): GetResult
     {
         $exportedOptions = GetOptions::export($options);
@@ -264,11 +250,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->Get(new GetRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to get the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
+            [$this->client->kv(), 'Get']
+        );
         $contentType = (new TranscoderFlags(
             KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
             $res->getCompressionType()
@@ -300,11 +285,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->Exists(new ExistsRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to check if the key exists", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new ExistsRequest($request), true, $timeout),
+            [$this->client->kv(), 'Exists']
+        );
         return new ExistsResult( //TODO Other options in ExistsResult not returned by GRPC
             [
                 "id" => $key,
@@ -336,11 +320,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->GetAndTouch(new GetAndTouchRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to getAndTouch the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
+            [$this->client->kv(), 'GetAndTouch']
+        );
         $contentType = (new TranscoderFlags(
             KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
             $res->getCompressionType()
@@ -375,11 +358,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->GetAndLock(new GetAndLockRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to getAndLock the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new GetAndLockRequest($request), false, $timeout),
+            [$this->client->kv(), 'GetAndLock']
+        );
         $contentType = (new TranscoderFlags(
             KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
             $res->getCompressionType()
@@ -413,11 +395,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->Unlock(new UnlockRequest($request), [], ['timeout' => $timeout]);
-        [, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to unlock the document", $status);
-        }
+        ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new UnlockRequest($request), false, $timeout),
+            [$this->client->kv(), 'Unlock']
+        );
         return new Result(
             [
                 "id" => $key,
@@ -447,11 +428,10 @@ class Collection implements CollectionInterface
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
-        $pendingCall = $this->client->kv()->Touch(new TouchRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to touch the document", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
+            [$this->client->kv(), 'Touch']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -466,6 +446,7 @@ class Collection implements CollectionInterface
             ]
         );
     }
+
     public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
     {
         $encoded = array_map(
@@ -490,18 +471,18 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertLookupInOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->LookupIn(new LookupInRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to LookupIn the document", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new LookupInRequest($request), true, $timeout),
+            [$this->client->kv(), 'LookupIn']
+        );
         $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
         return new LookupInResult(
             [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "fields" => $fields
-            ]
+            "id" => $key,
+            "cas" => strval($res->getCas()),
+            "fields" => $fields
+            ],
+            LookupInOptions::getTranscoder($options)
         );
     }
 
@@ -529,11 +510,10 @@ class Collection implements CollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertMutateInOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->MutateIn(new MutateInRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to mutateIn the document", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new MutateInRequest($request), false, $timeout),
+            [$this->client->kv(), 'MutateIn']
+        );
         $fields = KVConverter::ConvertMutateInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
         return new MutateInResult(
             [
@@ -555,7 +535,7 @@ class Collection implements CollectionInterface
     public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): \Couchbase\GetReplicaResult
     {
         // TODO: Implement getAnyReplica() method.
-        return new \Couchbase\GetReplicaResult();
+        return new GetReplicaResult();
     }
 
     public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
