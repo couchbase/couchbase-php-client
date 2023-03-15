@@ -69,7 +69,6 @@ class RetryReason
 
     private bool $allowsNonIdempotentRetry;
     private bool $alwaysRetry;
-
     private string $reason;
 
     /**
