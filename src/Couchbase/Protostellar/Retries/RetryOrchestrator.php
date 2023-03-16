@@ -32,9 +32,9 @@ class RetryOrchestrator
     {
         if ($request->timeoutElapsed()) {
             if ($request->idempotent()) {
-                return RequestBehaviour::fail(new UnambiguousTimeoutException("Request timed out"));
+                return RequestBehaviour::fail(new UnambiguousTimeoutException(message: "Request timed out", context: $request->context()));
             }
-            return RequestBehaviour::fail(new AmbiguousTimeoutException("Request timed out"));
+            return RequestBehaviour::fail(new AmbiguousTimeoutException(message: "Request timed out", context: $request->context()));
         }
         if ($reason->alwaysRetry()) {
             return self::retryWithDuration($request, $reason, (new ControlledBackoff())->calculateBackoff($request));
@@ -46,7 +46,7 @@ class RetryOrchestrator
             //log retry
         } else {
             //log not retried
-            return RequestBehaviour::fail(new RequestCanceledException("No more retries allowed based on the retry strategy"));
+            return RequestBehaviour::fail(new RequestCanceledException(message: "No more retries allowed based on the retry strategy", context: $request->context()));
         }
     }
 

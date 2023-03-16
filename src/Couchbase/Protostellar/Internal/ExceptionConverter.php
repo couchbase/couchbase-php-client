@@ -66,9 +66,9 @@ class ExceptionConverter
         try {
             ErrorDetails::initOnce();
             $details = $status->metadata["grpc-status-details-bin"][0];
-            $s = new Status();
-            $s->mergeFromString($details);
-            $anyDetails = $s->getDetails()[0];
+            $protoStatus = new Status();
+            $protoStatus->mergeFromString($details);
+            $anyDetails = $protoStatus->getDetails()[0];
             $typeUrl = $anyDetails->getTypeUrl();
             switch ($typeUrl) {
                 case self::TYPE_URL_PRECONDITION_FAILURE:
@@ -78,7 +78,7 @@ class ExceptionConverter
                         $violation = $preconditionFailure->getViolations()[0];
                         $type = $violation->getType();
                         if ($type == "CAS") {
-                            return RequestBehaviour::fail(new CasMismatchException($s->getMessage()));
+                            return RequestBehaviour::fail(new CasMismatchException($protoStatus->getMessage()));
                         } elseif ($type == "LOCKED") {
                             return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::KV_LOCKED));
                         }
@@ -89,29 +89,29 @@ class ExceptionConverter
                     $resourceInfo->discardUnknownFields();
                     $request->appendContext("resourceName", $resourceInfo->getResourceName());
                     $request->appendContext("resourceType", $resourceInfo->getResourceType());
-                    if ($s->getCode() == Code::NOT_FOUND) {
+                    if ($protoStatus->getCode() == Code::NOT_FOUND) {
                         if ($resourceInfo->getResourceType() == "document") {
-                            return RequestBehaviour::fail(new DocumentNotFoundException("Specified document was not found"));
+                            return RequestBehaviour::fail(new DocumentNotFoundException(message: "Specified document was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "index") {
-                            return RequestBehaviour::fail(new IndexNotFoundException("Specified index was not found"));
+                            return RequestBehaviour::fail(new IndexNotFoundException(message: "Specified index was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
-                            return RequestBehaviour::fail(new BucketNotFoundException("Specified bucket was not found"));
+                            return RequestBehaviour::fail(new BucketNotFoundException(message: "Specified bucket was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "scope") {
-                            return RequestBehaviour::fail(new ScopeNotFoundException("Specified scope was not found"));
+                            return RequestBehaviour::fail(new ScopeNotFoundException(message: "Specified scope was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "collection") {
-                            return RequestBehaviour::fail(new CollectionNotFoundException("Specified collection was not found"));
+                            return RequestBehaviour::fail(new CollectionNotFoundException(message: "Specified collection was not found", context: $request->context()));
                         }
-                    } elseif ($s->getCode() == Code::ALREADY_EXISTS) {
+                    } elseif ($protoStatus->getCode() == Code::ALREADY_EXISTS) {
                         if ($resourceInfo->getResourceType() == "document") {
-                            return RequestBehaviour::fail(new DocumentExistsException("Specified document already exists"));
+                            return RequestBehaviour::fail(new DocumentExistsException(message: "Specified document already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "index") {
-                            return RequestBehaviour::fail(new IndexExistsException("Specified index already exists"));
+                            return RequestBehaviour::fail(new IndexExistsException(message: "Specified index already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
-                            return RequestBehaviour::fail(new BucketExistsException("Specified bucket already exists"));
+                            return RequestBehaviour::fail(new BucketExistsException(message: "Specified bucket already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "scope") {
-                            return RequestBehaviour::fail(new ScopeExistsException("Specified scope already exists"));
+                            return RequestBehaviour::fail(new ScopeExistsException(message: "Specified scope already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "collection") {
-                            return RequestBehaviour::fail(new CollectionExistsException("Specified collection already exists"));
+                            return RequestBehaviour::fail(new CollectionExistsException(message: "Specified collection already exists", context: $request->context()));
                         }
                     }
                     break;
@@ -132,33 +132,33 @@ class ExceptionConverter
                     }
                     break;
                 default:
-                    return RequestBehaviour::fail(new DecodingFailureException("Failed to decode GRPC response - Unknown typeURL"));
+                    return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
             }
-        } catch (Exception $exception) {
-            return RequestBehaviour::fail(new DecodingFailureException("Failed to decode GRPC response"));
+        } catch (Exception) {
+            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response", context: $request->context()));
         }
-        return self::convertToCouchbaseException($s, $request);
+        return self::convertToCouchbaseException($protoStatus, $request);
     }
 
     private static function convertToCouchbaseException(Status $status, ProtostellarRequest $request): RequestBehaviour
     {
         switch ($status->getCode()) {
             case Code::CANCELLED:
-                return RequestBehaviour::fail(new RequestCanceledException("Request cancelled by server"));
+                return RequestBehaviour::fail(new RequestCanceledException(message: "Request cancelled by server", context: $request->context()));
             case Code::INTERNAL:
-                return RequestBehaviour::fail(new InternalServerFailureException());
+                return RequestBehaviour::fail(new InternalServerFailureException(context: $request->context()));
             case Code::INVALID_ARGUMENT:
-                return RequestBehaviour::fail(new InvalidArgumentException("Invalid argument provided"));
+                return RequestBehaviour::fail(new InvalidArgumentException(message: "Invalid argument provided", context: $request->context()));
             case Code::DEADLINE_EXCEEDED:
-                return RequestBehaviour::fail(new AmbiguousTimeoutException("The server reported the operation timeout, and the state might have been changed"));
+                return RequestBehaviour::fail(new AmbiguousTimeoutException(message: "The server reported the operation timeout, and the state might have been changed", context: $request->context()));
             case Code::PERMISSION_DENIED:
-                return RequestBehaviour::fail(new AuthenticationFailureException("The server reported that permission to the resource was denied"));
+                return RequestBehaviour::fail(new AuthenticationFailureException(message: "The server reported that permission to the resource was denied", context: $request->context()));
             case Code::UNIMPLEMENTED:
-                return RequestBehaviour::fail(new FeatureNotAvailableException($status->getMessage()));
+                return RequestBehaviour::fail(new FeatureNotAvailableException(message: $status->getMessage(), context: $request->context()));
             case Code::UNAVAILABLE:
                 return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::SOCKET_NOT_AVAILABLE));
             default:
-                return RequestBehaviour::fail(new CouchbaseException($status->getMessage()));
+                return RequestBehaviour::fail(new CouchbaseException(message: $status->getMessage(), context: $request->context()));
         }
     }
 }

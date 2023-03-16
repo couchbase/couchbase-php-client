@@ -34,7 +34,7 @@ class ProtostellarRequest
 
     private mixed $grpcRequest;
 
-    private array $context;
+    private ?array $context;
 
     public function __construct(
         bool $idempotent,
@@ -94,7 +94,7 @@ class ProtostellarRequest
         return $this->grpcRequest;
     }
 
-    public function context(): array
+    public function context(): ?array
     {
         return $this->context;
     }
