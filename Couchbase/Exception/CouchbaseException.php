@@ -21,13 +21,20 @@ declare(strict_types=1);
 namespace Couchbase\Exception;
 
 use Exception;
+use Throwable;
 
 /**
  *  Base exception for exceptions that are thrown originating from Couchbase operations.
  */
 class CouchbaseException extends Exception
 {
-    private ?array $context = null;
+    private ?array $context;
+
+    public function __construct($message = "", $code = 0, Throwable $previous = null, array $context = null)
+    {
+        parent::__construct($message, $code, $previous);
+        $this->context = $context;
+    }
 
     /**
      * Returns error details.
