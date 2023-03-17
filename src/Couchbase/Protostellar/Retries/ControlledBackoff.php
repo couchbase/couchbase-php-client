@@ -16,36 +16,29 @@
  * limitations under the License.
  */
 
-
 declare(strict_types=1);
 
-namespace Couchbase\Protostellar\Internal;
+namespace Couchbase\Protostellar\Retries;
 
 use Couchbase\Protostellar\ProtostellarRequest;
-use Couchbase\Protostellar\Retries\BestEffortRetryStrategy;
 
-class SharedUtils
+class ControlledBackoff implements BackoffCalculator
 {
-    /** Convert Protobuf RepeatedField Object to PHP array
-     * @param $rf
-     * @return array
-     */
-    public static function toArray($rf): array
+    public function calculateBackoff(ProtostellarRequest $request): int
     {
-        $ret = [];
-        foreach ($rf as $elem) {
-            $ret[] = $elem;
+        switch ($request->retryAttempts()) {
+            case 0:
+                return 1_000;
+            case 1:
+                return 10_000;
+            case 2:
+                return 50_000;
+            case 3:
+                return 100_000;
+            case 4:
+                return 500_000;
+            default:
+                return 1000_000;
         }
-        return $ret;
-    }
-
-    public static function createProtostellarRequest(mixed $grpcRequest, bool $idempotent, float $timeout): ProtostellarRequest
-    {
-        return new ProtostellarRequest(
-            $idempotent,
-            BestEffortRetryStrategy::build(),
-            (microtime(true) * 1e6) + $timeout,
-            $grpcRequest
-        );
     }
 }

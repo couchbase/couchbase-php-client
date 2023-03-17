@@ -28,6 +28,7 @@ use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
 use Couchbase\Protostellar\Internal\SearchConverter;
+use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
@@ -60,17 +61,19 @@ class Cluster implements ClusterInterface
 
     /**
      * @throws InvalidArgumentException
-     * @throws ProtocolException
      */
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
         $exportedOptions = QueryOptions::export($options);
+        $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_QUERY_TIMEOUT;
-        $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
-        $pendingCall = $this->client->query()->Query(new QueryRequest($request), [], ['timeout' => $timeout]);
-        $res = iterator_to_array($pendingCall->responses());
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
+            [$this->client->query(), 'Query']
+        );
+        $res = iterator_to_array($response);
         $finalArray = QueryConverter::convertQueryResult($res);
         return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }

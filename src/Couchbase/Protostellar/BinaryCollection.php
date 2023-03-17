@@ -34,6 +34,7 @@ use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\KVConverter;
 
+use Couchbase\Protostellar\Internal\SharedUtils;
 use const Grpc\STATUS_OK;
 
 class BinaryCollection implements BinaryCollectionInterface
@@ -81,11 +82,10 @@ class BinaryCollection implements BinaryCollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertAppendOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Append(new AppendRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to append the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new AppendRequest($request), false, $timeout),
+            [$this->client->kv(), 'Append']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -118,11 +118,10 @@ class BinaryCollection implements BinaryCollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertPrependOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Prepend(new PrependRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to prepend the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new PrependRequest($request), false, $timeout),
+            [$this->client->kv(), 'Prepend']
+        );
         return new MutationResult(
             [
                 "id" => $key,
@@ -154,11 +153,10 @@ class BinaryCollection implements BinaryCollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertIncrementOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Increment(new IncrementRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to increment the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new IncrementRequest($request), false, $timeout),
+            [$this->client->kv(), 'Increment']
+        );
         return new CounterResult(
             [
                 "id" => $key,
@@ -191,11 +189,10 @@ class BinaryCollection implements BinaryCollectionInterface
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : Collection::DEFAULT_KV_TIMEOUT;
         $request = array_merge($request, KVConverter::convertDecrementOptions($exportedOptions));
-        $pendingCall = $this->client->kv()->Decrement(new DecrementRequest($request), [], ['timeout' => $timeout]);
-        [$res, $status] = $pendingCall->wait();
-        if ($status->code !== STATUS_OK) {
-            throw new ProtocolException("unable to decrement the key", $status);
-        }
+        $res = ProtostellarOperationRunner::runUnary(
+            SharedUtils::createProtostellarRequest(new DecrementRequest($request), false, $timeout),
+            [$this->client->kv(), 'Decrement']
+        );
         return new CounterResult(
             [
                 "id" => $key,

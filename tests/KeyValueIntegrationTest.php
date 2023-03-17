@@ -23,11 +23,11 @@ use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\CollectionInterface;
 use Couchbase\DecrementOptions;
+use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\GetOptions;
 use Couchbase\IncrementOptions;
 use Couchbase\Integration;
 use Couchbase\RawBinaryTranscoder;
-use Couchbase\Protostellar\ProtocolException;
 use Couchbase\UpsertOptions;
 use PHPUnit\Framework\TestCase;
 
@@ -50,7 +50,7 @@ final class KeyValueIntegrationTest extends TestCase
         $options = new ClusterOptions();
         $this->cluster = Couchbase\Cluster::connect(
             getenv(self::CONNECTION_STRING_ENV)
-            ?: self::DEFAULT_CONNECTION_STRING,
+                ?: self::DEFAULT_CONNECTION_STRING,
             $options
         );
         $this->bucket = $this->cluster->bucket(getenv(self::BUCKET_NAME_ENV) ?: self::DEFAULT_BUCKET_NAME);
@@ -94,7 +94,8 @@ final class KeyValueIntegrationTest extends TestCase
     {
         $id = uniqid();
 
-        $this->expectException(ProtocolException::class);
+
+        $this->expectException(DocumentNotFoundException::class);
         $this->defaultCollection->get($id);
 
         $this->defaultCollection->upsert($id, ["hello" => "earth"]);
@@ -136,7 +137,7 @@ final class KeyValueIntegrationTest extends TestCase
 
         $this->defaultCollection->remove($id);
 
-        $this->expectException(ProtocolException::class);
+        $this->expectException(DocumentNotFoundException::class);
         $this->defaultCollection->get($id);
     }
 
