@@ -21,6 +21,8 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal;
 
+use Couchbase\ClusterOptions;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated;
 use Grpc\Channel;
 
@@ -31,13 +33,16 @@ class Client
     private Generated\Query\V1\QueryServiceClient $query;
     private Generated\Search\V1\SearchServiceClient $search;
 
-    public function __construct(string $host, ClientOptions $options = new ClientOptions())
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function __construct(string $host, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
     {
         $host = substr($host, strpos($host, "/") + 2) . ":18098";
-        $this->channel = new Channel($host, $options->channelOptions());
-        $this->kv = new Generated\KV\V1\KvServiceClient($host, $options->channelOptions(), $this->channel);
-        $this->query = new Generated\Query\V1\QueryServiceClient($host, $options->channelOptions(), $this->channel);
-        $this->search = new Generated\Search\V1\SearchServiceClient($host, $options->channelOptions(), $this->channel);
+        $this->channel = new Channel($host, []);
+        $this->kv = new Generated\KV\V1\KvServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
+        $this->query = new Generated\Query\V1\QueryServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
+        $this->search = new Generated\Search\V1\SearchServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
     }
 
     public function close()

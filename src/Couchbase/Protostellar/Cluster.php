@@ -46,7 +46,7 @@ class Cluster implements ClusterInterface
 
     public function __construct(string $connectionString, ClusterOptions $options = new ClusterOptions())
     {
-        $this->client = new Client($connectionString);
+        $this->client = new Client($connectionString, $options);
     }
 
     public function close()

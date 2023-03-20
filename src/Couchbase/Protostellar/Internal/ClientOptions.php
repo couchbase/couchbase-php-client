@@ -20,10 +20,35 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal;
 
+use Couchbase\ClusterOptions;
+use Couchbase\Exception\InvalidArgumentException;
+
 class ClientOptions
 {
-    public function channelOptions(): array
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function channelOptions(ClusterOptions $options): array
     {
-        return [];
+        $exported = $options->export();
+        $creds = $this->getCredentials($exported['authenticator']);
+        return [
+            'update_metadata' => function ($metaData) use ($creds) {
+                $metaData['authorization'] = [$creds];
+                return $metaData;
+            }
+        ];
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function getCredentials(array $authenticator): string
+    {
+        if ($authenticator['type'] == 'password') {
+            return "Basic " . base64_encode($authenticator['username'] . ":" . $authenticator['password']);
+        } else {
+            throw new InvalidArgumentException("Unsupported type of the authenticator: " . $authenticator['type']);
+        }
     }
 }
