@@ -63,7 +63,7 @@ class Transactions
                 $logic($transaction->transactionAttemptContext());
             } catch (Exception $exception) {
                 $transaction->rollback();
-                throw new TransactionFailedException("Exception caught during execution of transaction logic", 0, $exception);
+                throw new TransactionFailedException("Exception caught during execution of transaction logic. " . $exception->getMessage(), 0, $exception);
             }
 
             try {

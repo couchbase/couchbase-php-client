@@ -566,6 +566,7 @@ zval_to_links(const zval* document)
     std::optional<std::string> atr_collection_name;
     std::optional<std::string> staged_transaction_id;
     std::optional<std::string> staged_attempt_id;
+    std::optional<std::string> staged_operation_id;
     std::optional<std::vector<std::byte>> staged_content;
     std::optional<std::string> cas_pre_txn;
     std::optional<std::string> revid_pre_txn;
@@ -581,6 +582,7 @@ zval_to_links(const zval* document)
     cb_assign_string(atr_collection_name, links, "atr_collection_name");
     cb_assign_string(staged_transaction_id, links, "staged_transaction_id");
     cb_assign_string(staged_attempt_id, links, "staged_attempt_id");
+    cb_assign_string(staged_operation_id, links, "staged_operation_id");
     cb_assign_binary(staged_content, links, "staged_content");
     cb_assign_string(cas_pre_txn, links, "cas_pre_txn");
     cb_assign_string(revid_pre_txn, links, "revid_pre_txn");
@@ -595,21 +597,22 @@ zval_to_links(const zval* document)
         forward_compat_json = core::utils::json::parse(forward_compat.value());
     }
 
-    core::transactions::transaction_links links_(atr_id,
-                                                 atr_bucket_name,
-                                                 atr_scope_name,
-                                                 atr_collection_name,
-                                                 staged_transaction_id,
-                                                 staged_attempt_id,
-                                                 staged_content,
-                                                 cas_pre_txn,
-                                                 revid_pre_txn,
-                                                 exptime_pre_txn,
-                                                 crc32_of_staging,
-                                                 op,
-                                                 forward_compat_json,
-                                                 is_deleted);
-    return { links_, {} };
+    return { core::transactions::transaction_links{ atr_id,
+                                                    atr_bucket_name,
+                                                    atr_scope_name,
+                                                    atr_collection_name,
+                                                    staged_transaction_id,
+                                                    staged_attempt_id,
+                                                    staged_operation_id,
+                                                    staged_content,
+                                                    cas_pre_txn,
+                                                    revid_pre_txn,
+                                                    exptime_pre_txn,
+                                                    crc32_of_staging,
+                                                    op,
+                                                    forward_compat_json,
+                                                    is_deleted },
+             {} };
 }
 
 static std::pair<std::optional<core::transactions::document_metadata>, core_error_info>
