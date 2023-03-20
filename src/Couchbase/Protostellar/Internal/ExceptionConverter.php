@@ -138,7 +138,7 @@ class ExceptionConverter
                     return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
             }
         } catch (Exception) {
-            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response", context: $request->context()));
+            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response: " . $status->details, context: $request->context()));
         }
         return self::convertToCouchbaseException($protoStatus, $request);
     }
