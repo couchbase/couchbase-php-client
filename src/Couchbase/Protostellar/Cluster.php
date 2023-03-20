@@ -73,8 +73,7 @@ class Cluster implements ClusterInterface
             SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
             [$this->client->query(), 'Query']
         );
-        $res = iterator_to_array($response);
-        $finalArray = QueryConverter::convertQueryResult($res);
+        $finalArray = QueryConverter::convertQueryResult($response);
         return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }
 
@@ -90,13 +89,15 @@ class Cluster implements ClusterInterface
     public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
     {
         $exportedOptions = SearchOptions::export($options);
+        $request = SearchConverter::getSearchRequest($indexName, $query, $exportedOptions);
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_QUERY_TIMEOUT;
-        $request = SearchConverter::getSearchRequest($indexName, $query, $exportedOptions);
-        $pendingCall = $this->client->search()->SearchQuery(new SearchQueryRequest($request), [], ['timeout' => $timeout]);
-        $res = iterator_to_array($pendingCall->responses());
-        $finalArray = SearchConverter::convertSearchResult($res);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new SearchQueryRequest($request), true, $timeout),
+            [$this->client->search(), 'SearchQuery']
+        );
+        $finalArray = SearchConverter::convertSearchResult($response);
         return new SearchResult($finalArray);
     }
 }
