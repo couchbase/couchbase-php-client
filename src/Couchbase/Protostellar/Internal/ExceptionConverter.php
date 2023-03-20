@@ -65,7 +65,10 @@ class ExceptionConverter
     {
         try {
             ErrorDetails::initOnce();
-            $details = $status->metadata["grpc-status-details-bin"][0];
+            $details = $status->metadata["grpc-status-details-bin"][0] ?? null;
+            if (is_null($details)) {
+                throw new DecodingFailureException($status->details);
+            }
             $protoStatus = new Status();
             $protoStatus->mergeFromString($details);
             $anyDetails = $protoStatus->getDetails()[0];

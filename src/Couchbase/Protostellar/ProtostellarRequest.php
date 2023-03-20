@@ -49,6 +49,7 @@ class ProtostellarRequest
         $this->absoluteTimeout = $absoluteTimeout;
         $this->grpcRequest = $grpcRequest;
         $this->retryReasons = [];
+        $this->context = [];
     }
 
     public function idempotent(): bool
