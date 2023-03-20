@@ -633,11 +633,11 @@ class SearchConverter
     {
         switch ($style) {
             case SearchHighlightMode::SIMPLE:
-                return HighlightStyle::PBDEFAULT;
+                return HighlightStyle::HIGHLIGHT_STYLE_DEFAULT;
             case SearchHighlightMode::HTML:
-                return HighlightStyle::HTML;
+                return HighlightStyle::HIGHLIGHT_STYLE_HTML;
             case SearchHighlightMode::ANSI:
-                return HighlightStyle::ANSI;
+                return HighlightStyle::HIGHLIGHT_STYLE_ANSI;
             default:
                 throw new InvalidArgumentException("Unknown Search Highlight style");
         }
@@ -736,9 +736,9 @@ class SearchConverter
     {
         switch ($operator) {
             case MatchSearchQuery::OPERATOR_AND:
-                return MatchQuery\Operator::PBAND;
+                return MatchQuery\Operator::OPERATOR_AND;
             case MatchSearchQuery::OPERATOR_OR:
-                return MatchQuery\Operator::PBOR;
+                return MatchQuery\Operator::OPERATOR_OR;
             default:
                 throw new InvalidArgumentException("Unknown Match Query Operator");
         }

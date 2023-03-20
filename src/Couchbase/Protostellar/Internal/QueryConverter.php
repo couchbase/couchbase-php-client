@@ -22,11 +22,11 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar\Internal;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Protostellar\Generated\Query\V1\QueryRequest\ScanConsistency;
 use Couchbase\QueryProfile;
 use Couchbase\Protostellar\Generated\KV\V1\MutationToken;
-use Couchbase\Protostellar\Generated\Query\V1\QueryRequest\QueryProfileMode;
-use Couchbase\Protostellar\Generated\Query\V1\QueryRequest\QueryScanConsistency;
 use Couchbase\Protostellar\Generated\Query\V1\QueryResponse\MetaData;
+use Couchbase\QueryScanConsistency;
 use Google\Protobuf\Duration;
 use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
 
@@ -132,10 +132,10 @@ class QueryConverter
     private static function convertScanConsistency(string $consistencyLevel): int
     {
         switch ($consistencyLevel) {
-            case \Couchbase\QueryScanConsistency::NOT_BOUNDED:
-                return QueryScanConsistency::NOT_BOUNDED;
-            case \Couchbase\QueryScanConsistency::REQUEST_PLUS:
-                return QueryScanConsistency::REQUEST_PLUS;
+            case QueryScanConsistency::NOT_BOUNDED:
+                return ScanConsistency::SCAN_CONSISTENCY_NOT_BOUNDED;
+            case QueryScanConsistency::REQUEST_PLUS:
+                return ScanConsistency::SCAN_CONSISTENCY_REQUEST_PLUS;
             default:
                 throw new InvalidArgumentException(
                     "Value for query scan consistency must be QueryScanConsistency::NOT_BOUNDED or QueryScanConsistency::REQUEST_PLUS"
@@ -183,11 +183,11 @@ class QueryConverter
     {
         switch ($profile) {
             case QueryProfile::OFF:
-                return QueryProfileMode::OFF;
+                return QueryRequest\ProfileMode::PROFILE_MODE_OFF;
             case QueryProfile::PHASES:
-                return QueryProfileMode::PHASES;
+                return QueryRequest\ProfileMode::PROFILE_MODE_PHASES;
             case QueryProfile::TIMINGS:
-                return QueryProfileMode::TIMINGS;
+                return QueryRequest\ProfileMode::PROFILE_MODE_TIMINGS;
             default:
                 throw new InvalidArgumentException("Unexpected query profile");
         }
@@ -201,7 +201,7 @@ class QueryConverter
         if ($metadata->hasMetrics()) {
             $finalMetaData["metrics"] = self::convertMetrics($metadata->getMetrics());
         }
-        $finalMetaData["status"] = MetaData\MetaDataStatus::name($metadata->getStatus());
+        $finalMetaData["status"] = MetaData\Status::name($metadata->getStatus());
         if ($metadata->getWarnings()->count()) {
             $finalMetaData["warnings"] = self::convertWarnings(SharedUtils::toArray($metadata->getWarnings()));
         }

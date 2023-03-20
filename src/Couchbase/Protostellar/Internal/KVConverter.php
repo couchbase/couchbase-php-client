@@ -179,10 +179,10 @@ class KVConverter
     public static function getLookupInSpec(array $exportedSpecs): array
     {
         $opcodeToSpecOperation = [
-            'get' => Spec\Operation::GET,
-            'getDocument' => Spec\Operation::GET,
-            'exists' => Spec\Operation::EXISTS,
-            'getCount' => Spec\Operation::COUNT
+            'get' => Spec\Operation::OPERATION_GET,
+            'getDocument' => Spec\Operation::OPERATION_GET,
+            'exists' => Spec\Operation::OPERATION_EXISTS,
+            'getCount' => Spec\Operation::OPERATION_COUNT
         ];
         $specs = [];
         foreach ($exportedSpecs as $spec) {
@@ -201,15 +201,15 @@ class KVConverter
     public static function getMutateInSpec(array $exportedSpecs): array
     {
         $opcodeToSpecOperation = [
-            'dictionaryAdd' => Operation::INSERT,
-            'dictionaryUpsert' => Operation::UPSERT,
-            'replace' => Operation::REPLACE,
-            'remove' => Operation::REMOVE,
-            'arrayPushLast' => Operation::ARRAY_APPEND,
-            'arrayPushFirst' => Operation::ARRAY_PREPEND,
-            'arrayInsert' => Operation::ARRAY_INSERT,
-            'arrayAddUnique' => Operation::ARRAY_ADD_UNIQUE,
-            'counter' => Operation::COUNTER
+            'dictionaryAdd' => Operation::OPERATION_INSERT,
+            'dictionaryUpsert' => Operation::OPERATION_UPSERT,
+            'replace' => Operation::OPERATION_REPLACE,
+            'remove' => Operation::OPERATION_REMOVE,
+            'arrayPushLast' => Operation::OPERATION_ARRAY_APPEND,
+            'arrayPushFirst' => Operation::OPERATION_ARRAY_PREPEND,
+            'arrayInsert' => Operation::OPERATION_ARRAY_INSERT,
+            'arrayAddUnique' => Operation::OPERATION_ARRAY_ADD_UNIQUE,
+            'counter' => Operation::OPERATION_COUNTER
         ];
         $specs = [];
         foreach ($exportedSpecs as $spec) {
@@ -232,11 +232,11 @@ class KVConverter
     {
         switch ($storeSemantic) {
             case StoreSemantics::INSERT:
-                return StoreSemantic::INSERT;
+                return StoreSemantic::STORE_SEMANTIC_INSERT;
             case StoreSemantics::UPSERT:
-                return StoreSemantic::UPSERT;
+                return StoreSemantic::STORE_SEMANTIC_UPSERT;
             case StoreSemantics::REPLACE:
-                return StoreSemantic::REPLACE;
+                return StoreSemantic::STORE_SEMANTIC_REPLACE;
             default:
                 throw new InvalidArgumentException("Unknown store semantic option");
         }
@@ -285,9 +285,9 @@ class KVConverter
     {
         switch ($classicFlags) {
             case TranscoderFlags::DATA_FORMAT_BINARY:
-                return DocumentContentType::BINARY;
+                return DocumentContentType::DOCUMENT_CONTENT_TYPE_BINARY;
             case TranscoderFlags::DATA_FORMAT_JSON:
-                return DocumentContentType::JSON;
+                return DocumentContentType::DOCUMENT_CONTENT_TYPE_JSON;
             default:
                 throw new InvalidArgumentException("Unsupported transcoder content flag");
         }
@@ -301,26 +301,34 @@ class KVConverter
     public static function convertTranscoderFlagsToClassic(int $grpcFlags): int
     {
         switch ($grpcFlags) {
-            case DocumentContentType::BINARY:
+            case DocumentContentType::DOCUMENT_CONTENT_TYPE_BINARY:
                 return TranscoderFlags::DATA_FORMAT_BINARY;
-            case DocumentContentType::JSON:
+            case DocumentContentType::DOCUMENT_CONTENT_TYPE_JSON:
                 return TranscoderFlags::DATA_FORMAT_JSON;
             default:
                 throw new InvalidArgumentException("Unexpected GRPC content Flag");
         }
     }
 
-    private static function convertDurabilityLevel(string $durabilityLevel): ?int
+    /**
+     * @param string $durabilityLevel
+     * @return int|null
+     * @throws InvalidArgumentException
+     * @internal
+     */
+    public static function convertDurabilityLevel(string $durabilityLevel): ?int
     {
         switch ($durabilityLevel) {
             case DurabilityLevel::MAJORITY:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::MAJORITY;
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY;
             case DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE;
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE;
             case DurabilityLevel::PERSIST_TO_MAJORITY:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::PERSIST_TO_MAJORITY;
-            default:
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY;
+            case DurabilityLevel::NONE:
                 return null;
+            default:
+                throw new InvalidArgumentException("Unknown durability level specified");
         }
     }
 }
