@@ -28,6 +28,7 @@ class ReplaceOptions
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
@@ -77,7 +78,7 @@ class ReplaceOptions
     public function expiry($seconds): ReplaceOptions
     {
         if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
+            $this->expiryTimestamp = $seconds->getTimestamp();
         } else {
             $this->expirySeconds = (int)$seconds;
         }
@@ -179,6 +180,7 @@ class ReplaceOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,
             'durabilityLevel' => $options->durabilityLevel,
             'cas' => $options->cas,

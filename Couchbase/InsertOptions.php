@@ -28,6 +28,7 @@ class InsertOptions
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private ?string $durabilityLevel = null;
     private ?int $durabilityTimeoutSeconds = null;
 
@@ -76,7 +77,7 @@ class InsertOptions
     public function expiry($seconds): InsertOptions
     {
         if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
+            $this->expiryTimestamp = $seconds->getTimestamp();
         } else {
             $this->expirySeconds = (int)$seconds;
         }
@@ -151,6 +152,7 @@ class InsertOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'durabilityLevel' => $options->durabilityLevel,
             'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
         ];
