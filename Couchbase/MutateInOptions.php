@@ -31,6 +31,7 @@ class MutateInOptions
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
     private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
     private string $storeSemantics;
 
@@ -94,7 +95,7 @@ class MutateInOptions
     public function expiry($seconds): MutateInOptions
     {
         if ($seconds instanceof DateTimeInterface) {
-            $this->expirySeconds = $seconds->getTimestamp();
+            $this->expiryTimestamp = $seconds->getTimestamp();
         } else {
             $this->expirySeconds = (int)$seconds;
         }
@@ -201,6 +202,7 @@ class MutateInOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,
             'cas' => $options->cas,
             'durabilityLevel' => $options->durabilityLevel,

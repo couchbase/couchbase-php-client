@@ -158,15 +158,22 @@ cb_set_expiry(Options& opts, const zval* options)
     if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "expirySeconds"); e.ec) {
         return e;
     } else if (value) {
-        opts.expiry(std::chrono::seconds{ value.value() });
+        try {
+            opts.expiry(std::chrono::seconds{ value.value() });
+        } catch (const std::system_error& ec) {
+            return { ec.code(), ERROR_LOCATION, ec.what() };
+        }
         return {};
     }
 
     if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "expiryTimestamp"); e.ec) {
         return e;
     } else if (value) {
-        opts.expiry(std::chrono::system_clock::time_point{ std::chrono::seconds{ value.value() } });
-        return {};
+        try {
+            opts.expiry(std::chrono::system_clock::time_point{ std::chrono::seconds{ value.value() } });
+        } catch (const std::system_error& ec) {
+            return { ec.code(), ERROR_LOCATION, ec.what() };
+        }
     }
     return {};
 }
