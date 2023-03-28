@@ -51,42 +51,31 @@ class ProtostellarOperationRunner
             return $response;
         }
     }
-// https://github.com/grpc/grpc/issues/32591
-//    /**
-//     * @throws Exception
-//     */
-//    public static function runStreaming(ProtostellarRequest $request, callable $grpcFunc): mixed
-//    {
-//        while (true) {
-//            $pendingCall = $grpcFunc(
-//                $request->grpcRequest(),
-//                [],
-//                ['timeout' => self::calculateGRPCTimeout($request->absoluteTimeout())]
-//            );
-//            $response = $pendingCall->responses();
-//            $status = $pendingCall->getStatus();
-//            if ($status->code !== STATUS_OK) {
-//                $behaviour = ExceptionConverter::convertToCouchbaseException($status, $request);
-//                if (!is_null($behaviour->retryDuration())) {
-//                    usleep($behaviour->retryDuration());
-//                    continue;
-//                } else {
-//                    throw $behaviour->exception();
-//                }
-//            }
-//            return $response;
-//        }
-//    }
-
+    /**
+     * @throws Exception
+     */
     public static function runStreaming(ProtostellarRequest $request, callable $grpcFunc): mixed
     {
+        while (true) {
             $pendingCall = $grpcFunc(
                 $request->grpcRequest(),
                 [],
                 ['timeout' => self::calculateGRPCTimeout($request->absoluteTimeout())]
             );
-            $response = $pendingCall->responses();
-            return $response;
+            $responses = $pendingCall->responses();
+            $result = iterator_to_array($responses);
+            $status = $pendingCall->getStatus();
+            if ($status->code !== STATUS_OK) {
+                $behaviour = ExceptionConverter::convertError($status, $request);
+                if (!is_null($behaviour->retryDuration())) {
+                    usleep($behaviour->retryDuration());
+                    continue;
+                } else {
+                    throw $behaviour->exception();
+                }
+            }
+            return $result;
+        }
     }
 
     private static function calculateGRPCTimeout(float $absoluteTimeout): float

@@ -44,6 +44,9 @@ final class QueryIntegrationTest extends TestCase
         parent::setUp();
         Integration::enableProtostellar();
         $options = new ClusterOptions();
+        $username = getenv("TEST_USERNAME") ?: "Administrator";
+        $password = getenv("TEST_PASSWORD") ?: "password";
+        $options->credentials($username, $password);
         $this->cluster = Couchbase\Cluster::connect(
             getenv(self::CONNECTION_STRING_ENV)
                 ?: self::DEFAULT_CONNECTION_STRING,

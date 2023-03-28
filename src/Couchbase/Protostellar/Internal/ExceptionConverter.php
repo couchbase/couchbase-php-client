@@ -65,7 +65,10 @@ class ExceptionConverter
     {
         try {
             ErrorDetails::initOnce();
-            $details = $status->metadata["grpc-status-details-bin"][0];
+            $details = $status->metadata["grpc-status-details-bin"][0] ?? null;
+            if (is_null($details)) {
+                throw new DecodingFailureException($status->details);
+            }
             $protoStatus = new Status();
             $protoStatus->mergeFromString($details);
             $anyDetails = $protoStatus->getDetails()[0];
@@ -135,7 +138,7 @@ class ExceptionConverter
                     return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
             }
         } catch (Exception) {
-            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response", context: $request->context()));
+            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response: " . $status->details, context: $request->context()));
         }
         return self::convertToCouchbaseException($protoStatus, $request);
     }
