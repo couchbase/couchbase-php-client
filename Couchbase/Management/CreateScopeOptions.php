@@ -63,5 +63,4 @@ class CreateScopeOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

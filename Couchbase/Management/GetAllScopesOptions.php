@@ -64,5 +64,4 @@ class GetAllScopesOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

@@ -63,5 +63,4 @@ class DropScopeOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

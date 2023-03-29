@@ -22,7 +22,6 @@ namespace Couchbase\Management;
 
 class CollectionSpec
 {
-
     private string $name;
     private string $scopeName;
     private ?int $maxExpiry;

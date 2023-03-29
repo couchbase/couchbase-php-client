@@ -63,5 +63,4 @@ class DropCollectionOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

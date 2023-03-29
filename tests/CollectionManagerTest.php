@@ -25,7 +25,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateScopeThrowsScopesExistsException(): void
     {
-        $scopeName= uniqid("scope");
+        $scopeName = uniqid("scope");
         $this->manager->createScope($scopeName);
         $this->expectException(ScopeExistsException::class);
         $this->manager->createScope($scopeName);
@@ -33,7 +33,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateScopeAndGetAllScopes(): void
     {
-        $scopeName= $this->uniqueId("scope");
+        $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
         $scopes = $this->manager->getAllScopes();
         $this->assertNotNull($scopes);
@@ -120,7 +120,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $collectionName = $this->uniqueId("collection");
-        $scopeName= $this->uniqueId("scope");
+        $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
         $collectionSpec = new CollectionSpec($collectionName, $scopeName);
         $this->expectException(CollectionNotFoundException::class);
@@ -150,7 +150,8 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
 
         $selectedScope = null;
         foreach ($scopes as $scope) {
-            if ($scope->name() == $scopeName);
+            if ($scope->name() == $scopeName) {
+            }
             $selectedScope = $scope;
         }
         $this->assertNotNull($selectedScope);

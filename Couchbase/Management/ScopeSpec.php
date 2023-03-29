@@ -119,7 +119,6 @@ class ScopeSpec
             $newColl = new CollectionSpec($collection['name'], $scope['name']);
             $newColl->setMaxExpiry($collection['max_expiry']);
             $collections[] = $newColl;
-
         }
         return new ScopeSpec($scope['name'], $collections);
     }

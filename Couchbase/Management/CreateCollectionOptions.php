@@ -65,5 +65,4 @@ class CreateCollectionOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }
