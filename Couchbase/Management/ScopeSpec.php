@@ -22,11 +22,105 @@ namespace Couchbase\Management;
 
 class ScopeSpec
 {
-    public function name(): string
+    private string $name;
+    private array $collections;
+
+    /**
+     * @param string $name
+     * @param array $collections
+     * @since 4.1.3
+     */
+    public function __construct(string $name, array $collections)
     {
+        $this->name = $name;
+        $this->collections = $collections;
     }
 
+    /**
+     * Static helper to keep code more readable
+     *
+     * @param string $name
+     * @param array $collections
+     * @return ScopeSpec
+     */
+    public static function build(string $name, array $collections): ScopeSpec
+    {
+        return new ScopeSpec($name, $collections);
+    }
+
+    /**
+     * Gets the name of the scope
+     * @return string scope name
+     * @since 4.1.3
+     */
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Gets the array of collections
+     *
+     * @see CollectionSpec
+     * @return array
+     * @since 4.1.3
+     */
     public function collections(): array
     {
+        return $this->collections;
+    }
+
+    /**
+     * Sets the name of the scope
+     *
+     * @param string $name scope name
+     * @return ScopeSpec
+     * @since 4.1.3
+     */
+    public function setName(string $name): ScopeSpec
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * Sets the collections included in the scope
+     *
+     * @see CollectionSpec
+     * @param array $collections
+     * @return $this
+     */
+    public function setCollections(array $collections): ScopeSpec
+    {
+        $this->collections = $collections;
+        return $this;
+    }
+
+    /**
+     * @param ScopeSpec $spec
+     * @return array
+     */
+    public static function export(ScopeSpec $spec): array
+    {
+        return [
+            "name" => $spec->name,
+            "collections" => $spec->collections
+        ];
+    }
+
+    /**
+     * @param array $scope
+     * @return ScopeSpec
+     */
+    public static function import(array $scope): ScopeSpec
+    {
+        $collections = [];
+        foreach ($scope['collections'] as $collection) {
+            $newColl = new CollectionSpec($collection['name'], $scope['name']);
+            $newColl->setMaxExpiry($collection['max_expiry']);
+            $collections[] = $newColl;
+
+        }
+        return new ScopeSpec($scope['name'], $collections);
     }
 }
