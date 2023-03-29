@@ -22,23 +22,133 @@ namespace Couchbase\Management;
 
 class CollectionSpec
 {
+    private string $name;
+    private string $scopeName;
+    private ?int $maxExpiry;
+
+    /**
+     * @param string $name
+     * @param string $scopeName
+     * @param int|null $maxExpiry
+     * @since 4.1.3
+     */
+    public function __construct(string $name, string $scopeName, int $maxExpiry = null)
+    {
+        $this->name = $name;
+        $this->scopeName = $scopeName;
+        $this->maxExpiry = $maxExpiry;
+    }
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @param string $name
+     * @param string $scopeName
+     * @param int|null $maxExpiry
+     * @return CollectionSpec
+     * @since 4.1.3
+     */
+    public static function build(string $name, string $scopeName, int $maxExpiry = null): CollectionSpec
+    {
+        return new CollectionSpec($name, $scopeName, $maxExpiry);
+    }
+
+    /**
+     * Get the name of the collection
+     *
+     * @return string collection name
+     * @since 4.1.3
+     */
     public function name(): string
     {
+        return $this->name;
     }
 
+    /**
+     * Get the name of the scope which the collection belongs to
+     *
+     * @return string scope name
+     * @since 4.1.3
+     */
     public function scopeName(): string
     {
+        return $this->scopeName;
     }
 
+    /**
+     * Get the max expiry of the collection
+     *
+     * @return int|null
+     * @since 4.1.3
+     */
+    public function maxExpiry(): ?int
+    {
+        return $this->maxExpiry;
+    }
+
+    /**
+     * Set the name of the collection
+     *
+     * @param string $name collection name
+     * @return CollectionSpec
+     * @since 4.1.3
+     */
     public function setName(string $name): CollectionSpec
     {
+        $this->name = $name;
+        return $this;
     }
 
-    public function setScopeName(string $name): CollectionSpec
+    /**
+     * Sets the name of the scope which the collection belongs to
+     * @param string $scopeName scope name
+     * @return CollectionSpec
+     * @since 4.1.3
+     */
+    public function setScopeName(string $scopeName): CollectionSpec
     {
+        $this->scopeName = $scopeName;
+        return $this;
     }
 
-    public function setMaxExpiry(int $ms): CollectionSpec
+    /**
+     * Sets the max expiry of the collection
+     *
+     * @param int $seconds max expiry in seconds
+     * @return CollectionSpec
+     * @since 4.1.3
+     */
+    public function setMaxExpiry(int $seconds): CollectionSpec
     {
+        $this->maxExpiry = $seconds;
+        return $this;
+    }
+
+    /**
+     * @param CollectionSpec $spec
+     * @return array
+     * @since 4.1.3
+     */
+    public static function export(CollectionSpec $spec): array
+    {
+        return [
+            'name' => $spec->name,
+            'scopeName' => $spec->scopeName,
+            'maxExpiry' => $spec->maxExpiry
+        ];
+    }
+
+    /**
+     * @param array $collection
+     * @return CollectionSpec
+     * @since 4.1.3
+     */
+    public static function import(array $collection): CollectionSpec
+    {
+        $collectionSpec = new CollectionSpec($collection['name'], $collection['scopeName']);
+        if (array_key_exists('maxExpiry', $collection)) {
+            $collectionSpec->setMaxExpiry($collection['maxExpiry']);
+        }
+        return $collectionSpec;
     }
 }

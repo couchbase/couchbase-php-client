@@ -137,12 +137,11 @@ class Bucket implements BucketInterface
      * Creates a new CollectionManager object for managing collections and scopes.
      *
      * @return CollectionManager
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function collections(): CollectionManager
     {
-        throw new UnsupportedOperationException();
+        return new CollectionManager($this->core, $this->name);
     }
 
     /**

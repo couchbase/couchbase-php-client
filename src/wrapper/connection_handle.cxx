@@ -28,6 +28,7 @@
 #include <core/management/bucket_settings.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
+#include <core/operations/management/collections.hxx>
 #include <core/operations/management/query.hxx>
 #include <core/operations/management/search.hxx>
 #include <core/operations/management/user.hxx>
@@ -3140,6 +3141,151 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
     couchbase::core::operations::management::bucket_flush_request request{ cb_string_new(name) };
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_get_all(zval* return_value, const zend_string* bucket_name, const zval* options)
+{
+    couchbase::core::operations::management::scope_get_all_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+
+    zval scopes;
+    array_init(&scopes);
+    for (const auto& s : resp.manifest.scopes) {
+        zval scope;
+        array_init(&scope);
+        add_assoc_string(&scope, "name", s.name.c_str());
+        zval collections;
+        array_init(&collections);
+        for (const auto& c : s.collections) {
+            zval collection;
+            array_init(&collection);
+            add_assoc_string(&collection, "name", c.name.c_str());
+            add_assoc_long(&collection, "max_expiry", c.max_expiry);
+            add_next_index_zval(&collections, &collection);
+            }
+        add_assoc_zval(&scope, "collections", &collections);
+        add_next_index_zval(&scopes, &scope);
+    }
+    add_assoc_zval(return_value, "scopes", &scopes);
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_create(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options)
+{
+    couchbase::core::operations::management::scope_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options)
+{
+    couchbase::core::operations::management::scope_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_create(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options)
+{
+    couchbase::core::operations::management::collection_create_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    request.bucket_name = cb_string_new(bucket_name);
+
+    if (auto e = cb_assign_string(request.scope_name, collection_spec, "scopeName"); e.ec) {
+        return e;
+    }
+
+    if (auto e = cb_assign_string(request.collection_name, collection_spec, "name"); e.ec) {
+        return e;
+    }
+
+    if (auto e = cb_assign_integer(request.max_expiry, collection_spec, "maxExpiry"); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_drop(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options)
+{
+    couchbase::core::operations::management::collection_drop_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    request.bucket_name = cb_string_new(bucket_name);
+
+    if (auto e = cb_assign_string(request.scope_name, collection_spec, "scopeName"); e.ec) {
+        return e;
+    }
+
+    if (auto e = cb_assign_string(request.collection_name, collection_spec, "name"); e.ec) {
         return e;
     }
 

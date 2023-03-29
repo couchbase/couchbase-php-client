@@ -324,6 +324,21 @@ class connection_handle
     core_error_info bucket_flush(zval* return_value, const zend_string* name, const zval* options);
 
     COUCHBASE_API
+    core_error_info scope_get_all(zval* return_value, const zend_string* name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_create(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info collection_create(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options);
+
+    COUCHBASE_API
+    core_error_info collection_drop(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options);
+
+    COUCHBASE_API
     core_error_info user_upsert(zval* return_value, const zval* user, const zval* options);
 
     COUCHBASE_API
