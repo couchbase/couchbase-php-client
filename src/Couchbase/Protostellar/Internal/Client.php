@@ -32,17 +32,20 @@ class Client
     private Generated\KV\V1\KvServiceClient $kv;
     private Generated\Query\V1\QueryServiceClient $query;
     private Generated\Search\V1\SearchServiceClient $search;
+    private Generated\Admin\Collection\V1\CollectionAdminServiceClient $collectionAdmin;
 
     /**
      * @throws InvalidArgumentException
      */
     public function __construct(string $host, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
     {
+        $opts = $options->channelOptions($clusterOptions);
         $host = substr($host, strpos($host, "/") + 2) . ":18098";
-        $this->channel = new Channel($host, []);
-        $this->kv = new Generated\KV\V1\KvServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
-        $this->query = new Generated\Query\V1\QueryServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
-        $this->search = new Generated\Search\V1\SearchServiceClient($host, $options->channelOptions($clusterOptions), $this->channel);
+        $this->channel = new Channel($host, $options->channelOptions());
+        $this->kv = new Generated\KV\V1\KvServiceClient($host, $opts, $this->channel);
+        $this->query = new Generated\Query\V1\QueryServiceClient($host, $opts, $this->channel);
+        $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);
+        $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $opts, $this->channel);
     }
 
     public function close()
@@ -63,5 +66,10 @@ class Client
     public function search(): Generated\Search\V1\SearchServiceClient
     {
         return $this->search;
+    }
+
+    public function collectionAdmin(): Generated\Admin\Collection\V1\CollectionAdminServiceClient
+    {
+        return $this->collectionAdmin;
     }
 }

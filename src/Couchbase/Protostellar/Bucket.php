@@ -22,6 +22,7 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\BucketInterface;
 use Couchbase\Protostellar\Internal\Client;
+use Couchbase\Protostellar\Management\CollectionManager;
 use Couchbase\ViewOptions;
 use Couchbase\ViewResult;
 
@@ -65,5 +66,10 @@ class Bucket implements BucketInterface
     {
         // TODO: Implement viewQuery() method.
         return new ViewResult();
+    }
+
+    public function collections(): CollectionManager
+    {
+        return new CollectionManager($this->name, $this->client);
     }
 }
