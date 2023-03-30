@@ -33,6 +33,7 @@ class Client
     private Generated\Query\V1\QueryServiceClient $query;
     private Generated\Search\V1\SearchServiceClient $search;
     private Generated\Admin\Collection\V1\CollectionAdminServiceClient $collectionAdmin;
+    private Generated\Admin\Bucket\V1\BucketAdminServiceClient $bucketAdmin;
 
     /**
      * @throws InvalidArgumentException
@@ -46,6 +47,7 @@ class Client
         $this->query = new Generated\Query\V1\QueryServiceClient($host, $opts, $this->channel);
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);
         $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $opts, $this->channel);
+        $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $opts, $this->channel);
     }
 
     public function close()
@@ -71,5 +73,10 @@ class Client
     public function collectionAdmin(): Generated\Admin\Collection\V1\CollectionAdminServiceClient
     {
         return $this->collectionAdmin;
+    }
+
+    public function bucketAdmin(): Generated\Admin\Bucket\V1\BucketAdminServiceClient
+    {
+        return $this->bucketAdmin;
     }
 }
