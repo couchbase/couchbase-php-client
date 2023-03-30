@@ -49,6 +49,7 @@ class MutateInRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>optional .couchbase.kv.v1.MutateInRequest.Flags flags = 10;</code>
      */
     protected $flags = null;
+    protected $expiry;
 
     /**
      * Constructor.
@@ -65,6 +66,8 @@ class MutateInRequest extends \Google\Protobuf\Internal\Message
      *     @type int $durability_level
      *     @type int|string $cas
      *     @type \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags $flags
+     *     @type \Google\Protobuf\Timestamp $expiry_time
+     *     @type int $expiry_secs
      * }
      */
     public function __construct($data = NULL) {
@@ -308,6 +311,68 @@ class MutateInRequest extends \Google\Protobuf\Internal\Message
         $this->flags = $var;
 
         return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>.google.protobuf.Timestamp expiry_time = 11;</code>
+     * @return \Google\Protobuf\Timestamp|null
+     */
+    public function getExpiryTime()
+    {
+        return $this->readOneof(11);
+    }
+
+    public function hasExpiryTime()
+    {
+        return $this->hasOneof(11);
+    }
+
+    /**
+     * Generated from protobuf field <code>.google.protobuf.Timestamp expiry_time = 11;</code>
+     * @param \Google\Protobuf\Timestamp $var
+     * @return $this
+     */
+    public function setExpiryTime($var)
+    {
+        GPBUtil::checkMessage($var, \Google\Protobuf\Timestamp::class);
+        $this->writeOneof(11, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>uint32 expiry_secs = 12;</code>
+     * @return int
+     */
+    public function getExpirySecs()
+    {
+        return $this->readOneof(12);
+    }
+
+    public function hasExpirySecs()
+    {
+        return $this->hasOneof(12);
+    }
+
+    /**
+     * Generated from protobuf field <code>uint32 expiry_secs = 12;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setExpirySecs($var)
+    {
+        GPBUtil::checkUint32($var);
+        $this->writeOneof(12, $var);
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getExpiry()
+    {
+        return $this->whichOneof("expiry");
     }
 
 }

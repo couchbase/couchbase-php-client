@@ -91,7 +91,6 @@ class Collection implements CollectionInterface
     public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
-        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
         $exportedOptions = UpsertOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
@@ -99,7 +98,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
             "content" => $encodedDocument,
-            "content_type" => $contentType,
+            "content_flags" => $contentType,
         ];
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
@@ -131,7 +130,6 @@ class Collection implements CollectionInterface
     public function insert(string $key, $document, InsertOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
-        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
         $exportedOptions = InsertOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
@@ -139,7 +137,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
             "content" => $encodedDocument,
-            "content_type" => $contentType,
+            "content_flags" => $contentType
         ];
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
@@ -170,7 +168,6 @@ class Collection implements CollectionInterface
     public function replace(string $key, $document, ReplaceOptions $options = null): MutationResult
     {
         [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
-        $contentType = KVConverter::convertTranscoderFlagsToGRPC((TranscoderFlags::decode($contentType))->dataFormat());
         $exportedOptions = ReplaceOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
@@ -178,7 +175,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
             "content" => $encodedDocument,
-            "content_type" => $contentType
+            "content_flags" => $contentType
         ];
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
@@ -254,16 +251,12 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
             [$this->client->kv(), 'Get']
         );
-        $contentType = (new TranscoderFlags(
-            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
-            $res->getCompressionType()
-        ))->encode();
         return new GetResult(
             [
                 "id" => $key,
                 "cas" => strval($res->getCas()),
                 "value" => $res->getContent(),
-                "flags" => $contentType,
+                "flags" => $res->getContentFlags(),
                 "expiry" => $res->getExpiry()?->getSeconds(),
             ],
             GetOptions::getTranscoder($options)
@@ -324,17 +317,12 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndTouch']
         );
-        $contentType = (new TranscoderFlags(
-            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
-            $res->getCompressionType()
-        ))->encode();
         return new GetResult(
             [
                 "id" => $key,
                 "cas" => strval($res->getCas()),
                 "value" => $res->getContent(),
-                "flags" => $contentType,
-                "compression_type" => $res->getCompressionType(),
+                "flags" => $res->getContentFlags(),
                 "expiry" => $res->getExpiry()?->getSeconds(),
             ],
             GetAndTouchOptions::getTranscoder($options)
@@ -362,17 +350,12 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new GetAndLockRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndLock']
         );
-        $contentType = (new TranscoderFlags(
-            KVConverter::convertTranscoderFlagsToClassic($res->getContentType()),
-            $res->getCompressionType()
-        ))->encode();
         return new GetResult(
             [
                 "id" => $key,
                 "cas" => strval($res->getCas()),
                 "value" => $res->getContent(),
-                "flags" => $res->getContentType(),
-                "compression_type" => $contentType,
+                "flags" => $res->getContentFlags(),
                 "expiry" => $res->getExpiry()?->getSeconds(),
             ],
             GetAndLockOptions::getTranscoder($options)
