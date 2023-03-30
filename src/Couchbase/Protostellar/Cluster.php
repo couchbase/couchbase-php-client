@@ -29,6 +29,7 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
 use Couchbase\Protostellar\Internal\SearchConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Management\BucketManager;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
@@ -99,5 +100,10 @@ class Cluster implements ClusterInterface
         );
         $finalArray = SearchConverter::convertSearchResult($response);
         return new SearchResult($finalArray);
+    }
+
+    public function buckets(): BucketManager
+    {
+        return new BucketManager($this->client);
     }
 }
