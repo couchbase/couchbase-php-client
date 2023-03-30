@@ -173,6 +173,9 @@ class KVConverter
         if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in MutateInOptions
             $options["flags"] = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
         }
+        if (isset($exportedOptions["expirySeconds"])) {
+            $options["expiry_secs"] = $exportedOptions["expirySeconds"];
+        }
         return $options;
     }
 
