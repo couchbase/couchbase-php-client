@@ -279,41 +279,6 @@ class KVConverter
     }
 
     /**
-     * @param int $classicFlags
-     * @return int
-     * @throws InvalidArgumentException
-     * @internal
-     */
-    public static function convertTranscoderFlagsToGRPC(int $classicFlags): int
-    {
-        switch ($classicFlags) {
-            case TranscoderFlags::DATA_FORMAT_BINARY:
-                return DocumentContentType::DOCUMENT_CONTENT_TYPE_BINARY;
-            case TranscoderFlags::DATA_FORMAT_JSON:
-                return DocumentContentType::DOCUMENT_CONTENT_TYPE_JSON;
-            default:
-                throw new InvalidArgumentException("Unsupported transcoder content flag");
-        }
-    }
-
-    /**
-     * @param int $grpcFlags
-     * @return int
-     * @internal
-     */
-    public static function convertTranscoderFlagsToClassic(int $grpcFlags): int
-    {
-        switch ($grpcFlags) {
-            case DocumentContentType::DOCUMENT_CONTENT_TYPE_BINARY:
-                return TranscoderFlags::DATA_FORMAT_BINARY;
-            case DocumentContentType::DOCUMENT_CONTENT_TYPE_JSON:
-                return TranscoderFlags::DATA_FORMAT_JSON;
-            default:
-                throw new InvalidArgumentException("Unexpected GRPC content Flag");
-        }
-    }
-
-    /**
      * @param string $durabilityLevel
      * @return int|null
      * @throws InvalidArgumentException
