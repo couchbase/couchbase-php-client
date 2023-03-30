@@ -34,9 +34,9 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
      */
     protected $content = '';
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 12;</code>
      */
-    protected $content_type = 0;
+    protected $content_flags = 0;
     /**
      * Generated from protobuf field <code>optional uint64 cas = 7;</code>
      */
@@ -58,7 +58,7 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
      *     @type string $collection_name
      *     @type string $key
      *     @type string $content
-     *     @type int $content_type
+     *     @type int $content_flags
      *     @type int|string $cas
      *     @type \Google\Protobuf\Timestamp $expiry_time
      *     @type int $expiry_secs
@@ -181,23 +181,23 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 12;</code>
      * @return int
      */
-    public function getContentType()
+    public function getContentFlags()
     {
-        return $this->content_type;
+        return $this->content_flags;
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 12;</code>
      * @param int $var
      * @return $this
      */
-    public function setContentType($var)
+    public function setContentFlags($var)
     {
-        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\DocumentContentType::class);
-        $this->content_type = $var;
+        GPBUtil::checkUint32($var);
+        $this->content_flags = $var;
 
         return $this;
     }

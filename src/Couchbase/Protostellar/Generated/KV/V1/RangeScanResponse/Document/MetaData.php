@@ -14,9 +14,9 @@ use Google\Protobuf\Internal\GPBUtil;
 class MetaData extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>uint32 flags = 1;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 1;</code>
      */
-    protected $flags = 0;
+    protected $content_flags = 0;
     /**
      * Generated from protobuf field <code>optional .google.protobuf.Timestamp expiry = 2;</code>
      */
@@ -29,14 +29,6 @@ class MetaData extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>uint64 cas = 4;</code>
      */
     protected $cas = 0;
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 5;</code>
-     */
-    protected $content_type = 0;
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentCompressionType compression_type = 6;</code>
-     */
-    protected $compression_type = 0;
 
     /**
      * Constructor.
@@ -44,12 +36,10 @@ class MetaData extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type int $flags
+     *     @type int $content_flags
      *     @type \Google\Protobuf\Timestamp $expiry
      *     @type int|string $seqno
      *     @type int|string $cas
-     *     @type int $content_type
-     *     @type int $compression_type
      * }
      */
     public function __construct($data = NULL) {
@@ -58,23 +48,23 @@ class MetaData extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint32 flags = 1;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 1;</code>
      * @return int
      */
-    public function getFlags()
+    public function getContentFlags()
     {
-        return $this->flags;
+        return $this->content_flags;
     }
 
     /**
-     * Generated from protobuf field <code>uint32 flags = 1;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 1;</code>
      * @param int $var
      * @return $this
      */
-    public function setFlags($var)
+    public function setContentFlags($var)
     {
         GPBUtil::checkUint32($var);
-        $this->flags = $var;
+        $this->content_flags = $var;
 
         return $this;
     }
@@ -151,50 +141,6 @@ class MetaData extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkUint64($var);
         $this->cas = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 5;</code>
-     * @return int
-     */
-    public function getContentType()
-    {
-        return $this->content_type;
-    }
-
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentContentType content_type = 5;</code>
-     * @param int $var
-     * @return $this
-     */
-    public function setContentType($var)
-    {
-        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\DocumentContentType::class);
-        $this->content_type = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentCompressionType compression_type = 6;</code>
-     * @return int
-     */
-    public function getCompressionType()
-    {
-        return $this->compression_type;
-    }
-
-    /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DocumentCompressionType compression_type = 6;</code>
-     * @param int $var
-     * @return $this
-     */
-    public function setCompressionType($var)
-    {
-        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\DocumentCompressionType::class);
-        $this->compression_type = $var;
 
         return $this;
     }
