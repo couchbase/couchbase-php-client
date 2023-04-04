@@ -64,6 +64,9 @@ class ExceptionConverter
     public static function convertError(stdClass $status, ProtostellarRequest $request): RequestBehaviour
     {
         try {
+            if ($status->details == "Deadline Exceeded") {
+                return $request->cancelDueToTimeout();
+            }
             ErrorDetails::initOnce();
             $details = $status->metadata["grpc-status-details-bin"][0] ?? null;
             if (is_null($details)) {

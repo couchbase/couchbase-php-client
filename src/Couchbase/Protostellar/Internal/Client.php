@@ -42,7 +42,7 @@ class Client
     {
         $opts = $options->channelOptions($clusterOptions);
         $host = substr($host, strpos($host, "/") + 2) . ":18098";
-        $this->channel = new Channel($host, $options->channelOptions());
+        $this->channel = new Channel($host, []);
         $this->kv = new Generated\KV\V1\KvServiceClient($host, $opts, $this->channel);
         $this->query = new Generated\Query\V1\QueryServiceClient($host, $opts, $this->channel);
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);

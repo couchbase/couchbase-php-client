@@ -23,13 +23,11 @@ namespace Couchbase\Protostellar\Internal;
 
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\InvalidArgumentException;
-use Couchbase\Protostellar\Generated\KV\V1\DocumentContentType;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Flags;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Spec;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Operation;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\StoreSemantic;
 use Couchbase\StoreSemantics;
-use Couchbase\TranscoderFlags;
 use Google\Protobuf\Timestamp;
 
 class KVConverter
@@ -42,8 +40,11 @@ class KVConverter
     public static function convertUpsertOptions($exportedOptions): array
     {
         $options = [];
+        if (isset($exportedOptions["expiryTimestamp"])) {
+            $options["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);
+        }
         if (isset($exportedOptions["expirySeconds"])) {
-            $options["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
+            $options["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
             $options["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
@@ -54,8 +55,11 @@ class KVConverter
     public static function convertInsertOptions($exportedOptions): array
     {
         $options = [];
+        if (isset($exportedOptions["expiryTimestamp"])) {
+            $options["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);
+        }
         if (isset($exportedOptions["expirySeconds"])) {
-            $options["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
+            $options["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
             $options["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
@@ -66,8 +70,11 @@ class KVConverter
     public static function convertReplaceOptions($exportedOptions): array
     {
         $options = [];
+        if (isset($exportedOptions["expiryTimestamp"])) {
+            $options["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);
+        }
         if (isset($exportedOptions["expirySeconds"])) {
-            $options["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
+            $options["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["cas"])) {
             $options["cas"] = $exportedOptions["cas"];
@@ -121,8 +128,11 @@ class KVConverter
         if (isset($exportedOptions["initialValue"])) {
             $options["initial"] = $exportedOptions["initialValue"];
         }
+        if (isset($exportedOptions["expiryTimestamp"])) {
+            $options["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);
+        }
         if (isset($exportedOptions["expirySeconds"])) { //TODO IncrementOptions do not include expirySeconds
-            $options["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
+            $options["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
             $options["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
@@ -172,6 +182,9 @@ class KVConverter
         }
         if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in MutateInOptions
             $options["flags"] = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
+        }
+        if (isset($exportedOptions["expiryTimestamp"])) {
+            $options["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);
         }
         if (isset($exportedOptions["expirySeconds"])) {
             $options["expiry_secs"] = $exportedOptions["expirySeconds"];

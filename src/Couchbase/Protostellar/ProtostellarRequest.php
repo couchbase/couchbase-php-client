@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar;
 
+use Couchbase\Exception\AmbiguousTimeoutException;
+use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Protostellar\Retries\RetryReason;
 use Couchbase\Protostellar\Retries\RetryStrategy;
 
@@ -103,5 +105,16 @@ class ProtostellarRequest
     public function appendContext(string $key, string|array $value): void
     {
         $this->context[$key] = $value;
+    }
+
+    public function cancelDueToTimeout(): RequestBehaviour
+    {
+        $exception = $this->idempotent()
+            ? new UnambiguousTimeoutException(message: "The operation timed out", context: $this->context())
+            : new AmbiguousTimeoutException(
+                message: "The operation timed out and the state might have been changed",
+                context: $this->context()
+            );
+        return RequestBehaviour::fail($exception);
     }
 }
