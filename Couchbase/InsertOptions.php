@@ -77,8 +77,10 @@ class InsertOptions
     public function expiry($seconds): InsertOptions
     {
         if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = null;
             $this->expiryTimestamp = $seconds->getTimestamp();
         } else {
+            $this->expiryTimestamp = null;
             $this->expirySeconds = (int)$seconds;
         }
         return $this;
