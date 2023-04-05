@@ -26,11 +26,11 @@ use DateTimeInterface;
 class ExistsResult extends Result
 {
     private bool $exists;
-    private bool $deleted;
-    private int $expiry;
-    private int $flags;
     private string $cas;
-    private string $sequenceNumber;
+    private ?bool $deleted;
+    private ?int $expiry;
+    private ?int $flags;
+    private ?string $sequenceNumber;
 
     /**
      * @internal
@@ -43,11 +43,19 @@ class ExistsResult extends Result
     {
         parent::__construct($response);
         $this->exists = $response["exists"];
-        $this->deleted = $response["deleted"];
-        $this->expiry = $response["expiry"];
-        $this->flags = $response["flags"];
         $this->cas = $response["cas"];
-        $this->sequenceNumber = $response["sequenceNumber"];
+        if (array_key_exists("deleted", $response)) {
+            $this->deleted = $response["deleted"];
+        }
+        if (array_key_exists("expiry", $response)) {
+            $this->expiry = $response["expiry"];
+        }
+        if (array_key_exists("flags", $response)) {
+            $this->flags = $response["flags"];
+        }
+        if (array_key_exists("sequenceNumber", $response)) {
+            $this->sequenceNumber = $response["sequenceNumber"];
+        }
     }
 
     /**
@@ -67,7 +75,7 @@ class ExistsResult extends Result
      * @return bool
      * @since 4.0.0
      */
-    public function deleted(): bool
+    public function deleted(): ?bool
     {
         return $this->deleted;
     }
@@ -81,17 +89,17 @@ class ExistsResult extends Result
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function sequenceNumber(): string
+    public function sequenceNumber(): ?string
     {
         return $this->sequenceNumber;
     }
 
     /**
-     * @return int
+     * @return int|null
      */
-    public function flags(): int
+    public function flags(): ?int
     {
         return $this->flags;
     }
