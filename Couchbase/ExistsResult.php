@@ -72,7 +72,7 @@ class ExistsResult extends Result
     /**
      * Returns true if the document had been just deleted.
      *
-     * @return bool
+     * @return bool|null
      * @since 4.0.0
      */
     public function deleted(): ?bool
