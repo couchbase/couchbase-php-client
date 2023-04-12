@@ -3185,7 +3185,7 @@ connection_handle::scope_get_all(zval* return_value, const zend_string* bucket_n
             add_assoc_string(&collection, "name", c.name.c_str());
             add_assoc_long(&collection, "max_expiry", c.max_expiry);
             add_next_index_zval(&collections, &collection);
-            }
+        }
         add_assoc_zval(&scope, "collections", &collections);
         add_next_index_zval(&scopes, &scope);
     }
@@ -3987,7 +3987,11 @@ connection_handle::query_index_build_deferred(zval* return_value, const zend_str
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_query_index_get_all(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
+connection_handle::collection_query_index_get_all(zval* return_value,
+                                                  const zend_string* bucket_name,
+                                                  const zend_string* scope_name,
+                                                  const zend_string* collection_name,
+                                                  const zval* options)
 {
     couchbase::core::operations::management::query_index_get_all_request request{};
 
@@ -4038,11 +4042,11 @@ connection_handle::collection_query_index_get_all(zval* return_value, const zend
 COUCHBASE_API
 core_error_info
 connection_handle::collection_query_index_create(const zend_string* bucket_name,
-                                      const zend_string* scope_name,
-                                      const zend_string* collection_name,
-                                      const zend_string* index_name,
-                                      const zval* fields,
-                                      const zval* options)
+                                                 const zend_string* scope_name,
+                                                 const zend_string* collection_name,
+                                                 const zend_string* index_name,
+                                                 const zval* fields,
+                                                 const zval* options)
 {
     if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
         return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for index fields" };
@@ -4091,7 +4095,10 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_query_index_create_primary(const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
+connection_handle::collection_query_index_create_primary(const zend_string* bucket_name,
+                                                         const zend_string* scope_name,
+                                                         const zend_string* collection_name,
+                                                         const zval* options)
 {
     couchbase::core::operations::management::query_index_create_request request{};
 
@@ -4127,10 +4134,10 @@ connection_handle::collection_query_index_create_primary(const zend_string* buck
 COUCHBASE_API
 core_error_info
 connection_handle::collection_query_index_drop(const zend_string* bucket_name,
-                                    const zend_string* scope_name,
-                                    const zend_string* collection_name,
-                                    const zend_string* index_name,
-                                    const zval* options)
+                                               const zend_string* scope_name,
+                                               const zend_string* collection_name,
+                                               const zend_string* index_name,
+                                               const zval* options)
 {
     couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4190,10 +4197,10 @@ connection_handle::collection_query_index_drop_primary(const zend_string* bucket
 COUCHBASE_API
 core_error_info
 connection_handle::collection_query_index_build_deferred(zval* return_value,
-                                                        const zend_string* bucket_name,
-                                                        const zend_string* scope_name,
-                                                        const zend_string* collection_name,
-                                                        const zval* options)
+                                                         const zend_string* bucket_name,
+                                                         const zend_string* scope_name,
+                                                         const zend_string* collection_name,
+                                                         const zval* options)
 {
     couchbase::core::operations::management::query_index_build_deferred_request request{};
 
@@ -4293,6 +4300,12 @@ connection_handle::cluster() const
         (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                                                              \
     }
 
+struct dns_options {
+    std::chrono::milliseconds timeout{ core::timeout_defaults::dns_srv_timeout };
+    std::string nameserver{ core::io::dns::dns_config::default_nameserver };
+    std::uint16_t port{ core::io::dns::dns_config::default_port };
+};
+
 static core_error_info
 apply_options(core::utils::connection_string& connstr, zval* options)
 {
@@ -4303,12 +4316,18 @@ apply_options(core::utils::connection_string& connstr, zval* options)
     const zend_string* key;
     const zval* value;
 
+    dns_options dns{};
+
     ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
     {
         ASSIGN_DURATION_OPTION("analyticsTimeout", connstr.options.analytics_timeout, key, value);
         ASSIGN_DURATION_OPTION("bootstrapTimeout", connstr.options.bootstrap_timeout, key, value);
         ASSIGN_DURATION_OPTION("connectTimeout", connstr.options.connect_timeout, key, value);
-        ASSIGN_DURATION_OPTION("dnsSrvTimeout", connstr.options.dns_srv_timeout, key, value);
+
+        ASSIGN_DURATION_OPTION("dnsSrvTimeout", dns.timeout, key, value);
+        ASSIGN_STRING_OPTION("dnsSrvNameserver", dns.nameserver, key, value);
+        ASSIGN_NUMBER_OPTION("dnsSrvPort", dns.port, key, value);
+
         ASSIGN_DURATION_OPTION("keyValueDurableTimeout", connstr.options.key_value_durable_timeout, key, value);
         ASSIGN_DURATION_OPTION("keyValueTimeout", connstr.options.key_value_timeout, key, value);
         ASSIGN_DURATION_OPTION("managementTimeout", connstr.options.management_timeout, key, value);
@@ -4436,6 +4455,8 @@ apply_options(core::utils::connection_string& connstr, zval* options)
         }
     }
     ZEND_HASH_FOREACH_END();
+
+    connstr.options.dns_config = core::io::dns::dns_config(dns.nameserver, dns.port, dns.timeout);
 
     return {};
 }

@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-03-20</date>
+    <date>2023-04-12</date>
     <version>
         <release>4.1.2</release>
         <api>4.0.0</api>
@@ -151,8 +151,10 @@
                     <file role="php" name="CreateAnalyticsIndexOptions.php"/>
                     <file role="php" name="CreateAnalyticsLinkOptions.php"/>
                     <file role="php" name="CreateBucketOptions.php"/>
+                    <file role="php" name="CreateCollectionOptions.php"/>
                     <file role="php" name="CreateQueryIndexOptions.php"/>
                     <file role="php" name="CreateQueryPrimaryIndexOptions.php"/>
+                    <file role="php" name="CreateScopeOptions.php"/>
                     <file role="php" name="DesignDocument.php"/>
                     <file role="php" name="DisconnectAnalyticsLinkOptions.php"/>
                     <file role="php" name="DropAnalyticsDatasetOptions.php"/>
@@ -160,9 +162,11 @@
                     <file role="php" name="DropAnalyticsIndexOptions.php"/>
                     <file role="php" name="DropAnalyticsLinkOptions.php"/>
                     <file role="php" name="DropBucketOptions.php"/>
+                    <file role="php" name="DropCollectionOptions.php"/>
                     <file role="php" name="DropGroupOptions.php"/>
                     <file role="php" name="DropQueryIndexOptions.php"/>
                     <file role="php" name="DropQueryPrimaryIndexOptions.php"/>
+                    <file role="php" name="DropScopeOptions.php"/>
                     <file role="php" name="DropUserOptions.php"/>
                     <file role="php" name="EncryptionSettings.php"/>
                     <file role="php" name="EvictionPolicy.php"/>
@@ -170,6 +174,7 @@
                     <file role="php" name="GetAllBucketsOptions.php"/>
                     <file role="php" name="GetAllGroupsOptions.php"/>
                     <file role="php" name="GetAllQueryIndexesOptions.php"/>
+                    <file role="php" name="GetAllScopesOptions.php"/>
                     <file role="php" name="GetAllUsersOptions.php"/>
                     <file role="php" name="GetAnalyticsLinksOptions.php"/>
                     <file role="php" name="GetBucketOptions.php"/>
@@ -428,6 +433,7 @@
                                     <file role="src" name="replace.cxx"/>
                                     <file role="src" name="upsert.cxx"/>
                                 </dir>
+                                <file role="src" name="analytics.cxx"/>
                                 <file role="src" name="analytics_error_category.cxx"/>
                                 <file role="src" name="append.cxx"/>
                                 <file role="src" name="best_effort_retry_strategy.cxx"/>
@@ -487,6 +493,7 @@
                                 <file role="src" name="with_legacy_durability.hxx"/>
                             </dir>
                             <dir name="io">
+                                <file role="src" name="dns_client.cxx"/>
                                 <file role="src" name="dns_client.hxx"/>
                                 <file role="src" name="dns_codec.hxx"/>
                                 <file role="src" name="dns_config.cxx"/>
@@ -1030,7 +1037,6 @@
                                 <file role="src" name="url_codec.cxx"/>
                                 <file role="src" name="url_codec.hxx"/>
                             </dir>
-                            <file role="src" name="CMakeLists.txt"/>
                             <file role="src" name="agent.cxx"/>
                             <file role="src" name="agent.hxx"/>
                             <file role="src" name="agent_config.cxx"/>
@@ -1139,6 +1145,7 @@
                                 <file role="src" name="transcoder_traits.hxx"/>
                             </dir>
                             <dir name="fmt">
+                                <file role="src" name="analytics_status.hxx"/>
                                 <file role="src" name="cas.hxx"/>
                                 <file role="src" name="durability_level.hxx"/>
                                 <file role="src" name="key_value_extended_error_info.hxx"/>
@@ -1193,6 +1200,14 @@
                                 <file role="src" name="transactions_config.hxx"/>
                                 <file role="src" name="transactions_query_config.hxx"/>
                             </dir>
+                            <file role="src" name="analytics_error_context.hxx"/>
+                            <file role="src" name="analytics_meta_data.hxx"/>
+                            <file role="src" name="analytics_metrics.hxx"/>
+                            <file role="src" name="analytics_options.hxx"/>
+                            <file role="src" name="analytics_result.hxx"/>
+                            <file role="src" name="analytics_scan_consistency.hxx"/>
+                            <file role="src" name="analytics_status.hxx"/>
+                            <file role="src" name="analytics_warning.hxx"/>
                             <file role="src" name="append_options.hxx"/>
                             <file role="src" name="behavior_options.hxx"/>
                             <file role="src" name="best_effort_retry_strategy.hxx"/>
