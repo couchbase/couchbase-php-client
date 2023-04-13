@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-04-12</date>
+    <date>2023-04-13</date>
     <version>
-        <release>4.1.2</release>
+        <release>4.1.3</release>
         <api>4.0.0</api>
     </version>
     <stability>
@@ -24,18 +24,17 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        * PCBC-888 handle query context changes (#68)
-        * Added optional context to CouchbaseException constructor (#85)
+        * PCBC-915: Fixed timestamp as expiry in mutation options (#88)
+        * PCBC-828: Implemented collection management (#89)
+        * PCBC-918: Extra attributes in ExistsResult now optional (deleted, expiry, flags, and sequenceNumber) (#95)
 
         Notable changes in core C++
         ---------------------------
 
-        * OpenSSL and CentOS 7 (#382)
-        * CXXCBC-144: Search query on collections should not require you to pass in the scope name (#379)
-        * CXXCBC-145: Search query request raw option not used (#380)
-        * CXXCBC-194: Support ExtThreadSafe transaction extension. (#374, #376)
-        * CXXCBC-316: Core txn get_optional after query issue (#385)
-        * CXXCBC-310: Fixed race condition in transaction_context state machine (#386, #378)
+        * CXXCBC-31: Allow to use schema-less connection strings (#394)
+        * CXXCBC-318: Always try TCP if UDP fails in DNS-SRV resolver (#390)
+        * CXXCBC-320: Negative expiry in atr can 'stuck' docs. (#393)
+        * CXXCBC-310: Improve shutdown of the LostTxnCleanup thread. (#389)
     </notes>
     <contents>
         <dir name="/">
@@ -2825,7 +2824,33 @@
     <extsrcrelease/>
     <changelog>
         <release>
-            <date>2023-03-14</date>
+            <date>2023-03-20</date>
+            <version>
+                <release>4.1.2</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-888 handle query context changes (#68)
+                * Added optional context to CouchbaseException constructor (#85)
+
+                Notable changes in core C++
+                ---------------------------
+
+                * OpenSSL and CentOS 7 (#382)
+                * CXXCBC-144: Search query on collections should not require you to pass in the scope name (#379)
+                * CXXCBC-145: Search query request raw option not used (#380)
+                * CXXCBC-194: Support ExtThreadSafe transaction extension. (#374, #376)
+                * CXXCBC-316: Core txn get_optional after query issue (#385)
+                * CXXCBC-310: Fixed race condition in transaction_context state machine (#386, #378)
+            </notes>
+        </release>
+        <release>
+            <date>2023-02-22</date>
             <version>
                 <release>4.1.1</release>
                 <api>4.0.0</api>
