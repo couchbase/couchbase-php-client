@@ -14,25 +14,25 @@ use Google\Protobuf\Internal\GPBUtil;
 class TermQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      */
-    protected $field = '';
+    protected $field = null;
     /**
      * Generated from protobuf field <code>string term = 3;</code>
      */
     protected $term = '';
     /**
-     * Generated from protobuf field <code>uint64 fuzziness = 4;</code>
+     * Generated from protobuf field <code>optional uint64 fuzziness = 4;</code>
      */
-    protected $fuzziness = 0;
+    protected $fuzziness = null;
     /**
-     * Generated from protobuf field <code>uint64 prefix_length = 5;</code>
+     * Generated from protobuf field <code>optional uint64 prefix_length = 5;</code>
      */
-    protected $prefix_length = 0;
+    protected $prefix_length = null;
 
     /**
      * Constructor.
@@ -53,16 +53,26 @@ class TermQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -75,16 +85,26 @@ class TermQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @return string
      */
     public function getField()
     {
-        return $this->field;
+        return isset($this->field) ? $this->field : '';
+    }
+
+    public function hasField()
+    {
+        return isset($this->field);
+    }
+
+    public function clearField()
+    {
+        unset($this->field);
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @param string $var
      * @return $this
      */
@@ -119,16 +139,26 @@ class TermQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint64 fuzziness = 4;</code>
+     * Generated from protobuf field <code>optional uint64 fuzziness = 4;</code>
      * @return int|string
      */
     public function getFuzziness()
     {
-        return $this->fuzziness;
+        return isset($this->fuzziness) ? $this->fuzziness : 0;
+    }
+
+    public function hasFuzziness()
+    {
+        return isset($this->fuzziness);
+    }
+
+    public function clearFuzziness()
+    {
+        unset($this->fuzziness);
     }
 
     /**
-     * Generated from protobuf field <code>uint64 fuzziness = 4;</code>
+     * Generated from protobuf field <code>optional uint64 fuzziness = 4;</code>
      * @param int|string $var
      * @return $this
      */
@@ -141,16 +171,26 @@ class TermQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint64 prefix_length = 5;</code>
+     * Generated from protobuf field <code>optional uint64 prefix_length = 5;</code>
      * @return int|string
      */
     public function getPrefixLength()
     {
-        return $this->prefix_length;
+        return isset($this->prefix_length) ? $this->prefix_length : 0;
+    }
+
+    public function hasPrefixLength()
+    {
+        return isset($this->prefix_length);
+    }
+
+    public function clearPrefixLength()
+    {
+        unset($this->prefix_length);
     }
 
     /**
-     * Generated from protobuf field <code>uint64 prefix_length = 5;</code>
+     * Generated from protobuf field <code>optional uint64 prefix_length = 5;</code>
      * @param int|string $var
      * @return $this
      */

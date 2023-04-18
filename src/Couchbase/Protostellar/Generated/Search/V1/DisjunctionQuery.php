@@ -14,17 +14,17 @@ use Google\Protobuf\Internal\GPBUtil;
 class DisjunctionQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
      * Generated from protobuf field <code>repeated .couchbase.search.v1.Query queries = 2;</code>
      */
     private $queries;
     /**
-     * Generated from protobuf field <code>uint32 minimum = 3;</code>
+     * Generated from protobuf field <code>optional uint32 minimum = 3;</code>
      */
-    protected $minimum = 0;
+    protected $minimum = null;
 
     /**
      * Constructor.
@@ -43,16 +43,26 @@ class DisjunctionQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -87,16 +97,26 @@ class DisjunctionQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint32 minimum = 3;</code>
+     * Generated from protobuf field <code>optional uint32 minimum = 3;</code>
      * @return int
      */
     public function getMinimum()
     {
-        return $this->minimum;
+        return isset($this->minimum) ? $this->minimum : 0;
+    }
+
+    public function hasMinimum()
+    {
+        return isset($this->minimum);
+    }
+
+    public function clearMinimum()
+    {
+        unset($this->minimum);
     }
 
     /**
-     * Generated from protobuf field <code>uint32 minimum = 3;</code>
+     * Generated from protobuf field <code>optional uint32 minimum = 3;</code>
      * @param int $var
      * @return $this
      */

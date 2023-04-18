@@ -14,29 +14,13 @@ use Google\Protobuf\Internal\GPBUtil;
 class MetaData extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration execution_time = 1;</code>
+     * Generated from protobuf field <code>.couchbase.search.v1.SearchQueryResponse.SearchMetrics metrics = 1;</code>
      */
-    protected $execution_time = null;
+    protected $metrics = null;
     /**
-     * Generated from protobuf field <code>uint64 total_rows = 2;</code>
+     * Generated from protobuf field <code>map<string, string> errors = 2;</code>
      */
-    protected $total_rows = 0;
-    /**
-     * Generated from protobuf field <code>double max_score = 3;</code>
-     */
-    protected $max_score = 0.0;
-    /**
-     * Generated from protobuf field <code>uint64 total_partition_count = 4;</code>
-     */
-    protected $total_partition_count = 0;
-    /**
-     * Generated from protobuf field <code>uint64 success_partition_count = 5;</code>
-     */
-    protected $success_partition_count = 0;
-    /**
-     * Generated from protobuf field <code>uint64 error_partition_count = 6;</code>
-     */
-    protected $error_partition_count = 0;
+    private $errors;
 
     /**
      * Constructor.
@@ -44,12 +28,8 @@ class MetaData extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type \Google\Protobuf\Duration $execution_time
-     *     @type int|string $total_rows
-     *     @type float $max_score
-     *     @type int|string $total_partition_count
-     *     @type int|string $success_partition_count
-     *     @type int|string $error_partition_count
+     *     @type \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchMetrics $metrics
+     *     @type array|\Google\Protobuf\Internal\MapField $errors
      * }
      */
     public function __construct($data = NULL) {
@@ -58,143 +38,55 @@ class MetaData extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration execution_time = 1;</code>
-     * @return \Google\Protobuf\Duration|null
+     * Generated from protobuf field <code>.couchbase.search.v1.SearchQueryResponse.SearchMetrics metrics = 1;</code>
+     * @return \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchMetrics|null
      */
-    public function getExecutionTime()
+    public function getMetrics()
     {
-        return $this->execution_time;
+        return $this->metrics;
     }
 
-    public function hasExecutionTime()
+    public function hasMetrics()
     {
-        return isset($this->execution_time);
+        return isset($this->metrics);
     }
 
-    public function clearExecutionTime()
+    public function clearMetrics()
     {
-        unset($this->execution_time);
+        unset($this->metrics);
     }
 
     /**
-     * Generated from protobuf field <code>.google.protobuf.Duration execution_time = 1;</code>
-     * @param \Google\Protobuf\Duration $var
+     * Generated from protobuf field <code>.couchbase.search.v1.SearchQueryResponse.SearchMetrics metrics = 1;</code>
+     * @param \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchMetrics $var
      * @return $this
      */
-    public function setExecutionTime($var)
+    public function setMetrics($var)
     {
-        GPBUtil::checkMessage($var, \Google\Protobuf\Duration::class);
-        $this->execution_time = $var;
+        GPBUtil::checkMessage($var, \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchMetrics::class);
+        $this->metrics = $var;
 
         return $this;
     }
 
     /**
-     * Generated from protobuf field <code>uint64 total_rows = 2;</code>
-     * @return int|string
+     * Generated from protobuf field <code>map<string, string> errors = 2;</code>
+     * @return \Google\Protobuf\Internal\MapField
      */
-    public function getTotalRows()
+    public function getErrors()
     {
-        return $this->total_rows;
+        return $this->errors;
     }
 
     /**
-     * Generated from protobuf field <code>uint64 total_rows = 2;</code>
-     * @param int|string $var
+     * Generated from protobuf field <code>map<string, string> errors = 2;</code>
+     * @param array|\Google\Protobuf\Internal\MapField $var
      * @return $this
      */
-    public function setTotalRows($var)
+    public function setErrors($var)
     {
-        GPBUtil::checkUint64($var);
-        $this->total_rows = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>double max_score = 3;</code>
-     * @return float
-     */
-    public function getMaxScore()
-    {
-        return $this->max_score;
-    }
-
-    /**
-     * Generated from protobuf field <code>double max_score = 3;</code>
-     * @param float $var
-     * @return $this
-     */
-    public function setMaxScore($var)
-    {
-        GPBUtil::checkDouble($var);
-        $this->max_score = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 total_partition_count = 4;</code>
-     * @return int|string
-     */
-    public function getTotalPartitionCount()
-    {
-        return $this->total_partition_count;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 total_partition_count = 4;</code>
-     * @param int|string $var
-     * @return $this
-     */
-    public function setTotalPartitionCount($var)
-    {
-        GPBUtil::checkUint64($var);
-        $this->total_partition_count = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 success_partition_count = 5;</code>
-     * @return int|string
-     */
-    public function getSuccessPartitionCount()
-    {
-        return $this->success_partition_count;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 success_partition_count = 5;</code>
-     * @param int|string $var
-     * @return $this
-     */
-    public function setSuccessPartitionCount($var)
-    {
-        GPBUtil::checkUint64($var);
-        $this->success_partition_count = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 error_partition_count = 6;</code>
-     * @return int|string
-     */
-    public function getErrorPartitionCount()
-    {
-        return $this->error_partition_count;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint64 error_partition_count = 6;</code>
-     * @param int|string $var
-     * @return $this
-     */
-    public function setErrorPartitionCount($var)
-    {
-        GPBUtil::checkUint64($var);
-        $this->error_partition_count = $var;
+        $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::STRING);
+        $this->errors = $arr;
 
         return $this;
     }
