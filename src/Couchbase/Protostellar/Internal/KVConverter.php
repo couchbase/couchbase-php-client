@@ -194,6 +194,7 @@ class KVConverter
 
     public static function getLookupInSpec(array $exportedSpecs): array
     {
+        [$orderedSpecs, $order] = self::orderSubdocSpecs($exportedSpecs);
         $opcodeToSpecOperation = [
             'get' => Spec\Operation::OPERATION_GET,
             'getDocument' => Spec\Operation::OPERATION_GET,
@@ -201,7 +202,7 @@ class KVConverter
             'getCount' => Spec\Operation::OPERATION_COUNT
         ];
         $specs = [];
-        foreach ($exportedSpecs as $spec) {
+        foreach ($orderedSpecs as $spec) {
             $newSpec = new Spec(
                 [
                     "operation" => $opcodeToSpecOperation[$spec['opcode']],
@@ -211,11 +212,31 @@ class KVConverter
             );
             $specs[] = $newSpec;
         }
-        return $specs;
+        return [$specs, $order];
+    }
+
+    private static function orderSubdocSpecs(array $exportedSpecs): array
+    {
+        for ($i = 0; $i < sizeof($exportedSpecs); $i++) {
+            $exportedSpecs[$i]["order"] = $i;
+        }
+        usort(
+            $exportedSpecs,
+            function ($left, $right) {
+                return $right["isXattr"] - $left["isXattr"];
+            }
+        );
+        $order = [];
+        for ($i = 0; $i < sizeof($exportedSpecs); $i++) {
+            $order[] = $exportedSpecs[$i]["order"];
+            unset($exportedSpecs[$i]["order"]);
+        }
+        return [$exportedSpecs, $order];
     }
 
     public static function getMutateInSpec(array $exportedSpecs): array
     {
+        [$orderedSpecs, $order] = self::orderSubdocSpecs($exportedSpecs);
         $opcodeToSpecOperation = [
             'dictionaryAdd' => Operation::OPERATION_INSERT,
             'dictionaryUpsert' => Operation::OPERATION_UPSERT,
@@ -228,7 +249,7 @@ class KVConverter
             'counter' => Operation::OPERATION_COUNTER
         ];
         $specs = [];
-        foreach ($exportedSpecs as $spec) {
+        foreach ($orderedSpecs as $spec) {
             $newSpec = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec(
                 [
                     "operation" => $opcodeToSpecOperation[$spec['opcode']],
@@ -241,7 +262,7 @@ class KVConverter
             );
             $specs[] = $newSpec;
         }
-        return $specs;
+        return [$specs, $order];
     }
 
     private static function convertStoreSemantic(string $storeSemantic): int
@@ -258,27 +279,46 @@ class KVConverter
         }
     }
 
-    public static function convertLookupInRes(array $specs, array $specsReq): array
+    public static function convertLookupInRes(array $specs, array $specsReq, array $order): array
     {
+        $specs = self::orderSubdocRes($specs, $order);
+        $specsReq = self::orderSubdocRes($specsReq, $order);
         $fields = [];
         for ($i = 0; $i < count($specs); $i++) {
             $res = [];
             $res["path"] = $specsReq[$i]->getPath();
-            if (!$specs[$i]->getStatus()) { //TODO: exists doesn't work atm, verify this logic works
-                $res["exists"] = "1";
-            } else {
-                $res["exists"] = null;
+            if ($specs[$i]->getContent() == "true") {
+                $res["exists"] = true;
+            } elseif ($specs[$i]->getContent() == "false") {
+                $res["exists"] = false;
             }
-            if (!empty($specs[$i]->getContent())) {
+            if (!isset($res["exists"]) && $specs[$i]->getContent() !== "") {
                 $res["value"] = $specs[$i]->getContent();
+                $res["exists"] = true;
             }
             $fields[] = $res;
         }
         return $fields;
     }
 
-    public static function convertMutateInRes(array $specs, array $specsReq): array
+    private static function orderSubdocRes(array $specs, array $order): array
     {
+        $temp = [];
+        for ($i = 0; $i < sizeof($specs); $i++) {
+            $temp[$order[$i]] = $specs[$i];
+        }
+
+        for ($i = 0; $i < sizeof($specs); $i++) {
+            $specs[$i] = $temp[$i];
+            $order[$i] = $i;
+        }
+        return $specs;
+    }
+
+    public static function convertMutateInRes(array $specs, array $specsReq, array $order): array
+    {
+        $specs = self::orderSubdocRes($specs, $order);
+        $specsReq = self::orderSubdocRes($specsReq, $order);
         $fields = [];
         for ($i = 0; $i < count($specs); $i++) {
             $res = [];
