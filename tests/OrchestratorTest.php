@@ -31,43 +31,8 @@ use Couchbase\Protostellar\Retries\RetryOrchestrator;
 use Couchbase\Protostellar\Retries\RetryReason;
 use PHPUnit\Framework\TestCase;
 
-final class OrchestratorTest extends TestCase
+final class OrchestratorTest extends \Helpers\CouchbaseTestCaseProtostellar
 {
-    private const CONNECTION_STRING_ENV = "TEST_CONNECTION_STRING";
-    private const BUCKET_NAME_ENV = "TEST_BUCKET";
-
-    private const DEFAULT_CONNECTION_STRING = "localhost";
-    private const DEFAULT_BUCKET_NAME = "default";
-
-    private ClusterInterface $cluster;
-    private CollectionInterface $defaultCollection;
-    private BucketInterface $bucket;
-
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Integration::enableProtostellar();
-        $options = new ClusterOptions();
-        $username = getenv("TEST_USERNAME") ?: "Administrator";
-        $password = getenv("TEST_PASSWORD") ?: "password";
-        $options->credentials($username, $password);
-        $this->cluster = Couchbase\Cluster::connect(
-            getenv(self::CONNECTION_STRING_ENV)
-                ?: self::DEFAULT_CONNECTION_STRING,
-            $options
-        );
-        $this->bucket = $this->cluster->bucket(getenv(self::BUCKET_NAME_ENV) ?: self::DEFAULT_BUCKET_NAME);
-        $this->defaultCollection = $this->bucket->defaultCollection();
-    }
-
-    protected function tearDown(): void
-    {
-        $this->cluster->close();
-        parent::tearDown();
-    }
-
-
     public function testNonIdempotentRetries(): void
     {
         $request = SharedUtils::createProtostellarRequest(new UpsertRequest(), false, Collection::DEFAULT_KV_TIMEOUT);
