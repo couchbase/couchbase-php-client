@@ -27,6 +27,7 @@ use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Flags;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Spec;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Operation;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\StoreSemantic;
+use Couchbase\Protostellar\Generated\KV\V1\TouchResponse;
 use Couchbase\StoreSemantics;
 use Google\Protobuf\Timestamp;
 
@@ -299,6 +300,24 @@ class KVConverter
             $fields[] = $res;
         }
         return $fields;
+    }
+
+    public static function convertTouchRes(string $key, TouchResponse $response): array
+    {
+        $resArr = [
+            "id" => $key,
+            "cas" => strval($response->getCas()),
+        ];
+        if ($response->hasMutationToken()) {
+            $resArr["mutationToken"] =
+                [
+                    "bucketName" => $response->getMutationToken()->getBucketName(),
+                    "partitionId" => $response->getMutationToken()->getVbucketId(),
+                    "partitionUuid" => strval($response->getMutationToken()->getVbucketUuid()),
+                    "sequenceNumber" => strval($response->getMutationToken()->getSeqNo())
+                ];
+        }
+        return $resArr;
     }
 
     private static function orderSubdocRes(array $specs, array $order): array
