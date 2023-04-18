@@ -14,13 +14,9 @@ use Google\Protobuf\Internal\GPBUtil;
 class QueryStringQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
-    /**
-     * Generated from protobuf field <code>string field = 2;</code>
-     */
-    protected $field = '';
+    protected $boost = null;
     /**
      * Generated from protobuf field <code>string query_string = 3;</code>
      */
@@ -33,7 +29,6 @@ class QueryStringQuery extends \Google\Protobuf\Internal\Message
      *     Optional. Data for populating the Message object.
      *
      *     @type float $boost
-     *     @type string $field
      *     @type string $query_string
      * }
      */
@@ -43,16 +38,26 @@ class QueryStringQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -60,28 +65,6 @@ class QueryStringQuery extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkFloat($var);
         $this->boost = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>string field = 2;</code>
-     * @return string
-     */
-    public function getField()
-    {
-        return $this->field;
-    }
-
-    /**
-     * Generated from protobuf field <code>string field = 2;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setField($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->field = $var;
 
         return $this;
     }

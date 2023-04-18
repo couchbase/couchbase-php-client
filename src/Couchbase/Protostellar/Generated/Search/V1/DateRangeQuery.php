@@ -14,25 +14,25 @@ use Google\Protobuf\Internal\GPBUtil;
 class DateRangeQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      */
-    protected $field = '';
+    protected $field = null;
     /**
-     * Generated from protobuf field <code>string date_time_parser = 3;</code>
+     * Generated from protobuf field <code>optional string date_time_parser = 3;</code>
      */
-    protected $date_time_parser = '';
+    protected $date_time_parser = null;
     /**
-     * Generated from protobuf field <code>string start_date = 4;</code>
+     * Generated from protobuf field <code>optional string start_date = 4;</code>
      */
-    protected $start_date = '';
+    protected $start_date = null;
     /**
-     * Generated from protobuf field <code>string end_date = 5;</code>
+     * Generated from protobuf field <code>optional string end_date = 5;</code>
      */
-    protected $end_date = '';
+    protected $end_date = null;
 
     /**
      * Constructor.
@@ -53,16 +53,26 @@ class DateRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -75,16 +85,26 @@ class DateRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @return string
      */
     public function getField()
     {
-        return $this->field;
+        return isset($this->field) ? $this->field : '';
+    }
+
+    public function hasField()
+    {
+        return isset($this->field);
+    }
+
+    public function clearField()
+    {
+        unset($this->field);
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @param string $var
      * @return $this
      */
@@ -97,16 +117,26 @@ class DateRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string date_time_parser = 3;</code>
+     * Generated from protobuf field <code>optional string date_time_parser = 3;</code>
      * @return string
      */
     public function getDateTimeParser()
     {
-        return $this->date_time_parser;
+        return isset($this->date_time_parser) ? $this->date_time_parser : '';
+    }
+
+    public function hasDateTimeParser()
+    {
+        return isset($this->date_time_parser);
+    }
+
+    public function clearDateTimeParser()
+    {
+        unset($this->date_time_parser);
     }
 
     /**
-     * Generated from protobuf field <code>string date_time_parser = 3;</code>
+     * Generated from protobuf field <code>optional string date_time_parser = 3;</code>
      * @param string $var
      * @return $this
      */
@@ -119,16 +149,26 @@ class DateRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string start_date = 4;</code>
+     * Generated from protobuf field <code>optional string start_date = 4;</code>
      * @return string
      */
     public function getStartDate()
     {
-        return $this->start_date;
+        return isset($this->start_date) ? $this->start_date : '';
+    }
+
+    public function hasStartDate()
+    {
+        return isset($this->start_date);
+    }
+
+    public function clearStartDate()
+    {
+        unset($this->start_date);
     }
 
     /**
-     * Generated from protobuf field <code>string start_date = 4;</code>
+     * Generated from protobuf field <code>optional string start_date = 4;</code>
      * @param string $var
      * @return $this
      */
@@ -141,16 +181,26 @@ class DateRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string end_date = 5;</code>
+     * Generated from protobuf field <code>optional string end_date = 5;</code>
      * @return string
      */
     public function getEndDate()
     {
-        return $this->end_date;
+        return isset($this->end_date) ? $this->end_date : '';
+    }
+
+    public function hasEndDate()
+    {
+        return isset($this->end_date);
+    }
+
+    public function clearEndDate()
+    {
+        unset($this->end_date);
     }
 
     /**
-     * Generated from protobuf field <code>string end_date = 5;</code>
+     * Generated from protobuf field <code>optional string end_date = 5;</code>
      * @param string $var
      * @return $this
      */

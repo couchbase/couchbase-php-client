@@ -14,9 +14,9 @@ use Google\Protobuf\Internal\GPBUtil;
 class ConjunctionQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
      * Generated from protobuf field <code>repeated .couchbase.search.v1.Query queries = 2;</code>
      */
@@ -38,16 +38,26 @@ class ConjunctionQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */

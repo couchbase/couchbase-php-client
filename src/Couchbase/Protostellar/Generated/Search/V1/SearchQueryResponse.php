@@ -14,11 +14,15 @@ use Google\Protobuf\Internal\GPBUtil;
 class SearchQueryResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>repeated bytes hits = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.search.v1.SearchQueryResponse.SearchQueryRow hits = 1;</code>
      */
     private $hits;
     /**
-     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 2;</code>
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.SearchQueryResponse.FacetResult> facets = 2;</code>
+     */
+    private $facets;
+    /**
+     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 3;</code>
      */
     protected $meta_data = null;
 
@@ -28,7 +32,8 @@ class SearchQueryResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $hits
+     *     @type array<\Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchQueryRow>|\Google\Protobuf\Internal\RepeatedField $hits
+     *     @type array|\Google\Protobuf\Internal\MapField $facets
      *     @type \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\MetaData $meta_data
      * }
      */
@@ -38,7 +43,7 @@ class SearchQueryResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>repeated bytes hits = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.search.v1.SearchQueryResponse.SearchQueryRow hits = 1;</code>
      * @return \Google\Protobuf\Internal\RepeatedField
      */
     public function getHits()
@@ -47,20 +52,42 @@ class SearchQueryResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>repeated bytes hits = 1;</code>
-     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
+     * Generated from protobuf field <code>repeated .couchbase.search.v1.SearchQueryResponse.SearchQueryRow hits = 1;</code>
+     * @param array<\Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchQueryRow>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setHits($var)
     {
-        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::BYTES);
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\SearchQueryRow::class);
         $this->hits = $arr;
 
         return $this;
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 2;</code>
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.SearchQueryResponse.FacetResult> facets = 2;</code>
+     * @return \Google\Protobuf\Internal\MapField
+     */
+    public function getFacets()
+    {
+        return $this->facets;
+    }
+
+    /**
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.SearchQueryResponse.FacetResult> facets = 2;</code>
+     * @param array|\Google\Protobuf\Internal\MapField $var
+     * @return $this
+     */
+    public function setFacets($var)
+    {
+        $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\FacetResult::class);
+        $this->facets = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 3;</code>
      * @return \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\MetaData|null
      */
     public function getMetaData()
@@ -79,7 +106,7 @@ class SearchQueryResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 2;</code>
+     * Generated from protobuf field <code>optional .couchbase.search.v1.SearchQueryResponse.MetaData meta_data = 3;</code>
      * @param \Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\MetaData $var
      * @return $this
      */

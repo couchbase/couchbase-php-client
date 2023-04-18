@@ -65,6 +65,10 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>bool include_locations = 13;</code>
      */
     protected $include_locations = false;
+    /**
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.Facet> facets = 14;</code>
+     */
+    private $facets;
 
     /**
      * Constructor.
@@ -85,6 +89,7 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
      *     @type bool $disable_scoring
      *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $collections
      *     @type bool $include_locations
+     *     @type array|\Google\Protobuf\Internal\MapField $facets
      * }
      */
     public function __construct($data = NULL) {
@@ -384,6 +389,28 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->include_locations = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.Facet> facets = 14;</code>
+     * @return \Google\Protobuf\Internal\MapField
+     */
+    public function getFacets()
+    {
+        return $this->facets;
+    }
+
+    /**
+     * Generated from protobuf field <code>map<string, .couchbase.search.v1.Facet> facets = 14;</code>
+     * @param array|\Google\Protobuf\Internal\MapField $var
+     * @return $this
+     */
+    public function setFacets($var)
+    {
+        $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Search\V1\Facet::class);
+        $this->facets = $arr;
 
         return $this;
     }

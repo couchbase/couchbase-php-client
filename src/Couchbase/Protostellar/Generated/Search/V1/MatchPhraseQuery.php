@@ -14,21 +14,21 @@ use Google\Protobuf\Internal\GPBUtil;
 class MatchPhraseQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      */
-    protected $field = '';
+    protected $field = null;
     /**
      * Generated from protobuf field <code>string phrase = 3;</code>
      */
     protected $phrase = '';
     /**
-     * Generated from protobuf field <code>string analyzer = 4;</code>
+     * Generated from protobuf field <code>optional string analyzer = 4;</code>
      */
-    protected $analyzer = '';
+    protected $analyzer = null;
 
     /**
      * Constructor.
@@ -48,16 +48,26 @@ class MatchPhraseQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -70,16 +80,26 @@ class MatchPhraseQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @return string
      */
     public function getField()
     {
-        return $this->field;
+        return isset($this->field) ? $this->field : '';
+    }
+
+    public function hasField()
+    {
+        return isset($this->field);
+    }
+
+    public function clearField()
+    {
+        unset($this->field);
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @param string $var
      * @return $this
      */
@@ -114,16 +134,26 @@ class MatchPhraseQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string analyzer = 4;</code>
+     * Generated from protobuf field <code>optional string analyzer = 4;</code>
      * @return string
      */
     public function getAnalyzer()
     {
-        return $this->analyzer;
+        return isset($this->analyzer) ? $this->analyzer : '';
+    }
+
+    public function hasAnalyzer()
+    {
+        return isset($this->analyzer);
+    }
+
+    public function clearAnalyzer()
+    {
+        unset($this->analyzer);
     }
 
     /**
-     * Generated from protobuf field <code>string analyzer = 4;</code>
+     * Generated from protobuf field <code>optional string analyzer = 4;</code>
      * @param string $var
      * @return $this
      */

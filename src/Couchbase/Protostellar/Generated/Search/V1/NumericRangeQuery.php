@@ -14,29 +14,29 @@ use Google\Protobuf\Internal\GPBUtil;
 class NumericRangeQuery extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      */
-    protected $boost = 0.0;
+    protected $boost = null;
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      */
-    protected $field = '';
+    protected $field = null;
     /**
-     * Generated from protobuf field <code>float min = 3;</code>
+     * Generated from protobuf field <code>optional float min = 3;</code>
      */
-    protected $min = 0.0;
+    protected $min = null;
     /**
-     * Generated from protobuf field <code>float max = 4;</code>
+     * Generated from protobuf field <code>optional float max = 4;</code>
      */
-    protected $max = 0.0;
+    protected $max = null;
     /**
-     * Generated from protobuf field <code>bool inclusive_min = 5;</code>
+     * Generated from protobuf field <code>optional bool inclusive_min = 5;</code>
      */
-    protected $inclusive_min = false;
+    protected $inclusive_min = null;
     /**
-     * Generated from protobuf field <code>bool inclusive_max = 6;</code>
+     * Generated from protobuf field <code>optional bool inclusive_max = 6;</code>
      */
-    protected $inclusive_max = false;
+    protected $inclusive_max = null;
 
     /**
      * Constructor.
@@ -58,16 +58,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @return float
      */
     public function getBoost()
     {
-        return $this->boost;
+        return isset($this->boost) ? $this->boost : 0.0;
+    }
+
+    public function hasBoost()
+    {
+        return isset($this->boost);
+    }
+
+    public function clearBoost()
+    {
+        unset($this->boost);
     }
 
     /**
-     * Generated from protobuf field <code>float boost = 1;</code>
+     * Generated from protobuf field <code>optional float boost = 1;</code>
      * @param float $var
      * @return $this
      */
@@ -80,16 +90,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @return string
      */
     public function getField()
     {
-        return $this->field;
+        return isset($this->field) ? $this->field : '';
+    }
+
+    public function hasField()
+    {
+        return isset($this->field);
+    }
+
+    public function clearField()
+    {
+        unset($this->field);
     }
 
     /**
-     * Generated from protobuf field <code>string field = 2;</code>
+     * Generated from protobuf field <code>optional string field = 2;</code>
      * @param string $var
      * @return $this
      */
@@ -102,16 +122,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float min = 3;</code>
+     * Generated from protobuf field <code>optional float min = 3;</code>
      * @return float
      */
     public function getMin()
     {
-        return $this->min;
+        return isset($this->min) ? $this->min : 0.0;
+    }
+
+    public function hasMin()
+    {
+        return isset($this->min);
+    }
+
+    public function clearMin()
+    {
+        unset($this->min);
     }
 
     /**
-     * Generated from protobuf field <code>float min = 3;</code>
+     * Generated from protobuf field <code>optional float min = 3;</code>
      * @param float $var
      * @return $this
      */
@@ -124,16 +154,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>float max = 4;</code>
+     * Generated from protobuf field <code>optional float max = 4;</code>
      * @return float
      */
     public function getMax()
     {
-        return $this->max;
+        return isset($this->max) ? $this->max : 0.0;
+    }
+
+    public function hasMax()
+    {
+        return isset($this->max);
+    }
+
+    public function clearMax()
+    {
+        unset($this->max);
     }
 
     /**
-     * Generated from protobuf field <code>float max = 4;</code>
+     * Generated from protobuf field <code>optional float max = 4;</code>
      * @param float $var
      * @return $this
      */
@@ -146,16 +186,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bool inclusive_min = 5;</code>
+     * Generated from protobuf field <code>optional bool inclusive_min = 5;</code>
      * @return bool
      */
     public function getInclusiveMin()
     {
-        return $this->inclusive_min;
+        return isset($this->inclusive_min) ? $this->inclusive_min : false;
+    }
+
+    public function hasInclusiveMin()
+    {
+        return isset($this->inclusive_min);
+    }
+
+    public function clearInclusiveMin()
+    {
+        unset($this->inclusive_min);
     }
 
     /**
-     * Generated from protobuf field <code>bool inclusive_min = 5;</code>
+     * Generated from protobuf field <code>optional bool inclusive_min = 5;</code>
      * @param bool $var
      * @return $this
      */
@@ -168,16 +218,26 @@ class NumericRangeQuery extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bool inclusive_max = 6;</code>
+     * Generated from protobuf field <code>optional bool inclusive_max = 6;</code>
      * @return bool
      */
     public function getInclusiveMax()
     {
-        return $this->inclusive_max;
+        return isset($this->inclusive_max) ? $this->inclusive_max : false;
+    }
+
+    public function hasInclusiveMax()
+    {
+        return isset($this->inclusive_max);
+    }
+
+    public function clearInclusiveMax()
+    {
+        unset($this->inclusive_max);
     }
 
     /**
-     * Generated from protobuf field <code>bool inclusive_max = 6;</code>
+     * Generated from protobuf field <code>optional bool inclusive_max = 6;</code>
      * @param bool $var
      * @return $this
      */
