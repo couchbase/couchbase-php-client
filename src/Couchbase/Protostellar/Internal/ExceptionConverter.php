@@ -36,6 +36,8 @@ use Couchbase\Exception\IndexExistsException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\Exception\InternalServerFailureException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\PathExistsException;
+use Couchbase\Exception\PathNotFoundException;
 use Couchbase\Exception\RequestCanceledException;
 use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
@@ -106,7 +108,10 @@ class ExceptionConverter
                             return RequestBehaviour::fail(new ScopeNotFoundException(message: "Specified scope was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "collection") {
                             return RequestBehaviour::fail(new CollectionNotFoundException(message: "Specified collection was not found", context: $request->context()));
+                        } elseif ($resourceInfo->getResourceType() == "path") {
+                            return RequestBehaviour::fail(new PathNotFoundException(message: "Specified path was not found", context: $request->context()));
                         }
+
                     } elseif ($protoStatus->getCode() == Code::ALREADY_EXISTS) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentExistsException(message: "Specified document already exists", context: $request->context()));
@@ -118,6 +123,8 @@ class ExceptionConverter
                             return RequestBehaviour::fail(new ScopeExistsException(message: "Specified scope already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "collection") {
                             return RequestBehaviour::fail(new CollectionExistsException(message: "Specified collection already exists", context: $request->context()));
+                        } elseif ($resourceInfo->getResourceType() == "path") {
+                            return RequestBehaviour::fail(new PathExistsException(message: "Specified path already exists", context: $request->context()));
                         }
                     }
                     break;

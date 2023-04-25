@@ -63,6 +63,7 @@ use Couchbase\TranscoderFlags;
 use Couchbase\UnlockOptions;
 use Couchbase\UpsertOptions;
 use DateTimeInterface;
+use Google\Protobuf\Timestamp;
 
 class Collection implements CollectionInterface
 {
@@ -297,19 +298,20 @@ class Collection implements CollectionInterface
      */
     public function getAndTouch(string $key, $expiry, GetAndTouchOptions $options = null): GetResult
     {
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-        } else {
-            $expirySeconds = (int)$expiry;
-        }
         $exportedOptions = GetAndTouchOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
             "collection_name" => $this->name,
             "key" => $key,
-            "expiry" => $expirySeconds
         ];
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+            $request["expiry_time"] = new Timestamp(["seconds" => $expirySeconds]);
+        } else {
+            $expirySeconds = (int)$expiry;
+            $request["expiry_secs"] = $expirySeconds;
+        }
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
@@ -395,19 +397,20 @@ class Collection implements CollectionInterface
      */
     public function touch(string $key, $expiry, TouchOptions $options = null): MutationResult
     {
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-        } else {
-            $expirySeconds = (int)$expiry;
-        }
         $exportedOptions = TouchOptions::export($options);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
             "collection_name" => $this->name,
             "key" => $key,
-            "expiry" => $expirySeconds
         ];
+        if ($expiry instanceof DateTimeInterface) {
+            $expirySeconds = $expiry->getTimestamp();
+            $request["expiry_time"] = new Timestamp(["seconds" => $expirySeconds]);
+        } else {
+            $expirySeconds = (int)$expiry;
+            $request["expiry_secs"] = $expirySeconds;
+        }
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_KV_TIMEOUT;
@@ -415,19 +418,8 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
             [$this->client->kv(), 'Touch']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        $resArr = KVConverter::convertTouchRes($key, $res);
+        return new MutationResult($resArr);
     }
 
     public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
@@ -442,7 +434,7 @@ class Collection implements CollectionInterface
             $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
         }
         $exportedOptions = LookupInOptions::export($options);
-        $specsReq = KVConverter::getLookupInSpec($encoded);
+        [$specsReq, $order] = KVConverter::getLookupInSpec($encoded);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
@@ -458,7 +450,8 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new LookupInRequest($request), true, $timeout),
             [$this->client->kv(), 'LookupIn']
         );
-        $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
+
+        $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq, $order);
         return new LookupInResult(
             [
             "id" => $key,
@@ -481,7 +474,7 @@ class Collection implements CollectionInterface
             $specs
         );
         $exportedOptions = MutateInOptions::export($options);
-        $specsReq = KVConverter::getMutateInSpec($encoded);
+        [$specsReq, $order] = KVConverter::getMutateInSpec($encoded);
         $request = [
             "bucket_name" => $this->bucketName,
             "scope_name" => $this->scopeName,
@@ -497,7 +490,7 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new MutateInRequest($request), false, $timeout),
             [$this->client->kv(), 'MutateIn']
         );
-        $fields = KVConverter::ConvertMutateInRes(SharedUtils::toArray($res->getSpecs()), $specsReq);
+        $fields = KVConverter::convertMutateInRes(SharedUtils::toArray($res->getSpecs()), $specsReq, $order);
         return new MutateInResult(
             [
                 "id" => $key,
