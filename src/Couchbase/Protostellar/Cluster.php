@@ -27,7 +27,8 @@ use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
-use Couchbase\Protostellar\Internal\SearchConverter;
+use Couchbase\Protostellar\Internal\SearchRequestConverter;
+use Couchbase\Protostellar\Internal\SearchResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Management\BucketManager;
 use Couchbase\QueryOptions;
@@ -90,7 +91,7 @@ class Cluster implements ClusterInterface
     public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
     {
         $exportedOptions = SearchOptions::export($options);
-        $request = SearchConverter::getSearchRequest($indexName, $query, $exportedOptions);
+        $request = SearchRequestConverter::getSearchRequest($indexName, $query, $exportedOptions);
         $timeout = isset($exportedOptions["timeoutMilliseconds"])
             ? $exportedOptions["timeoutMilliseconds"] * 1000
             : self::DEFAULT_QUERY_TIMEOUT;
@@ -98,7 +99,7 @@ class Cluster implements ClusterInterface
             SharedUtils::createProtostellarRequest(new SearchQueryRequest($request), true, $timeout),
             [$this->client->search(), 'SearchQuery']
         );
-        $finalArray = SearchConverter::convertSearchResult($response);
+        $finalArray = SearchResponseConverter::convertSearchResult($response);
         return new SearchResult($finalArray);
     }
 

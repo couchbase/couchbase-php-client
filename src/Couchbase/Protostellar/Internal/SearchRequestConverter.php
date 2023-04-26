@@ -42,9 +42,12 @@ use Couchbase\PrefixSearchQuery;
 use Couchbase\Protostellar\Generated\Search\V1\BooleanFieldQuery;
 use Couchbase\Protostellar\Generated\Search\V1\BooleanQuery;
 use Couchbase\Protostellar\Generated\Search\V1\ConjunctionQuery;
+use Couchbase\Protostellar\Generated\Search\V1\DateRange;
+use Couchbase\Protostellar\Generated\Search\V1\DateRangeFacet;
 use Couchbase\Protostellar\Generated\Search\V1\DateRangeQuery;
 use Couchbase\Protostellar\Generated\Search\V1\DisjunctionQuery;
 use Couchbase\Protostellar\Generated\Search\V1\DocIdQuery;
+use Couchbase\Protostellar\Generated\Search\V1\Facet;
 use Couchbase\Protostellar\Generated\Search\V1\FieldSorting;
 use Couchbase\Protostellar\Generated\Search\V1\GeoBoundingBoxQuery;
 use Couchbase\Protostellar\Generated\Search\V1\GeoDistanceQuery;
@@ -55,6 +58,8 @@ use Couchbase\Protostellar\Generated\Search\V1\MatchAllQuery;
 use Couchbase\Protostellar\Generated\Search\V1\MatchNoneQuery;
 use Couchbase\Protostellar\Generated\Search\V1\MatchPhraseQuery;
 use Couchbase\Protostellar\Generated\Search\V1\MatchQuery;
+use Couchbase\Protostellar\Generated\Search\V1\NumericRange;
+use Couchbase\Protostellar\Generated\Search\V1\NumericRangeFacet;
 use Couchbase\Protostellar\Generated\Search\V1\NumericRangeQuery;
 use Couchbase\Protostellar\Generated\Search\V1\PhraseQuery;
 use Couchbase\Protostellar\Generated\Search\V1\PrefixQuery;
@@ -63,6 +68,8 @@ use Couchbase\Protostellar\Generated\Search\V1\QueryStringQuery;
 use Couchbase\Protostellar\Generated\Search\V1\RegexpQuery;
 use Couchbase\Protostellar\Generated\Search\V1\ScoreSorting;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest\HighlightStyle;
+use Couchbase\Protostellar\Generated\Search\V1\Sorting;
+use Couchbase\Protostellar\Generated\Search\V1\TermFacet;
 use Couchbase\Protostellar\Generated\Search\V1\TermQuery;
 use Couchbase\Protostellar\Generated\Search\V1\TermRangeQuery;
 use Couchbase\Protostellar\Generated\Search\V1\WildcardQuery;
@@ -75,7 +82,7 @@ use Couchbase\TermSearchQuery;
 use Couchbase\WildcardSearchQuery;
 use stdClass;
 
-class SearchConverter
+class SearchRequestConverter
 {
     /**
      * @throws InvalidArgumentException
@@ -116,6 +123,9 @@ class SearchConverter
         }
         if (isset($exportedOptions["includeLocations"])) {
             $request["include_locations"] = $exportedOptions["includeLocations"];
+        }
+        if (isset($exportedOptions["facets"])) {
+            $request["facets"] = self::convertFacets($exportedOptions["facets"]);
         }
         return $request;
     }
@@ -620,12 +630,6 @@ class SearchConverter
         );
     }
 
-    public static function convertSearchResult(array $response): array
-    {
-        //TODO: Implement ConvertSearchResult
-        return [];
-    }
-
     /**
      * @throws InvalidArgumentException
      */
@@ -678,16 +682,17 @@ class SearchConverter
         return $sort;
     }
 
-    private static function convertIdSort(stdClass $spec): IdSorting
+    private static function convertIdSort(stdClass $spec): Sorting
     {
         $data = [];
         if (property_exists($spec, "desc")) {
             $data["descending"] = $spec->desc;
         }
-        return new IdSorting($data);
+        $idSorting = new IdSorting($data);
+        return new Sorting(["id_sorting" => $idSorting]);
     }
 
-    private static function convertFieldSort(stdClass $spec): FieldSorting
+    private static function convertFieldSort(stdClass $spec): Sorting
     {
         $data = [];
         $data["field"] = $spec->field;
@@ -703,10 +708,11 @@ class SearchConverter
         if (property_exists($spec, "missing")) {
             $data["missing"] = $spec->missing;
         }
-        return new FieldSorting($data);
+        $fieldSorting = new FieldSorting($data);
+        return new Sorting(["field_sorting" => $fieldSorting]);
     }
 
-    private static function convertGeoDistanceSort(stdClass $spec): GeoDistanceSorting
+    private static function convertGeoDistanceSort(stdClass $spec): Sorting
     {
         $data = [];
         $data["field"] = $spec->field;
@@ -717,16 +723,96 @@ class SearchConverter
         if (property_exists($spec, "unit")) {
             $data["unit"] = $spec->unit;
         }
-        return new GeoDistanceSorting($data);
+        $geoDistanceSort = new GeoDistanceSorting($data);
+        return new Sorting(["geo_distance_sorting" => $geoDistanceSort]);
     }
 
-    private static function convertScoreSort(stdClass $spec): ScoreSorting
+    private static function convertScoreSort(stdClass $spec): Sorting
     {
         $data = [];
         if (property_exists($spec, "desc")) {
             $data["descending"] = $spec->desc;
         }
-        return new ScoreSorting($data);
+        $scoreSorting = new ScoreSorting($data);
+        return new Sorting(["score_sorting" => $scoreSorting]);
+    }
+
+    private static function convertFacets(array $facets): array
+    {
+        $finalRes = [];
+        $decodedFacets = [];
+        foreach ($facets as $name => $facet) {
+            $decodedFacets[$name] = json_decode($facet);
+        }
+        foreach ($decodedFacets as $name => $facet) {
+            if (property_exists($facet, "date_ranges")) {
+                $finalRes[$name] = self::handleDateRangeFacet($facet);
+            } elseif (property_exists($facet, "numeric_ranges")) {
+                $finalRes[$name] = self::handleNumericRangeFacet($facet);
+            } else {
+                $finalRes[$name] = self::handleTermFacet($facet);
+            }
+        }
+        return $finalRes;
+    }
+
+    private static function handleDateRangeFacet(stdClass $facet): Facet
+    {
+        $dateRanges = [];
+        foreach ($facet->date_ranges as $range) {
+            $rangeData = [];
+            $rangeData["name"] = $range->name;
+            if (property_exists($range, "start")) {
+                $rangeData["start"] = $range->start;
+            }
+            if (property_exists($range, "end")) {
+                $rangeData["end"] = $range->end;
+            }
+            $dateRanges[] = new DateRange($rangeData);
+        }
+        $dateRangeFacet = new DateRangeFacet(
+            [
+                "field" => $facet->field,
+                "size" => $facet->size,
+                "date_ranges" => $dateRanges
+            ]
+        );
+        return new Facet(["date_range_facet" => $dateRangeFacet]);
+    }
+
+    public static function handleNumericRangeFacet(stdClass $facet): Facet
+    {
+        $numericRanges = [];
+        foreach ($facet->numeric_ranges as $range) {
+            $rangeData = [];
+            $rangeData["name"] = $range->name;
+            if (property_exists($range, "min")) {
+                $rangeData["min"] = $range->min;
+            }
+            if (property_exists($range, "max")) {
+                $rangeData["max"] = $range->max;
+            }
+            $numericRanges[] = new NumericRange($rangeData);
+        }
+        $numericRangeFacet = new NumericRangeFacet(
+            [
+                "field" => $facet->field,
+                "size" => $facet->size,
+                "numeric_ranges" => $numericRanges
+            ]
+        );
+        return new Facet(["numeric_range_facet" => $numericRangeFacet]);
+    }
+
+    public static function handleTermFacet(stdClass $facet): Facet
+    {
+        $termFacet = new TermFacet(
+            [
+                "field" => $facet->field,
+                "size" => $facet->size
+            ]
+        );
+        return new Facet(["term_facet" => $termFacet]);
     }
 
     /**
