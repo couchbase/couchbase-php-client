@@ -39,6 +39,15 @@ class SharedUtils
         return $ret;
     }
 
+    public static function toAssociativeArray($rf): array
+    {
+        $ret = [];
+        foreach ($rf as $key => $value) {
+            $ret[$key] = $value;
+        }
+        return $ret;
+    }
+
     public static function createProtostellarRequest(mixed $grpcRequest, bool $idempotent, float $timeout): ProtostellarRequest
     {
         return new ProtostellarRequest(
