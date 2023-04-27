@@ -24,9 +24,7 @@ class TimeoutsTest extends CouchbaseTestCaseProtostellar
     }
     public function testSettingNoTimeoutGetsDefault()
     {
-        $clusterOptions = new ClusterOptions();
-        $clusterOptions->authenticator(self::env()->buildPasswordAuthenticator());
-        $client = new Client(self::env()->connectionString(), $clusterOptions);
+        $client = $this->getDefaultClient();
         $exportedOptions = GetOptions::export(new GetOptions());
         $timeout = $client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $this->assertEquals(2.5e6, $timeout);
@@ -41,6 +39,17 @@ class TimeoutsTest extends CouchbaseTestCaseProtostellar
         $exportedOptions = UpsertOptions::export(UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY));
         $timeout = $client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $this->assertEquals(1e7, $timeout);
+    }
+
+    public function testDurableTimeoutSetToNone()
+    {
+        $clusterOptions = new ClusterOptions();
+        $clusterOptions->authenticator(self::env()->buildPasswordAuthenticator());
+        $clusterOptions->keyValueTimeout(6000);
+        $client = new Client(self::env()->connectionString(), $clusterOptions);
+        $exportedOptions = UpsertOptions::export(UpsertOptions::build()->durabilityLevel(DurabilityLevel::NONE));
+        $timeout = $client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
+        $this->assertEquals(6e6, $timeout);
     }
 
     public function testOperationTimeoutTakesPrecedence()
