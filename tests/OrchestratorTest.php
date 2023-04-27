@@ -18,24 +18,21 @@
 
 declare(strict_types=1);
 
-use Couchbase\BucketInterface;
-use Couchbase\ClusterInterface;
-use Couchbase\ClusterOptions;
-use Couchbase\CollectionInterface;
-use Couchbase\Integration;
-use Couchbase\Protostellar\Collection;
 use Couchbase\Protostellar\Generated\KV\V1\GetRequest;
 use Couchbase\Protostellar\Generated\KV\V1\UpsertRequest;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Retries\RetryOrchestrator;
 use Couchbase\Protostellar\Retries\RetryReason;
-use PHPUnit\Framework\TestCase;
+use Couchbase\UpsertOptions;
 
+include_once __DIR__ . "/Helpers/CouchbaseTestCaseProtostellar.php";
 final class OrchestratorTest extends \Helpers\CouchbaseTestCaseProtostellar
 {
     public function testNonIdempotentRetries(): void
     {
-        $request = SharedUtils::createProtostellarRequest(new UpsertRequest(), false, Collection::DEFAULT_KV_TIMEOUT);
+        $timeout = $this->getDefaultClient()->timeoutHandler()->getTimeout(TimeoutHandler::KV, UpsertOptions::export(new UpsertOptions()));
+        $request = SharedUtils::createProtostellarRequest(new UpsertRequest(), false, $timeout);
         $behaviour = RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::KV_LOCKED));
         $this->assertNull($behaviour->exception());
         $this->assertEquals(1_500, $behaviour->retryDuration()); //1500 per ExponentialBackoff Calculator
@@ -43,7 +40,8 @@ final class OrchestratorTest extends \Helpers\CouchbaseTestCaseProtostellar
 
     public function testIdempotentRetries(): void
     {
-        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, Collection::DEFAULT_KV_TIMEOUT);
+        $timeout = $this->getDefaultClient()->timeoutHandler()->getTimeout(TimeoutHandler::KV, UpsertOptions::export(new UpsertOptions()));
+        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, $timeout);
         $behaviour = RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::UNKNOWN));
         $this->assertNull($behaviour->exception());
         $this->assertEquals(1_500, $behaviour->retryDuration());
@@ -51,7 +49,8 @@ final class OrchestratorTest extends \Helpers\CouchbaseTestCaseProtostellar
 
     public function testIdempotentRetriesWithTwoPriorRetries(): void
     {
-        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, Collection::DEFAULT_KV_TIMEOUT);
+        $timeout = $this->getDefaultClient()->timeoutHandler()->getTimeout(TimeoutHandler::KV, UpsertOptions::export(new UpsertOptions()));
+        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, $timeout);
         $request->incrementRetryAttempts(new RetryReason(RetryReason::UNKNOWN));
         $request->incrementRetryAttempts(new RetryReason(RetryReason::UNKNOWN));
         $this->assertEquals(2, $request->retryAttempts());
@@ -62,7 +61,8 @@ final class OrchestratorTest extends \Helpers\CouchbaseTestCaseProtostellar
 
     public function testAlwaysRetry(): void
     {
-        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, Collection::DEFAULT_KV_TIMEOUT);
+        $timeout = $this->getDefaultClient()->timeoutHandler()->getTimeout(TimeoutHandler::KV, UpsertOptions::export(new UpsertOptions()));
+        $request = SharedUtils::createProtostellarRequest(new GetRequest(), true, $timeout);
         $behaviour = RetryOrchestrator::maybeRetry($request, RetryReason::build(RetryReason::KV_COLLECTION_OUTDATED));
         $this->assertNull($behaviour->exception());
         $this->assertEquals(1_000, $behaviour->retryDuration()); //Controlled backoff duration

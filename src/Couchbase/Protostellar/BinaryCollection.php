@@ -33,8 +33,9 @@ use Couchbase\Protostellar\Generated\KV\V1\IncrementRequest;
 use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\KVConverter;
-
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
+
 use const Grpc\STATUS_OK;
 
 class BinaryCollection implements BinaryCollectionInterface
@@ -78,9 +79,7 @@ class BinaryCollection implements BinaryCollectionInterface
             "key" => $key,
             "content" => $value,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : Collection::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertAppendOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new AppendRequest($request), false, $timeout),
@@ -114,9 +113,7 @@ class BinaryCollection implements BinaryCollectionInterface
             "key" => $key,
             "content" => $value,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : Collection::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertPrependOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new PrependRequest($request), false, $timeout),
@@ -149,9 +146,7 @@ class BinaryCollection implements BinaryCollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : Collection::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertIncrementOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new IncrementRequest($request), false, $timeout),
@@ -185,9 +180,7 @@ class BinaryCollection implements BinaryCollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : Collection::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertDecrementOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DecrementRequest($request), false, $timeout),

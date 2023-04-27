@@ -34,6 +34,7 @@ class Client
     private Generated\Search\V1\SearchServiceClient $search;
     private Generated\Admin\Collection\V1\CollectionAdminServiceClient $collectionAdmin;
     private Generated\Admin\Bucket\V1\BucketAdminServiceClient $bucketAdmin;
+    private TimeoutHandler $timeoutHandler;
 
     /**
      * @throws InvalidArgumentException
@@ -48,6 +49,7 @@ class Client
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);
         $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $opts, $this->channel);
         $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $opts, $this->channel);
+        $this->timeoutHandler = new TimeoutHandler($clusterOptions->export());
     }
 
     public function close()
@@ -78,5 +80,10 @@ class Client
     public function bucketAdmin(): Generated\Admin\Bucket\V1\BucketAdminServiceClient
     {
         return $this->bucketAdmin;
+    }
+
+    public function timeoutHandler(): TimeoutHandler
+    {
+        return $this->timeoutHandler;
     }
 }

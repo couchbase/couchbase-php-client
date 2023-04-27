@@ -8,6 +8,7 @@ use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\CollectionInterface;
 use Couchbase\Integration;
+use Couchbase\Protostellar\Internal\Client;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -105,6 +106,12 @@ class CouchbaseTestCaseProtostellar extends TestCase
                 )
             );
         }
+    }
+    protected function getDefaultClient(): Client
+    {
+        $clusterOptions = new ClusterOptions();
+        $clusterOptions->authenticator(self::env()->buildPasswordAuthenticator());
+        return new Client(self::env()->connectionString(), $clusterOptions);
     }
 
     protected function version(): ServerVersion

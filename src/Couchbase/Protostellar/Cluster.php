@@ -30,6 +30,7 @@ use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
 use Couchbase\Protostellar\Internal\SearchRequestConverter;
 use Couchbase\Protostellar\Internal\SearchResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Management\BucketManager;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
@@ -44,7 +45,6 @@ class Cluster implements ClusterInterface
 {
     private Client $client;
 
-    public const DEFAULT_QUERY_TIMEOUT = 7.5e7;
 
     public function __construct(string $connectionString, ClusterOptions $options = new ClusterOptions())
     {
@@ -68,9 +68,7 @@ class Cluster implements ClusterInterface
     {
         $exportedOptions = QueryOptions::export($options);
         $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_QUERY_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::QUERY, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
             SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
             [$this->client->query(), 'Query']
@@ -92,9 +90,7 @@ class Cluster implements ClusterInterface
     {
         $exportedOptions = SearchOptions::export($options);
         $request = SearchRequestConverter::getSearchRequest($indexName, $query, $exportedOptions);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_QUERY_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::SEARCH, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
             SharedUtils::createProtostellarRequest(new SearchQueryRequest($request), true, $timeout),
             [$this->client->search(), 'SearchQuery']
