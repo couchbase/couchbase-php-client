@@ -34,11 +34,11 @@ use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsRequest;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\CollectionManagementConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
 
 class CollectionManager
 {
-    const DEFAULT_MANAGEMENT_TIMEOUT = 7.5e7;
     private string $bucketName;
     private Client $client;
 
@@ -54,9 +54,7 @@ class CollectionManager
         $request = [
             "bucket_name" => $this->bucketName
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ListCollectionsRequest($request), true, $timeout),
             [$this->client->collectionAdmin(), 'ListCollections']
@@ -71,9 +69,7 @@ class CollectionManager
             "bucket_name" => $this->bucketName,
             "scope_name" => $name
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateScopeRequest($request), false, $timeout),
             [$this->client->collectionAdmin(), 'CreateScope']
@@ -87,9 +83,7 @@ class CollectionManager
             "bucket_name" => $this->bucketName,
             "scope_name" => $name
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DeleteScopeRequest($request), false, $timeout),
             [$this->client->collectionAdmin(), 'DeleteScope']
@@ -100,9 +94,7 @@ class CollectionManager
     {
         $exportedOptions = CreateCollectionOptions::export($options);
         $request = CollectionManagementConverter::getCreateCollectionRequest($this->bucketName, $collection);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateCollectionRequest($request), false, $timeout),
             [$this->client->collectionAdmin(), 'CreateCollection']
@@ -113,9 +105,7 @@ class CollectionManager
     {
         $exportedOptions = DropCollectionOptions::export($options);
         $request = CollectionManagementConverter::getDropCollectionRequest($this->bucketName, $collection);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DeleteCollectionRequest($request), false, $timeout),
             [$this->client->collectionAdmin(), 'DeleteCollection']

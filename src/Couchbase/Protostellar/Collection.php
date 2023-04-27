@@ -43,6 +43,7 @@ use Couchbase\MutationResult;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\RemoveOptions;
 use Couchbase\ReplaceOptions;
 use Couchbase\Result;
@@ -68,8 +69,6 @@ use Google\Protobuf\Timestamp;
 class Collection implements CollectionInterface
 {
     public const DEFAULT_NAME = "_default";
-
-    public const DEFAULT_KV_TIMEOUT = 2.5e6;
 
     private Client $client;
     private string $bucketName;
@@ -101,9 +100,7 @@ class Collection implements CollectionInterface
             "content" => $encodedDocument,
             "content_flags" => $contentType,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertUpsertOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UpsertRequest($request), false, $timeout),
@@ -111,15 +108,15 @@ class Collection implements CollectionInterface
         );
         return new MutationResult(
             [
-            "id" => $key,
-            "cas" => strval($res->getCas()),
-            "mutationToken" =>
-                [
-                "bucketName" => $res->getMutationToken()->getBucketName(),
-                "partitionId" => $res->getMutationToken()->getVbucketId(),
-                "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                ]
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "mutationToken" =>
+                    [
+                        "bucketName" => $res->getMutationToken()->getBucketName(),
+                        "partitionId" => $res->getMutationToken()->getVbucketId(),
+                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
+                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
+                    ]
             ]
         );
     }
@@ -140,9 +137,7 @@ class Collection implements CollectionInterface
             "content" => $encodedDocument,
             "content_flags" => $contentType
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertInsertOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new InsertRequest($request), false, $timeout),
@@ -178,9 +173,7 @@ class Collection implements CollectionInterface
             "content" => $encodedDocument,
             "content_flags" => $contentType
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertReplaceOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ReplaceRequest($request), false, $timeout),
@@ -213,9 +206,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertRemoveOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new RemoveRequest($request), false, $timeout),
@@ -245,9 +236,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
             [$this->client->kv(), 'Get']
@@ -276,9 +265,7 @@ class Collection implements CollectionInterface
             "collection_name" => $this->name,
             "key" => $key,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ExistsRequest($request), true, $timeout),
             [$this->client->kv(), 'Exists']
@@ -312,9 +299,7 @@ class Collection implements CollectionInterface
             $expirySeconds = (int)$expiry;
             $request["expiry_secs"] = $expirySeconds;
         }
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndTouch']
@@ -345,9 +330,7 @@ class Collection implements CollectionInterface
             "key" => $key,
             "lock_time" => $lockTimeSeconds
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetAndLockRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndLock']
@@ -377,9 +360,7 @@ class Collection implements CollectionInterface
             "key" => $key,
             "cas" => $cas,
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UnlockRequest($request), false, $timeout),
             [$this->client->kv(), 'Unlock']
@@ -411,9 +392,7 @@ class Collection implements CollectionInterface
             $expirySeconds = (int)$expiry;
             $request["expiry_secs"] = $expirySeconds;
         }
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
             [$this->client->kv(), 'Touch']
@@ -442,9 +421,7 @@ class Collection implements CollectionInterface
             "key" => $key,
             "specs" => $specsReq
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertLookupInOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new LookupInRequest($request), true, $timeout),
@@ -454,9 +431,9 @@ class Collection implements CollectionInterface
         $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq, $order);
         return new LookupInResult(
             [
-            "id" => $key,
-            "cas" => strval($res->getCas()),
-            "fields" => $fields
+                "id" => $key,
+                "cas" => strval($res->getCas()),
+                "fields" => $fields
             ],
             LookupInOptions::getTranscoder($options)
         );
@@ -482,9 +459,7 @@ class Collection implements CollectionInterface
             "key" => $key,
             "specs" => $specsReq
         ];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_KV_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $request = array_merge($request, KVConverter::convertMutateInOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new MutateInRequest($request), false, $timeout),

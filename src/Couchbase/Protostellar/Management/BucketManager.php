@@ -37,12 +37,12 @@ use Couchbase\Protostellar\Generated\Admin\Bucket\V1\UpdateBucketRequest;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\BucketManagementConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
 
 class BucketManager
 {
     private Client $client;
-    public const DEFAULT_MANAGEMENT_TIMEOUT = 7.5e7;
 
     public function __construct(Client $client)
     {
@@ -57,9 +57,7 @@ class BucketManager
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = CreateBucketOptions::export($options);
         $request = BucketManagementConverter::getCreateBucketRequest($exportedSettings);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateBucketRequest($request), false, $timeout),
             [$this->client->bucketAdmin(), 'CreateBucket']
@@ -71,9 +69,7 @@ class BucketManager
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = UpdateBucketOptions::export($options);
         $request = BucketManagementConverter::getUpdateBucketRequest($exportedSettings);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UpdateBucketRequest($request), false, $timeout),
             [$this->client->bucketAdmin(), 'UpdateBucket']
@@ -84,9 +80,7 @@ class BucketManager
     {
         $exportedOptions = DropBucketOptions::export($options);
         $request = ["bucket_name" => $name];
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DeleteBucketRequest($request), false, $timeout),
             [$this->client->bucketAdmin(), 'DeleteBucket']
@@ -113,9 +107,7 @@ class BucketManager
     public function getAllBuckets(GetAllBucketsOptions $options = null): array
     {
         $exportedOptions = GetAllBucketsOptions::export($options);
-        $timeout = isset($exportedOptions["timeoutMilliseconds"])
-            ? $exportedOptions["timeoutMilliseconds"] * 1000
-            : self::DEFAULT_MANAGEMENT_TIMEOUT;
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ListBucketsRequest(), true, $timeout),
             [$this->client->bucketAdmin(), 'ListBuckets']
