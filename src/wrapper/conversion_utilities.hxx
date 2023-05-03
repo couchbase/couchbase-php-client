@@ -316,7 +316,7 @@ cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas);
 core_error_info
 cb_assign_cas(couchbase::cas& cas, const zval* document);
 
-std::pair<core_error_info, std::optional<durability_level>>
+std::pair<core_error_info, std::optional<couchbase::durability_level>>
 cb_get_durability_level(const zval* options);
 
 std::pair<core_error_info, std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>

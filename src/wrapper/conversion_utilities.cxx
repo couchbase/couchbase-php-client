@@ -598,7 +598,7 @@ cb_get_timeout(const zval* options)
     return { {}, std::chrono::milliseconds(Z_LVAL_P(value)) };
 }
 
-std::pair<core_error_info, std::optional<durability_level>>
+std::pair<core_error_info, std::optional<couchbase::durability_level>>
 cb_get_durability_level(const zval* options)
 {
     if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
@@ -621,16 +621,16 @@ cb_get_durability_level(const zval* options)
             return { { errc::common::invalid_argument, ERROR_LOCATION, "expected durabilityLevel to be a string in the options" }, {} };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-        return { {}, durability_level::none };
+        return { {}, couchbase::durability_level::none };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majority")) == 0) {
-        return { {}, durability_level::majority };
+        return { {}, couchbase::durability_level::majority };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("majorityAndPersistToActive")) == 0) {
-        return { {}, durability_level::majority_and_persist_to_active };
+        return { {}, couchbase::durability_level::majority_and_persist_to_active };
     }
     if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("persistToMajority")) == 0) {
-        return { {}, durability_level::persist_to_majority };
+        return { {}, couchbase::durability_level::persist_to_majority };
     }
     return { { errc::common::invalid_argument,
                ERROR_LOCATION,
