@@ -198,6 +198,7 @@ class QueryConverter
         $finalMetaData = [];
         $finalMetaData["requestId"] = $metadata->getRequestId();
         $finalMetaData["clientContextId"] = $metadata->getClientContextId();
+        $finalMetaData["signature"] = $metadata->getSignature();
         if ($metadata->hasMetrics()) {
             $finalMetaData["metrics"] = self::convertMetrics($metadata->getMetrics());
         }
