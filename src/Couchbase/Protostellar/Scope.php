@@ -23,6 +23,10 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
+use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
+use Couchbase\Protostellar\Internal\QueryConverter;
+use Couchbase\Protostellar\Internal\SharedUtils;
+use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\ScopeInterface;
@@ -55,8 +59,17 @@ class Scope implements ScopeInterface
 
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
-        // TODO: Implement query() method.
-        return new QueryResult();
+        $exportedOptions = QueryOptions::export($options);
+        $exportedOptions["bucketName"] = $this->bucketName;
+        $exportedOptions["scopeName"] = $this->name;
+        $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::QUERY, $exportedOptions);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
+            [$this->client->query(), 'Query']
+        );
+        $finalArray = QueryConverter::convertQueryResult($response);
+        return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }
 
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
