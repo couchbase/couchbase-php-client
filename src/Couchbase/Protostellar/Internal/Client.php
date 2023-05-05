@@ -39,11 +39,12 @@ class Client
     /**
      * @throws InvalidArgumentException
      */
-    public function __construct(string $host, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
+    public function __construct(string $connectionString, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
     {
-        $opts = $options->channelOptions($clusterOptions);
-        $host = substr($host, strpos($host, "/") + 2) . ":18098";
-        $this->channel = new Channel($host, []);
+        $parsedConnectionString = parse_url($connectionString);
+        $opts = $options->channelOptions($clusterOptions->export());
+        $host = $parsedConnectionString['host'] . ":18098";
+        $this->channel = new Channel($host, $options->getChannelCredentials($parsedConnectionString, $clusterOptions->export()));
         $this->kv = new Generated\KV\V1\KvServiceClient($host, $opts, $this->channel);
         $this->query = new Generated\Query\V1\QueryServiceClient($host, $opts, $this->channel);
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);

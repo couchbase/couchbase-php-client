@@ -22,21 +22,39 @@ namespace Couchbase\Protostellar\Internal;
 
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
+use Grpc\ChannelCredentials;
 
 class ClientOptions
 {
     /**
      * @throws InvalidArgumentException
      */
-    public function channelOptions(ClusterOptions $options): array
+    public function channelOptions(array $exported): array
     {
-        $exported = $options->export();
         $creds = $this->getCredentials($exported['authenticator']);
         return [
             'update_metadata' => function ($metaData) use ($creds) {
                 $metaData['authorization'] = [$creds];
                 return $metaData;
-            }
+            },
+        ];
+    }
+
+    public function getChannelCredentials(array $parsedConnString, array $exported): array
+    {
+        $certPath = "";
+        if (isset($parsedConnString["query"])) {
+            $queryArr = self::parseURIQuery($parsedConnString["query"]);
+            $certPath = $queryArr["certpath"] ?? $certPath;
+        }
+        $certPath = $exported["trustCertificate"] ?? $certPath; //Overwriting certificate path if set in ClusterOptions
+        return empty($certPath) ? self::getChannelCredentialsInsecure() : ['credentials' => ChannelCredentials::createSsl(file_get_contents($certPath))];
+    }
+
+    public static function getChannelCredentialsInsecure(): array
+    {
+        return [
+            'credentials' => ChannelCredentials::createInsecure(),
         ];
     }
 
@@ -50,5 +68,24 @@ class ClientOptions
         } else {
             throw new InvalidArgumentException("Unsupported type of the authenticator: " . $authenticator['type']);
         }
+    }
+
+    private static function parseURIQuery(string $str): array
+    {
+        $arr = [];
+        $pairs = explode('&', $str);
+        foreach ($pairs as $i) {
+            list($name,$value) = explode('=', $i, 2);
+            if (isset($arr[$name])) {
+                if (is_array($arr[$name])) {
+                    $arr[$name][] = $value;
+                } else {
+                    $arr[$name] = array($arr[$name], $value);
+                }
+            } else {
+                $arr[$name] = $value;
+            }
+        }
+        return $arr;
     }
 }
