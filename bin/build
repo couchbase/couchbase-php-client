@@ -94,9 +94,9 @@ Dir.chdir(PROJECT_ROOT) do
 end
 
 COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
-unless File.exists?(COUCHBASE_EXT)
+unless File.exist?(COUCHBASE_EXT)
   alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
-  if File.exists?(alt_filename)
+  if File.exist?(alt_filename)
     COUCHBASE_EXT = alt_filename
   end
 end
