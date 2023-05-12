@@ -35,9 +35,9 @@ DEFAULT_PHP_PREFIX =
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
 
 COUCHBASE_EXT="#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
-unless File.exists?(COUCHBASE_EXT)
+unless File.exist?(COUCHBASE_EXT)
   alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
-  if File.exists?(alt_filename)
+  if File.exist?(alt_filename)
     COUCHBASE_EXT = alt_filename
   end
 end

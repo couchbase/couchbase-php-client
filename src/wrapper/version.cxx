@@ -33,9 +33,10 @@ core_version(zval* return_value)
     add_assoc_string(return_value, "cxx_client_revision", COUCHBASE_CXX_CLIENT_GIT_REVISION);
 
     for (const auto& [name, value] : core::meta::sdk_build_info()) {
-        if (name == "version_major" || name == "version_minor" || name == "version_patch" || name == "version_build") {
+        if (name == "version_major" || name == "version_minor" || name == "version_patch" || name == "version_build" ||
+            name == "__cplusplus" || name == "_MSC_VER" || name == "mozilla_ca_bundle_size") {
             add_assoc_long_ex(return_value, name.c_str(), name.size(), std::stoi(value));
-        } else if (name == "snapshot" || name == "static_stdlib" || name == "static_openssl") {
+        } else if (name == "snapshot" || name == "static_stdlib" || name == "static_openssl" || name == "mozilla_ca_bundle_embedded") {
             add_assoc_bool_ex(return_value, name.c_str(), name.size(), value == "true");
         } else {
             add_assoc_stringl_ex(return_value, name.c_str(), name.size(), value.c_str(), value.size());
