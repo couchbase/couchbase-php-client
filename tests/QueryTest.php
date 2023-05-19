@@ -52,7 +52,7 @@ class QueryTest extends CouchbaseTestCaseProtostellar
 
         $meta = $res->metaData();
         $this->assertNotEmpty($meta);
-        $this->assertEquals("STATUS_SUCCESS", $meta->status());
+        $this->assertEquals("success", $meta->status());
         $this->assertNotNull($meta->requestId());
         $this->assertNotNull($meta->metrics());
         $this->assertNotNull($meta->signature());
@@ -151,7 +151,6 @@ class QueryTest extends CouchbaseTestCaseProtostellar
         $this->assertIsArray($row);
         $this->assertEquals("Hello, PHP!", $row["message"]);
     }
-
     public function testRowsShapeNonAssociative()
     {
 
@@ -218,7 +217,7 @@ class QueryTest extends CouchbaseTestCaseProtostellar
         $this->assertEquals(42, $res->rows()[0][$collectionName]['bar']);
     }
 
-    public function testScope() //TODO: Scope query not implemented in PS
+    public function testScope()
     {
         $bucketName = $this->env()->bucketName();
         $nameSpace = $this->nameSpace($bucketName);
