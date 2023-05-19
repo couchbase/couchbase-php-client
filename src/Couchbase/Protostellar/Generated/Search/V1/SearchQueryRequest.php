@@ -69,6 +69,14 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>map<string, .couchbase.search.v1.Facet> facets = 14;</code>
      */
     private $facets;
+    /**
+     * Generated from protobuf field <code>optional string bucket_name = 15;</code>
+     */
+    protected $bucket_name = null;
+    /**
+     * Generated from protobuf field <code>optional string scope_name = 16;</code>
+     */
+    protected $scope_name = null;
 
     /**
      * Constructor.
@@ -90,6 +98,8 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
      *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $collections
      *     @type bool $include_locations
      *     @type array|\Google\Protobuf\Internal\MapField $facets
+     *     @type string $bucket_name
+     *     @type string $scope_name
      * }
      */
     public function __construct($data = NULL) {
@@ -411,6 +421,70 @@ class SearchQueryRequest extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkMapField($var, \Google\Protobuf\Internal\GPBType::STRING, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Search\V1\Facet::class);
         $this->facets = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional string bucket_name = 15;</code>
+     * @return string
+     */
+    public function getBucketName()
+    {
+        return isset($this->bucket_name) ? $this->bucket_name : '';
+    }
+
+    public function hasBucketName()
+    {
+        return isset($this->bucket_name);
+    }
+
+    public function clearBucketName()
+    {
+        unset($this->bucket_name);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional string bucket_name = 15;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setBucketName($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->bucket_name = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional string scope_name = 16;</code>
+     * @return string
+     */
+    public function getScopeName()
+    {
+        return isset($this->scope_name) ? $this->scope_name : '';
+    }
+
+    public function hasScopeName()
+    {
+        return isset($this->scope_name);
+    }
+
+    public function clearScopeName()
+    {
+        unset($this->scope_name);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional string scope_name = 16;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setScopeName($var)
+    {
+        GPBUtil::checkString($var, True);
+        $this->scope_name = $var;
 
         return $this;
     }

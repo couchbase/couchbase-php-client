@@ -48,6 +48,23 @@ class SharedUtils
         return $ret;
     }
 
+    public static function convertStatus(string $PSStatus): string
+    {
+        $arr = [
+            "STATUS_SUCCESS" => "success",
+            "STATUS_RUNNING" => "running",
+            "STATUS_ERRORS" => "errors",
+            "STATUS_COMPLETED" => "completed",
+            "STATUS_STOPPED" => "stopped",
+            "STATUS_TIMEOUT" => "timeout",
+            "STATUS_CLOSED" => "closed",
+            "STATUS_FATAL" => "fatal",
+            "STATUS_ABORTED" => "aborted",
+            "STATUS_UNKNOWN" => "unknown"
+        ];
+        return $arr[$PSStatus];
+    }
+
     public static function createProtostellarRequest(mixed $grpcRequest, bool $idempotent, float $timeout): ProtostellarRequest
     {
         return new ProtostellarRequest(

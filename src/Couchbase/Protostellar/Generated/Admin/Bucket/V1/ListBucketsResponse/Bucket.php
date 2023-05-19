@@ -50,9 +50,9 @@ class Bucket extends \Google\Protobuf\Internal\Message
      */
     protected $compression_mode = 0;
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
      */
-    protected $minimum_durability_level = 0;
+    protected $minimum_durability_level = null;
     /**
      * Generated from protobuf field <code>.couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
      */
@@ -286,16 +286,26 @@ class Bucket extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
      * @return int
      */
     public function getMinimumDurabilityLevel()
     {
-        return $this->minimum_durability_level;
+        return isset($this->minimum_durability_level) ? $this->minimum_durability_level : 0;
+    }
+
+    public function hasMinimumDurabilityLevel()
+    {
+        return isset($this->minimum_durability_level);
+    }
+
+    public function clearMinimumDurabilityLevel()
+    {
+        unset($this->minimum_durability_level);
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
      * @param int $var
      * @return $this
      */

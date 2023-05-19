@@ -202,7 +202,7 @@ class QueryConverter
         if ($metadata->hasMetrics()) {
             $finalMetaData["metrics"] = self::convertMetrics($metadata->getMetrics());
         }
-        $finalMetaData["status"] = MetaData\Status::name($metadata->getStatus());
+        $finalMetaData["status"] = SharedUtils::convertStatus(MetaData\Status::name($metadata->getStatus()));
         if ($metadata->getWarnings()->count()) {
             $finalMetaData["warnings"] = self::convertWarnings(SharedUtils::toArray($metadata->getWarnings()));
         }
