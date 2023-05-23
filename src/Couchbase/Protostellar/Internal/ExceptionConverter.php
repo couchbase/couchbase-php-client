@@ -31,16 +31,24 @@ use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\DocumentExistsException;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\DocumentNotJsonException;
+use Couchbase\Exception\DurabilityImpossibleException;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexExistsException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\Exception\InternalServerFailureException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\NumberTooBigException;
 use Couchbase\Exception\PathExistsException;
+use Couchbase\Exception\PathMismatchException;
 use Couchbase\Exception\PathNotFoundException;
+use Couchbase\Exception\PathTooDeepException;
 use Couchbase\Exception\RequestCanceledException;
 use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
+use Couchbase\Exception\ValueInvalidException;
+use Couchbase\Exception\ValueTooDeepException;
+use Couchbase\Exception\ValueTooLargeException;
 use Couchbase\HttpException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
@@ -89,6 +97,22 @@ class ExceptionConverter
                             return RequestBehaviour::fail(new CasMismatchException($protoStatus->getMessage()));
                         } elseif ($type == "LOCKED") {
                             return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::KV_LOCKED));
+                        } elseif ($type == "VALUE_TOO_LARGE") {
+                            return RequestBehaviour::fail(new ValueTooLargeException($protoStatus->getMessage()));
+                        } elseif ($type == "DURABILITY_IMPOSSIBLE") {
+                            return RequestBehaviour::fail(new DurabilityImpossibleException($protoStatus->getMessage()));
+                        } elseif ($type == "PATH_MISMATCH") {
+                            return RequestBehaviour::fail(new PathMismatchException($protoStatus->getMessage()));
+                        } elseif ($type == "DOC_TOO_DEEP") {
+                            return RequestBehaviour::fail(new PathTooDeepException($protoStatus->getMessage()));
+                        } elseif ($type == "VALUE_TOO_DEEP") {
+                            return RequestBehaviour::fail(new ValueTooDeepException($protoStatus->getMessage()));
+                        } elseif ($type == "WOULD_INVALIDATE_JSON") {
+                            return RequestBehaviour::fail(new ValueInvalidException($protoStatus->getMessage()));
+                        } elseif ($type == "DOC_NOT_JSON") {
+                            return RequestBehaviour::fail(new DocumentNotJsonException($protoStatus->getMessage()));
+                        } elseif ($type == "PATH_VALUE_OUT_OF_RANGE") {
+                            return RequestBehaviour::fail(new NumberTooBigException($protoStatus->getMessage()));
                         }
                     }
                     break;
