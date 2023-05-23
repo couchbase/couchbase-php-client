@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-05-17</date>
+    <date>2023-05-23</date>
     <version>
-        <release>4.1.3</release>
+        <release>4.1.4</release>
         <api>4.0.0</api>
     </version>
     <stability>
@@ -24,17 +24,15 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        * PCBC-915: Fixed timestamp as expiry in mutation options (#88)
-        * PCBC-828: Implemented collection management (#89)
-        * PCBC-918: Extra attributes in ExistsResult now optional (deleted, expiry, flags, and sequenceNumber) (#95)
+        * Add `couchbase::` namespace to `durability_level`, fixes using Sync Durability. (#102)
 
         Notable changes in core C++
         ---------------------------
 
-        * CXXCBC-31: Allow to use schema-less connection strings (#394)
-        * CXXCBC-318: Always try TCP if UDP fails in DNS-SRV resolver (#390)
-        * CXXCBC-320: Negative expiry in atr can 'stuck' docs. (#393)
-        * CXXCBC-310: Improve shutdown of the LostTxnCleanup thread. (#389)
+        * CXXCBC-327: bundle Mozilla certificates with the library (#405, #408)
+        * CXXCBC-324: check port and network name on session restart (#401)
+        * CXXCBC-323: parse bootstrap_timeout and resolve_timeout in connection string (#400)
+        * introduce option dump_configuration for debugging (#398)
     </notes>
     <contents>
         <dir name="/">
@@ -495,6 +493,7 @@
                                 <file role="src" name="internal_term_facet_result.cxx"/>
                                 <file role="src" name="internal_term_facet_result.hxx"/>
                                 <file role="src" name="key_value_error_category.cxx"/>
+                                <file role="src" name="key_value_error_context.cxx"/>
                                 <file role="src" name="lookup_in.cxx"/>
                                 <file role="src" name="management_error_category.cxx"/>
                                 <file role="src" name="match_all_query.cxx"/>
@@ -516,6 +515,7 @@
                                 <file role="src" name="prepend.cxx"/>
                                 <file role="src" name="query.cxx"/>
                                 <file role="src" name="query_error_category.cxx"/>
+                                <file role="src" name="query_error_context.cxx"/>
                                 <file role="src" name="query_string_query.cxx"/>
                                 <file role="src" name="regexp_query.cxx"/>
                                 <file role="src" name="remove.cxx"/>
@@ -1004,7 +1004,6 @@
                                 <file role="src" name="configuration_fmt.hxx"/>
                                 <file role="src" name="configuration_json.hxx"/>
                                 <file role="src" name="error_map.hxx"/>
-                                <file role="src" name="error_map_fmt.hxx"/>
                                 <file role="src" name="error_map_json.hxx"/>
                             </dir>
                             <dir name="tracing">
@@ -1213,6 +1212,7 @@
                                 <file role="src" name="analytics_status.hxx"/>
                                 <file role="src" name="cas.hxx"/>
                                 <file role="src" name="durability_level.hxx"/>
+                                <file role="src" name="key_value_error_map_attribute.hxx"/>
                                 <file role="src" name="key_value_extended_error_info.hxx"/>
                                 <file role="src" name="key_value_status_code.hxx"/>
                                 <file role="src" name="mutation_token.hxx"/>
@@ -2945,6 +2945,31 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2023-04-13</date>
+            <version>
+                <release>4.1.3</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-915: Fixed timestamp as expiry in mutation options (#88)
+                * PCBC-828: Implemented collection management (#89)
+                * PCBC-918: Extra attributes in ExistsResult now optional (deleted, expiry, flags, and sequenceNumber) (#95)
+
+                Notable changes in core C++
+                ---------------------------
+
+                * CXXCBC-31: Allow to use schema-less connection strings (#394)
+                * CXXCBC-318: Always try TCP if UDP fails in DNS-SRV resolver (#390)
+                * CXXCBC-320: Negative expiry in atr can 'stuck' docs. (#393)
+                * CXXCBC-310: Improve shutdown of the LostTxnCleanup thread. (#389)
+            </notes>
+        </release>
         <release>
             <date>2023-03-20</date>
             <version>
