@@ -42,7 +42,6 @@ class Client
     public function __construct(string $connectionString, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
     {
         $parsedConnectionString = parse_url($connectionString);
-      //  $clientOpts = $options->channelOptions($clusterOptions->export());
         $parsedOptions = $options->getConnectionOptions($parsedConnectionString, $clusterOptions->export());
         $clientOpts = $options->channelOptions($parsedOptions);
         $host = $parsedConnectionString['host'] . ":18098";
