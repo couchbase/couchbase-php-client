@@ -42,15 +42,17 @@ class Client
     public function __construct(string $connectionString, ClusterOptions $clusterOptions, ClientOptions $options = new ClientOptions())
     {
         $parsedConnectionString = parse_url($connectionString);
-        $opts = $options->channelOptions($clusterOptions->export());
+      //  $clientOpts = $options->channelOptions($clusterOptions->export());
+        $parsedOptions = $options->getConnectionOptions($parsedConnectionString, $clusterOptions->export());
+        $clientOpts = $options->channelOptions($parsedOptions);
         $host = $parsedConnectionString['host'] . ":18098";
-        $this->channel = new Channel($host, $options->getChannelCredentials($parsedConnectionString, $clusterOptions->export()));
-        $this->kv = new Generated\KV\V1\KvServiceClient($host, $opts, $this->channel);
-        $this->query = new Generated\Query\V1\QueryServiceClient($host, $opts, $this->channel);
-        $this->search = new Generated\Search\V1\SearchServiceClient($host, $opts, $this->channel);
-        $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $opts, $this->channel);
-        $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $opts, $this->channel);
-        $this->timeoutHandler = new TimeoutHandler($clusterOptions->export());
+        $this->channel = new Channel($host, $options->getChannelCredentials($parsedOptions));
+        $this->kv = new Generated\KV\V1\KvServiceClient($host, $clientOpts, $this->channel);
+        $this->query = new Generated\Query\V1\QueryServiceClient($host, $clientOpts, $this->channel);
+        $this->search = new Generated\Search\V1\SearchServiceClient($host, $clientOpts, $this->channel);
+        $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $clientOpts, $this->channel);
+        $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $clientOpts, $this->channel);
+        $this->timeoutHandler = new TimeoutHandler($parsedOptions);
     }
 
     public function close()
