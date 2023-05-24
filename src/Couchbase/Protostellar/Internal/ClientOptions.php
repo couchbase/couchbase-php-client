@@ -40,15 +40,40 @@ class ClientOptions
         ];
     }
 
-    public function getChannelCredentials(array $parsedConnString, array $exported): array
+    public function getConnectionOptions(array $parsedConnString, array $exported): array
     {
-        $certPath = "";
-        if (isset($parsedConnString["query"])) {
-            $queryArr = self::parseURIQuery($parsedConnString["query"]);
-            $certPath = $queryArr["certpath"] ?? $certPath;
+        if (!isset($parsedConnString["query"])) {
+            return $exported;
         }
-        $certPath = $exported["trustCertificate"] ?? $certPath; //Overwriting certificate path if set in ClusterOptions
-        return empty($certPath) ? self::getChannelCredentialsInsecure() : ['credentials' => ChannelCredentials::createSsl(file_get_contents($certPath))];
+        $arr = [];
+        foreach (self::parseURIQuery($parsedConnString["query"]) as $key => $value) {
+            if ($key == "kv_timeout" || $key == "key_value_timeout") {
+                $arr["keyValueTimeout"] = intval($value);
+            } elseif ($key == "kv_durable_timeout" || $key == "key_value_durable_timeout") {
+                $arr["keyValueDurableTimeout"] = intval($value);
+            } elseif ($key == "view_timeout") {
+                $arr["viewTimeout"] = intval($value);
+            } elseif ($key == "query_timeout") {
+                $arr["queryTimeout"] = intval($value);
+            } elseif ($key == "analytics_timeout") {
+                $arr["analyticsTimeout"] = intval($value);
+            } elseif ($key == "search_timeout") {
+                $arr["searchTimeout"] = intval($value);
+            } elseif ($key == "management_timeout") {
+                $arr["managementTimeout"] = intval($value);
+            } elseif ($key == "trust_certificate") {
+                $arr["trustCertificate"] = $value;
+            }
+        }
+        return array_merge($arr, array_filter($exported)); //Cluster options overwrite conn string options
+    }
+
+    public function getChannelCredentials(array $opts = [])
+    {
+        if (!isset($opts["trustCertificate"])) {
+            return self::getChannelCredentialsInsecure();
+        }
+        return ['credentials' => ChannelCredentials::createSsl(file_get_contents($opts["trustCertificate"]))];
     }
 
     public static function getChannelCredentialsInsecure(): array

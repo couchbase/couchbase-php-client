@@ -62,4 +62,14 @@ class TimeoutsTest extends CouchbaseTestCaseProtostellar
         $timeout = $client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $this->assertEquals(3e6, $timeout);
     }
+
+    public function testConnectionStringOptions()
+    {
+        $connString = "protostellar://test_conn_string?kv_timeout=6000";
+        $clusterOptions = new ClusterOptions();
+        $clusterOptions->authenticator(self::env()->buildPasswordAuthenticator());
+        $client = new Client($connString, $clusterOptions);
+        $timeout = $client->timeoutHandler()->getTimeout(TimeoutHandler::KV, UpsertOptions::export(UpsertOptions::build()));
+        $this->assertEquals(6e6, $timeout);
+    }
 }
