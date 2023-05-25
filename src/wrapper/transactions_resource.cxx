@@ -153,6 +153,7 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
 
     ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
     {
+        ASSIGN_DURATION_OPTION("timeout", config.expiration_time, key, value);
         ASSIGN_DURATION_OPTION("keyValueTimeout", config.kv_timeout, key, value);
         if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("durabilityLevel")) == 0) {
             if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {

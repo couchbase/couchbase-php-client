@@ -26,6 +26,7 @@ class TransactionOptions
 {
     private ?string $durabilityLevel = null;
     private ?int $timeoutMilliseconds = null;
+    private ?int $keyValueTimeoutMilliseconds = null;
 
     /**
      * Specifies the timeout for the transaction.
@@ -38,6 +39,20 @@ class TransactionOptions
     public function timeout(int $milliseconds): TransactionOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Specifies the default timeout for KV operations, in milliseconds.
+     *
+     * @param int $milliseconds
+     *
+     * @return TransactionsOptins
+     * @since 4.1.4
+     */
+    public function keyValueTimeout(int $milliseconds): TransactionsOptions
+    {
+        $this->keyValueTimeoutMilliseconds = $milliseconds;
         return $this;
     }
 
@@ -75,6 +90,7 @@ class TransactionOptions
         }
         return [
             'timeout' => $options->timeoutMilliseconds,
+            'keyValueTimeout' => $options->keyValueTimeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
         ];
     }
