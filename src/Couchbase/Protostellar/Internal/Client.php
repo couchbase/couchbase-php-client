@@ -34,6 +34,7 @@ class Client
     private Generated\Search\V1\SearchServiceClient $search;
     private Generated\Admin\Collection\V1\CollectionAdminServiceClient $collectionAdmin;
     private Generated\Admin\Bucket\V1\BucketAdminServiceClient $bucketAdmin;
+    private Generated\Admin\Query\V1\QueryAdminServiceClient $queryAdmin;
     private TimeoutHandler $timeoutHandler;
 
     /**
@@ -51,6 +52,7 @@ class Client
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $clientOpts, $this->channel);
         $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $clientOpts, $this->channel);
         $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $clientOpts, $this->channel);
+        $this->queryAdmin = new Generated\Admin\Query\V1\QueryAdminServiceClient($host, $clientOpts, $this->channel);
         $this->timeoutHandler = new TimeoutHandler($parsedOptions);
     }
 
@@ -82,6 +84,11 @@ class Client
     public function bucketAdmin(): Generated\Admin\Bucket\V1\BucketAdminServiceClient
     {
         return $this->bucketAdmin;
+    }
+
+    public function queryAdmin(): Generated\Admin\Query\V1\QueryAdminServiceClient
+    {
+        return $this->queryAdmin;
     }
 
     public function timeoutHandler(): TimeoutHandler
