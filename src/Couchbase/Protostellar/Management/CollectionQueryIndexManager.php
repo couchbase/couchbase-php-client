@@ -189,7 +189,4 @@ class CollectionQueryIndexManager
             throw new InvalidArgumentException("Scope and Collection options cannot be set when using the Query Index Manager at the collection level");
         }
     }
-
-
-
 }
