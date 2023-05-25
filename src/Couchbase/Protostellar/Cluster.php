@@ -32,6 +32,7 @@ use Couchbase\Protostellar\Internal\SearchResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Management\BucketManager;
+use Couchbase\Protostellar\Management\QueryIndexManager;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
@@ -102,5 +103,10 @@ class Cluster implements ClusterInterface
     public function buckets(): BucketManager
     {
         return new BucketManager($this->client);
+    }
+
+    public function queryIndexes(): QueryIndexManager
+    {
+        return new QueryIndexManager($this->client);
     }
 }
