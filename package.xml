@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-05-23</date>
+    <date>2023-05-25</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -25,6 +25,7 @@
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
         * Add `couchbase::` namespace to `durability_level`, fixes using Sync Durability. (#102)
+        * PCBC-934: Fixed setting timeout for transaction.
 
         Notable changes in core C++
         ---------------------------
