@@ -44,6 +44,7 @@ use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
+use Couchbase\Protostellar\Management\CollectionQueryIndexManager;
 use Couchbase\RemoveOptions;
 use Couchbase\ReplaceOptions;
 use Couchbase\Result;
@@ -508,5 +509,10 @@ class Collection implements CollectionInterface
     public function binary(): BinaryCollectionInterface
     {
         return new BinaryCollection($this->client, $this->bucketName, $this->scopeName, $this->name);
+    }
+
+    public function queryIndexes(): CollectionQueryIndexManager
+    {
+        return new CollectionQueryIndexManager($this->name, $this->scopeName, $this->bucketName, $this->client);
     }
 }
