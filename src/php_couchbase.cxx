@@ -1136,6 +1136,54 @@ PHP_FUNCTION(diagnostics)
     }
 }
 
+PHP_FUNCTION(searchIndexGet)
+{
+    zval* connection = nullptr;
+    zend_string* index_name;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->search_index_get(return_value, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexGetAll)
+{
+    zval* connection = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 2)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->search_index_get_all(return_value, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(searchIndexUpsert)
 {
     zval* connection = nullptr;
@@ -1157,6 +1205,242 @@ PHP_FUNCTION(searchIndexUpsert)
     }
 
     if (auto e = handle->search_index_upsert(return_value, index, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexDrop)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_drop(return_value, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexGetDocumentsCount)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_get_documents_count(return_value, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexIngestPause)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_ingest(return_value, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexIngestResume)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_ingest(return_value, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexQueryingAllow)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_query(return_value, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexQueryingDisallow)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_query(return_value, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexPlanFreeze)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_plan_freeze(return_value, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexPlanUnfreeze)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(2, 3)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_control_plan_freeze(return_value, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(searchIndexDocumentAnalyze)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zend_string* document = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(3, 4)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_STR(document)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->search_index_analyze_document(return_value, index_name, document, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -2603,9 +2887,75 @@ ZEND_ARG_TYPE_INFO(0, reportId, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexGet, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexGetAll, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexUpsert, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexDrop, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexGetDocumentsCount, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexIngestPause, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexIngestResume, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexQueryingAllow, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexQueryingDisallow, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexPlanFreeze, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexPlanUnfreeze, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_searchIndexDocumentAnalyze, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, document, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
@@ -2936,7 +3286,18 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", transactionRemove, ai_CouchbaseExtension_transactionRemove)
         ZEND_NS_FE("Couchbase\\Extension", transactionQuery, ai_CouchbaseExtension_transactionQuery)
 
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexGet, ai_CouchbaseExtension_searchIndexGet)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexGetAll, ai_CouchbaseExtension_searchIndexGetAll)
         ZEND_NS_FE("Couchbase\\Extension", searchIndexUpsert, ai_CouchbaseExtension_searchIndexUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexDrop, ai_CouchbaseExtension_searchIndexDrop)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexGetDocumentsCount, ai_CouchbaseExtension_searchIndexGetDocumentsCount)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexIngestPause, ai_CouchbaseExtension_searchIndexIngestPause)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexIngestResume, ai_CouchbaseExtension_searchIndexIngestResume)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexQueryingAllow, ai_CouchbaseExtension_searchIndexQueryingAllow)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexQueryingDisallow, ai_CouchbaseExtension_searchIndexQueryingDisallow)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexPlanFreeze, ai_CouchbaseExtension_searchIndexPlanFreeze)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexPlanUnfreeze, ai_CouchbaseExtension_searchIndexPlanUnfreeze)
+        ZEND_NS_FE("Couchbase\\Extension", searchIndexDocumentAnalyze, ai_CouchbaseExtension_searchIndexDocumentAnalyze)
         ZEND_NS_FE("Couchbase\\Extension", viewIndexUpsert, ai_CouchbaseExtension_viewIndexUpsert)
         ZEND_NS_FE("Couchbase\\Extension", bucketCreate, ai_CouchbaseExtension_bucketCreate)
         ZEND_NS_FE("Couchbase\\Extension", bucketUpdate, ai_CouchbaseExtension_bucketUpdate)
