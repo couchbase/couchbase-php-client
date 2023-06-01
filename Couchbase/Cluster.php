@@ -189,11 +189,10 @@ class Cluster implements ClusterInterface
      * Creates a new search index manager object for managing search query indexes.
      *
      * @return SearchIndexManager
-     * @throws UnsupportedOperationException
      */
     public function searchIndexes(): SearchIndexManager
     {
-        throw new UnsupportedOperationException();
+        return new SearchIndexManager($this->core);
     }
 
     /**
