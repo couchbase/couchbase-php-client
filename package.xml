@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-05-25</date>
+    <date>2023-06-01</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -379,6 +379,7 @@
             <dir name="src">
                 <dir name="cmake">
                     <file role="src" name="ext_build_version.hxx.in"/>
+                    <file role="src" name="revisions.cmake"/>
                 </dir>
                 <dir name="deps">
                     <dir name="couchbase-cxx-client">
