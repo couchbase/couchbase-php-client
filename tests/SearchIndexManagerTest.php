@@ -118,24 +118,26 @@ class SearchIndexManagerTest extends Helpers\CouchbaseTestCase
         );
         $this->assertNotEmpty($tokens);
     }
-
     public function testVariousIndexTasks()
     {
         $this->skipIfCaves();
 
         $randomIndex = $this->uniqueId("idx");
-
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->pauseIngest($randomIndex);
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->resumeIngest($randomIndex);
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->freezePlan($randomIndex);
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->unfreezePlan($randomIndex);
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->allowQuerying($randomIndex);
-        $this->expectException(IndexNotFoundException::class);
-        $this->manager->disallowQuerying($randomIndex);
+        $functions = [
+            [$this->manager, 'pauseIngest'],
+            [$this->manager, 'resumeIngest'],
+            [$this->manager, 'freezePlan'],
+            [$this->manager, 'unfreezePlan'],
+            [$this->manager, 'allowQuerying'],
+            [$this->manager, 'disallowQuerying']
+        ];
+        foreach ($functions as $func) {
+            $this->wrapException(
+                function () use ($randomIndex, $func) {
+                    $func($randomIndex);
+                },
+                IndexNotFoundException::class
+            );
+        }
     }
 }
