@@ -117,7 +117,7 @@ class SearchIndex implements JsonSerializable
      *
      * @since 4.1.5
      */
-    public function uuid(): string|null
+    public function uuid(): ?string
     {
         return $this->uuid;
     }
@@ -129,7 +129,7 @@ class SearchIndex implements JsonSerializable
      *
      * @since 4.1.5
      */
-    public function sourceUuid(): string|null
+    public function sourceUuid(): ?string
     {
         return $this->sourceUuid;
     }
@@ -141,7 +141,7 @@ class SearchIndex implements JsonSerializable
      *
      * @since 4.1.5
      */
-    public function params(): stdClass|null
+    public function params(): ?stdClass
     {
         return $this->params;
     }
@@ -153,7 +153,7 @@ class SearchIndex implements JsonSerializable
      *
      * @since 4.1.5
      */
-    public function sourceParams(): stdClass|null
+    public function sourceParams(): ?stdClass
     {
         return $this->sourceParams;
     }
@@ -165,7 +165,7 @@ class SearchIndex implements JsonSerializable
      *
      * @since 4.1.5
      */
-    public function planParams(): stdClass|null
+    public function planParams(): ?stdClass
     {
         return $this->planParams;
     }
