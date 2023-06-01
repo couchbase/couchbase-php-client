@@ -20,53 +20,191 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Extension;
+
 class SearchIndexManager
 {
-    public function getIndex(string $name): SearchIndex
+    /**
+     * @var resource
+     */
+    private $core;
+
+    /**
+     * @param $core
+     *
+     * @internal
+     * @since 4.1.5
+     */
+    public function __construct($core)
     {
+        $this->core = $core;
     }
 
-    public function getAllIndexes(): array
+    /**
+     * Fetches index with the specified name from the server
+     *
+     * @param string $indexName
+     * @param GetSearchIndexOptions|null $options
+     * @return SearchIndex
+     *
+     * @since 4.1.5
+     */
+    public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
     {
+        $result = Extension\searchIndexGet($this->core, $indexName, GetSearchIndexOptions::export($options));
+
+        return SearchIndex::import($result);
     }
 
-    public function upsertIndex(SearchIndex $indexDefinition)
+    /**
+     * Fetches all indexes from the server
+     *
+     * @param GetAllSearchIndexesOptions|null $options
+     * @return array
+     *
+     * @since 4.1.5
+     */
+    public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
     {
+        $result = Extension\searchIndexGetAll($this->core, GetAllSearchIndexesOptions::export($options));
+        $indexes = [];
+        foreach ($result as $index) {
+            $indexes[] = SearchIndex::import($index);
+        }
+        return $indexes;
     }
 
-    public function dropIndex(string $name)
+    /**
+     * Upserts index to the server
+     *
+     * @param SearchIndex $indexDefinition
+     * @param UpsertSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
     {
+        Extension\searchIndexUpsert($this->core, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
     }
 
-    public function getIndexedDocumentsCount(string $indexName): int
+    /**
+     * Drops an index from the server
+     *
+     * @param string $name
+     * @param DropSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function dropIndex(string $name, DropSearchIndexOptions $options = null)
     {
+        Extension\searchIndexDrop($this->core, $name, DropSearchIndexOptions::export($options));
     }
 
-    public function pauseIngest(string $indexName)
+    /**
+     * Retrieves the number of documents that have been indexed for the index
+     *
+     * @param string $indexName
+     * @param GetIndexedSearchIndexOptions|null $options
+     * @return int
+     *
+     * @since 4.1.5
+     */
+    public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
     {
+        $result = Extension\searchIndexGetDocumentsCount($this->core, $indexName, GetIndexedSearchIndexOptions::export($options));
+        return $result['count'];
     }
 
-    public function resumeIngest(string $indexName)
+    /**
+     * Pauses updates and maintenance for the index
+     *
+     * @param string $indexName
+     * @param PauseIngestSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
     {
+        Extension\searchIndexIngestPause($this->core, $indexName, PauseIngestSearchIndexOptions::export($options));
     }
 
-    public function allowQuerying(string $indexName)
+    /**
+     * Resumes updates and maintenance for the index
+     *
+     * @param string $indexName
+     * @param ResumeIngestSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
     {
+        Extension\searchIndexIngestResume($this->core, $indexName, ResumeIngestSearchIndexOptions::export($options));
     }
 
-    public function disallowQuerying(string $indexName)
+    /**
+     * Allows querying against the index
+     *
+     * @param string $indexName
+     * @param AllowQueryingSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
     {
+        Extension\searchIndexQueryingAllow($this->core, $indexName, AllowQueryingSearchIndexOptions::export($options));
     }
 
-    public function freezePlan(string $indexName)
+    /**
+     * Disallows querying against the index
+     *
+     * @param string $indexName
+     * @param DisallowQueryingSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
     {
+        Extension\searchIndexQueryingDisallow($this->core, $indexName, DisallowQueryingSearchIndexOptions::export($options));
     }
 
-    public function unfreezePlan(string $indexName)
+    /**
+     * Freezes the assigment of index partitions to nodes
+     *
+     * @param string $indexName
+     * @param FreezePlanSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
     {
+        Extension\searchIndexPlanFreeze($this->core, $indexName, FreezePlanSearchIndexOptions::export($options));
     }
 
-    public function analyzeDocument(string $indexName, $document)
+    /**
+     * Unfreezes the assignment of index partitions to nodes
+     * @param string $indexName
+     * @param UnfreezePlanSearchIndexOptions|null $options
+     *
+     * @since 4.1.5
+     */
+    public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
     {
+        Extension\searchIndexPlanUnfreeze($this->core, $indexName, UnfreezePlanSearchIndexOptions::export($options));
+    }
+
+    /**
+     * Fetches the analysis of a document against a specific index
+     *
+     * @param string $indexName
+     * @param $document
+     * @param AnalyzeDocumentOptions|null $options
+     * @return array
+     *
+     * @since 4.1.5
+     */
+    public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
+    {
+        $result = Extension\searchIndexDocumentAnalyze($this->core, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
+        return json_decode($result["analysis"], true);
     }
 }

@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-05-25</date>
+    <date>2023-06-01</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -126,10 +126,12 @@
                     <file role="php" name="XattrUnknownVirtualAttributeException.php"/>
                 </dir>
                 <dir name="Management">
+                    <file role="php" name="AllowQueryingSearchIndexOptions.php"/>
                     <file role="php" name="AnalyticsEncryptionLevel.php"/>
                     <file role="php" name="AnalyticsIndexManager.php"/>
                     <file role="php" name="AnalyticsLink.php"/>
                     <file role="php" name="AnalyticsLinkType.php"/>
+                    <file role="php" name="AnalyzeDocumentOptions.php"/>
                     <file role="php" name="AuthDomain.php"/>
                     <file role="php" name="AzureBlobExternalAnalyticsLink.php"/>
                     <file role="php" name="BucketManager.php"/>
@@ -154,6 +156,7 @@
                     <file role="php" name="CreateQueryPrimaryIndexOptions.php"/>
                     <file role="php" name="CreateScopeOptions.php"/>
                     <file role="php" name="DesignDocument.php"/>
+                    <file role="php" name="DisallowQueryingSearchIndexOptions.php"/>
                     <file role="php" name="DisconnectAnalyticsLinkOptions.php"/>
                     <file role="php" name="DropAnalyticsDatasetOptions.php"/>
                     <file role="php" name="DropAnalyticsDataverseOptions.php"/>
@@ -165,26 +168,33 @@
                     <file role="php" name="DropQueryIndexOptions.php"/>
                     <file role="php" name="DropQueryPrimaryIndexOptions.php"/>
                     <file role="php" name="DropScopeOptions.php"/>
+                    <file role="php" name="DropSearchIndexOptions.php"/>
                     <file role="php" name="DropUserOptions.php"/>
                     <file role="php" name="EncryptionSettings.php"/>
                     <file role="php" name="EvictionPolicy.php"/>
                     <file role="php" name="FlushBucketOptions.php"/>
+                    <file role="php" name="FreezePlanSearchIndexOptions.php"/>
                     <file role="php" name="GetAllBucketsOptions.php"/>
                     <file role="php" name="GetAllGroupsOptions.php"/>
                     <file role="php" name="GetAllQueryIndexesOptions.php"/>
                     <file role="php" name="GetAllScopesOptions.php"/>
+                    <file role="php" name="GetAllSearchIndexesOptions.php"/>
                     <file role="php" name="GetAllUsersOptions.php"/>
                     <file role="php" name="GetAnalyticsLinksOptions.php"/>
                     <file role="php" name="GetBucketOptions.php"/>
                     <file role="php" name="GetGroupOptions.php"/>
+                    <file role="php" name="GetIndexedSearchIndexOptions.php"/>
                     <file role="php" name="GetRolesOptions.php"/>
+                    <file role="php" name="GetSearchIndexOptions.php"/>
                     <file role="php" name="GetUserOptions.php"/>
                     <file role="php" name="Group.php"/>
                     <file role="php" name="Origin.php"/>
+                    <file role="php" name="PauseIngestSearchIndexOptions.php"/>
                     <file role="php" name="QueryIndex.php"/>
                     <file role="php" name="QueryIndexManager.php"/>
                     <file role="php" name="QueryIndexType.php"/>
                     <file role="php" name="ReplaceAnalyticsLinkOptions.php"/>
+                    <file role="php" name="ResumeIngestSearchIndexOptions.php"/>
                     <file role="php" name="Role.php"/>
                     <file role="php" name="RoleAndDescription.php"/>
                     <file role="php" name="RoleAndOrigin.php"/>
@@ -193,8 +203,10 @@
                     <file role="php" name="SearchIndex.php"/>
                     <file role="php" name="SearchIndexManager.php"/>
                     <file role="php" name="StorageBackend.php"/>
+                    <file role="php" name="UnfreezePlanSearchIndexOptions.php"/>
                     <file role="php" name="UpdateBucketOptions.php"/>
                     <file role="php" name="UpsertGroupOptions.php"/>
+                    <file role="php" name="UpsertSearchIndexOptions.php"/>
                     <file role="php" name="UpsertUserOptions.php"/>
                     <file role="php" name="User.php"/>
                     <file role="php" name="UserAndMetadata.php"/>
