@@ -64,5 +64,4 @@ class ResumeIngestSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

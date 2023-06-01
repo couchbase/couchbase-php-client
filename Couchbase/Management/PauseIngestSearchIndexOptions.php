@@ -64,5 +64,4 @@ class PauseIngestSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

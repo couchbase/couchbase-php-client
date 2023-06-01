@@ -64,5 +64,4 @@ class DropSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

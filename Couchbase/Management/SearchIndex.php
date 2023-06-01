@@ -268,7 +268,7 @@ class SearchIndex implements JsonSerializable
         $type = gettype($params);
         if ($type == "string") {
             $this->params = json_decode($params);
-        } elseif($type == "array") {
+        } elseif ($type == "array") {
             $this->params = self::toObject($params);
         } else {
             $this->params = $params;

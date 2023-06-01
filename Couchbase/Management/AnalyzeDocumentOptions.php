@@ -64,5 +64,4 @@ class AnalyzeDocumentOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

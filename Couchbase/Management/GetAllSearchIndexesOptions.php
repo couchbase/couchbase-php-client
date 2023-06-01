@@ -64,5 +64,4 @@ class GetAllSearchIndexesOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

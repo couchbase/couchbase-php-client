@@ -64,5 +64,4 @@ class DisallowQueryingSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

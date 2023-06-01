@@ -54,7 +54,6 @@ class SearchIndexManager
         $result = Extension\searchIndexGet($this->core, $indexName, GetSearchIndexOptions::export($options));
 
         return SearchIndex::import($result);
-
     }
 
     /**

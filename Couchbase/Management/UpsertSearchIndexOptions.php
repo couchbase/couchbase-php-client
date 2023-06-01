@@ -64,5 +64,4 @@ class UpsertSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }

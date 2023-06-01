@@ -64,5 +64,4 @@ class UnfreezePlanSearchIndexOptions
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
     }
-
 }
