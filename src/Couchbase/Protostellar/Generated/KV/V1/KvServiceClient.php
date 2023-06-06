@@ -73,20 +73,6 @@ class KvServiceClient extends \Grpc\BaseStub {
     }
 
     /**
-     * @param \Couchbase\Protostellar\Generated\KV\V1\GetReplicaRequest $argument input argument
-     * @param array $metadata metadata
-     * @param array $options call options
-     * @return \Grpc\UnaryCall
-     */
-    public function GetReplica(\Couchbase\Protostellar\Generated\KV\V1\GetReplicaRequest $argument,
-      $metadata = [], $options = []) {
-        return $this->_simpleRequest('/couchbase.kv.v1.KvService/GetReplica',
-        $argument,
-        ['\Couchbase\Protostellar\Generated\KV\V1\GetReplicaResponse', 'decode'],
-        $metadata, $options);
-    }
-
-    /**
      * @param \Couchbase\Protostellar\Generated\KV\V1\TouchRequest $argument input argument
      * @param array $metadata metadata
      * @param array $options call options
@@ -251,6 +237,20 @@ class KvServiceClient extends \Grpc\BaseStub {
         return $this->_simpleRequest('/couchbase.kv.v1.KvService/MutateIn',
         $argument,
         ['\Couchbase\Protostellar\Generated\KV\V1\MutateInResponse', 'decode'],
+        $metadata, $options);
+    }
+
+    /**
+     * @param \Couchbase\Protostellar\Generated\KV\V1\GetAllReplicasRequest $argument input argument
+     * @param array $metadata metadata
+     * @param array $options call options
+     * @return \Grpc\ServerStreamingCall
+     */
+    public function GetAllReplicas(\Couchbase\Protostellar\Generated\KV\V1\GetAllReplicasRequest $argument,
+      $metadata = [], $options = []) {
+        return $this->_serverStreamRequest('/couchbase.kv.v1.KvService/GetAllReplicas',
+        $argument,
+        ['\Couchbase\Protostellar\Generated\KV\V1\GetAllReplicasResponse', 'decode'],
         $metadata, $options);
     }
 

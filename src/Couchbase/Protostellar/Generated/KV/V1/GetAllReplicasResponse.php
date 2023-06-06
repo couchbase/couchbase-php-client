@@ -9,26 +9,26 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>couchbase.kv.v1.GetReplicaResponse</code>
+ * Generated from protobuf message <code>couchbase.kv.v1.GetAllReplicasResponse</code>
  */
-class GetReplicaResponse extends \Google\Protobuf\Internal\Message
+class GetAllReplicasResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
+     * Generated from protobuf field <code>bool is_replica = 1;</code>
+     */
+    protected $is_replica = false;
+    /**
+     * Generated from protobuf field <code>bytes content = 2;</code>
      */
     protected $content = '';
     /**
-     * Generated from protobuf field <code>uint32 content_flags = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 3;</code>
      */
     protected $content_flags = 0;
     /**
-     * Generated from protobuf field <code>uint64 cas = 3;</code>
+     * Generated from protobuf field <code>uint64 cas = 4;</code>
      */
     protected $cas = 0;
-    /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp expiry = 4;</code>
-     */
-    protected $expiry = null;
 
     /**
      * Constructor.
@@ -36,10 +36,10 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
+     *     @type bool $is_replica
      *     @type string $content
      *     @type int $content_flags
      *     @type int|string $cas
-     *     @type \Google\Protobuf\Timestamp $expiry
      * }
      */
     public function __construct($data = NULL) {
@@ -48,7 +48,29 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
+     * Generated from protobuf field <code>bool is_replica = 1;</code>
+     * @return bool
+     */
+    public function getIsReplica()
+    {
+        return $this->is_replica;
+    }
+
+    /**
+     * Generated from protobuf field <code>bool is_replica = 1;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setIsReplica($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->is_replica = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>bytes content = 2;</code>
      * @return string
      */
     public function getContent()
@@ -57,7 +79,7 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
+     * Generated from protobuf field <code>bytes content = 2;</code>
      * @param string $var
      * @return $this
      */
@@ -70,7 +92,7 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint32 content_flags = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 3;</code>
      * @return int
      */
     public function getContentFlags()
@@ -79,7 +101,7 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint32 content_flags = 6;</code>
+     * Generated from protobuf field <code>uint32 content_flags = 3;</code>
      * @param int $var
      * @return $this
      */
@@ -92,7 +114,7 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint64 cas = 3;</code>
+     * Generated from protobuf field <code>uint64 cas = 4;</code>
      * @return int|string
      */
     public function getCas()
@@ -101,7 +123,7 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint64 cas = 3;</code>
+     * Generated from protobuf field <code>uint64 cas = 4;</code>
      * @param int|string $var
      * @return $this
      */
@@ -109,38 +131,6 @@ class GetReplicaResponse extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkUint64($var);
         $this->cas = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp expiry = 4;</code>
-     * @return \Google\Protobuf\Timestamp|null
-     */
-    public function getExpiry()
-    {
-        return $this->expiry;
-    }
-
-    public function hasExpiry()
-    {
-        return isset($this->expiry);
-    }
-
-    public function clearExpiry()
-    {
-        unset($this->expiry);
-    }
-
-    /**
-     * Generated from protobuf field <code>.google.protobuf.Timestamp expiry = 4;</code>
-     * @param \Google\Protobuf\Timestamp $var
-     * @return $this
-     */
-    public function setExpiry($var)
-    {
-        GPBUtil::checkMessage($var, \Google\Protobuf\Timestamp::class);
-        $this->expiry = $var;
 
         return $this;
     }

@@ -22,13 +22,13 @@ class CreateBucketRequest extends \Google\Protobuf\Internal\Message
      */
     protected $bucket_type = 0;
     /**
-     * Generated from protobuf field <code>uint64 ram_quota_bytes = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
      */
-    protected $ram_quota_bytes = 0;
+    protected $ram_quota_mb = null;
     /**
-     * Generated from protobuf field <code>uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
      */
-    protected $num_replicas = 0;
+    protected $num_replicas = null;
     /**
      * Generated from protobuf field <code>optional bool flush_enabled = 5;</code>
      */
@@ -70,7 +70,7 @@ class CreateBucketRequest extends \Google\Protobuf\Internal\Message
      *
      *     @type string $bucket_name
      *     @type int $bucket_type
-     *     @type int|string $ram_quota_bytes
+     *     @type int|string $ram_quota_mb
      *     @type int $num_replicas
      *     @type bool $flush_enabled
      *     @type bool $replica_indexes
@@ -132,38 +132,58 @@ class CreateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>uint64 ram_quota_bytes = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
      * @return int|string
      */
-    public function getRamQuotaBytes()
+    public function getRamQuotaMb()
     {
-        return $this->ram_quota_bytes;
+        return isset($this->ram_quota_mb) ? $this->ram_quota_mb : 0;
+    }
+
+    public function hasRamQuotaMb()
+    {
+        return isset($this->ram_quota_mb);
+    }
+
+    public function clearRamQuotaMb()
+    {
+        unset($this->ram_quota_mb);
     }
 
     /**
-     * Generated from protobuf field <code>uint64 ram_quota_bytes = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
      * @param int|string $var
      * @return $this
      */
-    public function setRamQuotaBytes($var)
+    public function setRamQuotaMb($var)
     {
         GPBUtil::checkUint64($var);
-        $this->ram_quota_bytes = $var;
+        $this->ram_quota_mb = $var;
 
         return $this;
     }
 
     /**
-     * Generated from protobuf field <code>uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
      * @return int
      */
     public function getNumReplicas()
     {
-        return $this->num_replicas;
+        return isset($this->num_replicas) ? $this->num_replicas : 0;
+    }
+
+    public function hasNumReplicas()
+    {
+        return isset($this->num_replicas);
+    }
+
+    public function clearNumReplicas()
+    {
+        unset($this->num_replicas);
     }
 
     /**
-     * Generated from protobuf field <code>uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
      * @param int $var
      * @return $this
      */

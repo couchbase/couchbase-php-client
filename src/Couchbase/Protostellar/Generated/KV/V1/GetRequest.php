@@ -29,6 +29,10 @@ class GetRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string key = 4;</code>
      */
     protected $key = '';
+    /**
+     * Generated from protobuf field <code>repeated string project = 5;</code>
+     */
+    private $project;
 
     /**
      * Constructor.
@@ -40,6 +44,7 @@ class GetRequest extends \Google\Protobuf\Internal\Message
      *     @type string $scope_name
      *     @type string $collection_name
      *     @type string $key
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $project
      * }
      */
     public function __construct($data = NULL) {
@@ -131,6 +136,28 @@ class GetRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->key = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated string project = 5;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getProject()
+    {
+        return $this->project;
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated string project = 5;</code>
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setProject($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::STRING);
+        $this->project = $arr;
 
         return $this;
     }
