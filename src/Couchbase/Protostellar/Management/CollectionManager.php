@@ -32,7 +32,8 @@ use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteCollectionRequest
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteScopeRequest;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\CollectionManagementConverter;
+use Couchbase\Protostellar\Internal\CollectionManagementRequestConverter;
+use Couchbase\Protostellar\Internal\CollectionManagementResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
@@ -59,7 +60,7 @@ class CollectionManager
             SharedUtils::createProtostellarRequest(new ListCollectionsRequest($request), true, $timeout),
             [$this->client->collectionAdmin(), 'ListCollections']
         );
-        return CollectionManagementConverter::convertGetAllScopesResult($res);
+        return CollectionManagementResponseConverter::convertGetAllScopesResult($res);
     }
 
     public function createScope(string $name, CreateScopeOptions $options = null)
@@ -93,7 +94,7 @@ class CollectionManager
     public function createCollection(CollectionSpec $collection, CreateCollectionOptions $options = null)
     {
         $exportedOptions = CreateCollectionOptions::export($options);
-        $request = CollectionManagementConverter::getCreateCollectionRequest($this->bucketName, $collection);
+        $request = CollectionManagementRequestConverter::getCreateCollectionRequest($this->bucketName, $collection);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateCollectionRequest($request), false, $timeout),
@@ -104,7 +105,7 @@ class CollectionManager
     public function dropCollection(CollectionSpec $collection, DropCollectionOptions $options = null)
     {
         $exportedOptions = DropCollectionOptions::export($options);
-        $request = CollectionManagementConverter::getDropCollectionRequest($this->bucketName, $collection);
+        $request = CollectionManagementRequestConverter::getDropCollectionRequest($this->bucketName, $collection);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DeleteCollectionRequest($request), false, $timeout),

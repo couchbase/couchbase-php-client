@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar\Management;
 
 use Couchbase\Exception\BucketNotFoundException;
+use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\CreateBucketOptions;
@@ -34,8 +35,9 @@ use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CreateBucketRequest;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\DeleteBucketRequest;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsRequest;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\UpdateBucketRequest;
+use Couchbase\Protostellar\Internal\BucketManagementRequestConverter;
+use Couchbase\Protostellar\Internal\BucketManagementResponseConverter;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\BucketManagementConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
@@ -56,7 +58,7 @@ class BucketManager
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = CreateBucketOptions::export($options);
-        $request = BucketManagementConverter::getCreateBucketRequest($exportedSettings);
+        $request = BucketManagementRequestConverter::getCreateBucketRequest($exportedSettings);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateBucketRequest($request), false, $timeout),
@@ -64,11 +66,14 @@ class BucketManager
         );
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function updateBucket(BucketSettings $settings, UpdateBucketOptions $options = null)
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = UpdateBucketOptions::export($options);
-        $request = BucketManagementConverter::getUpdateBucketRequest($exportedSettings);
+        $request = BucketManagementRequestConverter::getUpdateBucketRequest($exportedSettings);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UpdateBucketRequest($request), false, $timeout),
@@ -104,6 +109,9 @@ class BucketManager
         throw new BucketNotFoundException("Bucket " . $name . " was not found");
     }
 
+    /**
+     * @throws DecodingFailureException
+     */
     public function getAllBuckets(GetAllBucketsOptions $options = null): array
     {
         $exportedOptions = GetAllBucketsOptions::export($options);
@@ -114,7 +122,7 @@ class BucketManager
         );
         $buckets = [];
         foreach ($res->getBuckets() as $bucket) {
-            $buckets[] = BucketSettings::import(BucketManagementConverter::convertBucketRequest($bucket));
+            $buckets[] = BucketSettings::import(BucketManagementResponseConverter::convertGetBucketResponse($bucket));
         }
         return $buckets;
     }
