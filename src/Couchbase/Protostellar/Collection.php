@@ -22,7 +22,6 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\BinaryCollectionInterface;
 use Couchbase\CollectionInterface;
-use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\ExistsOptions;
 use Couchbase\ExistsResult;
@@ -30,18 +29,18 @@ use Couchbase\GetAllReplicasOptions;
 use Couchbase\GetAndLockOptions;
 use Couchbase\GetAndTouchOptions;
 use Couchbase\GetOptions;
+use Couchbase\GetReplicaResult;
 use Couchbase\GetResult;
 use Couchbase\InsertOptions;
-use Couchbase\LookupInMacro;
 use Couchbase\LookupInOptions;
 use Couchbase\LookupInResult;
-use Couchbase\LookupInSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateInResult;
-use Couchbase\MutateInSpec;
 use Couchbase\MutationResult;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
+use Couchbase\Protostellar\Internal\KVRequestConverter;
+use Couchbase\Protostellar\Internal\KVResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Management\CollectionQueryIndexManager;
@@ -59,13 +58,9 @@ use Couchbase\Protostellar\Generated\KV\V1\TouchRequest;
 use Couchbase\Protostellar\Generated\KV\V1\UnlockRequest;
 use Couchbase\Protostellar\Generated\KV\V1\UpsertRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\KVConverter;
 use Couchbase\TouchOptions;
-use Couchbase\TranscoderFlags;
 use Couchbase\UnlockOptions;
 use Couchbase\UpsertOptions;
-use DateTimeInterface;
-use Google\Protobuf\Timestamp;
 
 class Collection implements CollectionInterface
 {
@@ -89,195 +84,114 @@ class Collection implements CollectionInterface
         return $this->name;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
     {
-        [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
         $exportedOptions = UpsertOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "content" => $encodedDocument,
-            "content_flags" => $contentType,
-        ];
+        $request = KVRequestConverter::getUpsertRequest(
+            $key,
+            $document,
+            $options,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertUpsertOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UpsertRequest($request), false, $timeout),
             [$this->client->kv(), 'Upsert']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
      * @throws InvalidArgumentException
      */
     public function insert(string $key, $document, InsertOptions $options = null): MutationResult
     {
-        [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
         $exportedOptions = InsertOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "content" => $encodedDocument,
-            "content_flags" => $contentType
-        ];
+        $request = KVRequestConverter::getInsertRequest(
+            $key,
+            $document,
+            $options,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertInsertOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new InsertRequest($request), false, $timeout),
             [$this->client->kv(), 'Insert']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function replace(string $key, $document, ReplaceOptions $options = null): MutationResult
     {
-        [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
         $exportedOptions = ReplaceOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "content" => $encodedDocument,
-            "content_flags" => $contentType
-        ];
+        $request = KVRequestConverter::getReplaceRequest(
+            $key,
+            $document,
+            $options,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertReplaceOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ReplaceRequest($request), false, $timeout),
             [$this->client->kv(), 'Replace']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function remove(string $key, RemoveOptions $options = null): MutationResult
     {
         $exportedOptions = RemoveOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
+        $request = KVRequestConverter::getRemoveRequest(
+            $key,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertRemoveOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new RemoveRequest($request), false, $timeout),
             [$this->client->kv(), 'Remove']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     public function get(string $key, GetOptions $options = null): GetResult
     {
         $exportedOptions = GetOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
+        $request = KVRequestConverter::getGetRequest(
+            $key,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
             [$this->client->kv(), 'Get']
         );
-        return new GetResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "value" => $res->getContent(),
-                "flags" => $res->getContentFlags(),
-                "expiry" => $res->getExpiry()?->getSeconds(),
-            ],
-            GetOptions::getTranscoder($options)
-        );
+        return KVResponseConverter::convertGetResult($key, $options, $res);
     }
 
-    /**
-     * @throws ProtocolException
-     */
     public function exists(string $key, ExistsOptions $options = null): ExistsResult
     {
         $exportedOptions = ExistsOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
+        $request = KVRequestConverter::getExistsRequest(
+            $key,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new ExistsRequest($request), true, $timeout),
             [$this->client->kv(), 'Exists']
         );
-        return new ExistsResult( //TODO Other options in ExistsResult not returned by GRPC
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "exists" => $res->getResult()
-            ]
-        );
+        return KVResponseConverter::convertExistsResult($key, $res);
     }
 
     /**
@@ -287,34 +201,17 @@ class Collection implements CollectionInterface
     public function getAndTouch(string $key, $expiry, GetAndTouchOptions $options = null): GetResult
     {
         $exportedOptions = GetAndTouchOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-            $request["expiry_time"] = new Timestamp(["seconds" => $expirySeconds]);
-        } else {
-            $expirySeconds = (int)$expiry;
-            $request["expiry_secs"] = $expirySeconds;
-        }
+        $request = KVRequestConverter::getGetAndTouchRequest(
+            $key,
+            $expiry,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndTouch']
         );
-        return new GetResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "value" => $res->getContent(),
-                "flags" => $res->getContentFlags(),
-                "expiry" => $res->getExpiry()?->getSeconds(),
-            ],
-            GetAndTouchOptions::getTranscoder($options)
-        );
+        return KVResponseConverter::convertGetAndTouchResult($key, $options, $res);
     }
 
     /**
@@ -324,28 +221,17 @@ class Collection implements CollectionInterface
     public function getAndLock(string $key, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
     {
         $exportedOptions = GetAndLockOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "lock_time" => $lockTimeSeconds
-        ];
+        $request = KVRequestConverter::getGetAndLockRequest(
+            $key,
+            $lockTimeSeconds,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetAndLockRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndLock']
         );
-        return new GetResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "value" => $res->getContent(),
-                "flags" => $res->getContentFlags(),
-                "expiry" => $res->getExpiry()?->getSeconds(),
-            ],
-            GetAndLockOptions::getTranscoder($options)
-        );
+        return KVResponseConverter::convertGetAndLockResult($key, $res, $options);
     }
 
     /**
@@ -354,90 +240,50 @@ class Collection implements CollectionInterface
     public function unlock(string $key, string $cas, UnlockOptions $options = null): Result
     {
         $exportedOptions = UnlockOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "cas" => $cas,
-        ];
+        $request = KVRequestConverter::getUnlockRequest(
+            $key,
+            $cas,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new UnlockRequest($request), false, $timeout),
             [$this->client->kv(), 'Unlock']
         );
-        return new Result(
-            [
-                "id" => $key,
-                "cas" => $cas,
-            ]
-        );
+        return KVResponseConverter::convertUnlockResult($key, $cas);
     }
 
-    /**
-     * @throws ProtocolException
-     */
     public function touch(string $key, $expiry, TouchOptions $options = null): MutationResult
     {
         $exportedOptions = TouchOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-            $request["expiry_time"] = new Timestamp(["seconds" => $expirySeconds]);
-        } else {
-            $expirySeconds = (int)$expiry;
-            $request["expiry_secs"] = $expirySeconds;
-        }
+        $request = KVRequestConverter::getTouchRequest(
+            $key,
+            $expiry,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
             [$this->client->kv(), 'Touch']
         );
-        $resArr = KVConverter::convertTouchRes($key, $res);
-        return new MutationResult($resArr);
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
     {
-        $encoded = array_map(
-            function (LookupInSpec $item) {
-                return $item->export();
-            },
-            $specs
-        );
-        if ($options != null && $options->needToFetchExpiry()) {
-            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
-        }
         $exportedOptions = LookupInOptions::export($options);
-        [$specsReq, $order] = KVConverter::getLookupInSpec($encoded);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "specs" => $specsReq
-        ];
+        [$request, $order] = KVRequestConverter::getLookupInRequest(
+            $key,
+            $specs,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
+            $options
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertLookupInOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new LookupInRequest($request), true, $timeout),
             [$this->client->kv(), 'LookupIn']
         );
-
-        $fields = KVConverter::convertLookupInRes(SharedUtils::toArray($res->getSpecs()), $specsReq, $order);
-        return new LookupInResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "fields" => $fields
-            ],
-            LookupInOptions::getTranscoder($options)
-        );
+        return KVResponseConverter::convertLookupInResult($key, $res, $request['specs'], $order, $options);
     }
 
     /**
@@ -445,46 +291,22 @@ class Collection implements CollectionInterface
      */
     public function mutateIn(string $key, array $specs, MutateInOptions $options = null): MutateInResult
     {
-        $encoded = array_map(
-            function (MutateInSpec $item) use ($options) {
-                return $item->export($options);
-            },
-            $specs
-        );
         $exportedOptions = MutateInOptions::export($options);
-        [$specsReq, $order] = KVConverter::getMutateInSpec($encoded);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "specs" => $specsReq
-        ];
+        [$request, $order] = KVRequestConverter::getMutateInRequest(
+            $key,
+            $specs,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
+            $options
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertMutateInOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new MutateInRequest($request), false, $timeout),
             [$this->client->kv(), 'MutateIn']
         );
-        $fields = KVConverter::convertMutateInRes(SharedUtils::toArray($res->getSpecs()), $specsReq, $order);
-        return new MutateInResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ],
-                "fields" => $fields,
-                "deleted" => false //TODO: No Deleted flag from grpc response
-            ]
-        );
+        return KVResponseConverter::convertMutateInResult($key, $res, $request['specs'], $order);
     }
 
-    public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): \Couchbase\GetReplicaResult
+    public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): GetReplicaResult
     {
         // TODO: Implement getAnyReplica() method.
         return new GetReplicaResult();
