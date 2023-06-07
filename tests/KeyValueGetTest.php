@@ -56,39 +56,38 @@ class KeyValueGetTest extends CouchbaseTestCaseProtostellar
         $this->assertGreaterThan($now + 8, $res->expiryTime()->getTimestamp());
     }
 
-    // TODO: Projections not yet implemented in PS
-//    public function testGetWithProjections()
-//    {
-//        $id = $this->uniqueId();
-//        $collection = $this->defaultCollection();
-//        $opts = (UpsertOptions::build())->expiry(10);
-//        $res = $collection->upsert(
-//            $id,
-//            [
-//                "answer" => 42,
-//                "name" => "james",
-//                "hobbies" => [
-//                    "activity" => "biking",
-//                    "frequency" => "weekly"
-//                ]
-//            ],
-//            $opts
-//        );
-//        $cas = $res->cas();
-//        $this->assertNotNull($cas);
-//
-//        $opts = (GetOptions::build())->project(["name", "hobbies.activity"]);
-//        $res = $collection->get($id, $opts);
-//        $this->assertEquals(
-//            [
-//                "name" => "james",
-//                "hobbies" => [
-//                    "activity" => "biking"
-//                ]
-//            ],
-//            $res->content()
-//        );
-//    }
+    public function testGetWithProjections()
+    {
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $opts = (UpsertOptions::build())->expiry(10);
+        $res = $collection->upsert(
+            $id,
+            [
+                "answer" => 42,
+                "name" => "james",
+                "hobbies" => [
+                    "activity" => "biking",
+                    "frequency" => "weekly"
+                ]
+            ],
+            $opts
+        );
+        $cas = $res->cas();
+        $this->assertNotNull($cas);
+
+        $opts = (GetOptions::build())->project(["name", "hobbies.activity"]);
+        $res = $collection->get($id, $opts);
+        $this->assertEquals(
+            [
+                "name" => "james",
+                "hobbies" => [
+                    "activity" => "biking"
+                ]
+            ],
+            $res->content()
+        );
+    }
 
     public function testGetContentAsReturnsCorrectValue()
     {
