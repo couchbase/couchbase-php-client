@@ -34,7 +34,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getUpsertRequest(string $key, $document, UpsertOptions $options, array $location): array
+    public static function getUpsertRequest(string $key, $document, array $location, UpsertOptions $options = null): array
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
         $exportedOptions = UpsertOptions::export($options);
@@ -58,7 +58,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getInsertRequest(string $key, $document, InsertOptions $options, array $location): array
+    public static function getInsertRequest(string $key, $document, array $location, InsertOptions $options = null): array
     {
         [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
         $exportedOptions = InsertOptions::export($options);
@@ -82,7 +82,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getReplaceRequest(string $key, $document, ReplaceOptions $options, array $location): array
+    public static function getReplaceRequest(string $key, $document, array $location, ReplaceOptions $options = null): array
     {
         [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
         $exportedOptions = ReplaceOptions::export($options);
@@ -216,7 +216,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getMutateInRequest(string $key, array $specs, array $location, MutateInOptions $options): array
+    public static function getMutateInRequest(string $key, array $specs, array $location, MutateInOptions $options = null): array
     {
         $exportedOptions = MutateInOptions::export($options);
         $encoded = array_map(
@@ -297,7 +297,7 @@ class KVRequestConverter
         $request = [
             "key" => $key
         ];
-        $request["delta"] = $exportedOptions["delta"];
+        $request["delta"] = $exportedOptions["delta"] ?? 1;
         if (isset($exportedOptions["initialValue"])) {
             $request["initial"] = $exportedOptions["initialValue"];
         }
@@ -318,7 +318,7 @@ class KVRequestConverter
         $request = [
             "key" => $key
         ];
-        $request["delta"] = $exportedOptions["delta"];
+        $request["delta"] = $exportedOptions["delta"] ?? 1;
         if (isset($exportedOptions["initialValue"])) {
             $request["initial"] = $exportedOptions["initialValue"];
         }

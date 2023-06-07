@@ -17,6 +17,7 @@ use Couchbase\Protostellar\Generated\KV\V1\GetAndTouchResponse;
 use Couchbase\Protostellar\Generated\KV\V1\GetResponse;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInResponse;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInResponse;
+use Couchbase\Protostellar\Generated\KV\V1\TouchResponse;
 use Couchbase\Result;
 
 class KVResponseConverter
@@ -38,7 +39,7 @@ class KVResponseConverter
         );
     }
 
-    public static function convertGetResult(string $key, GetOptions $options, GetResponse $result): GetResult
+    public static function convertGetResult(string $key, GetResponse $result, GetOptions $options = null): GetResult
     {
         return new GetResult(
             [
@@ -63,7 +64,7 @@ class KVResponseConverter
         );
     }
 
-    public static function convertGetAndTouchResult(string $key, GetAndTouchOptions $options, GetAndTouchResponse $result): GetResult
+    public static function convertGetAndTouchResult(string $key, GetAndTouchResponse $result, GetAndTouchOptions $options = null): GetResult
     {
         return new GetResult(
             [
@@ -99,6 +100,24 @@ class KVResponseConverter
                 "cas" => $cas,
             ]
         );
+    }
+
+    public static function convertTouchResult(string $key, TouchResponse $response): MutationResult
+    {
+        $resArr = [
+            "id" => $key,
+            "cas" => strval($response->getCas()),
+        ];
+        if ($response->hasMutationToken()) {
+            $resArr["mutationToken"] =
+                [
+                    "bucketName" => $response->getMutationToken()->getBucketName(),
+                    "partitionId" => $response->getMutationToken()->getVbucketId(),
+                    "partitionUuid" => strval($response->getMutationToken()->getVbucketUuid()),
+                    "sequenceNumber" => strval($response->getMutationToken()->getSeqNo())
+                ];
+        }
+        return new MutationResult($resArr);
     }
 
     public static function convertLookupInResult(

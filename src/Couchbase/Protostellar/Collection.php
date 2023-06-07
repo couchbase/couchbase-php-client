@@ -93,8 +93,8 @@ class Collection implements CollectionInterface
         $request = KVRequestConverter::getUpsertRequest(
             $key,
             $document,
-            $options,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
+            $options
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
@@ -113,8 +113,8 @@ class Collection implements CollectionInterface
         $request = KVRequestConverter::getInsertRequest(
             $key,
             $document,
-            $options,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
+            $options
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
@@ -133,8 +133,8 @@ class Collection implements CollectionInterface
         $request = KVRequestConverter::getReplaceRequest(
             $key,
             $document,
-            $options,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
+            $options
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
@@ -176,7 +176,7 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
             [$this->client->kv(), 'Get']
         );
-        return KVResponseConverter::convertGetResult($key, $options, $res);
+        return KVResponseConverter::convertGetResult($key, $res, $options);
     }
 
     public function exists(string $key, ExistsOptions $options = null): ExistsResult
@@ -211,7 +211,7 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
             [$this->client->kv(), 'GetAndTouch']
         );
-        return KVResponseConverter::convertGetAndTouchResult($key, $options, $res);
+        return KVResponseConverter::convertGetAndTouchResult($key, $res, $options);
     }
 
     /**
@@ -266,7 +266,7 @@ class Collection implements CollectionInterface
             SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
             [$this->client->kv(), 'Touch']
         );
-        return KVResponseConverter::convertMutationResult($key, $res);
+        return KVResponseConverter::convertTouchResult($key, $res);
     }
 
     public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
