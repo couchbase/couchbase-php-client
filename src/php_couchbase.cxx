@@ -57,6 +57,13 @@ PHP_RSHUTDOWN_FUNCTION(couchbase)
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO(ai_Exception_getContext, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_Exception___construct, 0, 0, 0)
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, message, IS_STRING, 0, "\"\"")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, code, IS_LONG, 0, "0")
+ZEND_ARG_OBJ_INFO_WITH_DEFAULT_VALUE(0, previous, Throwable, 1, "null")
+ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, context, IS_ARRAY, 1, "null")
+ZEND_END_ARG_INFO()
+
 PHP_METHOD(CouchbaseException, getContext)
 {
     if (zend_parse_parameters_none_throw() == FAILURE) {
@@ -66,6 +73,40 @@ PHP_METHOD(CouchbaseException, getContext)
     zval *prop, rv;
     prop = couchbase_read_property(couchbase::php::couchbase_exception(), getThis(), "context", 0, &rv);
     ZVAL_COPY_DEREF(return_value, prop);
+}
+
+PHP_METHOD(CouchbaseException, __construct)
+{
+    zend_string* message = NULL;
+    zend_long code = 0;
+    zval tmp, *object, *previous = NULL, *context = NULL;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|SlO!a", &message, &code, &previous, zend_ce_throwable, &context) == FAILURE) {
+        RETURN_THROWS();
+    }
+
+    object = ZEND_THIS;
+
+    if (message) {
+        ZVAL_STR_COPY(&tmp, message);
+        zend_update_property_ex(zend_ce_exception, Z_OBJ_P(object), ZSTR_KNOWN(ZEND_STR_MESSAGE), &tmp);
+        zval_ptr_dtor(&tmp);
+    }
+
+    if (code) {
+        ZVAL_LONG(&tmp, code);
+        zend_update_property_ex(zend_ce_exception, Z_OBJ_P(object), ZSTR_KNOWN(ZEND_STR_CODE), &tmp);
+    }
+
+    if (previous) {
+        zend_update_property_ex(zend_ce_exception, Z_OBJ_P(object), ZSTR_KNOWN(ZEND_STR_PREVIOUS), previous);
+    }
+
+    if (context) {
+        zend_string* property_context_name = zend_string_init(ZEND_STRL("context"), 1);
+        zend_update_property_ex(couchbase::php::couchbase_exception(), Z_OBJ_P(object), property_context_name, context);
+        zend_string_release(property_context_name);
+    }
 }
 
 PHP_RINIT_FUNCTION(couchbase)
@@ -80,6 +121,7 @@ PHP_RINIT_FUNCTION(couchbase)
 // clang-format off
 static const zend_function_entry exception_functions[] = {
         PHP_ME(CouchbaseException, getContext, ai_Exception_getContext, ZEND_ACC_PUBLIC)
+        PHP_ME(CouchbaseException, __construct, ai_Exception___construct, ZEND_ACC_PUBLIC)
         PHP_FE_END
 };
 
@@ -1756,7 +1798,7 @@ PHP_FUNCTION(collectionDrop)
     if (auto e = handle->collection_drop(return_value, bucket_name, collection_spec, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
-        }
+    }
 }
 
 static inline couchbase::php::transactions_resource*
