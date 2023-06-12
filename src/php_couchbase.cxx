@@ -78,20 +78,20 @@ PHP_METHOD(CouchbaseException, getContext)
 PHP_METHOD(CouchbaseException, __construct)
 {
     zend_string* message = NULL;
-    zend_long   code = 0;
-    zval  tmp, *object, *previous = NULL, *context = NULL;
+    zend_long code = 0;
+    zval tmp, *object, *previous = NULL, *context = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|SlO!a", &message, &code, &previous, zend_ce_throwable, &context) == FAILURE) {
-		RETURN_THROWS();
-	}
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|SlO!a", &message, &code, &previous, zend_ce_throwable, &context) == FAILURE) {
+        RETURN_THROWS();
+    }
 
-	object = ZEND_THIS;
+    object = ZEND_THIS;
 
-	if (message) {
-	    ZVAL_STR_COPY(&tmp, message);
-	    zend_update_property_ex(zend_ce_exception, Z_OBJ_P(object), ZSTR_KNOWN(ZEND_STR_MESSAGE), &tmp);
-	    zval_ptr_dtor(&tmp);
-	}
+    if (message) {
+        ZVAL_STR_COPY(&tmp, message);
+        zend_update_property_ex(zend_ce_exception, Z_OBJ_P(object), ZSTR_KNOWN(ZEND_STR_MESSAGE), &tmp);
+        zval_ptr_dtor(&tmp);
+    }
 
     if (code) {
         ZVAL_LONG(&tmp, code);
@@ -103,7 +103,7 @@ PHP_METHOD(CouchbaseException, __construct)
     }
 
     if (context) {
-        zend_string *property_context_name = zend_string_init(ZEND_STRL("context"), 1);
+        zend_string* property_context_name = zend_string_init(ZEND_STRL("context"), 1);
         zend_update_property_ex(couchbase::php::couchbase_exception(), Z_OBJ_P(object), property_context_name, context);
         zend_string_release(property_context_name);
     }
@@ -1798,7 +1798,7 @@ PHP_FUNCTION(collectionDrop)
     if (auto e = handle->collection_drop(return_value, bucket_name, collection_spec, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
-        }
+    }
 }
 
 static inline couchbase::php::transactions_resource*
