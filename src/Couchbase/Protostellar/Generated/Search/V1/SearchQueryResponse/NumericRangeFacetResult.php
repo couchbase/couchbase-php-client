@@ -14,10 +14,6 @@ use Google\Protobuf\Internal\GPBUtil;
 class NumericRangeFacetResult extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>string name = 1;</code>
-     */
-    protected $name = '';
-    /**
      * Generated from protobuf field <code>string field = 2;</code>
      */
     protected $field = '';
@@ -44,7 +40,6 @@ class NumericRangeFacetResult extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type string $name
      *     @type string $field
      *     @type int|string $total
      *     @type int|string $missing
@@ -55,28 +50,6 @@ class NumericRangeFacetResult extends \Google\Protobuf\Internal\Message
     public function __construct($data = NULL) {
         \GPBMetadata\Couchbase\Search\V1\Search::initOnce();
         parent::__construct($data);
-    }
-
-    /**
-     * Generated from protobuf field <code>string name = 1;</code>
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Generated from protobuf field <code>string name = 1;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setName($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->name = $var;
-
-        return $this;
     }
 
     /**

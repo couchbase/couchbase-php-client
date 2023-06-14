@@ -9,9 +9,9 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>couchbase.kv.v1.GetReplicaRequest</code>
+ * Generated from protobuf message <code>couchbase.kv.v1.GetAllReplicasRequest</code>
  */
-class GetReplicaRequest extends \Google\Protobuf\Internal\Message
+class GetAllReplicasRequest extends \Google\Protobuf\Internal\Message
 {
     /**
      * Generated from protobuf field <code>string bucket_name = 1;</code>
@@ -29,10 +29,6 @@ class GetReplicaRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string key = 4;</code>
      */
     protected $key = '';
-    /**
-     * Generated from protobuf field <code>uint32 replica_index = 5;</code>
-     */
-    protected $replica_index = 0;
 
     /**
      * Constructor.
@@ -44,7 +40,6 @@ class GetReplicaRequest extends \Google\Protobuf\Internal\Message
      *     @type string $scope_name
      *     @type string $collection_name
      *     @type string $key
-     *     @type int $replica_index
      * }
      */
     public function __construct($data = NULL) {
@@ -136,28 +131,6 @@ class GetReplicaRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->key = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint32 replica_index = 5;</code>
-     * @return int
-     */
-    public function getReplicaIndex()
-    {
-        return $this->replica_index;
-    }
-
-    /**
-     * Generated from protobuf field <code>uint32 replica_index = 5;</code>
-     * @param int $var
-     * @return $this
-     */
-    public function setReplicaIndex($var)
-    {
-        GPBUtil::checkUint32($var);
-        $this->replica_index = $var;
 
         return $this;
     }

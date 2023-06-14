@@ -24,6 +24,7 @@ use Couchbase\AppendOptions;
 use Couchbase\BinaryCollectionInterface;
 use Couchbase\CounterResult;
 use Couchbase\DecrementOptions;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\IncrementOptions;
 use Couchbase\MutationResult;
 use Couchbase\PrependOptions;
@@ -32,11 +33,10 @@ use Couchbase\Protostellar\Generated\KV\V1\DecrementRequest;
 use Couchbase\Protostellar\Generated\KV\V1\IncrementRequest;
 use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\KVConverter;
+use Couchbase\Protostellar\Internal\KVRequestConverter;
+use Couchbase\Protostellar\Internal\KVResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
-
-use const Grpc\STATUS_OK;
 
 class BinaryCollection implements BinaryCollectionInterface
 {
@@ -46,11 +46,10 @@ class BinaryCollection implements BinaryCollectionInterface
     private string $name;
 
     /**
-     * @param string $name
-     * @param string $scopeName
+     * @param Client $client
      * @param string $bucketName
-     * @param resource $core
-     *
+     * @param string $scopeName
+     * @param string $name
      * @internal
      */
     public function __construct(Client $client, string $bucketName, string $scopeName, string $name)
@@ -67,138 +66,80 @@ class BinaryCollection implements BinaryCollectionInterface
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function append(string $key, string $value, AppendOptions $options = null): MutationResult
     {
         $exportedOptions = AppendOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "content" => $value,
-        ];
+        $request = KVRequestConverter::getAppendRequest(
+            $key,
+            $value,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertAppendOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new AppendRequest($request), false, $timeout),
             [$this->client->kv(), 'Append']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function prepend(string $key, string $value, PrependOptions $options = null): MutationResult
     {
         $exportedOptions = PrependOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-            "content" => $value,
-        ];
+        $request = KVRequestConverter::getPrependRequest(
+            $key,
+            $value,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertPrependOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new PrependRequest($request), false, $timeout),
             [$this->client->kv(), 'Prepend']
         );
-        return new MutationResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ]
-            ]
-        );
+        return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function increment(string $key, IncrementOptions $options = null): CounterResult
     {
         $exportedOptions = IncrementOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
+        $request = KVRequestConverter::getIncrementRequest(
+            $key,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->scopeName)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertIncrementOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new IncrementRequest($request), false, $timeout),
             [$this->client->kv(), 'Increment']
         );
-        return new CounterResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ],
-                "value" => $res->getContent()
-            ]
-        );
+        return KVResponseConverter::convertCounterResult($key, $res);
     }
 
     /**
-     * @throws ProtocolException
+     * @throws InvalidArgumentException
      */
     public function decrement(string $key, DecrementOptions $options = null): CounterResult
     {
         $exportedOptions = DecrementOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $this->scopeName,
-            "collection_name" => $this->name,
-            "key" => $key,
-        ];
+        $request = KVRequestConverter::getDecrementRequest(
+            $key,
+            $exportedOptions,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
-        $request = array_merge($request, KVConverter::convertDecrementOptions($exportedOptions));
         $res = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DecrementRequest($request), false, $timeout),
             [$this->client->kv(), 'Decrement']
         );
-        return new CounterResult(
-            [
-                "id" => $key,
-                "cas" => strval($res->getCas()),
-                "mutationToken" =>
-                    [
-                        "bucketName" => $res->getMutationToken()->getBucketName(),
-                        "partitionId" => $res->getMutationToken()->getVbucketId(),
-                        "partitionUuid" => strval($res->getMutationToken()->getVbucketUuid()),
-                        "sequenceNumber" => strval($res->getMutationToken()->getSeqNo())
-                    ],
-                "value" => $res->getContent()
-            ]
-        );
+        return KVResponseConverter::convertCounterResult($key, $res);
     }
 }

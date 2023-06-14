@@ -13,6 +13,10 @@ use Google\Protobuf\Internal\GPBUtil;
  */
 class BuildDeferredIndexesResponse extends \Google\Protobuf\Internal\Message
 {
+    /**
+     * Generated from protobuf field <code>repeated string index_names = 1;</code>
+     */
+    private $index_names;
 
     /**
      * Constructor.
@@ -20,11 +24,34 @@ class BuildDeferredIndexesResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
+     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $index_names
      * }
      */
     public function __construct($data = NULL) {
         \GPBMetadata\Couchbase\Admin\Query\V1\Query::initOnce();
         parent::__construct($data);
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated string index_names = 1;</code>
+     * @return \Google\Protobuf\Internal\RepeatedField
+     */
+    public function getIndexNames()
+    {
+        return $this->index_names;
+    }
+
+    /**
+     * Generated from protobuf field <code>repeated string index_names = 1;</code>
+     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
+     * @return $this
+     */
+    public function setIndexNames($var)
+    {
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::STRING);
+        $this->index_names = $arr;
+
+        return $this;
     }
 
 }

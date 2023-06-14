@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Management;
 
+use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Management\BuildQueryIndexesOptions;
 use Couchbase\Management\CreateQueryIndexOptions;
@@ -36,7 +37,8 @@ use Couchbase\Protostellar\Generated\Admin\Query\V1\DropIndexRequest;
 use Couchbase\Protostellar\Generated\Admin\Query\V1\DropPrimaryIndexRequest;
 use Couchbase\Protostellar\Generated\Admin\Query\V1\GetAllIndexesRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\QueryIndexManagementConverter;
+use Couchbase\Protostellar\Internal\QueryIndexManagementRequestConverter;
+use Couchbase\Protostellar\Internal\QueryIndexManagementResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
@@ -50,22 +52,25 @@ class QueryIndexManager
         $this->client = $client;
     }
 
+    /**
+     * @throws DecodingFailureException
+     */
     public function getAllIndexes(string $bucketName, GetAllQueryIndexesOptions $options = null): array
     {
         $exportedOptions = GetAllQueryIndexesOptions::export($options);
-        $request = QueryIndexManagementConverter::getGetAllIndexesRequest($bucketName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getGetAllIndexesRequest($bucketName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $response = ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new GetAllIndexesRequest($request), true, $timeout),
             [$this->client->queryAdmin(), 'GetAllIndexes']
         );
-        return QueryIndexManagementConverter::convertGetAllIndexesResult($response);
+        return QueryIndexManagementResponseConverter::convertGetAllIndexesResult($response);
     }
 
     public function createPrimaryIndex(string $bucketName, CreateQueryPrimaryIndexOptions $options = null)
     {
         $exportedOptions = CreateQueryPrimaryIndexOptions::export($options);
-        $request = QueryIndexManagementConverter::getCreatePrimaryIndexRequest($bucketName, $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getCreatePrimaryIndexRequest($bucketName, $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreatePrimaryIndexRequest($request), false, $timeout),
@@ -76,7 +81,7 @@ class QueryIndexManager
     public function createIndex(string $bucketName, string $indexName, array $fields, CreateQueryIndexOptions $options = null)
     {
         $exportedOptions = CreateQueryIndexOptions::export($options);
-        $request = QueryIndexManagementConverter::getCreateIndexRequest($bucketName, $indexName, $fields,  $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getCreateIndexRequest($bucketName, $indexName, $fields,  $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new CreateIndexRequest($request), false, $timeout),
@@ -87,7 +92,7 @@ class QueryIndexManager
     public function dropIndex(string $bucketName, string $indexName, DropQueryIndexOptions $options = null)
     {
         $exportedOptions = DropQueryIndexOptions::export($options);
-        $request = QueryIndexManagementConverter::getDropIndexRequest($bucketName, $indexName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getDropIndexRequest($bucketName, $indexName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DropIndexRequest($request), false, $timeout),
@@ -98,7 +103,7 @@ class QueryIndexManager
     public function dropPrimaryIndex(string $bucketName, DropQueryPrimaryIndexOptions $options = null)
     {
         $exportedOptions = DropQueryPrimaryIndexOptions::export($options);
-        $request = QueryIndexManagementConverter::getDropPrimaryIndexRequest($bucketName, $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getDropPrimaryIndexRequest($bucketName, $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new DropPrimaryIndexRequest($request), false, $timeout),
@@ -109,7 +114,7 @@ class QueryIndexManager
     public function buildDeferredIndexes(string $bucketName, BuildQueryIndexesOptions $options = null)
     {
         $exportedOptions = BuildQueryIndexesOptions::export($options);
-        $request = QueryIndexManagementConverter::getBuildDeferredIndexesRequest($bucketName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
+        $request = QueryIndexManagementRequestConverter::getBuildDeferredIndexesRequest($bucketName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
             SharedUtils::createProtostellarRequest(new BuildDeferredIndexesRequest($request), false, $timeout),
@@ -119,6 +124,7 @@ class QueryIndexManager
 
     /**
      * @throws UnambiguousTimeoutException
+     * @throws DecodingFailureException
      */
     public function watchIndexes(string $bucketName, array $indexNames, int $timeoutMilliseconds, WatchQueryIndexesOptions $options = null)
     {

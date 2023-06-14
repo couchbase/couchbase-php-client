@@ -23,8 +23,10 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
-use Couchbase\Protostellar\Internal\QueryConverter;
+use Couchbase\Protostellar\Internal\QueryRequestConverter;
+use Couchbase\Protostellar\Internal\QueryResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\QueryOptions;
@@ -57,18 +59,21 @@ class Scope implements ScopeInterface
         return new Collection($this->client, $this->bucketName, $this->name, $name);
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
         $exportedOptions = QueryOptions::export($options);
         $exportedOptions["bucketName"] = $this->bucketName;
         $exportedOptions["scopeName"] = $this->name;
-        $request = QueryConverter::getQueryRequest($statement, $exportedOptions);
+        $request = QueryRequestConverter::getQueryRequest($statement, $exportedOptions);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::QUERY, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
             SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
             [$this->client->query(), 'Query']
         );
-        $finalArray = QueryConverter::convertQueryResult($response);
+        $finalArray = QueryResponseConverter::convertQueryResult($response);
         return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }
 

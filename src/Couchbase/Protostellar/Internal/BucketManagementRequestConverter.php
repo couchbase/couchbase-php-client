@@ -16,19 +16,19 @@
  * limitations under the License.
  */
 
+
+declare(strict_types=1);
+
 namespace Couchbase\Protostellar\Internal;
 
-use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Management\EvictionPolicy;
 use Couchbase\Management\StorageBackend;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\BucketType;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CompressionMode;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\EvictionMode;
-use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsResponse\Bucket;
-use Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel;
 
-class BucketManagementConverter
+class BucketManagementRequestConverter
 {
     /**
      * @throws InvalidArgumentException
@@ -38,6 +38,9 @@ class BucketManagementConverter
         return self::getCommonBucketRequest($exportedSettings);
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function getUpdateBucketRequest(array $exportedSettings): array
     {
         return self::getCommonBucketRequest($exportedSettings);
@@ -55,7 +58,7 @@ class BucketManagementConverter
             $request['bucket_type'] = self::convertBucketType($exportedSettings['bucketType']);
         }
         if (isset($exportedSettings['ramQuotaMB'])) {
-            $request['ram_quota_bytes'] = $exportedSettings['ramQuotaMB'] * 1e6;
+            $request['ram_quota_mb'] = $exportedSettings['ramQuotaMB'];
         }
         if (isset($exportedSettings['numReplicas'])) {
             $request['num_replicas'] = $exportedSettings['numReplicas'];
@@ -85,25 +88,6 @@ class BucketManagementConverter
     }
 
     /**
-     * @throws DecodingFailureException
-     */
-    public static function convertBucketRequest(Bucket $bucket): array
-    {
-        return [
-            "name" => $bucket->getBucketName(),
-            "bucketType" => self::convertBucketTypeToCb($bucket->getBucketType()),
-            "ramQuotaMB" => intval($bucket->getRamQuotaBytes() / 1e6),
-            "numReplicas" => $bucket->getNumReplicas(),
-            "replicaIndexes" => $bucket->getReplicaIndexes(),
-            "evictionPolicy" => self::convertEvictionModeToCb($bucket->getEvictionMode()),
-            "maxExpiry" => $bucket->getMaxExpirySecs(),
-            "compressionMode" => self::convertCompressionModeToCb($bucket->getCompressionMode()),
-            "minimumDurabilityLevel" => self::convertDurabilityLevelToCb($bucket->getMinimumDurabilityLevel()),
-            "storageBackend" => self::convertStorageBackendToCb($bucket->getStorageBackend())
-        ];
-    }
-
-    /**
      * @throws InvalidArgumentException
      */
     private static function convertBucketType(string $bucketType): int
@@ -117,20 +101,6 @@ class BucketManagementConverter
                 return BucketType::BUCKET_TYPE_MEMCACHED;
             default:
                 throw new InvalidArgumentException("Unknown bucket type specified");
-        }
-    }
-
-    private static function convertBucketTypeToCb(int $bucketType): string
-    {
-        switch ($bucketType) {
-            case BucketType::BUCKET_TYPE_COUCHBASE:
-                return \Couchbase\Management\BucketType::COUCHBASE;
-            case BucketType::BUCKET_TYPE_EPHEMERAL:
-                return \Couchbase\Management\BucketType::EPHEMERAL;
-            case BucketType::BUCKET_TYPE_MEMCACHED:
-                return \Couchbase\Management\BucketType::MEMCACHED;
-            default:
-                throw new DecodingFailureException("Unknown bucket type received from GRPC");
         }
     }
 
@@ -154,25 +124,6 @@ class BucketManagementConverter
     }
 
     /**
-     * @throws DecodingFailureException
-     */
-    private static function convertEvictionModeToCb(int $evictionMode): string
-    {
-        switch ($evictionMode) {
-            case EvictionMode::EVICTION_MODE_FULL:
-                return EvictionPolicy::FULL;
-            case EvictionMode::EVICTION_MODE_VALUE_ONLY:
-                return EvictionPolicy::VALUE_ONLY;
-            case EvictionMode::EVICTION_MODE_NONE:
-                return EvictionPolicy::NO_EVICTION;
-            case EvictionMode::EVICTION_MODE_NOT_RECENTLY_USED:
-                return EvictionPolicy::NOT_RECENTLY_USED;
-            default:
-                throw new DecodingFailureException("Unrecognised eviction policy received from GRPC");
-        }
-    }
-
-    /**
      * @throws InvalidArgumentException
      */
     private static function convertCompressionMode(string $compressionMode): int
@@ -190,23 +141,6 @@ class BucketManagementConverter
     }
 
     /**
-     * @throws DecodingFailureException
-     */
-    private static function convertCompressionModeToCb(int $compressionMode): string
-    {
-        switch ($compressionMode) {
-            case CompressionMode::COMPRESSION_MODE_OFF:
-                return \Couchbase\Management\CompressionMode::OFF;
-            case CompressionMode::COMPRESSION_MODE_ACTIVE:
-                return \Couchbase\Management\CompressionMode::ACTIVE;
-            case CompressionMode::COMPRESSION_MODE_PASSIVE:
-                return \Couchbase\Management\CompressionMode::PASSIVE;
-            default:
-                throw new DecodingFailureException("Unknown compression mode received from GRPC");
-        }
-    }
-
-    /**
      * @throws InvalidArgumentException
      */
     private static function convertStorageBackend(string $storageBackend): int
@@ -218,38 +152,6 @@ class BucketManagementConverter
                 return \Couchbase\Protostellar\Generated\Admin\Bucket\V1\StorageBackend::STORAGE_BACKEND_MAGMA;
             default:
                 throw new InvalidArgumentException("Unknown storage backend specified");
-        }
-    }
-
-    /**
-     * @throws DecodingFailureException
-     */
-    private static function convertStorageBackendToCb(int $storageBackend): string
-    {
-        switch ($storageBackend) {
-            case StorageBackend::COUCHSTORE:
-                return StorageBackend::COUCHSTORE;
-            case StorageBackend::MAGMA:
-                return StorageBackend::MAGMA;
-            default:
-                throw new DecodingFailureException("Unknown storage backend received from GRPC");
-        }
-    }
-
-    /**
-     * @throws DecodingFailureException
-     */
-    private static function convertDurabilityLevelToCb(int $durabilityLevel): string
-    {
-        switch ($durabilityLevel) {
-            case DurabilityLevel::DURABILITY_LEVEL_MAJORITY:
-                return \Couchbase\DurabilityLevel::MAJORITY;
-            case DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE:
-                return \Couchbase\DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE;
-            case DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY:
-                return \Couchbase\DurabilityLevel::PERSIST_TO_MAJORITY;
-            default:
-                throw new DecodingFailureException("Unknown durability level received from GRPC");
         }
     }
 }

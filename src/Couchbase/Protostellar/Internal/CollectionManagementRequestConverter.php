@@ -21,20 +21,9 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar\Internal;
 
 use Couchbase\Management\CollectionSpec;
-use Couchbase\Management\ScopeSpec;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsResponse;
 
-class CollectionManagementConverter
+class CollectionManagementRequestConverter
 {
-    public static function convertGetAllScopesResult(ListCollectionsResponse $response): array
-    {
-        $scopeSpecs = [];
-        foreach ($response->getScopes() as $scope) {
-            $scopeSpecs[] = self::convertScopeToScopeSpec($scope);
-        }
-        return $scopeSpecs;
-    }
-
     public static function getCreateCollectionRequest(string $bucketName, CollectionSpec $collectionSpec): array
     {
         $exportedSpec = CollectionSpec::export($collectionSpec);
@@ -57,26 +46,5 @@ class CollectionManagementConverter
             "scope_name" => $exportedSpec['scopeName'],
             "collection_name" => $exportedSpec["name"]
         ];
-    }
-
-    private static function convertScopeToScopeSpec(ListCollectionsResponse\Scope $scope): ScopeSpec
-    {
-        return ScopeSpec::build(
-            $scope->getName(),
-            self::convertCollectionsToCollectionSpecs($scope->getName(), Sharedutils::toArray($scope->getCollections()))
-        );
-    }
-
-    private static function convertCollectionsToCollectionSpecs(string $scopeName, array $collections): array
-    {
-        $collectionSpecs = [];
-        foreach ($collections as $collection) {
-            $collectionSpec = new CollectionSpec($collection['name'], $scopeName);
-            if ($collection->hasMaxExpirySecs()) {
-                $collectionSpec->setMaxExpiry($collection->getMaxExpirySecs());
-            }
-            $collectionSpecs[] = $collectionSpec;
-        }
-        return $collectionSpecs;
     }
 }
