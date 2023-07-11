@@ -44,6 +44,7 @@ class QueryOptions
     private ?bool $metrics = null;
     private ?bool $preserveExpiry = null;
     private ?string $queryContext = null;
+    private ?bool $useReplica = null;
     private Transcoder $transcoder;
 
     /**
@@ -370,6 +371,20 @@ class QueryOptions
     }
 
     /**
+     * Sets whether the query engine should use replica nodes for KV fetches if the active node is down.
+     *
+     *
+     * @param bool $useReplica Whether to use replica nodes for KV fetches
+     * @return QueryOptions
+     * @since 4.1.5
+     */
+    public function useReplica(bool $useReplica): QueryOptions
+    {
+        $this->useReplica = $useReplica;
+        return $this;
+    }
+
+    /**
      * Associate custom transcoder with the request.
      *
      * @param Transcoder $transcoder
@@ -451,6 +466,7 @@ class QueryOptions
             'clientContextId' => $options->clientContextId,
             'metrics' => $options->metrics,
             'preserveExpiry' => $options->preserveExpiry,
+            'useReplica' => $options->useReplica,
             'queryContext' => $options->queryContext == null ? $defaultQueryContext : $options->queryContext,
         ];
     }

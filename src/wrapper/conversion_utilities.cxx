@@ -341,6 +341,9 @@ zval_to_query_request(const zend_string* statement, const zval* options)
     if (auto e = cb_assign_boolean(request.adhoc, options, "adHoc"); e.ec) {
         return { {}, e };
     }
+    if (auto e = cb_assign_boolean(request.use_replica, options, "useReplica"); e.ec) {
+        return { {}, e };
+    }
     if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("positionalParameters"));
         value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
         std::vector<core::json_string> params{};
