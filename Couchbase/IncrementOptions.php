@@ -21,11 +21,14 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Utilities\Deprecations;
+use DateTimeInterface;
 
 class IncrementOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
+    private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private int $delta = 1;
     private ?int $initialValue = null;
 
@@ -87,7 +90,6 @@ class IncrementOptions
      * Sets the durability level to enforce when writing the document.
      *
      * @param string|int $level the durability level to enforce
-     * @param int|null $timeoutSeconds
      *
      * @return IncrementOptions
      * @throws Exception\InvalidArgumentException
@@ -100,6 +102,27 @@ class IncrementOptions
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
+        return $this;
+    }
+
+    /**
+     * Sets the expiry time for the document.
+     *
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
+     * @return IncrementOptions
+     * @since 4.1.5
+     */
+    public function expiry($seconds): IncrementOptions
+    {
+        if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = null;
+            $this->expiryTimestamp = $seconds->getTimestamp();
+        } else {
+            $this->expiryTimestamp = null;
+            $this->expirySeconds = (int)$seconds;
+        }
         return $this;
     }
 
@@ -119,6 +142,8 @@ class IncrementOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
+            'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'delta' => $options->delta,
             'initialValue' => $options->initialValue,
         ];
