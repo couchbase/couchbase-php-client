@@ -944,6 +944,9 @@ connection_handle::document_increment(zval* return_value,
     if (auto e = cb_set_initial_value(opts, options); e.ec) {
         return e;
     }
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
+        return e;
+    }
 
     auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
                          .binary()
@@ -988,6 +991,9 @@ connection_handle::document_decrement(zval* return_value,
         return e;
     }
     if (auto e = cb_set_initial_value(opts, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_set_expiry(opts, options); e.ec) {
         return e;
     }
 

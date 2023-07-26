@@ -374,7 +374,7 @@ class QueryOptions
      * Sets whether the query engine should use replica nodes for KV fetches if the active node is down.
      *
      * @param bool $useReplica Whether to use replica nodes for KV fetches
-     * 
+     *
      * @return QueryOptions
      * @since 4.1.5
      */

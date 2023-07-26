@@ -26,7 +26,8 @@ class DecrementOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
-    private ?int $durabilityTimeoutSeconds = null;
+    private ?int $expirySeconds = null;
+    private ?int $expiryTimestamp = null;
     private int $delta = 1;
     private ?int $initialValue = null;
 
@@ -88,20 +89,39 @@ class DecrementOptions
      * Sets the durability level to enforce when writing the document.
      *
      * @param string|int $level the durability level to enforce
-     * @param int|null $timeoutSeconds
      *
      * @return DecrementOptions
      * @throws Exception\InvalidArgumentException
      * @see DurabilityLevel
      * @since 4.0.0
      */
-    public function durabilityLevel($level, ?int $timeoutSeconds): DecrementOptions
+    public function durabilityLevel($level): DecrementOptions
     {
         if (gettype($level) == "integer") {
             $level = Deprecations::convertDeprecatedDurabilityLevel(__METHOD__, $level);
         }
         $this->durabilityLevel = $level;
-        $this->durabilityTimeoutSeconds = $timeoutSeconds;
+        return $this;
+    }
+
+    /**
+     * Sets the expiry time for the document.
+     *
+     * @param int|DateTimeInterface $seconds the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
+     *
+     * @return DecrementOptions
+     * @since 4.1.5
+     */
+    public function expiry($seconds): DecrementOptions
+    {
+        if ($seconds instanceof DateTimeInterface) {
+            $this->expirySeconds = null;
+            $this->expiryTimestamp = $seconds->getTimestamp();
+        } else {
+            $this->expiryTimestamp = null;
+            $this->expirySeconds = (int)$seconds;
+        }
         return $this;
     }
 
@@ -121,7 +141,8 @@ class DecrementOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
-            'durabilityTimeoutSeconds' => $options->durabilityTimeoutSeconds,
+            'expirySeconds' => $options->expirySeconds,
+            'expiryTimestamp' => $options->expiryTimestamp,
             'delta' => $options->delta,
             'initialValue' => $options->initialValue,
         ];
