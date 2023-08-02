@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-06-01</date>
+    <date>2023-08-02</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -272,8 +272,11 @@
                 <file role="php" name="LookupExistsSpec.php"/>
                 <file role="php" name="LookupGetFullSpec.php"/>
                 <file role="php" name="LookupGetSpec.php"/>
+                <file role="php" name="LookupInAllReplicasOptions.php"/>
+                <file role="php" name="LookupInAnyReplicaOptions.php"/>
                 <file role="php" name="LookupInMacro.php"/>
                 <file role="php" name="LookupInOptions.php"/>
+                <file role="php" name="LookupInReplicaResult.php"/>
                 <file role="php" name="LookupInResult.php"/>
                 <file role="php" name="LookupInSpec.php"/>
                 <file role="php" name="MatchAllSearchQuery.php"/>
@@ -514,6 +517,12 @@
                                 <file role="src" name="key_value_error_category.cxx"/>
                                 <file role="src" name="key_value_error_context.cxx"/>
                                 <file role="src" name="lookup_in.cxx"/>
+                                <file role="src" name="lookup_in_all_replicas.cxx"/>
+                                <file role="src" name="lookup_in_all_replicas.hxx"/>
+                                <file role="src" name="lookup_in_any_replica.cxx"/>
+                                <file role="src" name="lookup_in_any_replica.hxx"/>
+                                <file role="src" name="lookup_in_replica.cxx"/>
+                                <file role="src" name="lookup_in_replica.hxx"/>
                                 <file role="src" name="management_error_category.cxx"/>
                                 <file role="src" name="manager_error_context.cxx"/>
                                 <file role="src" name="match_all_query.cxx"/>
@@ -868,6 +877,8 @@
                                 <file role="src" name="document_insert.hxx"/>
                                 <file role="src" name="document_lookup_in.cxx"/>
                                 <file role="src" name="document_lookup_in.hxx"/>
+                                <file role="src" name="document_lookup_in_all_replicas.hxx"/>
+                                <file role="src" name="document_lookup_in_any_replica.hxx"/>
                                 <file role="src" name="document_mutate_in.cxx"/>
                                 <file role="src" name="document_mutate_in.hxx"/>
                                 <file role="src" name="document_prepend.cxx"/>
@@ -951,6 +962,8 @@
                                 <file role="src" name="cmd_insert.hxx"/>
                                 <file role="src" name="cmd_lookup_in.cxx"/>
                                 <file role="src" name="cmd_lookup_in.hxx"/>
+                                <file role="src" name="cmd_lookup_in_replica.cxx"/>
+                                <file role="src" name="cmd_lookup_in_replica.hxx"/>
                                 <file role="src" name="cmd_mutate_in.cxx"/>
                                 <file role="src" name="cmd_mutate_in.hxx"/>
                                 <file role="src" name="cmd_noop.cxx"/>
@@ -1365,7 +1378,10 @@
                             <file role="src" name="key_value_error_map_info.hxx"/>
                             <file role="src" name="key_value_extended_error_info.hxx"/>
                             <file role="src" name="key_value_status_code.hxx"/>
+                            <file role="src" name="lookup_in_all_replicas_options.hxx"/>
+                            <file role="src" name="lookup_in_any_replica_options.hxx"/>
                             <file role="src" name="lookup_in_options.hxx"/>
+                            <file role="src" name="lookup_in_replica_result.hxx"/>
                             <file role="src" name="lookup_in_result.hxx"/>
                             <file role="src" name="lookup_in_specs.hxx"/>
                             <file role="src" name="manager_error_context.hxx"/>
