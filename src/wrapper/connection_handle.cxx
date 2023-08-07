@@ -25,6 +25,7 @@
 #include "version.hxx"
 
 #include <core/cluster.hxx>
+#include <core/agent_group.hxx>
 #include <core/management/bucket_settings.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
@@ -33,6 +34,9 @@
 #include <core/operations/management/search.hxx>
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
+#include <core/range_scan_options.hxx>
+#include <core/range_scan_orchestrator.hxx>
+#include <core/range_scan_orchestrator_options.hxx>
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/collection.hxx>
@@ -1607,6 +1611,201 @@ connection_handle::document_lookup_in(zval* return_value,
     }
     add_assoc_zval(return_value, "fields", &fields);
     return {};
+}
+
+COUCHBASE_API
+core_error_info
+scan_get_items(zval* return_value, std::unique_ptr<couchbase::core::scan_result> scan_result)
+{
+    array_init(return_value);
+    while (true) {
+        auto barrier = std::make_shared<std::promise<tl::expected<couchbase::core::range_scan_item, std::error_code>>>();
+        auto f = barrier->get_future();
+        scan_result->next([barrier](couchbase::core::range_scan_item item, std::error_code ec) {
+            if (ec) {
+                return barrier->set_value(tl::unexpected(ec));
+            } else {
+                return barrier->set_value(item);
+            }
+        });
+
+        auto resp = f.get();
+        if (!resp.has_value()) {
+            if (resp.error() != couchbase::errc::key_value::range_scan_completed) {
+                return { resp.error(), ERROR_LOCATION, "Unable to fetch scan item" };
+            }
+            return {};
+        }
+        auto item = resp.value();
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "id", item.key.data(), item.key.size());
+        if (item.body.has_value()) {
+            auto body = item.body.value();
+            auto cas = fmt::format("{:x}", body.cas.value());
+            add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
+            add_assoc_long(&entry, "flags", body.flags);
+            add_assoc_stringl(&entry, "value", reinterpret_cast<const char*>(body.value.data()), body.value.size());
+            add_assoc_long(&entry, "expiry", body.expiry);
+            add_assoc_bool(&entry, "idsOnly", 0);
+        } else {
+            add_assoc_bool(&entry, "idsOnly", 1);
+        }
+        add_next_index_zval(return_value, &entry);
+    }
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::document_create_scan(zval* return_value,
+                                        const zend_string* bucket,
+                                        const zend_string* scope,
+                                        const zend_string* collection,
+                                        const zval* scan_type,
+                                        const zval* options)
+{
+    // Get orchestrator options
+    couchbase::core::range_scan_orchestrator_options opts;
+
+    if (auto e = cb_assign_timeout(opts, options); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_boolean(opts.ids_only, options, "idsOnly"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(opts.concurrency, options, "concurrency"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(opts.batch_byte_limit, options, "batchByteLimit"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_integer(opts.batch_item_limit, options, "batchItemLimit"); e.ec) {
+        return e;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        couchbase::core::mutation_state mutation_state{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            std::uint64_t partition_uuid;
+            std::uint64_t sequence_number;
+            std::uint16_t partition_id;
+            std::string bucket_name;
+            if (auto e = cb_assign_integer(partition_id, options, "partitionId"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_integer(partition_uuid, options, "partitionUuid"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_integer(sequence_number, options, "sequenceNumber"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_string(bucket_name, options, "bucketName"); e.ec) {
+                return e;
+            }
+            mutation_state.tokens.emplace_back(mutation_token{ partition_uuid, sequence_number, partition_id, bucket_name });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        opts.consistent_with = mutation_state;
+    }
+
+    auto bucket_name = cb_string_new(bucket);
+    auto scope_name = cb_string_new(scope);
+    auto collection_name = cb_string_new(collection);
+
+    // Get operation agent
+    auto clust = cluster();
+
+    auto agent_group = couchbase::core::agent_group(clust->io_context(), couchbase::core::agent_group_config{ { clust } });
+    agent_group.open_bucket(bucket_name);
+    auto agent = agent_group.get_agent(bucket_name);
+    if (!agent.has_value()) {
+        return { agent.error(), ERROR_LOCATION, "Cannot perform scan operation. Unable to get operation agent" }; //TODO: TEST THIS RETURNS CB EXCEPTION IF TRUE
+    }
+
+    // Get vBucket map
+    auto barrier = std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
+    auto f = barrier->get_future();
+    clust->with_bucket_configuration(bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
+        barrier->set_value({ ec, config });
+    });
+    auto [ec, config] = f.get();
+    if (ec) {
+        return {ec, ERROR_LOCATION, "Cannot perform scan operation. Unable to get bucket config" };
+    }
+    if (!config.supports_range_scan()) {
+        return { errc::common::feature_not_available, ERROR_LOCATION, "Server version does not support key-value scan operations" };
+    }
+    auto vbucket_map = config.vbmap;
+    if (!vbucket_map || vbucket_map->empty()) {
+        return { std::error_code{}, ERROR_LOCATION, "Cannot perform scan operation. Unable to get vBucket map." };
+    }
+
+    // Create scan type
+
+    std::variant<std::monostate, couchbase::core::range_scan, couchbase::core::prefix_scan, couchbase::core::sampling_scan> core_scan_type{};
+
+    if (auto [e, type] = cb_get_string(scan_type, "type"); type) {
+        if (type == "range_scan") {
+            couchbase::core::range_scan range_scan{};
+            if (const zval* from = zend_symtable_str_find(Z_ARRVAL_P(scan_type), ZEND_STRL("from"));
+                from != nullptr && Z_TYPE_P(from) == IS_ARRAY) {
+                couchbase::core::scan_term from_term{};
+                if (auto e = cb_assign_string(from_term.term, from, "term"); e.ec) {
+                    return e;
+                }
+                if (auto e = cb_assign_boolean(from_term.exclusive, from, "exclusive"); e.ec) {
+                    return e;
+                }
+                range_scan.from = from_term;
+            }
+            if (const zval* to = zend_symtable_str_find(Z_ARRVAL_P(scan_type), ZEND_STRL("to"));
+                to != nullptr && Z_TYPE_P(to) == IS_ARRAY) {
+                couchbase::core::scan_term to_term{};
+                if (auto e = cb_assign_string(to_term.term, to, "term"); e.ec) {
+                    return e;
+                }
+                if (auto e = cb_assign_boolean(to_term.exclusive, to, "exclusive"); e.ec) {
+                    return e;
+                }
+                range_scan.to = to_term;
+            }
+            core_scan_type = range_scan;
+        } else if (type == "prefix_scan") {
+            couchbase::core::prefix_scan prefix_scan{};
+            if (auto e = cb_assign_string(prefix_scan.prefix, scan_type, "prefix"); e.ec) {
+                return e;
+            }
+            core_scan_type = prefix_scan;
+        } else if (type == "sampling_scan") {
+            couchbase::core::sampling_scan sampling_scan{};
+            if (auto e = cb_assign_integer(sampling_scan.limit, scan_type, "limit"); e.ec) {
+                return e;
+            }
+            if (auto e = cb_assign_integer(sampling_scan.seed, scan_type, "seed"); e.ec) {
+                return e;
+            }
+            core_scan_type = sampling_scan;
+        } else {
+            return { errc::common::invalid_argument, ERROR_LOCATION, "Invalid scan type provided" };
+            }
+    } else if (e.ec) {
+        return e;
+    }
+    auto orchestrator = couchbase::core::range_scan_orchestrator(
+        clust->io_context(), agent.value(), vbucket_map.value(), scope_name, collection_name, core_scan_type, opts);
+
+    // start scan
+    auto resp = orchestrator.scan();
+    if (!resp.has_value()) {
+        return { resp.error(), ERROR_LOCATION, "Unable to start the scan" };
+    }
+
+    auto err = scan_get_items(return_value, std::make_unique<couchbase::core::scan_result>(resp.value()));
+    return err;
 }
 
 COUCHBASE_API
