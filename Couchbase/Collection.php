@@ -554,9 +554,9 @@ class Collection implements CollectionInterface
     {
         if ($scanType instanceof RangeScan) {
             $type = RangeScan::export($scanType);
-        } else if ($scanType instanceof SamplingScan) {
+        } elseif ($scanType instanceof SamplingScan) {
             $type = SamplingScan::export($scanType);
-        } else if ($scanType instanceof PrefixScan) {
+        } elseif ($scanType instanceof PrefixScan) {
             $type = PrefixScan::export($scanType);
         } else {
             throw new InvalidArgumentException("ScanType must be a RangeScan, SamplingScan, or PrefixScan");

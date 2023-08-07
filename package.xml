@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-06-01</date>
+    <date>2023-08-07</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -304,6 +304,7 @@
                 <file role="php" name="PasswordAuthenticator.php"/>
                 <file role="php" name="PersistTo.php"/>
                 <file role="php" name="PhraseSearchQuery.php"/>
+                <file role="php" name="PrefixScan.php"/>
                 <file role="php" name="PrefixSearchQuery.php"/>
                 <file role="php" name="PrependOptions.php"/>
                 <file role="php" name="QueryMetaData.php"/>
@@ -313,6 +314,7 @@
                 <file role="php" name="QueryScanConsistency.php"/>
                 <file role="php" name="QueryStringSearchQuery.php"/>
                 <file role="php" name="QueryWarning.php"/>
+                <file role="php" name="RangeScan.php"/>
                 <file role="php" name="RawBinaryTranscoder.php"/>
                 <file role="php" name="RawJsonTranscoder.php"/>
                 <file role="php" name="RawStringTranscoder.php"/>
@@ -323,6 +325,11 @@
                 <file role="php" name="RequestSpan.php"/>
                 <file role="php" name="RequestTracer.php"/>
                 <file role="php" name="Result.php"/>
+                <file role="php" name="SamplingScan.php"/>
+                <file role="php" name="ScanOptions.php"/>
+                <file role="php" name="ScanResult.php"/>
+                <file role="php" name="ScanTerm.php"/>
+                <file role="php" name="ScanType.php"/>
                 <file role="php" name="Scope.php"/>
                 <file role="php" name="ScopeInterface.php"/>
                 <file role="php" name="SearchFacet.php"/>
@@ -514,6 +521,12 @@
                                 <file role="src" name="key_value_error_category.cxx"/>
                                 <file role="src" name="key_value_error_context.cxx"/>
                                 <file role="src" name="lookup_in.cxx"/>
+                                <file role="src" name="lookup_in_all_replicas.cxx"/>
+                                <file role="src" name="lookup_in_all_replicas.hxx"/>
+                                <file role="src" name="lookup_in_any_replica.cxx"/>
+                                <file role="src" name="lookup_in_any_replica.hxx"/>
+                                <file role="src" name="lookup_in_replica.cxx"/>
+                                <file role="src" name="lookup_in_replica.hxx"/>
                                 <file role="src" name="management_error_category.cxx"/>
                                 <file role="src" name="manager_error_context.cxx"/>
                                 <file role="src" name="match_all_query.cxx"/>
@@ -868,6 +881,8 @@
                                 <file role="src" name="document_insert.hxx"/>
                                 <file role="src" name="document_lookup_in.cxx"/>
                                 <file role="src" name="document_lookup_in.hxx"/>
+                                <file role="src" name="document_lookup_in_all_replicas.hxx"/>
+                                <file role="src" name="document_lookup_in_any_replica.hxx"/>
                                 <file role="src" name="document_mutate_in.cxx"/>
                                 <file role="src" name="document_mutate_in.hxx"/>
                                 <file role="src" name="document_prepend.cxx"/>
@@ -951,6 +966,8 @@
                                 <file role="src" name="cmd_insert.hxx"/>
                                 <file role="src" name="cmd_lookup_in.cxx"/>
                                 <file role="src" name="cmd_lookup_in.hxx"/>
+                                <file role="src" name="cmd_lookup_in_replica.cxx"/>
+                                <file role="src" name="cmd_lookup_in_replica.hxx"/>
                                 <file role="src" name="cmd_mutate_in.cxx"/>
                                 <file role="src" name="cmd_mutate_in.hxx"/>
                                 <file role="src" name="cmd_noop.cxx"/>
@@ -1365,7 +1382,10 @@
                             <file role="src" name="key_value_error_map_info.hxx"/>
                             <file role="src" name="key_value_extended_error_info.hxx"/>
                             <file role="src" name="key_value_status_code.hxx"/>
+                            <file role="src" name="lookup_in_all_replicas_options.hxx"/>
+                            <file role="src" name="lookup_in_any_replica_options.hxx"/>
                             <file role="src" name="lookup_in_options.hxx"/>
+                            <file role="src" name="lookup_in_replica_result.hxx"/>
                             <file role="src" name="lookup_in_result.hxx"/>
                             <file role="src" name="lookup_in_specs.hxx"/>
                             <file role="src" name="manager_error_context.hxx"/>

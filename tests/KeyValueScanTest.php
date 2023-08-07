@@ -55,12 +55,11 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     {
         parent::tearDown();
 
-        foreach($this->testIds as $id) {
-            try{
+        foreach ($this->testIds as $id) {
+            try {
                 $this->collection->remove($id);
             } catch (Exception $exception) {
             }
-
         }
     }
 
@@ -109,12 +108,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testSimplePrefixScan() {
+    public function testSimplePrefixScan()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "19");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         $results = $this->collection->scan(
             new PrefixScan($this->sharedPrefix . "-1")
@@ -122,12 +127,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testSimpleRangeScan() {
+    public function testSimpleRangeScan()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         $results = $this->collection->scan(
             new RangeScan(
@@ -138,7 +149,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testSimpleSamplingScan() {
+    public function testSimpleSamplingScan()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -149,12 +161,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateSamplingScan($results, $limit);
     }
 
-    public function testRangeScanExclusiveFrom() {
+    public function testRangeScanExclusiveFrom()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("11", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new RangeScan(
                 ScanTerm::build($this->sharedPrefix . "-10", true),
@@ -164,12 +182,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanExclusiveTo() {
+    public function testRangeScanExclusiveTo()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "28");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new RangeScan(
                 ScanTerm::build($this->sharedPrefix . "-10", false),
@@ -179,12 +203,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanBothExclusive() {
+    public function testRangeScanBothExclusive()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("11", "28");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new RangeScan(
                 ScanTerm::build($this->sharedPrefix . "-10", true),
@@ -194,12 +224,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanDefaultFrom() {
+    public function testRangeScanDefaultFrom()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("00", "09");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-0" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-0" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new RangeScan(
                 null,
@@ -209,12 +245,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanDefaultTo() {
+    public function testRangeScanDefaultTo()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("90", "99");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new RangeScan(
                 ScanTerm::build($this->sharedPrefix . "-90"),
@@ -224,7 +266,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanBothDefault() {
+    public function testRangeScanBothDefault()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -234,12 +277,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $this->testIds);
     }
 
-    public function testRangeScanIdsOnly() {
+    public function testRangeScanIdsOnly()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         $results = $this->collection->scan(
             new RangeScan(
@@ -251,12 +300,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds, true);
     }
 
-    public function testRangeScanExplicitlyWithContent() {
+    public function testRangeScanExplicitlyWithContent()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         $results = $this->collection->scan(
             new RangeScan(
@@ -268,12 +323,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testPrefixScanIdsOnly() {
+    public function testPrefixScanIdsOnly()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "19");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
         $results = $this->collection->scan(
             new PrefixScan($this->sharedPrefix . "-1"),
             ScanOptions::build()->idsOnly(true)
@@ -281,7 +342,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds, true);
     }
 
-    public function testSamplingScanIdsOnly() {
+    public function testSamplingScanIdsOnly()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -293,7 +355,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateSamplingScan($results, $limit, true);
     }
 
-    public function testSamplingScanWithSeed() {
+    public function testSamplingScanWithSeed()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -305,12 +368,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateSamplingScan($results, $limit, true);
     }
 
-    public function testRangeScanBatchByteLimit() {
+    public function testRangeScanBatchByteLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->batchByteLimitValues as $value) {
             $results = $this->collection->scan(
@@ -324,12 +393,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testPrefixScanBatchByteLimit() {
+    public function testPrefixScanBatchByteLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "19");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->batchByteLimitValues as $value) {
             $results = $this->collection->scan(
@@ -340,7 +415,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testSamplingScanBatchByteLimit() {
+    public function testSamplingScanBatchByteLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -355,13 +431,19 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testRangeScanConcurrency() {
+    public function testRangeScanConcurrency()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
         $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->concurrencyValues as $value) {
             $results = $this->collection->scan(
@@ -375,13 +457,19 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testPrefixScanConcurrency() {
+    public function testPrefixScanConcurrency()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
         $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
 
         $expectedIds = range("10", "19");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->concurrencyValues as $value) {
             $results = $this->collection->scan(
@@ -392,7 +480,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testSamplingScanConcurrency() {
+    public function testSamplingScanConcurrency()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
         $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
@@ -408,12 +497,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testRangeScanBatchItemLimit() {
+    public function testRangeScanBatchItemLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->batchItemLimitValues as $value) {
             $results = $this->collection->scan(
@@ -427,12 +522,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testPrefixScanBatchItemLimit() {
+    public function testPrefixScanBatchItemLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "19");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         foreach ($this->batchItemLimitValues as $value) {
             $results = $this->collection->scan(
@@ -443,13 +544,14 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testSamplingScanBatchItemLimit() {
+    public function testSamplingScanBatchItemLimit()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $limit = 15;
 
-        foreach($this->batchItemLimitValues as $value) {
+        foreach ($this->batchItemLimitValues as $value) {
             $results = $this->collection->scan(
                 new SamplingScan($limit),
                 ScanOptions::build()->batchItemLimit($value)
@@ -458,12 +560,18 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testRangeScanMultipleOptions() {
+    public function testRangeScanMultipleOptions()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
         $expectedIds = range("10", "29");
-        $expectedIds = array_map(function($val) { return $this->sharedPrefix . "-" . $val;}, $expectedIds);
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            $expectedIds
+        );
 
         $results = $this->collection->scan(
             new RangeScan(
@@ -475,7 +583,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanCollectionDoesNotExist() {
+    public function testRangeScanCollectionDoesNotExist()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -486,11 +595,12 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         );
     }
 
-    public function testRangeScanSameFromTo() {
+    public function testRangeScanSameFromTo()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
-        $expectedIds = [$this->sharedPrefix. "-10"];
+        $expectedIds = [$this->sharedPrefix . "-10"];
 
         $results = $this->collection->scan(
             new RangeScan(
@@ -501,7 +611,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanSameFromToExclusive() {
+    public function testRangeScanSameFromToExclusive()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -515,7 +626,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testRangeScanInvertedBounds() {
+    public function testRangeScanInvertedBounds()
+    {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
 
@@ -529,14 +641,16 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->validateScan($results, $expectedIds);
     }
 
-    public function testSamplingScanNonPositiveLimit() {
+    public function testSamplingScanNonPositiveLimit()
+    {
         $this->expectException(\Couchbase\Exception\InvalidArgumentException::class);
         $this->collection->scan(
             new SamplingScan(0)
         );
     }
 
-    public function testRangeScanNonPositiveConcurrency() {
+    public function testRangeScanNonPositiveConcurrency()
+    {
         $this->expectException(\Couchbase\Exception\InvalidArgumentException::class);
         $this->collection->scan(
             RangeScan::build(),
@@ -544,7 +658,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         );
     }
 
-    public function testRangeScanFeatureNotAvailable() {
+    public function testRangeScanFeatureNotAvailable()
+    {
         $this->skipIfUnsupported(!$this->version()->supportsRangeScan());
 
         $this->expectException(FeatureNotAvailableException::class);
