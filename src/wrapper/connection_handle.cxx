@@ -1723,7 +1723,7 @@ connection_handle::document_create_scan(zval* return_value,
     agent_group.open_bucket(bucket_name);
     auto agent = agent_group.get_agent(bucket_name);
     if (!agent.has_value()) {
-        return { agent.error(), ERROR_LOCATION, "Cannot perform scan operation. Unable to get operation agent" }; //TODO: TEST THIS RETURNS CB EXCEPTION IF TRUE
+        return { agent.error(), ERROR_LOCATION, "Cannot perform scan operation. Unable to get operation agent" };
     }
 
     // Get vBucket map
