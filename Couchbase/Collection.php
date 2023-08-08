@@ -550,7 +550,7 @@ class Collection implements CollectionInterface
      * @throws InvalidArgumentException
      * @since 4.1.6
      */
-    public function scan(ScanType $scanType, ScanOptions $options = null): array
+    public function scan(ScanType $scanType, ScanOptions $options = null): ScanResults
     {
         if ($scanType instanceof RangeScan) {
             $type = RangeScan::export($scanType);
@@ -561,20 +561,14 @@ class Collection implements CollectionInterface
         } else {
             throw new InvalidArgumentException("ScanType must be a RangeScan, SamplingScan, or PrefixScan");
         }
-        $responses = Extension\documentScan(
+        return new ScanResults(
             $this->core,
             $this->bucketName,
             $this->scopeName,
             $this->name,
             $type,
-            ScanOptions::export($options)
-        );
-
-        return array_map(
-            function (array $response) use ($options) {
-                return new ScanResult($response, ScanOptions::getTranscoder($options));
-            },
-            $responses
+            ScanOptions::export($options),
+            ScanOptions::getTranscoder($options)
         );
     }
 

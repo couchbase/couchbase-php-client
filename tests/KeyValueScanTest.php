@@ -25,6 +25,7 @@ use Couchbase\RangeScan;
 use Couchbase\SamplingScan;
 use Couchbase\ScanOptions;
 use Couchbase\Collection;
+use Couchbase\ScanResults;
 use Couchbase\ScanTerm;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
@@ -63,7 +64,7 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function validateScan(array $scanResults, array $expectedIds, bool $idsOnly = false)
+    public function validateScan(ScanResults $scanResults, array $expectedIds, bool $idsOnly = false)
     {
         $testIdsReturned = [];
         foreach ($scanResults as $result) {
@@ -84,14 +85,16 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function validateSamplingScan(array $scanResults, int $limit, bool $idsOnly = false)
+    public function validateSamplingScan(ScanResults $scanResults, int $limit, bool $idsOnly = false)
     {
         $testIdsReturned = [];
+        $results = [];
         foreach ($scanResults as $result) {
             $testIdsReturned[] = $result->id();
+            $results[] = $result;
             $this->assertEquals($idsOnly, $result->idsOnly());
         }
-        $this->assertLessThanOrEqual(sizeof($scanResults), $limit);
+        $this->assertLessThanOrEqual(sizeof($results), $limit);
 
         if ($idsOnly) {
             return;
