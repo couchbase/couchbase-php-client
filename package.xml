@@ -328,6 +328,7 @@
                 <file role="php" name="SamplingScan.php"/>
                 <file role="php" name="ScanOptions.php"/>
                 <file role="php" name="ScanResult.php"/>
+                <file role="php" name="ScanResults.php"/>
                 <file role="php" name="ScanTerm.php"/>
                 <file role="php" name="ScanType.php"/>
                 <file role="php" name="Scope.php"/>
@@ -2965,6 +2966,8 @@
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>
                     <file role="src" name="php_7_api_layer.hxx"/>
+                    <file role="src" name="scan_result_resource.cxx"/>
+                    <file role="src" name="scan_result_resource.hxx"/>
                     <file role="src" name="transaction_context_resource.cxx"/>
                     <file role="src" name="transaction_context_resource.hxx"/>
                     <file role="src" name="transactions_resource.cxx"/>
