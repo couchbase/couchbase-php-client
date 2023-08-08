@@ -546,7 +546,7 @@ class Collection implements CollectionInterface
      * @param ScanType $scanType The type of scan to execute
      * @param ScanOptions|null $options The options to use for the operation
      *
-     * @return array<ScanResult> array of ScanResult
+     * @return ScanResults Object containing iterator over the scan results
      * @throws InvalidArgumentException
      * @since 4.1.6
      */

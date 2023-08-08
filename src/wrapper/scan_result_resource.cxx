@@ -50,7 +50,7 @@ get_scan_result_destructor_id()
 class scan_result_resource::impl : public std::enable_shared_from_this<scan_result_resource::impl>
 {
   public:
-    impl(connection_handle* connection, std::unique_ptr<couchbase::core::scan_result> scan_result) //TODO: const? std::unique_ptr?
+    impl(connection_handle* connection, std::unique_ptr<couchbase::core::scan_result> scan_result)
       : cluster_{ connection->cluster() }
       , scan_result_{ std::move(scan_result) }
       {
