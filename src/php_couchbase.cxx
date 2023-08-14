@@ -980,7 +980,7 @@ PHP_FUNCTION(documentRemoveMulti)
         RETURN_THROWS();
     }
 
-    if (auto e = handle->document_get_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
+    if (auto e = handle->document_remove_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
