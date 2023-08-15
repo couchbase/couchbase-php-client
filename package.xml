@@ -272,8 +272,11 @@
                 <file role="php" name="LookupExistsSpec.php"/>
                 <file role="php" name="LookupGetFullSpec.php"/>
                 <file role="php" name="LookupGetSpec.php"/>
+                <file role="php" name="LookupInAllReplicasOptions.php"/>
+                <file role="php" name="LookupInAnyReplicaOptions.php"/>
                 <file role="php" name="LookupInMacro.php"/>
                 <file role="php" name="LookupInOptions.php"/>
+                <file role="php" name="LookupInReplicaResult.php"/>
                 <file role="php" name="LookupInResult.php"/>
                 <file role="php" name="LookupInSpec.php"/>
                 <file role="php" name="MatchAllSearchQuery.php"/>

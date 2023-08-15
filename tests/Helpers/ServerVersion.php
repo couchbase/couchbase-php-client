@@ -122,6 +122,11 @@ class ServerVersion
         return $this->major == 7 && $this->minor == 6;
     }
 
+    public function is80(): bool
+    {
+        return $this->major == 8 && $this->minor = 0;
+    }
+
     public function isCheshireCat(): bool
     {
         // [7.0.0, 7.1.0)
@@ -237,6 +242,11 @@ class ServerVersion
     public function supportsTransactions(): bool
     {
         return $this->is66() || $this->isCheshireCat() || $this->isNeo();
+    }
+
+    public function supportsSubdocReadReplica(): bool
+    {
+        return $this->is75() || $this->is76() || $this->is80();
     }
 
     public function supportsTransactionsQueries(): bool

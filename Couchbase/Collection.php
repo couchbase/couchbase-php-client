@@ -477,6 +477,84 @@ class Collection implements CollectionInterface
     }
 
     /**
+     * Performs a set of subdocument lookup operations against the document from any replica server in the cluster.
+     *
+     * @param string $id the key of the document
+     * @param array<LookupInSpec> $specs the array of selectors to query against the document
+     * @param LookupInAnyReplicaOptions|null $options the options to use for the operation
+     *
+     * @return LookupInReplicaResult
+     * @throws DocumentIrretrievableException
+     * @throws TimeoutException
+     * @throws CouchbaseException
+     * @since 4.1.6
+     */
+    public function lookupInAnyReplica(string $id, array $specs, LookupInAnyReplicaOptions $options = null): LookupInReplicaResult
+    {
+        $encoded = array_map(
+            function (LookupInSpec $item) {
+                return $item->export();
+            },
+            $specs
+        );
+        if ($options != null && $options->needToFetchExpiry()) {
+            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+        }
+        $response = Extension\documentLookupInAnyReplica(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded,
+            LookupInAnyReplicaOptions::export($options)
+        );
+        return new LookupInReplicaResult($response, LookupInAnyReplicaOptions::getTranscoder($options));
+    }
+
+    /**
+     * Performs a set of subdocument lookup operations against the document from the active server and all replicas in the cluster.
+     * Returns an array of LookupInReplicaResults, one per server.
+     *
+     * @param string $id the key of the document
+     * @param array<LookupInSpec> $specs the array of selectors to query against the document
+     * @param LookupInAllReplicasOptions|null $options the options to use for the operation
+     *
+     * @return array
+     * @throws DocumentNotFoundException
+     * @throws TimeoutException
+     * @throws CouchbaseException
+     * @since 4.1.6
+     */
+    public function lookupInAllReplicas(string $id, array $specs, LookupInAllReplicasOptions $options = null): array
+    {
+        $encoded = array_map(
+            function (LookupInSpec $item) {
+                return $item->export();
+            },
+            $specs
+        );
+        if ($options != null && $options->needToFetchExpiry()) {
+            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+        }
+        $responses = Extension\documentLookupInAllReplicas(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $id,
+            $encoded,
+            LookupInAllReplicasOptions::export($options)
+        );
+        return array_map(
+            function (array $response) use ($options) {
+                return new LookupInReplicaResult($response, LookupInAllReplicasOptions::getTranscoder($options));
+            },
+            $responses
+        );
+    }
+
+    /**
      * Performs a set of subdocument lookup operations against the document.
      *
      * @param string $id the key of the document

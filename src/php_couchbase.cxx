@@ -930,6 +930,74 @@ PHP_FUNCTION(documentLookupIn)
     }
 }
 
+PHP_FUNCTION(documentLookupInAnyReplica)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zval* specs = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(6, 7)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_ARRAY(specs)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_lookup_in_any_replica(return_value, bucket, scope, collection, id, specs, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(documentLookupInAllReplicas)
+{
+    zval* connection = nullptr;
+    zend_string* bucket = nullptr;
+    zend_string* scope = nullptr;
+    zend_string* collection = nullptr;
+    zend_string* id = nullptr;
+    zval* specs = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(6, 7)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket)
+    Z_PARAM_STR(scope)
+    Z_PARAM_STR(collection)
+    Z_PARAM_STR(id)
+    Z_PARAM_ARRAY(specs)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->document_lookup_in_all_replicas(return_value, bucket, scope, collection, id, specs, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 static inline couchbase::php::scan_result_resource*
 fetch_couchbase_scan_result_from_resource(zval* resource)
 {
@@ -986,6 +1054,7 @@ PHP_FUNCTION(documentScanNextItem)
         RETURN_THROWS();
     }
     if (auto e = scan_res->next_item(return_value); e.ec) {
+
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -1049,7 +1118,7 @@ PHP_FUNCTION(documentRemoveMulti)
         RETURN_THROWS();
     }
 
-    if (auto e = handle->document_get_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
+    if (auto e = handle->document_remove_multi(return_value, bucket, scope, collection, entries, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -2932,6 +3001,26 @@ ZEND_ARG_TYPE_INFO(0, specs, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentLookupInAnyReplica, 0, 0, 6)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, specs, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentLookupInAllReplicas, 0, 0, 6)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, specs, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createDocumentScanResult, 0, 0, IS_RESOURCE, 1)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -3391,6 +3480,8 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", documentLookupIn, ai_CouchbaseExtension_documentLookupIn)
         ZEND_NS_FE("Couchbase\\Extension", createDocumentScanResult, ai_CouchbaseExtension_createDocumentScanResult)
         ZEND_NS_FE("Couchbase\\Extension", documentScanNextItem, ai_CouchbaseExtension_documentScanNextItem)
+        ZEND_NS_FE("Couchbase\\Extension", documentLookupInAnyReplica, ai_CouchbaseExtension_documentLookupInAnyReplica)
+        ZEND_NS_FE("Couchbase\\Extension", documentLookupInAllReplicas, ai_CouchbaseExtension_documentLookupInAllReplicas)
         ZEND_NS_FE("Couchbase\\Extension", documentGetMulti, ai_CouchbaseExtension_documentGetMulti)
         ZEND_NS_FE("Couchbase\\Extension", documentRemoveMulti, ai_CouchbaseExtension_documentRemoveMulti)
         ZEND_NS_FE("Couchbase\\Extension", documentUpsertMulti, ai_CouchbaseExtension_documentUpsertMulti)

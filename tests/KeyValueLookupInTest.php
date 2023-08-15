@@ -19,10 +19,13 @@
 declare(strict_types=1);
 
 use Couchbase\Exception\PathNotFoundException;
+use Couchbase\Exception\DocumentIrretrievableException;
+use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\LookupGetFullSpec;
 use Couchbase\LookupGetSpec;
 use Couchbase\LookupInOptions;
 use Couchbase\UpsertOptions;
+use Couchbase\LookupInAnyReplicaOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -79,5 +82,100 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(3.14, $res->contentByPath("foo.value"));
         $this->expectException(PathNotFoundException::class);
         $this->assertEquals(3.14, $res->content(1));
+    }
+
+    public function testLookupInAllReplicasThrowsDocumentNotFoundExceptionForMissingId()
+    {
+        $this->skipIfUnsupported($this->version()->supportsSubdocReadReplica());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $this->expectException(DocumentNotFoundException::class);
+        $collection->lookupInAllReplicas(
+            $id,
+            [
+                LookupGetSpec::build("not.exist")
+            ]
+        );
+    }
+
+    public function testLookupInAnyReplicaThrowsIrretrievableExceptionForMissingId()
+    {
+        $this->skipIfUnsupported($this->version()->supportsSubdocReadReplica());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $this->expectException(DocumentIrretrievableException::class);
+        $collection->lookupInAnyReplica(
+            $id,
+            [
+            LookupGetSpec::build("not.exist")
+            ]
+        );
+    }
+
+    public function testSubdocumentLookupAnyReplicaCanFetchExpiry()
+    {
+        $this->skipIfUnsupported($this->version()->supportsSubdocReadReplica());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $res = $collection->upsert($id, ["foo" => "bar"]);
+        $cas = $res->cas();
+
+        $res = $collection->lookupInAnyReplica(
+            $id,
+            [
+                LookupGetFullSpec::build(),
+            ],
+            LookupInAnyReplicaOptions::build()->withExpiry(true)
+        );
+        $this->assertNotNull($res->cas());
+        $this->assertEquals($cas, $res->cas());
+        $this->assertEquals(["foo" => "bar"], $res->content(0));
+        $this->assertNull($res->expiryTime());
+
+        $birthday = DateTime::createFromFormat(DateTimeInterface::ISO8601, "2027-04-07T00:00:00UTC");
+        $collection->upsert($id, ["foo" => "bar"], UpsertOptions::build()->expiry($birthday));
+
+        $res = $collection->lookupInAnyReplica(
+            $id,
+            [
+                LookupGetFullSpec::build(),
+            ],
+            LookupInAnyReplicaOptions::build()->withExpiry(true)
+        );
+        $this->assertEquals($birthday, $res->expiryTime());
+    }
+
+    public function testSubdocumentLookupAllReplicas()
+    {
+        $this->skipIfUnsupported($this->version()->supportsSubdocReadReplica());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $res = $collection->upsert($id, ["answer" => 42]);
+        $cas = $res->cas();
+        $this->assertNotNull($cas);
+        $results = $collection->lookupInAllReplicas(
+            $id,
+            [
+                LookupGetSpec::build("answer")
+            ],
+        );
+        $this->assertGreaterThanOrEqual(1, count($results));
+        $seenActiveVersion = false;
+        foreach ($results as $res) {
+            $this->assertEquals(42, $res->contentByPath("answer"));
+            if (!$res->isReplica()) {
+                $seenActiveVersion = true;
+            }
+        }
+        $this->assertTrue($seenActiveVersion);
     }
 }

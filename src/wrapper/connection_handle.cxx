@@ -1611,6 +1611,177 @@ connection_handle::document_lookup_in(zval* return_value,
 
 COUCHBASE_API
 core_error_info
+connection_handle::document_lookup_in_any_replica(zval* return_value,
+                                                  const zend_string* bucket,
+                                                  const zend_string* scope,
+                                                  const zend_string* collection,
+                                                  const zend_string* id,
+                                                  const zval* specs,
+                                                  const zval* options)
+{
+    couchbase::lookup_in_any_replica_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
+        return e;
+    }
+
+    if (Z_TYPE_P(specs) != IS_ARRAY) {
+        return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
+    }
+    couchbase::lookup_in_specs cxx_specs;
+
+    const zval* item = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+    {
+        auto [operation, e] = decode_lookup_subdoc_opcode(item);
+        if (e.ec) {
+            return e;
+        }
+        bool xattr = false;
+        if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+            return e;
+        }
+        std::string path;
+        if (e = cb_assign_string(path, item, "path"); e.ec) {
+            return e;
+        }
+        switch (operation) {
+            case core::protocol::subdoc_opcode::get_doc:
+            case core::protocol::subdoc_opcode::get:
+                cxx_specs.push_back(lookup_in_specs::get(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::exists:
+                cxx_specs.push_back(lookup_in_specs::exists(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::get_count:
+                cxx_specs.push_back(lookup_in_specs::count(path).xattr(xattr));
+                break;
+            default:
+                break;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    auto [ctx, resp] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                         .lookup_in_any_replica(cb_string_new(id), cxx_specs, opts)
+                         .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute lookup_in_any_replica", build_error_context(ctx) };
+    }
+
+    array_init(return_value);
+    add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_bool(return_value, "deleted", resp.is_deleted());
+    add_assoc_bool(return_value, "isReplica", resp.is_replica());
+    auto cas = fmt::format("{:x}", resp.cas().value());
+    add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+    zval fields;
+    array_init_size(&fields, cxx_specs.specs().size());
+    for (std::size_t idx = 0; idx < cxx_specs.specs().size(); ++idx) {
+        zval entry;
+        array_init(&entry);
+        add_assoc_stringl(&entry, "path", cxx_specs.specs()[idx].path_.data(), cxx_specs.specs()[idx].path_.size());
+        add_assoc_bool(&entry, "exists", resp.exists(idx));
+        if (resp.has_value(idx)) {
+            auto value = resp.content_as<tao::json::value>(idx);
+            auto str = core::utils::json::generate(value);
+            add_assoc_stringl(&entry, "value", str.data(), str.size());
+        }
+        add_next_index_zval(&fields, &entry);
+    }
+    add_assoc_zval(return_value, "fields", &fields);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::document_lookup_in_all_replicas(zval* return_value,
+                                                   const zend_string* bucket,
+                                                   const zend_string* scope,
+                                                   const zend_string* collection,
+                                                   const zend_string* id,
+                                                   const zval* specs,
+                                                   const zval* options)
+{
+    couchbase::lookup_in_all_replicas_options opts;
+    if (auto e = cb_set_timeout(opts, options); e.ec) {
+        return e;
+    }
+
+    if (Z_TYPE_P(specs) != IS_ARRAY) {
+        return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
+    }
+    couchbase::lookup_in_specs cxx_specs;
+
+    const zval* item = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+    {
+        auto [operation, e] = decode_lookup_subdoc_opcode(item);
+        if (e.ec) {
+            return e;
+        }
+        bool xattr = false;
+        if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+            return e;
+        }
+        std::string path;
+        if (e = cb_assign_string(path, item, "path"); e.ec) {
+            return e;
+        }
+        switch (operation) {
+            case core::protocol::subdoc_opcode::get_doc:
+            case core::protocol::subdoc_opcode::get:
+                cxx_specs.push_back(lookup_in_specs::get(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::exists:
+                cxx_specs.push_back(lookup_in_specs::exists(path).xattr(xattr));
+                break;
+            case core::protocol::subdoc_opcode::get_count:
+                cxx_specs.push_back(lookup_in_specs::count(path).xattr(xattr));
+                break;
+            default:
+                break;
+        }
+    }
+    ZEND_HASH_FOREACH_END();
+
+    auto [ctx, responses] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
+                              .lookup_in_all_replicas(cb_string_new(id), cxx_specs, opts)
+                              .get();
+    if (ctx.ec()) {
+        return { ctx.ec(), ERROR_LOCATION, "unable to execute lookup_in_all_replicas", build_error_context(ctx) };
+    }
+
+    array_init_size(return_value, responses.size());
+    for (const auto& resp : responses) {
+        zval lookup_in_entry;
+        array_init(&lookup_in_entry);
+        add_assoc_stringl(&lookup_in_entry, "id", ctx.id().data(), ctx.id().size());
+        add_assoc_bool(&lookup_in_entry, "deleted", resp.is_deleted());
+        add_assoc_bool(&lookup_in_entry, "isReplica", resp.is_replica());
+        auto cas = fmt::format("{:x}", resp.cas().value());
+        add_assoc_stringl(&lookup_in_entry, "cas", cas.data(), cas.size());
+        zval fields;
+        array_init_size(&fields, cxx_specs.specs().size());
+        for (std::size_t idx = 0; idx < cxx_specs.specs().size(); ++idx) {
+            zval entry;
+            array_init(&entry);
+            add_assoc_stringl(&entry, "path", cxx_specs.specs()[idx].path_.data(), cxx_specs.specs()[idx].path_.size());
+            add_assoc_bool(&entry, "exists", resp.exists(idx));
+            if (resp.has_value(idx)) {
+                auto value = resp.content_as<tao::json::value>(idx);
+                auto str = core::utils::json::generate(value);
+                add_assoc_stringl(&entry, "value", str.data(), str.size());
+            }
+            add_next_index_zval(&fields, &entry);
+        }
+        add_assoc_zval(&lookup_in_entry, "fields", &fields);
+        add_next_index_zval(return_value, &lookup_in_entry);
+    }
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::document_get_multi(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
