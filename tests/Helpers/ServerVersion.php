@@ -114,7 +114,7 @@ class ServerVersion
 
     public function is75(): bool
     {
-        return $this->major == 7 && $this->minor = 5;
+        return $this->major == 7 && $this->minor == 5;
     }
 
     public function is76(): bool
@@ -252,6 +252,11 @@ class ServerVersion
     public function supportsTransactionsQueries(): bool
     {
         return $this->isCheshireCat() || $this->isNeo();
+    }
+
+    public function supportsRangeScan(): bool
+    {
+        return $this->is75() || $this->is76();
     }
 
     /**

@@ -617,6 +617,40 @@ class Collection implements CollectionInterface
     }
 
     /**
+     * Performs a key-value scan operation
+     *
+     * @VOLATILE: This API is subject to change at any time
+     *
+     * @param ScanType $scanType The type of scan to execute
+     * @param ScanOptions|null $options The options to use for the operation
+     *
+     * @return ScanResults Object containing iterator over the scan results
+     * @throws InvalidArgumentException
+     * @since 4.1.6
+     */
+    public function scan(ScanType $scanType, ScanOptions $options = null): ScanResults
+    {
+        if ($scanType instanceof RangeScan) {
+            $type = RangeScan::export($scanType);
+        } elseif ($scanType instanceof SamplingScan) {
+            $type = SamplingScan::export($scanType);
+        } elseif ($scanType instanceof PrefixScan) {
+            $type = PrefixScan::export($scanType);
+        } else {
+            throw new InvalidArgumentException("ScanType must be a RangeScan, SamplingScan, or PrefixScan");
+        }
+        return new ScanResults(
+            $this->core,
+            $this->bucketName,
+            $this->scopeName,
+            $this->name,
+            $type,
+            ScanOptions::export($options),
+            ScanOptions::getTranscoder($options)
+        );
+    }
+
+    /**
      * Removes a group of documents. If second element of the entry (CAS) is null, then the operation will
      * remove the document unconditionally.
      *

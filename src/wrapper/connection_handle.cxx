@@ -1612,12 +1612,12 @@ connection_handle::document_lookup_in(zval* return_value,
 COUCHBASE_API
 core_error_info
 connection_handle::document_lookup_in_any_replica(zval* return_value,
-                                      const zend_string* bucket,
-                                      const zend_string* scope,
-                                      const zend_string* collection,
-                                      const zend_string* id,
-                                      const zval* specs,
-                                      const zval* options)
+                                                  const zend_string* bucket,
+                                                  const zend_string* scope,
+                                                  const zend_string* collection,
+                                                  const zend_string* id,
+                                                  const zval* specs,
+                                                  const zval* options)
 {
     couchbase::lookup_in_any_replica_options opts;
     if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1695,12 +1695,12 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
 COUCHBASE_API
 core_error_info
 connection_handle::document_lookup_in_all_replicas(zval* return_value,
-                                      const zend_string* bucket,
-                                      const zend_string* scope,
-                                      const zend_string* collection,
-                                      const zend_string* id,
-                                      const zval* specs,
-                                      const zval* options)
+                                                   const zend_string* bucket,
+                                                   const zend_string* scope,
+                                                   const zend_string* collection,
+                                                   const zend_string* id,
+                                                   const zval* specs,
+                                                   const zval* options)
 {
     couchbase::lookup_in_all_replicas_options opts;
     if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1745,8 +1745,8 @@ connection_handle::document_lookup_in_all_replicas(zval* return_value,
     ZEND_HASH_FOREACH_END();
 
     auto [ctx, responses] = impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
-                         .lookup_in_all_replicas(cb_string_new(id), cxx_specs, opts)
-                         .get();
+                              .lookup_in_all_replicas(cb_string_new(id), cxx_specs, opts)
+                              .get();
     if (ctx.ec()) {
         return { ctx.ec(), ERROR_LOCATION, "unable to execute lookup_in_all_replicas", build_error_context(ctx) };
     }

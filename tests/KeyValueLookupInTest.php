@@ -92,7 +92,8 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
         $this->expectException(DocumentNotFoundException::class);
-        $collection->lookupInAllReplicas($id,
+        $collection->lookupInAllReplicas(
+            $id,
             [
                 LookupGetSpec::build("not.exist")
             ]
@@ -107,10 +108,11 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
         $this->expectException(DocumentIrretrievableException::class);
-        $collection->lookupInAnyReplica($id,
-        [
+        $collection->lookupInAnyReplica(
+            $id,
+            [
             LookupGetSpec::build("not.exist")
-        ]
+            ]
         );
     }
 

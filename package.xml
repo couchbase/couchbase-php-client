@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-08-02</date>
+    <date>2023-08-07</date>
     <version>
         <release>4.1.4</release>
         <api>4.0.0</api>
@@ -307,6 +307,7 @@
                 <file role="php" name="PasswordAuthenticator.php"/>
                 <file role="php" name="PersistTo.php"/>
                 <file role="php" name="PhraseSearchQuery.php"/>
+                <file role="php" name="PrefixScan.php"/>
                 <file role="php" name="PrefixSearchQuery.php"/>
                 <file role="php" name="PrependOptions.php"/>
                 <file role="php" name="QueryMetaData.php"/>
@@ -316,6 +317,7 @@
                 <file role="php" name="QueryScanConsistency.php"/>
                 <file role="php" name="QueryStringSearchQuery.php"/>
                 <file role="php" name="QueryWarning.php"/>
+                <file role="php" name="RangeScan.php"/>
                 <file role="php" name="RawBinaryTranscoder.php"/>
                 <file role="php" name="RawJsonTranscoder.php"/>
                 <file role="php" name="RawStringTranscoder.php"/>
@@ -326,6 +328,12 @@
                 <file role="php" name="RequestSpan.php"/>
                 <file role="php" name="RequestTracer.php"/>
                 <file role="php" name="Result.php"/>
+                <file role="php" name="SamplingScan.php"/>
+                <file role="php" name="ScanOptions.php"/>
+                <file role="php" name="ScanResult.php"/>
+                <file role="php" name="ScanResults.php"/>
+                <file role="php" name="ScanTerm.php"/>
+                <file role="php" name="ScanType.php"/>
                 <file role="php" name="Scope.php"/>
                 <file role="php" name="ScopeInterface.php"/>
                 <file role="php" name="SearchFacet.php"/>
@@ -2961,6 +2969,8 @@
                     <file role="src" name="persistent_connections_cache.cxx"/>
                     <file role="src" name="persistent_connections_cache.hxx"/>
                     <file role="src" name="php_7_api_layer.hxx"/>
+                    <file role="src" name="scan_result_resource.cxx"/>
+                    <file role="src" name="scan_result_resource.hxx"/>
                     <file role="src" name="transaction_context_resource.cxx"/>
                     <file role="src" name="transaction_context_resource.hxx"/>
                     <file role="src" name="transactions_resource.cxx"/>
