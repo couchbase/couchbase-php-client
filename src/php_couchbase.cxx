@@ -17,10 +17,10 @@
 #include "wrapper/common.hxx"
 #include "wrapper/logger.hxx"
 #include "wrapper/persistent_connections_cache.hxx"
+#include "wrapper/scan_result_resource.hxx"
 #include "wrapper/transaction_context_resource.hxx"
 #include "wrapper/transactions_resource.hxx"
 #include "wrapper/version.hxx"
-#include "wrapper/scan_result_resource.hxx"
 
 #include "php_couchbase.hxx"
 

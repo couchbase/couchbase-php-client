@@ -53,7 +53,12 @@ class scan_result_resource
 };
 
 COUCHBASE_API std::pair<zend_resource*, core_error_info>
-create_scan_result_resource(connection_handle* connection, const zend_string* bucket, const zend_string* scope, const zend_string* collection, const zval* scan_type, const zval* options);
+create_scan_result_resource(connection_handle* connection,
+                            const zend_string* bucket,
+                            const zend_string* scope,
+                            const zend_string* collection,
+                            const zval* scan_type,
+                            const zval* options);
 
 COUCHBASE_API void
 destroy_scan_result_resource(zend_resource* res);
