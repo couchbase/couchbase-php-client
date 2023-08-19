@@ -69,7 +69,7 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
 
         $this->assertEquals($idFoo, $res[0]->id());
         $this->assertNull($res[0]->error());
-        $this->assertEquals($resFoo->cas(), $res[0]->cas());
+        $this->assertNotEquals($resFoo->cas(), $res[0]->cas());
 
         $this->assertEquals($idMiss, $res[1]->id());
         $this->assertNotNull($res[1]->error());
@@ -77,7 +77,7 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
 
         $this->assertEquals($idBar, $res[2]->id());
         $this->assertNull($res[2]->error());
-        $this->assertEquals($resBar->cas(), $res[2]->cas());
+        $this->assertNotEquals($resBar->cas(), $res[2]->cas());
     }
 
     public function testUpsertMulti()
