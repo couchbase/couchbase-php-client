@@ -15,7 +15,7 @@
     </lead>
     <date>2023-08-21</date>
     <version>
-        <release>4.1.5</release>
+        <release>4.1.6</release>
         <api>4.0.0</api>
     </version>
     <stability>
@@ -24,21 +24,7 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        PCBC-939: Support query with read from replica. (#118)
-        PCBC-831: Implement search index management. (#115)
-        PCBC-945: Expose expiry options for increment/decrement. (#120)
-        PCBC-937: Fix `removeMulti`, which didn't remove documents. (#123)
-        PCBC-938: Override exception constructor in PHP Extension, which allows to initialize context in derived classes. (#117)
-        PCBC-940: Support for subdoc read from replica. (#121)
-        PCBC-884: Support for Native KV range scans.  (#122, #127)
-
-        Notable changes in core C++
-        ---------------------------
-        CXXCBC-333: Fix parsing resolv.conf on Linux (#416)
-        CXXCBC-335: Log connection options (#417)
-        CXXCBC-343: Continue bootsrap if DNS-SRV resolution fails (#422)
-        CXXCBC-242: SDK Support for Native KV Range Scans (#419, #423, #424, #428, #431, #432, #433, #434, #426)
-        CXXCBC-339: Disable older TLS protocols (#418)
+        WIP
     </notes>
     <contents>
         <dir name="/">
@@ -3006,6 +2992,35 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2023-08-21</date>
+            <version>
+                <release>4.1.5</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                PCBC-939: Support query with read from replica. (#118)
+                PCBC-831: Implement search index management. (#115)
+                PCBC-945: Expose expiry options for increment/decrement. (#120)
+                PCBC-937: Fix `removeMulti`, which didn't remove documents. (#123)
+                PCBC-938: Override exception constructor in PHP Extension, which allows to initialize context in derived classes. (#117)
+                PCBC-940: Support for subdoc read from replica. (#121)
+                PCBC-884: Support for Native KV range scans.  (#122, #127)
+
+                Notable changes in core C++
+                ---------------------------
+                CXXCBC-333: Fix parsing resolv.conf on Linux (#416)
+                CXXCBC-335: Log connection options (#417)
+                CXXCBC-343: Continue bootsrap if DNS-SRV resolution fails (#422)
+                CXXCBC-242: SDK Support for Native KV Range Scans (#419, #423, #424, #428, #431, #432, #433, #434, #426)
+                CXXCBC-339: Disable older TLS protocols (#418)
+            </notes>
+        </release>
         <release>
             <date>2023-05-26</date>
             <version>
