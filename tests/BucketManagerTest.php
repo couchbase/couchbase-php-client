@@ -334,4 +334,48 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(ConflictResolutionType::CUSTOM, $result->conflictResolutionType());
     }
+
+    public function testCreateHistory()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsBucketDedup());
+
+        $settings = new BucketSettings($this->bucketName);
+        $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::MAGMA)->setRamQuotaMb(1024)
+            ->enableHistoryRetentionCollectionDefault(true)->setHistoryRetentionBytes(2147483648)
+            ->setHistoryRetentionDuration(13000);
+        $this->manager->createBucket($settings);
+
+        $result = $this->manager->getBucket($this->bucketName);
+        $this->assertTrue($result->historyRetentionCollectionDefault());
+        $this->assertEquals(2147483648, $result->historyRetentionBytes());
+        $this->assertEquals(13000, $result->historyRetentionDuration());
+    }
+
+    public function testUpdateHistory()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsBucketDedup());
+
+        $settings = new BucketSettings($this->bucketName);
+        $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::MAGMA)->setRamQuotaMb(1024)
+            ->enableHistoryRetentionCollectionDefault(false);
+        $this->manager->createBucket($settings);
+
+        $result = $this->manager->getBucket($this->bucketName);
+
+        $this->assertFalse($result->historyRetentionCollectionDefault());
+        $this->assertEquals(0, $result->historyRetentionDuration());
+        $this->assertEquals(0, $result->historyRetentionBytes());
+
+        $settings->enableHistoryRetentionCollectionDefault(true)->setHistoryRetentionDuration(100)
+            ->setHistoryRetentionBytes(2147483648);
+
+        $this->manager->updateBucket($settings);
+
+        $result = $this->manager->getBucket($this->bucketName);
+        $this->assertTrue($result->historyRetentionCollectionDefault());
+        $this->assertEquals(2147483648, $result->historyRetentionBytes());
+        $this->assertEquals(100, $result->historyRetentionDuration());
+    }
 }

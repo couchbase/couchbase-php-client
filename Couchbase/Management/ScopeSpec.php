@@ -118,6 +118,9 @@ class ScopeSpec
         foreach ($scope['collections'] as $collection) {
             $newColl = new CollectionSpec($collection['name'], $scope['name']);
             $newColl->setMaxExpiry($collection['max_expiry']);
+            if (array_key_exists("history", $collection)) {
+                $newColl->setHistory($collection['history']);
+            }
             $collections[] = $newColl;
         }
         return new ScopeSpec($scope['name'], $collections);

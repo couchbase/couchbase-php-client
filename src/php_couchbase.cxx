@@ -1887,14 +1887,18 @@ PHP_FUNCTION(collectionCreate)
 {
     zval* connection = nullptr;
     zend_string* bucket_name = nullptr;
-    zval* collection_spec = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zval* settings = nullptr;
     zval* options = nullptr;
 
-    ZEND_PARSE_PARAMETERS_START(3, 4)
+    ZEND_PARSE_PARAMETERS_START(4, 6)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(bucket_name)
-    Z_PARAM_ARRAY(collection_spec)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
     Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(settings)
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
 
@@ -1905,7 +1909,7 @@ PHP_FUNCTION(collectionCreate)
         RETURN_THROWS();
     }
 
-    if (auto e = handle->collection_create(return_value, bucket_name, collection_spec, options); e.ec) {
+    if (auto e = handle->collection_create(return_value, bucket_name, scope_name, collection_name, settings, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -1915,13 +1919,15 @@ PHP_FUNCTION(collectionDrop)
 {
     zval* connection = nullptr;
     zend_string* bucket_name = nullptr;
-    zval* collection_spec = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
     zval* options = nullptr;
 
-    ZEND_PARSE_PARAMETERS_START(3, 4)
+    ZEND_PARSE_PARAMETERS_START(4, 5)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(bucket_name)
-    Z_PARAM_ARRAY(collection_spec)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -1933,7 +1939,39 @@ PHP_FUNCTION(collectionDrop)
         RETURN_THROWS();
     }
 
-    if (auto e = handle->collection_drop(return_value, bucket_name, collection_spec, options); e.ec) {
+    if (auto e = handle->collection_drop(return_value, bucket_name, scope_name, collection_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(collectionUpdate)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* collection_name = nullptr;
+    zval* settings = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(collection_name)
+    Z_PARAM_ARRAY(settings)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->collection_update(return_value, bucket_name, scope_name, collection_name, settings, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -3235,17 +3273,29 @@ ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionCreate, 0, 0, 3)
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionCreate, 0, 0, 4)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, collectionSpec, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, settings, IS_ARRAY, 1)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionDrop, 0, 0, 3)
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionDrop, 0, 0, 4)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
-ZEND_ARG_TYPE_INFO(0, collectionSpec, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_collectionUpdate, 0, 0, 5)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, settings, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
@@ -3527,6 +3577,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", scopeDrop, ai_CouchbaseExtension_scopeDrop)
         ZEND_NS_FE("Couchbase\\Extension", collectionCreate, ai_CouchbaseExtension_collectionCreate)
         ZEND_NS_FE("Couchbase\\Extension", collectionDrop, ai_CouchbaseExtension_collectionDrop)
+        ZEND_NS_FE("Couchbase\\Extension", collectionUpdate, ai_CouchbaseExtension_collectionUpdate)
         ZEND_NS_FE("Couchbase\\Extension", userUpsert, ai_CouchbaseExtension_userUpsert)
         ZEND_NS_FE("Couchbase\\Extension", userGet, ai_CouchbaseExtension_userGet)
         ZEND_NS_FE("Couchbase\\Extension", userGetAll, ai_CouchbaseExtension_userGetAll)

@@ -34,6 +34,9 @@ class BucketSettings
     private ?string $compressionMode = null;
     private ?string $minimumDurabilityLevel = null;
     private ?string $conflictResolutionType = null;
+    private ?bool $historyRetentionCollectionDefault = null;
+    private ?int $historyRetentionBytes = null;
+    private ?int $historyRetentionDuration = null;
 
     /**
      * @param string $name the name of the bucket
@@ -223,6 +226,38 @@ class BucketSettings
     public function conflictResolutionType(): ?string
     {
         return $this->conflictResolutionType;
+    }
+
+    /**
+     * Get the default history retention on all collections in this bucket
+     *
+     * @return bool|null
+     * @since 4.1.6
+     */
+    public function historyRetentionCollectionDefault(): ?bool
+    {
+        return $this->historyRetentionCollectionDefault;
+    }
+
+    /**
+     * Get the maximum history retention in bytes on all collections in this bucket
+     *
+     * @return int|null
+     * @since 4.1.6
+     */
+    public function historyRetentionBytes(): ?int
+    {
+        return $this->historyRetentionBytes;
+    }
+
+    /**
+     * Get the maximum duration in seconds to be covered by the change history that is written to disk for all collections in this bucket
+     * @return int|null
+     * @since 4.1.6
+     */
+    public function historyRetentionDuration(): ?int
+    {
+        return $this->historyRetentionDuration;
     }
 
     /**
@@ -476,6 +511,52 @@ class BucketSettings
     }
 
     /**
+     * Sets whether to enable history on collections by default
+     *
+     * @param bool $historyRetentionCollectionDefault
+     *
+     * @return BucketSettings
+     *
+     * @since 4.1.6
+     */
+    public function enableHistoryRetentionCollectionDefault(bool $historyRetentionCollectionDefault): BucketSettings
+    {
+        $this->historyRetentionCollectionDefault = $historyRetentionCollectionDefault;
+        return $this;
+    }
+
+    /**
+     * Sets the maximum size, in bytes, o the change history that is written to disk for all collections in this bucket
+     *
+     * @param int $historyRetentionBytes
+     *
+     * @return BucketSettings
+     *
+     * @since 4.1.6
+     */
+    public function setHistoryRetentionBytes(int $historyRetentionBytes): BucketSettings
+    {
+        $this->historyRetentionBytes = $historyRetentionBytes;
+        return $this;
+    }
+
+    /**
+     * Sets teh maximum number of seconds to be covered by the change history that is written to disk for all collections
+     * in this bucket
+     *
+     * @param int $historyRetentionDuration duration in seconds
+     *
+     * @return BucketSettings
+     *
+     * @since 4.1.6
+     */
+    public function setHistoryRetentionDuration(int $historyRetentionDuration): BucketSettings
+    {
+        $this->historyRetentionDuration = $historyRetentionDuration;
+        return $this;
+    }
+
+    /**
      * @internal
      * @since 4.0.0
      */
@@ -494,6 +575,9 @@ class BucketSettings
             'compressionMode' => $bucket->compressionMode,
             'minimumDurabilityLevel' => $bucket->minimumDurabilityLevel,
             'conflictResolutionType' => $bucket->conflictResolutionType,
+            'historyRetentionCollectionDefault' => $bucket->historyRetentionCollectionDefault,
+            'historyRetentionBytes' => $bucket->historyRetentionBytes,
+            'historyRetentionDuration' => $bucket->historyRetentionDuration,
         ];
     }
 
@@ -536,6 +620,15 @@ class BucketSettings
         }
         if (array_key_exists('storageBackend', $bucket)) {
             $settings->setStorageBackend($bucket['storageBackend']);
+        }
+        if (array_key_exists('historyRetentionCollectionDefault', $bucket)) {
+            $settings->enableHistoryRetentionCollectionDefault($bucket['historyRetentionCollectionDefault']);
+        }
+        if (array_key_exists('historyRetentionBytes', $bucket)) {
+            $settings->setHistoryRetentionBytes($bucket['historyRetentionBytes']);
+        }
+        if (array_key_exists('historyRetentionDuration', $bucket)) {
+            $settings->setHistoryRetentionDuration($bucket['historyRetentionDuration']);
         }
 
         return $settings;

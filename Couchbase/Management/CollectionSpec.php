@@ -25,6 +25,7 @@ class CollectionSpec
     private string $name;
     private string $scopeName;
     private ?int $maxExpiry;
+    private ?bool $history;
 
     /**
      * @param string $name
@@ -32,11 +33,12 @@ class CollectionSpec
      * @param int|null $maxExpiry
      * @since 4.1.3
      */
-    public function __construct(string $name, string $scopeName, int $maxExpiry = null)
+    public function __construct(string $name, string $scopeName, int $maxExpiry = null, bool $history = null)
     {
         $this->name = $name;
         $this->scopeName = $scopeName;
         $this->maxExpiry = $maxExpiry;
+        $this->history = $history;
     }
 
     /**
@@ -48,9 +50,9 @@ class CollectionSpec
      * @return CollectionSpec
      * @since 4.1.3
      */
-    public static function build(string $name, string $scopeName, int $maxExpiry = null): CollectionSpec
+    public static function build(string $name, string $scopeName, int $maxExpiry = null, bool $history = null): CollectionSpec
     {
-        return new CollectionSpec($name, $scopeName, $maxExpiry);
+        return new CollectionSpec($name, $scopeName, $maxExpiry, $history);
     }
 
     /**
@@ -84,6 +86,18 @@ class CollectionSpec
     public function maxExpiry(): ?int
     {
         return $this->maxExpiry;
+    }
+
+    /**
+     * Gets the history retention override setting on this collection.
+     * Only supported for Magma buckets
+     *
+     * @return bool|null
+     * @since 4.1.6
+     */
+    public function history(): ?bool
+    {
+        return $this->history;
     }
 
     /**
@@ -125,6 +139,20 @@ class CollectionSpec
     }
 
     /**
+     * Sets the history retention override setting for this collection.
+     * Only supported for Magma buckets.
+     *
+     * @param bool $history
+     * @return CollectionSpec
+     * @since 4.1.6
+     */
+    public function setHistory(bool $history): CollectionSpec
+    {
+        $this->history = $history;
+        return $this;
+    }
+
+    /**
      * @param CollectionSpec $spec
      * @return array
      * @since 4.1.3
@@ -134,7 +162,8 @@ class CollectionSpec
         return [
             'name' => $spec->name,
             'scopeName' => $spec->scopeName,
-            'maxExpiry' => $spec->maxExpiry
+            'maxExpiry' => $spec->maxExpiry,
+            'history' => $spec->history,
         ];
     }
 
@@ -148,6 +177,9 @@ class CollectionSpec
         $collectionSpec = new CollectionSpec($collection['name'], $collection['scopeName']);
         if (array_key_exists('maxExpiry', $collection)) {
             $collectionSpec->setMaxExpiry($collection['maxExpiry']);
+        }
+        if (array_key_exists('history', $collection)) {
+            $collectionSpec->setHistory($collection['history']);
         }
         return $collectionSpec;
     }
