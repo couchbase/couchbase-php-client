@@ -114,7 +114,7 @@ class ServerVersion
 
     public function is72(): bool
     {
-        return $this->major == 6 && $this->minor == 2;
+        return $this->major == 7 && $this->minor == 2;
     }
 
     public function is75(): bool
