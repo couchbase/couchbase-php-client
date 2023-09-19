@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Extension;
 
 class CollectionManager
@@ -80,24 +81,69 @@ class CollectionManager
     /**
      * Creates a new collection
      *
-     * @param CollectionSpec $collection The spec of the collection
+     * Note: The (CollectionSpec, CreateCollectionOptions) API is now deprecated.
+     *
+     * @param string|CollectionSpec $scopeName The name of the scope on which to create the collection. Deprecated: CollectionSpec
+     * @param string|CreateCollectionOptions $collectionName The name of the collection. Deprecated: CreateCollectionOptions
+     * @param CreateCollectionSettings|null $settings The settings to apply on the collection
      * @param CreateCollectionOptions|null $options The options to use when creating a collection
-     * @since 4.1.3
+     *
+     * @throws InvalidArgumentException
+     * @since 4.1.6
      */
-    public function createCollection(CollectionSpec $collection, CreateCollectionOptions $options = null)
+    public function createCollection($scopeName, $collectionName = null, $settings = null, $options = null)
     {
-        Extension\collectionCreate($this->core, $this->bucketName, CollectionSpec::export($collection), CreateCollectionOptions::export($options));
+        if (is_string($scopeName) && is_null($collectionName)) {
+            throw new InvalidArgumentException("Collection name cannot be null if using the (scopeName, collectionName, settings, options) API");
+        }
+        // Deprecated usage conversion for (CollectionSpec, CreateCollectionOptions)
+        if ($scopeName instanceof  CollectionSpec) {
+            $options = $collectionName;
+            $collectionName = $scopeName->name();
+            $settings = new CreateCollectionSettings($scopeName->maxExpiry(), $scopeName->history());
+            $scopeName = $scopeName->scopeName();
+        }
+
+        Extension\collectionCreate($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options));
     }
 
     /**
      * Drops an existing collection
      *
-     * @param CollectionSpec $collection The spec of the collection to drop
-     * @param DropCollectionOptions|null $options The options to use when dropping a collection
+     * Note: The (CollectionSpec, DropCollectionOptions) API is now deprecated.
+     *
+     * @param string|CollectionSpec $scopeName The name of the scope on which the collection exists.
+     * @param string|DropCollectionOptions|null $collectionName The name of the collection. Only nullable to support the deprecated API.
+     * @param DropcollectionOptions|null $options The options to use when dropping a collection
+     *
+     * @throws InvalidArgumentException
      * @since 4.1.3
      */
-    public function dropCollection(CollectionSpec $collection, DropCollectionOptions $options = null)
+    public function dropCollection($scopeName, $collectionName = null, $options = null)
     {
-        Extension\collectionDrop($this->core, $this->bucketName, CollectionSpec::export($collection), DropCollectionOptions::export($options));
+        if (is_string($scopeName) && is_null($collectionName)) {
+            throw new InvalidArgumentException("Collection name cannot be null if using the (scopeName, collectionName, options) API");
+        }
+        // Deprecated usage conversion for (CollectionSpec, DropCollectionOptions)
+        if ($scopeName instanceof CollectionSpec) {
+            $options = $collectionName;
+            $collectionName = $scopeName->name();
+            $scopeName = $scopeName->scopeName();
+        }
+        Extension\collectionDrop($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options));
+    }
+
+    /**
+     * Updates an existing collection
+     *
+     * @param string $scopeName name of the scope on which the collection exists
+     * @param string $collectionName collection name
+     * @param UpdateCollectionSettings $settings Settings to update on the collection
+     * @param UpdateCollectionOptions|null $options The options to use when updating the collection
+     * @since 4.1.6
+     */
+    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, UpdateCollectionOptions $options = null)
+    {
+        Extension\collectionUpdate($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateBucketOptions::export($options));
     }
 }

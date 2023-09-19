@@ -2,11 +2,16 @@
 
 use Couchbase\Exception\CollectionExistsException;
 use Couchbase\Exception\CollectionNotFoundException;
+use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
+use Couchbase\Management\BucketSettings;
 use Couchbase\Management\CollectionManager;
 use Couchbase\Management\CollectionSpec;
+use Couchbase\Management\CreateCollectionSettings;
 use Couchbase\Management\ScopeSpec;
+use Couchbase\Management\StorageBackend;
+use Couchbase\Management\UpdateCollectionSettings;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -85,7 +90,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->dropScope($scopeName);
     }
 
-    public function testCreateCollection(): void
+    public function testCreateCollectionDeprecatedAPI(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -104,7 +109,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
     }
 
-    public function testCreateCollectionExists(): void
+    public function testCreateCollectionExistsDeprecatedAPI(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -115,7 +120,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->createCollection($collectionSpec);
     }
 
-    public function testDropCollectionNotExists(): void
+    public function testDropCollectionNotExistsDeprecatedAPI(): void
     {
         $this->skipIfCaves();
 
@@ -127,7 +132,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->dropCollection($collectionSpec);
     }
 
-    public function testDropCollection(): void
+    public function testDropCollectionDeprecatedAPI(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -165,12 +170,136 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertFalse($found);
     }
 
+    public function testUpdateCollection(): void
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsUpdateCollectionMaxExpiry());
+        $collectionName = $this->uniqueId("collection");
+        $scopeName = $this->uniqueId("scope");
+        $this->manager->createScope($scopeName);
+        $this->manager->createCollection($scopeName, $collectionName);
+
+        $selectedScope = $this->getScope($scopeName);
+
+        $found = false;
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $found = true;
+                $foundCollection = $collection;
+            }
+        }
+        $this->assertTrue($found);
+
+        $this->assertEquals(0, $foundCollection->maxExpiry());
+
+        $this->manager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(3));
+
+        $updatedScope = $this->getScope($scopeName);
+
+        foreach ($updatedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $updatedCollection = $collection;
+            }
+        }
+
+        $this->assertEquals(3, $updatedCollection->maxExpiry());
+    }
+
+    public function testDropCollection(): void
+    {
+        $collectionName = $this->uniqueId("collection");
+        $scopeName = $this->uniqueId("scope");
+        $this->manager->createScope($scopeName);
+        $this->manager->createCollection($scopeName, $collectionName);
+
+        $selectedScope = $this->getScope($scopeName);
+
+        $found = false;
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $found = true;
+            }
+        }
+        $this->assertTrue($found);
+
+        $this->manager->dropCollection($scopeName, $collectionName);
+
+        $selectedScope = $this->getScope($scopeName);
+
+        $found = false;
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $found = true;
+            }
+        }
+        $this->assertFalse($found);
+    }
+    public function testCollectionHistory(): void
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsMagmaStorageBackend());
+        $this->skipIfUnsupported($this->version()->supportsBucketDedup());
+
+        // Create magma bucket
+        $collectionName = $this->uniqueId("collection");
+        $scopeName = $this->uniqueId("scope");
+        $bucketManager = $this->connectCluster()->buckets();
+        $bucketName = $this->uniqueId("magma");
+        $bucketSettings = BucketSettings::build($bucketName)->setStorageBackend(StorageBackend::MAGMA)->setRamQuotaMb(1024);
+        $bucketManager->createBucket($bucketSettings);
+
+        $deadline = time() + 5; /* 5 seconds from now */
+        while (true) {
+            try {
+                $bucketManager->getBucket($bucketName);
+                $collectionManager = $this->openBucket($bucketName)->collections();
+                break;
+            } catch (CouchbaseException $ex) {
+                printf("Error getting bucket: %s, %s", $ex->getMessage(), var_export($ex->getContext(), true));
+                if (time() > $deadline) {
+                    $this->assertFalse("timed out waiting to get bucket");
+                }
+                sleep(1);
+            }
+        }
+
+        $collectionManager->createScope($scopeName);
+        $collectionManager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(null, false));
+
+        $selectedScope = $this->getScope($scopeName, $collectionManager);
+        $found = false;
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $found = true;
+                $foundCollection = $collection;
+            }
+        }
+        $this->assertTrue($found);
+        $this->assertFalse($foundCollection->history());
+
+        $collectionManager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(null, true));
+
+        $selectedScope = $this->getScope($scopeName, $collectionManager);
+
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $foundCollection = $collection;
+            }
+        }
+        $this->assertTrue($foundCollection->history());
+
+        $bucketManager->dropBucket($bucketName);
+    }
+
     /**
      * @throws ScopeNotFoundException
      */
-    private function getScope(string $scopeName): ScopeSpec
+    private function getScope(string $scopeName, CollectionManager $manager = null): ScopeSpec
     {
-        $scopes = $this->manager->getAllScopes();
+        if (is_null($manager)) {
+            $manager = $this->manager;
+        }
+        $scopes = $manager->getAllScopes();
         foreach ($scopes as $scope) {
             if ($scope->name() == $scopeName) {
                 return $scope;

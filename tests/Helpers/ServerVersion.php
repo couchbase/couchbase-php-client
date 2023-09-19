@@ -112,6 +112,11 @@ class ServerVersion
         return $this->major == 6 && $this->minor == 6;
     }
 
+    public function is72(): bool
+    {
+        return $this->major == 7 && $this->minor == 2;
+    }
+
     public function is75(): bool
     {
         return $this->major == 7 && $this->minor == 5;
@@ -257,6 +262,16 @@ class ServerVersion
     public function supportsRangeScan(): bool
     {
         return $this->is75() || $this->is76();
+    }
+
+    public function supportsBucketDedup(): bool
+    {
+        return ($this->major == 7 && $this->minor >= 2) || $this->major > 7;
+    }
+
+    public function supportsUpdateCollectionMaxExpiry(): bool
+    {
+        return ($this->major == 7 && $this->minor >= 5) || $this->major > 7;
     }
 
     /**

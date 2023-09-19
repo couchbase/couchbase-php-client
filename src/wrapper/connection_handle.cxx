@@ -3273,6 +3273,15 @@ zval_to_bucket_settings(const zval* bucket_settings)
     } else if (e.ec) {
         return { e, {} };
     }
+    if (auto e = cb_assign_boolean(bucket.history_retention_collection_default, bucket_settings, "historyRetentionCollectionDefault"); e.ec) {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_integer(bucket.history_retention_bytes, bucket_settings, "historyRetentionBytes"); e.ec) {
+        return { e, {} };
+    }
+    if (auto e = cb_assign_integer(bucket.history_retention_duration, bucket_settings, "historyRetentionDuration"); e.ec) {
+        return { e, {} };
+    }
 
     return { {}, bucket };
 }
@@ -3436,6 +3445,11 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
             break;
     }
     add_assoc_string(return_value, "storageBackend", storage_backend.c_str());
+    if (bucket_settings.history_retention_collection_default.has_value()) {
+        add_assoc_bool(return_value, "historyRetentionCollectionDefault", bucket_settings.history_retention_collection_default.value());
+    }
+    add_assoc_long(return_value, "historyRetentionBytes", bucket_settings.history_retention_bytes);
+    add_assoc_long(return_value, "historyRetentionDuration", bucket_settings.history_retention_duration);
 
     return {};
 }
@@ -3559,6 +3573,9 @@ connection_handle::scope_get_all(zval* return_value, const zend_string* bucket_n
             array_init(&collection);
             add_assoc_string(&collection, "name", c.name.c_str());
             add_assoc_long(&collection, "max_expiry", c.max_expiry);
+            if (c.history.has_value()) {
+                add_assoc_bool(&collection, "history", c.history.value());
+            }
             add_next_index_zval(&collections, &collection);
         }
         add_assoc_zval(&scope, "collections", &collections);
@@ -3613,7 +3630,7 @@ connection_handle::scope_drop(zval* return_value, const zend_string* bucket_name
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_create(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options)
+connection_handle::collection_create(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* settings, const zval* options)
 {
     couchbase::core::operations::management::collection_create_request request{};
 
@@ -3622,16 +3639,14 @@ connection_handle::collection_create(zval* return_value, const zend_string* buck
     }
 
     request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
 
-    if (auto e = cb_assign_string(request.scope_name, collection_spec, "scopeName"); e.ec) {
+    if (auto e = cb_assign_integer(request.max_expiry, settings, "maxExpiry"); e.ec) {
         return e;
     }
 
-    if (auto e = cb_assign_string(request.collection_name, collection_spec, "name"); e.ec) {
-        return e;
-    }
-
-    if (auto e = cb_assign_integer(request.max_expiry, collection_spec, "maxExpiry"); e.ec) {
+    if (auto e = cb_assign_boolean(request.history, settings, "history"); e.ec) {
         return e;
     }
 
@@ -3646,7 +3661,7 @@ connection_handle::collection_create(zval* return_value, const zend_string* buck
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_drop(zval* return_value, const zend_string* bucket_name, const zval* collection_spec, const zval* options)
+connection_handle::collection_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
 {
     couchbase::core::operations::management::collection_drop_request request{};
 
@@ -3655,12 +3670,37 @@ connection_handle::collection_drop(zval* return_value, const zend_string* bucket
     }
 
     request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
 
-    if (auto e = cb_assign_string(request.scope_name, collection_spec, "scopeName"); e.ec) {
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::collection_update(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* settings, const zval* options)
+{
+    couchbase::core::operations::management::collection_update_request request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
     }
 
-    if (auto e = cb_assign_string(request.collection_name, collection_spec, "name"); e.ec) {
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+    request.collection_name = cb_string_new(collection_name);
+
+    if (auto e = cb_assign_integer(request.max_expiry, settings, "maxExpiry"); e.ec) {
+        return e;
+    }
+
+    if (auto e = cb_assign_boolean(request.history, settings, "history"); e.ec) {
         return e;
     }
 
