@@ -3456,8 +3456,12 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
     if (bucket_settings.history_retention_collection_default.has_value()) {
         add_assoc_bool(return_value, "historyRetentionCollectionDefault", bucket_settings.history_retention_collection_default.value());
     }
-    add_assoc_long(return_value, "historyRetentionBytes", bucket_settings.history_retention_bytes);
-    add_assoc_long(return_value, "historyRetentionDuration", bucket_settings.history_retention_duration);
+    if (bucket_settings.history_retention_bytes.has_value()) {
+        add_assoc_long(return_value, "historyRetentionBytes", bucket_settings.history_retention_bytes.value());
+    }
+    if (bucket_settings.history_retention_duration.has_value()) {
+        add_assoc_long(return_value, "historyRetentionDuration", bucket_settings.history_retention_duration.value());
+    }
 
     return {};
 }
