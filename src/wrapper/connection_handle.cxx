@@ -3359,7 +3359,9 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
     }
     add_assoc_string(return_value, "bucketType", bucket_type.c_str());
     add_assoc_long(return_value, "ramQuotaMB", bucket_settings.ram_quota_mb);
-    add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry);
+    if (bucket_settings.max_expiry.has_value()) {
+        add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry.value());
+    }
     std::string compression_mode;
     switch (bucket_settings.compression_mode) {
         case couchbase::core::management::cluster::bucket_compression::off:
@@ -3394,9 +3396,15 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
         }
         add_assoc_string(return_value, "minimumDurabilityLevel", durability_level.c_str());
     }
-    add_assoc_long(return_value, "numReplicas", bucket_settings.num_replicas);
-    add_assoc_bool(return_value, "replicaIndexes", bucket_settings.replica_indexes);
-    add_assoc_bool(return_value, "flushEnabled", bucket_settings.flush_enabled);
+    if (bucket_settings.num_replicas.has_value()) {
+        add_assoc_long(return_value, "numReplicas", bucket_settings.num_replicas.value());
+    }
+    if (bucket_settings.replica_indexes.has_value()) {
+        add_assoc_bool(return_value, "replicaIndexes", bucket_settings.replica_indexes.value());
+    }
+    if (bucket_settings.flush_enabled.has_value()) {
+        add_assoc_bool(return_value, "flushEnabled", bucket_settings.flush_enabled.value());
+    }
     std::string eviction_policy;
     switch (bucket_settings.eviction_policy) {
         case couchbase::core::management::cluster::bucket_eviction_policy::no_eviction:
@@ -3448,8 +3456,12 @@ cb_bucket_settings_to_zval(zval* return_value, const couchbase::core::management
     if (bucket_settings.history_retention_collection_default.has_value()) {
         add_assoc_bool(return_value, "historyRetentionCollectionDefault", bucket_settings.history_retention_collection_default.value());
     }
-    add_assoc_long(return_value, "historyRetentionBytes", bucket_settings.history_retention_bytes);
-    add_assoc_long(return_value, "historyRetentionDuration", bucket_settings.history_retention_duration);
+    if (bucket_settings.history_retention_bytes.has_value()) {
+        add_assoc_long(return_value, "historyRetentionBytes", bucket_settings.history_retention_bytes.value());
+    }
+    if (bucket_settings.history_retention_duration.has_value()) {
+        add_assoc_long(return_value, "historyRetentionDuration", bucket_settings.history_retention_duration.value());
+    }
 
     return {};
 }
