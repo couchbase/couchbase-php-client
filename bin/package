@@ -41,6 +41,6 @@ Dir.chdir(project_root) do
   sdk_version = main_header[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1]
   snapshot = ENV.fetch("BUILD_NUMBER", 0) unless ENV.fetch("IS_RELEASE", false).to_b
   if snapshot
-    FileUtils.mv("couchbase-#{sdk_version}.tgz", "couchbase-#{sdk_version}.#{snapshot}.tgz")
+    FileUtils.mv("couchbase-#{sdk_version}.tgz", "couchbase-#{sdk_version}.#{snapshot}.tgz", verbose: true)
   end
 end

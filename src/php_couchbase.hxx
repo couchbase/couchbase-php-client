@@ -19,7 +19,7 @@
 
 #include <zend_modules.h>
 
-#define PHP_COUCHBASE_VERSION "4.1.5"
+#define PHP_COUCHBASE_VERSION "4.1.6"
 #define PHP_COUCHBASE_EXTENSION_NAME "couchbase"
 
 #ifdef __cplusplus
