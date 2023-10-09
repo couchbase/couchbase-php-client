@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-09-05</date>
+    <date>2023-10-04</date>
     <version>
         <release>4.1.6</release>
         <api>4.0.0</api>
@@ -24,7 +24,18 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        WIP
+        * PCBC-956: Update wrapper side bucket settings (#132)
+        * PCBC-950: Support bucket settings for no dedup feature (#131)
+        * Updates to support PHP 8.3. `zend_bool` was removed from 8.3.
+
+        Notable changes in core C++
+        ---------------------------
+        * CXXCBC-376: Revisit what 'create' and 'update' bucket operations send to the server. Make optional bucket
+          settings fields optional, and do not send anything unless the settings explicitly specified. (#451)
+        * CXXCBC-359: Reduce default HTTP idle timeout to 1 second (#448)
+        * CXXCBC-367, CXXCBC-370: Add history retention settings to buckets/collection management. (#446)
+        * CXXCBC-119: Return booleans for subdocument 'exists' operation instead of error code. (#444, #452)
+        * Detect 'collection_not_found' error in 'update_collection' response (#450)
     </notes>
     <contents>
         <dir name="/">
