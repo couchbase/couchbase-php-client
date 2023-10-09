@@ -519,7 +519,13 @@ core_error_info
 cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
 {
     try {
-        std::uint64_t cas_value = std::stoull(cas_string, nullptr, 16);
+        std::size_t end = 0;
+        const std::uint64_t cas_value = std::stoull(cas_string, &end, 16);
+        if (end != cas_string.size()) {
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
+                     fmt::format("trailing characters are not allowed in CAS value: \"{}\"", cas_string) };
+        }
         cas = couchbase::cas{ cas_value };
     } catch (const std::invalid_argument&) {
         return { errc::common::invalid_argument,
