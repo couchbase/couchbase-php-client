@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\CasMismatchException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\RemoveOptions;
 
@@ -36,6 +37,28 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
 
         $this->expectException(CasMismatchException::class);
         $collection->remove($id, RemoveOptions::build()->cas("deadbeef"));
+    }
+
+    public function testRemoveThrowsCasMismatchForWrongCasGarbageSuffix()
+    {
+        $collection = $this->defaultCollection();
+        $id = $this->uniqueId();
+
+        $res = $collection->upsert($id, ["answer" => 42]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $collection->remove($id, RemoveOptions::build()->cas($res->cas() . "-invalid"));
+    }
+
+    public function testRemoveThrowsCasMismatchForWrongCasGarbagePrefix()
+    {
+        $collection = $this->defaultCollection();
+        $id = $this->uniqueId();
+
+        $res = $collection->upsert($id, ["answer" => 42]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $collection->remove($id, RemoveOptions::build()->cas("invalid-" . $res->cas()));
     }
 
     public function testRemoveThrowsDocumentNotFoundForUnknownId()
