@@ -253,6 +253,14 @@ class KVRequestConverter
         return [array_merge($request, $location), $order];
     }
 
+    public static function getGetAllReplicasRequest(string $key, array $location): array
+    {
+        $request = [
+            "key" => $key
+        ];
+        return array_merge($request, $location);
+    }
+
     /**
      * @throws InvalidArgumentException
      */

@@ -28,6 +28,7 @@ use Couchbase\ExistsResult;
 use Couchbase\GetAllReplicasOptions;
 use Couchbase\GetAndLockOptions;
 use Couchbase\GetAndTouchOptions;
+use Couchbase\GetAnyReplicaOptions;
 use Couchbase\GetOptions;
 use Couchbase\GetReplicaResult;
 use Couchbase\GetResult;
@@ -37,6 +38,7 @@ use Couchbase\LookupInResult;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateInResult;
 use Couchbase\MutationResult;
+use Couchbase\Protostellar\Generated\KV\V1\GetAllReplicasRequest;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
 use Couchbase\Protostellar\Internal\KVRequestConverter;
@@ -306,16 +308,34 @@ class Collection implements CollectionInterface
         return KVResponseConverter::convertMutateInResult($key, $res, $request['specs'], $order);
     }
 
-    public function getAnyReplica(string $id, \Couchbase\GetAnyReplicaOptions $options = null): GetReplicaResult
+    public function getAnyReplica(string $key, GetAnyReplicaOptions $options = null): GetReplicaResult
     {
-        // TODO: Implement getAnyReplica() method.
-        return new GetReplicaResult();
+        $exportedOptions = GetAnyReplicaOptions::export($options);
+        $request = KVRequestConverter::getGetAllReplicasRequest(
+            $key,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new GetAllReplicasRequest($request), true, $timeout),
+            [$this->client->kv(), 'GetAllReplicas']
+        );
+        return KVResponseConverter::convertGetAllReplicasResult($key, $response, $options)[0];
     }
 
-    public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
+    public function getAllReplicas(string $key, GetAllReplicasOptions $options = null): array
     {
-        // TODO: Implement getAllReplicas() method.
-        return [];
+        $exportedOptions = GetAllReplicasOptions::export($options);
+        $request = KVRequestConverter::getGetAllReplicasRequest(
+            $key,
+            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        );
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new GetAllReplicasRequest($request), true, $timeout),
+            [$this->client->kv(), 'GetAllReplicas']
+        );
+        return KVResponseConverter::convertGetAllReplicasResult($key, $response, $options);
     }
 
     public function bucketName(): string
