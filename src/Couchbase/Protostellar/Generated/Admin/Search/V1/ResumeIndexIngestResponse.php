@@ -9,9 +9,9 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>couchbase.admin.search.v1.UpsertIndexResponse</code>
+ * Generated from protobuf message <code>couchbase.admin.search.v1.ResumeIndexIngestResponse</code>
  */
-class UpsertIndexResponse extends \Google\Protobuf\Internal\Message
+class ResumeIndexIngestResponse extends \Google\Protobuf\Internal\Message
 {
 
     /**

@@ -14,7 +14,7 @@ use Google\Protobuf\Internal\GPBUtil;
 class ListIndexesResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.ListIndexesResponse.Index indexes = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.Index indexes = 1;</code>
      */
     private $indexes;
 
@@ -24,7 +24,7 @@ class ListIndexesResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type array<\Couchbase\Protostellar\Generated\Admin\Search\V1\ListIndexesResponse\Index>|\Google\Protobuf\Internal\RepeatedField $indexes
+     *     @type array<\Couchbase\Protostellar\Generated\Admin\Search\V1\Index>|\Google\Protobuf\Internal\RepeatedField $indexes
      * }
      */
     public function __construct($data = NULL) {
@@ -33,7 +33,7 @@ class ListIndexesResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.ListIndexesResponse.Index indexes = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.Index indexes = 1;</code>
      * @return \Google\Protobuf\Internal\RepeatedField
      */
     public function getIndexes()
@@ -42,13 +42,13 @@ class ListIndexesResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.ListIndexesResponse.Index indexes = 1;</code>
-     * @param array<\Couchbase\Protostellar\Generated\Admin\Search\V1\ListIndexesResponse\Index>|\Google\Protobuf\Internal\RepeatedField $var
+     * Generated from protobuf field <code>repeated .couchbase.admin.search.v1.Index indexes = 1;</code>
+     * @param array<\Couchbase\Protostellar\Generated\Admin\Search\V1\Index>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
     public function setIndexes($var)
     {
-        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Admin\Search\V1\ListIndexesResponse\Index::class);
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Admin\Search\V1\Index::class);
         $this->indexes = $arr;
 
         return $this;

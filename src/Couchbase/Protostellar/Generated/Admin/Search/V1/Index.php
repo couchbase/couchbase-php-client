@@ -9,9 +9,9 @@ use Google\Protobuf\Internal\RepeatedField;
 use Google\Protobuf\Internal\GPBUtil;
 
 /**
- * Generated from protobuf message <code>couchbase.admin.search.v1.UpsertIndexRequest</code>
+ * Generated from protobuf message <code>couchbase.admin.search.v1.Index</code>
  */
-class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
+class Index extends \Google\Protobuf\Internal\Message
 {
     /**
      * Generated from protobuf field <code>string name = 1;</code>
@@ -26,41 +26,29 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
      */
     private $plan_params;
     /**
-     * Generated from protobuf field <code>optional string prev_index_uuid = 4;</code>
-     */
-    protected $prev_index_uuid = null;
-    /**
-     * Generated from protobuf field <code>optional string source_name = 5;</code>
+     * Generated from protobuf field <code>optional string source_name = 4;</code>
      */
     protected $source_name = null;
     /**
-     * Generated from protobuf field <code>map<string, bytes> source_params = 6;</code>
+     * Generated from protobuf field <code>map<string, bytes> source_params = 5;</code>
      */
     private $source_params;
     /**
-     * Generated from protobuf field <code>optional string source_type = 7;</code>
+     * Generated from protobuf field <code>optional string source_type = 6;</code>
      */
     protected $source_type = null;
     /**
-     * Generated from protobuf field <code>optional string source_uuid = 8;</code>
+     * Generated from protobuf field <code>optional string source_uuid = 7;</code>
      */
     protected $source_uuid = null;
     /**
-     * Generated from protobuf field <code>string type = 9;</code>
+     * Generated from protobuf field <code>string type = 8;</code>
      */
     protected $type = '';
     /**
-     * Generated from protobuf field <code>optional string uuid = 10;</code>
+     * Generated from protobuf field <code>string uuid = 9;</code>
      */
-    protected $uuid = null;
-    /**
-     * Generated from protobuf field <code>optional string bucket_name = 11;</code>
-     */
-    protected $bucket_name = null;
-    /**
-     * Generated from protobuf field <code>optional string scope_name = 12;</code>
-     */
-    protected $scope_name = null;
+    protected $uuid = '';
 
     /**
      * Constructor.
@@ -71,15 +59,12 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
      *     @type string $name
      *     @type array|\Google\Protobuf\Internal\MapField $params
      *     @type array|\Google\Protobuf\Internal\MapField $plan_params
-     *     @type string $prev_index_uuid
      *     @type string $source_name
      *     @type array|\Google\Protobuf\Internal\MapField $source_params
      *     @type string $source_type
      *     @type string $source_uuid
      *     @type string $type
      *     @type string $uuid
-     *     @type string $bucket_name
-     *     @type string $scope_name
      * }
      */
     public function __construct($data = NULL) {
@@ -154,39 +139,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string prev_index_uuid = 4;</code>
-     * @return string
-     */
-    public function getPrevIndexUuid()
-    {
-        return isset($this->prev_index_uuid) ? $this->prev_index_uuid : '';
-    }
-
-    public function hasPrevIndexUuid()
-    {
-        return isset($this->prev_index_uuid);
-    }
-
-    public function clearPrevIndexUuid()
-    {
-        unset($this->prev_index_uuid);
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string prev_index_uuid = 4;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setPrevIndexUuid($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->prev_index_uuid = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string source_name = 5;</code>
+     * Generated from protobuf field <code>optional string source_name = 4;</code>
      * @return string
      */
     public function getSourceName()
@@ -205,7 +158,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string source_name = 5;</code>
+     * Generated from protobuf field <code>optional string source_name = 4;</code>
      * @param string $var
      * @return $this
      */
@@ -218,7 +171,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>map<string, bytes> source_params = 6;</code>
+     * Generated from protobuf field <code>map<string, bytes> source_params = 5;</code>
      * @return \Google\Protobuf\Internal\MapField
      */
     public function getSourceParams()
@@ -227,7 +180,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>map<string, bytes> source_params = 6;</code>
+     * Generated from protobuf field <code>map<string, bytes> source_params = 5;</code>
      * @param array|\Google\Protobuf\Internal\MapField $var
      * @return $this
      */
@@ -240,7 +193,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string source_type = 7;</code>
+     * Generated from protobuf field <code>optional string source_type = 6;</code>
      * @return string
      */
     public function getSourceType()
@@ -259,7 +212,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string source_type = 7;</code>
+     * Generated from protobuf field <code>optional string source_type = 6;</code>
      * @param string $var
      * @return $this
      */
@@ -272,7 +225,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string source_uuid = 8;</code>
+     * Generated from protobuf field <code>optional string source_uuid = 7;</code>
      * @return string
      */
     public function getSourceUuid()
@@ -291,7 +244,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string source_uuid = 8;</code>
+     * Generated from protobuf field <code>optional string source_uuid = 7;</code>
      * @param string $var
      * @return $this
      */
@@ -304,7 +257,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string type = 9;</code>
+     * Generated from protobuf field <code>string type = 8;</code>
      * @return string
      */
     public function getType()
@@ -313,7 +266,7 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>string type = 9;</code>
+     * Generated from protobuf field <code>string type = 8;</code>
      * @param string $var
      * @return $this
      */
@@ -326,26 +279,16 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional string uuid = 10;</code>
+     * Generated from protobuf field <code>string uuid = 9;</code>
      * @return string
      */
     public function getUuid()
     {
-        return isset($this->uuid) ? $this->uuid : '';
-    }
-
-    public function hasUuid()
-    {
-        return isset($this->uuid);
-    }
-
-    public function clearUuid()
-    {
-        unset($this->uuid);
+        return $this->uuid;
     }
 
     /**
-     * Generated from protobuf field <code>optional string uuid = 10;</code>
+     * Generated from protobuf field <code>string uuid = 9;</code>
      * @param string $var
      * @return $this
      */
@@ -353,70 +296,6 @@ class UpsertIndexRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->uuid = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string bucket_name = 11;</code>
-     * @return string
-     */
-    public function getBucketName()
-    {
-        return isset($this->bucket_name) ? $this->bucket_name : '';
-    }
-
-    public function hasBucketName()
-    {
-        return isset($this->bucket_name);
-    }
-
-    public function clearBucketName()
-    {
-        unset($this->bucket_name);
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string bucket_name = 11;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setBucketName($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->bucket_name = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string scope_name = 12;</code>
-     * @return string
-     */
-    public function getScopeName()
-    {
-        return isset($this->scope_name) ? $this->scope_name : '';
-    }
-
-    public function hasScopeName()
-    {
-        return isset($this->scope_name);
-    }
-
-    public function clearScopeName()
-    {
-        unset($this->scope_name);
-    }
-
-    /**
-     * Generated from protobuf field <code>optional string scope_name = 12;</code>
-     * @param string $var
-     * @return $this
-     */
-    public function setScopeName($var)
-    {
-        GPBUtil::checkString($var, True);
-        $this->scope_name = $var;
 
         return $this;
     }
