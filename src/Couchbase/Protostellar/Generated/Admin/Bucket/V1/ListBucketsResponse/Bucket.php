@@ -54,9 +54,9 @@ class Bucket extends \Google\Protobuf\Internal\Message
      */
     protected $minimum_durability_level = null;
     /**
-     * Generated from protobuf field <code>.couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
      */
-    protected $storage_backend = 0;
+    protected $storage_backend = null;
     /**
      * Generated from protobuf field <code>.couchbase.admin.bucket.v1.ConflictResolutionType conflict_resolution_type = 12;</code>
      */
@@ -318,16 +318,26 @@ class Bucket extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
      * @return int
      */
     public function getStorageBackend()
     {
-        return $this->storage_backend;
+        return isset($this->storage_backend) ? $this->storage_backend : 0;
+    }
+
+    public function hasStorageBackend()
+    {
+        return isset($this->storage_backend);
+    }
+
+    public function clearStorageBackend()
+    {
+        unset($this->storage_backend);
     }
 
     /**
-     * Generated from protobuf field <code>.couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.StorageBackend storage_backend = 11;</code>
      * @param int $var
      * @return $this
      */
