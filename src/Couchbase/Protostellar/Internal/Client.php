@@ -32,6 +32,7 @@ class Client
     private Generated\KV\V1\KvServiceClient $kv;
     private Generated\Query\V1\QueryServiceClient $query;
     private Generated\Search\V1\SearchServiceClient $search;
+    private Generated\Analytics\V1\AnalyticsServiceClient $analytics;
     private Generated\Admin\Collection\V1\CollectionAdminServiceClient $collectionAdmin;
     private Generated\Admin\Bucket\V1\BucketAdminServiceClient $bucketAdmin;
     private Generated\Admin\Query\V1\QueryAdminServiceClient $queryAdmin;
@@ -50,6 +51,7 @@ class Client
         $this->kv = new Generated\KV\V1\KvServiceClient($host, $clientOpts, $this->channel);
         $this->query = new Generated\Query\V1\QueryServiceClient($host, $clientOpts, $this->channel);
         $this->search = new Generated\Search\V1\SearchServiceClient($host, $clientOpts, $this->channel);
+        $this->analytics = new Generated\Analytics\V1\AnalyticsServiceClient($host, $clientOpts, $this->channel);
         $this->collectionAdmin = new Generated\Admin\Collection\V1\CollectionAdminServiceClient($host, $clientOpts, $this->channel);
         $this->bucketAdmin = new Generated\Admin\Bucket\V1\BucketAdminServiceClient($host, $clientOpts, $this->channel);
         $this->queryAdmin = new Generated\Admin\Query\V1\QueryAdminServiceClient($host, $clientOpts, $this->channel);
@@ -74,6 +76,11 @@ class Client
     public function search(): Generated\Search\V1\SearchServiceClient
     {
         return $this->search;
+    }
+
+    public function analytics(): Generated\Analytics\V1\AnalyticsServiceClient
+    {
+        return $this->analytics;
     }
 
     public function collectionAdmin(): Generated\Admin\Collection\V1\CollectionAdminServiceClient

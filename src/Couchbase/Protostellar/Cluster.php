@@ -26,7 +26,10 @@ use Couchbase\AnalyticsResult;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryRequest;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
+use Couchbase\Protostellar\Internal\AnalyticsRequestConverter;
+use Couchbase\Protostellar\Internal\AnalyticsResponseConverter;
 use Couchbase\Protostellar\Internal\QueryRequestConverter;
 use Couchbase\Protostellar\Internal\QueryResponseConverter;
 use Couchbase\Protostellar\Internal\SearchRequestConverter;
@@ -81,8 +84,15 @@ class Cluster implements ClusterInterface
 
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
-        // TODO: Implement analyticsQuery() method.
-        return new AnalyticsResult();
+        $exportedOptions = AnalyticsOptions::export($options);
+        $request = AnalyticsRequestConverter::getAnalyticsRequest($statement, $exportedOptions);
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::ANALYTICS, $exportedOptions);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest(new AnalyticsQueryRequest($request), false, $timeout),
+            [$this->client->analytics(), 'AnalyticsQuery']
+        );
+        $finalArray = AnalyticsResponseConverter::convertAnalyticsResult($response);
+        return new AnalyticsResult($finalArray, AnalyticsOptions::getTranscoder($options));
     }
 
     /**
