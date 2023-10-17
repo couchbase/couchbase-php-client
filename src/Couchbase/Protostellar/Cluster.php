@@ -120,4 +120,9 @@ class Cluster implements ClusterInterface
     {
         return new QueryIndexManager($this->client);
     }
+
+    public function searchIndexes(): SearchIndexManager
+    {
+        return new SearchIndexManager($this->client);
+    }
 }
