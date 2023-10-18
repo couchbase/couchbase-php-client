@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Analytics\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Analytics\V1\AnalyticsQueryResponse\MetaData instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryResponse\MetaData instead.
      * @deprecated
      */
     class AnalyticsQueryResponse_MetaData {}

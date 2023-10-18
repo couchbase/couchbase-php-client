@@ -25,14 +25,14 @@ use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
-use Couchbase\Protostellar\Internal\QueryRequestConverter;
-use Couchbase\Protostellar\Internal\QueryResponseConverter;
+use Couchbase\Protostellar\Internal\Client;
+use Couchbase\Protostellar\Internal\Query\QueryRequestConverter;
+use Couchbase\Protostellar\Internal\Query\QueryResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\ScopeInterface;
-use Couchbase\Protostellar\Internal\Client;
 
 class Scope implements ScopeInterface
 {

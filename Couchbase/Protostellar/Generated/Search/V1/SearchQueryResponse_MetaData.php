@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Search\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Search\V1\SearchQueryResponse\MetaData instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Search\V1\SearchQueryResponse\MetaData instead.
      * @deprecated
      */
     class SearchQueryResponse_MetaData {}

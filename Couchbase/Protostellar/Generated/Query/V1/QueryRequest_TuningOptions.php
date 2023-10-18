@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Query\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Query\V1\QueryRequest\TuningOptions instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Query\V1\QueryRequest\TuningOptions instead.
      * @deprecated
      */
     class QueryRequest_TuningOptions {}

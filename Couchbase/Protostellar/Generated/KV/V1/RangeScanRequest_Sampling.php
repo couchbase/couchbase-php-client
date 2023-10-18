@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\KV\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\KV\V1\RangeScanRequest\Sampling instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\KV\V1\RangeScanRequest\Sampling instead.
      * @deprecated
      */
     class RangeScanRequest_Sampling {}

@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Admin\Bucket\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Admin\Bucket\V1\ListBucketsResponse\Bucket instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsResponse\Bucket instead.
      * @deprecated
      */
     class ListBucketsResponse_Bucket {}

@@ -33,8 +33,8 @@ use Couchbase\Protostellar\Generated\KV\V1\DecrementRequest;
 use Couchbase\Protostellar\Generated\KV\V1\IncrementRequest;
 use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\KVRequestConverter;
-use Couchbase\Protostellar\Internal\KVResponseConverter;
+use Couchbase\Protostellar\Internal\KV\KVRequestConverter;
+use Couchbase\Protostellar\Internal\KV\KVResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 

@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\View\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\View\V1\ViewQueryRequest\ScanConsistency instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\View\V1\ViewQueryRequest\ScanConsistency instead.
      * @deprecated
      */
     class ViewQueryRequest_ScanConsistency {}

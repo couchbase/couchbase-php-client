@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Query\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Query\V1\QueryRequest\ProfileMode instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Query\V1\QueryRequest\ProfileMode instead.
      * @deprecated
      */
     class QueryRequest_ProfileMode {}

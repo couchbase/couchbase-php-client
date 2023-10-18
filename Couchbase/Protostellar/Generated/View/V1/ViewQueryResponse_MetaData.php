@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\View\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\View\V1\ViewQueryResponse\MetaData instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\View\V1\ViewQueryResponse\MetaData instead.
      * @deprecated
      */
     class ViewQueryResponse_MetaData {}

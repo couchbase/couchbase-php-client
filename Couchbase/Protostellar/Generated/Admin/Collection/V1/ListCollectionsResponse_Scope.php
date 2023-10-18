@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Admin\Collection\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Admin\Collection\V1\ListCollectionsResponse\Scope instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsResponse\Scope instead.
      * @deprecated
      */
     class ListCollectionsResponse_Scope {}

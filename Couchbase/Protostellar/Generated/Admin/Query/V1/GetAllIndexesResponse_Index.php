@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Admin\Query\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Admin\Query\V1\GetAllIndexesResponse\Index instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Admin\Query\V1\GetAllIndexesResponse\Index instead.
      * @deprecated
      */
     class GetAllIndexesResponse_Index {}

@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Internal\Hooks\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Internal\Hooks\V1\HookAction\Counter instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Internal\Hooks\V1\HookAction\Counter instead.
      * @deprecated
      */
     class HookAction_Counter {}

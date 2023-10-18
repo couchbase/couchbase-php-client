@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Analytics\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Analytics\V1\AnalyticsQueryResponse\Metrics instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryResponse\Metrics instead.
      * @deprecated
      */
     class AnalyticsQueryResponse_Metrics {}

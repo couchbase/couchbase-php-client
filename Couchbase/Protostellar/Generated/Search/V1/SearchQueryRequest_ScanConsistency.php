@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\Search\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\Search\V1\SearchQueryRequest\ScanConsistency instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest\ScanConsistency instead.
      * @deprecated
      */
     class SearchQueryRequest_ScanConsistency {}

@@ -18,41 +18,33 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
      */
     protected $bucket_name = '';
     /**
-     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 2;</code>
      */
     protected $ram_quota_mb = null;
     /**
-     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 3;</code>
      */
     protected $num_replicas = null;
     /**
-     * Generated from protobuf field <code>optional bool flush_enabled = 5;</code>
+     * Generated from protobuf field <code>optional bool flush_enabled = 4;</code>
      */
     protected $flush_enabled = null;
     /**
-     * Generated from protobuf field <code>optional bool replica_indexes = 6;</code>
-     */
-    protected $replica_indexes = null;
-    /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 7;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 5;</code>
      */
     protected $eviction_mode = null;
     /**
-     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 8;</code>
+     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 6;</code>
      */
     protected $max_expiry_secs = null;
     /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 9;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 7;</code>
      */
     protected $compression_mode = null;
     /**
-     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 8;</code>
      */
     protected $minimum_durability_level = null;
-    /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.ConflictResolutionType conflict_resolution_type = 12;</code>
-     */
-    protected $conflict_resolution_type = null;
 
     /**
      * Constructor.
@@ -64,12 +56,10 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
      *     @type int|string $ram_quota_mb
      *     @type int $num_replicas
      *     @type bool $flush_enabled
-     *     @type bool $replica_indexes
      *     @type int $eviction_mode
      *     @type int $max_expiry_secs
      *     @type int $compression_mode
      *     @type int $minimum_durability_level
-     *     @type int $conflict_resolution_type
      * }
      */
     public function __construct($data = NULL) {
@@ -100,7 +90,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 2;</code>
      * @return int|string
      */
     public function getRamQuotaMb()
@@ -119,7 +109,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 3;</code>
+     * Generated from protobuf field <code>optional uint64 ram_quota_mb = 2;</code>
      * @param int|string $var
      * @return $this
      */
@@ -132,7 +122,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 3;</code>
      * @return int
      */
     public function getNumReplicas()
@@ -151,7 +141,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint32 num_replicas = 4;</code>
+     * Generated from protobuf field <code>optional uint32 num_replicas = 3;</code>
      * @param int $var
      * @return $this
      */
@@ -164,7 +154,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional bool flush_enabled = 5;</code>
+     * Generated from protobuf field <code>optional bool flush_enabled = 4;</code>
      * @return bool
      */
     public function getFlushEnabled()
@@ -183,7 +173,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional bool flush_enabled = 5;</code>
+     * Generated from protobuf field <code>optional bool flush_enabled = 4;</code>
      * @param bool $var
      * @return $this
      */
@@ -196,39 +186,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional bool replica_indexes = 6;</code>
-     * @return bool
-     */
-    public function getReplicaIndexes()
-    {
-        return isset($this->replica_indexes) ? $this->replica_indexes : false;
-    }
-
-    public function hasReplicaIndexes()
-    {
-        return isset($this->replica_indexes);
-    }
-
-    public function clearReplicaIndexes()
-    {
-        unset($this->replica_indexes);
-    }
-
-    /**
-     * Generated from protobuf field <code>optional bool replica_indexes = 6;</code>
-     * @param bool $var
-     * @return $this
-     */
-    public function setReplicaIndexes($var)
-    {
-        GPBUtil::checkBool($var);
-        $this->replica_indexes = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 7;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 5;</code>
      * @return int
      */
     public function getEvictionMode()
@@ -247,7 +205,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 7;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.EvictionMode eviction_mode = 5;</code>
      * @param int $var
      * @return $this
      */
@@ -260,7 +218,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 8;</code>
+     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 6;</code>
      * @return int
      */
     public function getMaxExpirySecs()
@@ -279,7 +237,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 8;</code>
+     * Generated from protobuf field <code>optional uint32 max_expiry_secs = 6;</code>
      * @param int $var
      * @return $this
      */
@@ -292,7 +250,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 9;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 7;</code>
      * @return int
      */
     public function getCompressionMode()
@@ -311,7 +269,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 9;</code>
+     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.CompressionMode compression_mode = 7;</code>
      * @param int $var
      * @return $this
      */
@@ -324,7 +282,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 8;</code>
      * @return int
      */
     public function getMinimumDurabilityLevel()
@@ -343,7 +301,7 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 10;</code>
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel minimum_durability_level = 8;</code>
      * @param int $var
      * @return $this
      */
@@ -351,38 +309,6 @@ class UpdateBucketRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::class);
         $this->minimum_durability_level = $var;
-
-        return $this;
-    }
-
-    /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.ConflictResolutionType conflict_resolution_type = 12;</code>
-     * @return int
-     */
-    public function getConflictResolutionType()
-    {
-        return isset($this->conflict_resolution_type) ? $this->conflict_resolution_type : 0;
-    }
-
-    public function hasConflictResolutionType()
-    {
-        return isset($this->conflict_resolution_type);
-    }
-
-    public function clearConflictResolutionType()
-    {
-        unset($this->conflict_resolution_type);
-    }
-
-    /**
-     * Generated from protobuf field <code>optional .couchbase.admin.bucket.v1.ConflictResolutionType conflict_resolution_type = 12;</code>
-     * @param int $var
-     * @return $this
-     */
-    public function setConflictResolutionType($var)
-    {
-        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\Admin\Bucket\V1\ConflictResolutionType::class);
-        $this->conflict_resolution_type = $var;
 
         return $this;
     }

@@ -6,7 +6,7 @@ namespace Couchbase\Protostellar\Generated\KV\V1;
 
 if (false) {
     /**
-     * This class is deprecated. Use Couchbase\Couchbase\Generated\KV\V1\LookupInResponse\Spec instead.
+     * This class is deprecated. Use Couchbase\Protostellar\Generated\KV\V1\LookupInResponse\Spec instead.
      * @deprecated
      */
     class LookupInResponse_Spec {}

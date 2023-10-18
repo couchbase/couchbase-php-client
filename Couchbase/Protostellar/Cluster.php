@@ -27,13 +27,15 @@ use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryRequest;
+use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
-use Couchbase\Protostellar\Internal\AnalyticsRequestConverter;
-use Couchbase\Protostellar\Internal\AnalyticsResponseConverter;
-use Couchbase\Protostellar\Internal\QueryRequestConverter;
-use Couchbase\Protostellar\Internal\QueryResponseConverter;
-use Couchbase\Protostellar\Internal\SearchRequestConverter;
-use Couchbase\Protostellar\Internal\SearchResponseConverter;
+use Couchbase\Protostellar\Internal\Analytics\AnalyticsRequestConverter;
+use Couchbase\Protostellar\Internal\Analytics\AnalyticsResponseConverter;
+use Couchbase\Protostellar\Internal\Client;
+use Couchbase\Protostellar\Internal\Query\QueryRequestConverter;
+use Couchbase\Protostellar\Internal\Query\QueryResponseConverter;
+use Couchbase\Protostellar\Internal\Search\SearchRequestConverter;
+use Couchbase\Protostellar\Internal\Search\SearchResponseConverter;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Management\BucketManager;
@@ -43,8 +45,6 @@ use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
 use Couchbase\SearchQuery;
 use Couchbase\SearchResult;
-use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
-use Couchbase\Protostellar\Internal\Client;
 
 class Cluster implements ClusterInterface
 {
