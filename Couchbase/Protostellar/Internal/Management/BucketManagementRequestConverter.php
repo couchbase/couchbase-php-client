@@ -21,30 +21,49 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal\Management;
 
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Management\ConflictResolutionType;
 use Couchbase\Management\EvictionPolicy;
 use Couchbase\Management\StorageBackend;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\BucketType;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CompressionMode;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CreateBucketRequest;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\DeleteBucketRequest;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\EvictionMode;
-use Couchbase\Protostellar\Internal\KVConverter;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsRequest;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\UpdateBucketRequest;
+use Couchbase\Protostellar\Internal\SharedUtils;
 
 class BucketManagementRequestConverter
 {
     /**
      * @throws InvalidArgumentException
      */
-    public static function getCreateBucketRequest(array $exportedSettings): array
+    public static function getCreateBucketRequest(array $exportedSettings): CreateBucketRequest
     {
-        return self::getCommonBucketRequest($exportedSettings);
+        $request = self::getCommonBucketRequest($exportedSettings);
+        if (isset($exportedSettings['bucketType'])) {
+            $request['bucket_type'] = self::convertBucketType($exportedSettings['bucketType']);
+        }
+        if (isset($exportedSettings['replicaIndexes'])) {
+            $request['replica_indexes'] = $exportedSettings['replicaIndexes'];
+        }
+        if (isset($exportedSettings['storageBackend'])) {
+            $request['storage_backend'] = self::convertStorageBackend($exportedSettings['storageBackend']);
+        }
+        if (isset($exportedSettings['conflictResolutionType'])) {
+            $request['conflict_resolution_type'] = self::convertConflictResolutionType($exportedSettings['conflictResolutionType']);
+        }
+        return new CreateBucketRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getUpdateBucketRequest(array $exportedSettings): array
+    public static function getUpdateBucketRequest(array $exportedSettings): UpdateBucketRequest
     {
-        return self::getCommonBucketRequest($exportedSettings);
+        return new UpdateBucketRequest(self::getCommonBucketRequest($exportedSettings));
     }
 
     /**
@@ -55,9 +74,6 @@ class BucketManagementRequestConverter
         $request = [
             'bucket_name' => $exportedSettings['name'],
         ];
-        if (isset($exportedSettings['bucketType'])) {
-            $request['bucket_type'] = self::convertBucketType($exportedSettings['bucketType']);
-        }
         if (isset($exportedSettings['ramQuotaMB'])) {
             $request['ram_quota_mb'] = $exportedSettings['ramQuotaMB'];
         }
@@ -66,9 +82,6 @@ class BucketManagementRequestConverter
         }
         if (isset($exportedSettings['flushEnabled'])) {
             $request['flush_enabled'] = $exportedSettings['flushEnabled'];
-        }
-        if (isset($exportedSettings['replicaIndexes'])) {
-            $request['replica_indexes'] = $exportedSettings['replicaIndexes'];
         }
         if (isset($exportedSettings['evictionPolicy'])) {
             $request['eviction_mode'] = self::convertEvictionMode($exportedSettings['evictionPolicy']);
@@ -80,12 +93,24 @@ class BucketManagementRequestConverter
             $request['compression_mode'] = self::convertCompressionMode($exportedSettings['compressionMode']);
         }
         if (isset($exportedSettings['minimumDurabilityLevel'])) {
-            $request['minimum_durability_level'] = KVConverter::convertDurabilityLevel($exportedSettings['minimumDurabilityLevel']);
-        }
-        if (isset($exportedSettings['storageBackend'])) {
-            $request['storage_backend'] = self::convertStorageBackend($exportedSettings['storageBackend']);
+            if ($exportedSettings['minimumDurabilityLevel'] != DurabilityLevel::NONE) {
+                $request['minimum_durability_level'] = SharedUtils::convertDurabilityLevelToPS($exportedSettings['minimumDurabilityLevel']);
+            }
         }
         return $request;
+    }
+
+    public static function getDropBucketRequest(string $bucketName): DeleteBucketRequest
+    {
+        $request = [
+            "bucket_name" => $bucketName
+        ];
+        return new DeleteBucketRequest($request);
+    }
+
+    public static function getGetAllBucketsRequest(): ListBucketsRequest
+    {
+        return new ListBucketsRequest();
     }
 
     /**
@@ -99,7 +124,7 @@ class BucketManagementRequestConverter
             case \Couchbase\Management\BucketType::EPHEMERAL:
                 return BucketType::BUCKET_TYPE_EPHEMERAL;
             case \Couchbase\Management\BucketType::MEMCACHED:
-                return BucketType::BUCKET_TYPE_MEMCACHED;
+                throw new InvalidArgumentException("Memcached buckets are not supported in CNG");
             default:
                 throw new InvalidArgumentException("Unknown bucket type specified");
         }
@@ -153,6 +178,23 @@ class BucketManagementRequestConverter
                 return \Couchbase\Protostellar\Generated\Admin\Bucket\V1\StorageBackend::STORAGE_BACKEND_MAGMA;
             default:
                 throw new InvalidArgumentException("Unknown storage backend specified");
+        }
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private static function convertConflictResolutionType(string $conflictResolutionType): int
+    {
+        switch ($conflictResolutionType) {
+            case ConflictResolutionType::CUSTOM:
+                return \Couchbase\Protostellar\Generated\Admin\Bucket\V1\ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_CUSTOM;
+            case ConflictResolutionType::TIMESTAMP:
+                return \Couchbase\Protostellar\Generated\Admin\Bucket\V1\ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_TIMESTAMP;
+            case ConflictResolutionType::SEQUENCE_NUMBER:
+                return \Couchbase\Protostellar\Generated\Admin\Bucket\V1\ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_SEQUENCE_NUMBER;
+            default:
+                throw new InvalidArgumentException("Unknown conflict resolution type specified");
         }
     }
 }

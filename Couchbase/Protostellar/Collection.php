@@ -22,6 +22,9 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\BinaryCollectionInterface;
 use Couchbase\CollectionInterface;
+use Couchbase\Exception\DecodingFailureException;
+use Couchbase\Exception\DocumentIrretrievableException;
+use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\ExistsOptions;
 use Couchbase\ExistsResult;
@@ -92,35 +95,31 @@ class Collection implements CollectionInterface
     public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
     {
         $exportedOptions = UpsertOptions::export($options);
-        $request = KVRequestConverter::getUpsertRequest(
-            $key,
-            $document,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
-            $options
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getUpsertRequest'],
+            [$key, $document, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name), $options]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new UpsertRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Upsert']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException|DecodingFailureException
      */
     public function insert(string $key, $document, InsertOptions $options = null): MutationResult
     {
         $exportedOptions = InsertOptions::export($options);
-        $request = KVRequestConverter::getInsertRequest(
-            $key,
-            $document,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
-            $options
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getInsertRequest'],
+            [$key, $document, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name), $options]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new InsertRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Insert']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -132,15 +131,13 @@ class Collection implements CollectionInterface
     public function replace(string $key, $document, ReplaceOptions $options = null): MutationResult
     {
         $exportedOptions = ReplaceOptions::export($options);
-        $request = KVRequestConverter::getReplaceRequest(
-            $key,
-            $document,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
-            $options
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getReplaceRequest'],
+            [$key, $document, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name), $options]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ReplaceRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Replace']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -152,14 +149,13 @@ class Collection implements CollectionInterface
     public function remove(string $key, RemoveOptions $options = null): MutationResult
     {
         $exportedOptions = RemoveOptions::export($options);
-        $request = KVRequestConverter::getRemoveRequest(
-            $key,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getRemoveRequest'],
+            [$key, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new RemoveRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Remove']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -168,14 +164,13 @@ class Collection implements CollectionInterface
     public function get(string $key, GetOptions $options = null): GetResult
     {
         $exportedOptions = GetOptions::export($options);
-        $request = KVRequestConverter::getGetRequest(
-            $key,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getGetRequest'],
+            [$key, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new GetRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->kv(), 'Get']
         );
         return KVResponseConverter::convertGetResult($key, $res, $options);
@@ -184,13 +179,13 @@ class Collection implements CollectionInterface
     public function exists(string $key, ExistsOptions $options = null): ExistsResult
     {
         $exportedOptions = ExistsOptions::export($options);
-        $request = KVRequestConverter::getExistsRequest(
-            $key,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getExistsRequest'],
+            [$key, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ExistsRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->kv(), 'Exists']
         );
         return KVResponseConverter::convertExistsResult($key, $res);
@@ -203,14 +198,13 @@ class Collection implements CollectionInterface
     public function getAndTouch(string $key, $expiry, GetAndTouchOptions $options = null): GetResult
     {
         $exportedOptions = GetAndTouchOptions::export($options);
-        $request = KVRequestConverter::getGetAndTouchRequest(
-            $key,
-            $expiry,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getGetAndTouchRequest'],
+            [$key, $expiry, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new GetAndTouchRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'GetAndTouch']
         );
         return KVResponseConverter::convertGetAndTouchResult($key, $res, $options);
@@ -223,14 +217,13 @@ class Collection implements CollectionInterface
     public function getAndLock(string $key, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
     {
         $exportedOptions = GetAndLockOptions::export($options);
-        $request = KVRequestConverter::getGetAndLockRequest(
-            $key,
-            $lockTimeSeconds,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getGetAndLockRequest'],
+            [$key, $lockTimeSeconds, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new GetAndLockRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'GetAndLock']
         );
         return KVResponseConverter::convertGetAndLockResult($key, $res, $options);
@@ -242,14 +235,13 @@ class Collection implements CollectionInterface
     public function unlock(string $key, string $cas, UnlockOptions $options = null): Result
     {
         $exportedOptions = UnlockOptions::export($options);
-        $request = KVRequestConverter::getUnlockRequest(
-            $key,
-            $cas,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getUnlockRequest'],
+            [$key, $cas, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new UnlockRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Unlock']
         );
         return KVResponseConverter::convertUnlockResult($key, $cas);
@@ -258,14 +250,13 @@ class Collection implements CollectionInterface
     public function touch(string $key, $expiry, TouchOptions $options = null): MutationResult
     {
         $exportedOptions = TouchOptions::export($options);
-        $request = KVRequestConverter::getTouchRequest(
-            $key,
-            $expiry,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getTouchRequest'],
+            [$key, $expiry, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new TouchRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Touch']
         );
         return KVResponseConverter::convertTouchResult($key, $res);
@@ -274,18 +265,16 @@ class Collection implements CollectionInterface
     public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
     {
         $exportedOptions = LookupInOptions::export($options);
-        [$request, $order] = KVRequestConverter::getLookupInRequest(
-            $key,
-            $specs,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
-            $options
+        [$request, $order] = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getLookupInRequest'],
+            [$key, $specs, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name), $options]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new LookupInRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->kv(), 'LookupIn']
         );
-        return KVResponseConverter::convertLookupInResult($key, $res, $request['specs'], $order, $options);
+        return KVResponseConverter::convertLookupInResult($key, $res, SharedUtils::toArray($request->getSpecs()), $order, $options);
     }
 
     /**
@@ -294,45 +283,49 @@ class Collection implements CollectionInterface
     public function mutateIn(string $key, array $specs, MutateInOptions $options = null): MutateInResult
     {
         $exportedOptions = MutateInOptions::export($options);
-        [$request, $order] = KVRequestConverter::getMutateInRequest(
-            $key,
-            $specs,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name),
-            $options
+        [$request, $order] = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getMutateInRequest'],
+            [$key, $specs, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name), $options]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new MutateInRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'MutateIn']
         );
-        return KVResponseConverter::convertMutateInResult($key, $res, $request['specs'], $order);
+        return KVResponseConverter::convertMutateInResult($key, $res, SharedUtils::toArray($request->getSpecs()), $order);
     }
 
+    /**
+     * @throws DocumentIrretrievableException
+     */
     public function getAnyReplica(string $key, GetAnyReplicaOptions $options = null): GetReplicaResult
     {
         $exportedOptions = GetAnyReplicaOptions::export($options);
-        $request = KVRequestConverter::getGetAllReplicasRequest(
-            $key,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getGetAllReplicasRequest'],
+            [$key, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new GetAllReplicasRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->kv(), 'GetAllReplicas']
         );
-        return KVResponseConverter::convertGetAllReplicasResult($key, $response, $options)[0];
+        return KVResponseConverter::convertGetAnyReplicaResult($key, $response, $options)[0];
     }
 
+    /**
+     * @throws DocumentNotFoundException
+     */
     public function getAllReplicas(string $key, GetAllReplicasOptions $options = null): array
     {
         $exportedOptions = GetAllReplicasOptions::export($options);
-        $request = KVRequestConverter::getGetAllReplicasRequest(
-            $key,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getGetAllReplicasRequest'],
+            [$key, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new GetAllReplicasRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->kv(), 'GetAllReplicas']
         );
         return KVResponseConverter::convertGetAllReplicasResult($key, $response, $options);

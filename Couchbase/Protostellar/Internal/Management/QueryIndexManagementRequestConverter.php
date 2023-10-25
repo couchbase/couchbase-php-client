@@ -21,9 +21,16 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal\Management;
 
+use Couchbase\Protostellar\Generated\Admin\Query\V1\BuildDeferredIndexesRequest;
+use Couchbase\Protostellar\Generated\Admin\Query\V1\CreateIndexRequest;
+use Couchbase\Protostellar\Generated\Admin\Query\V1\CreatePrimaryIndexRequest;
+use Couchbase\Protostellar\Generated\Admin\Query\V1\DropIndexRequest;
+use Couchbase\Protostellar\Generated\Admin\Query\V1\DropPrimaryIndexRequest;
+use Couchbase\Protostellar\Generated\Admin\Query\V1\GetAllIndexesRequest;
+
 class QueryIndexManagementRequestConverter
 {
-    public static function getGetAllIndexesRequest(string $bucketName, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getGetAllIndexesRequest(string $bucketName, ?string $scopeName = null, ?string $collectionName = null): GetAllIndexesRequest
     {
         $request = [
             "bucket_name" => $bucketName,
@@ -34,10 +41,10 @@ class QueryIndexManagementRequestConverter
         if (!is_null($collectionName)) {
             $request["collection_name"] = $collectionName;
         }
-        return $request;
+        return new GetAllIndexesRequest($request);
     }
 
-    public static function getCreatePrimaryIndexRequest(string $bucketName, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getCreatePrimaryIndexRequest(string $bucketName, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): CreatePrimaryIndexRequest
     {
         $request = [
             "bucket_name" => $bucketName,
@@ -57,10 +64,10 @@ class QueryIndexManagementRequestConverter
         if (isset($exportedOptions["deferred"])) {
             $request["deferred"] = $exportedOptions["deferred"];
         }
-        return $request;
+        return new CreatePrimaryIndexRequest($request);
     }
 
-    public static function getCreateIndexRequest(string $bucketName, string $indexName, array $fields, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getCreateIndexRequest(string $bucketName, string $indexName, array $fields, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): CreateIndexRequest
     {
         $request = [
             "bucket_name" => $bucketName,
@@ -79,10 +86,10 @@ class QueryIndexManagementRequestConverter
         if (isset($exportedOptions["deferred"])) {
             $request["deferred"] = $exportedOptions["deferred"];
         }
-        return $request;
+        return new CreateIndexRequest($request);
     }
 
-    public static function getDropIndexRequest(string $bucketName, string $indexName, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getDropIndexRequest(string $bucketName, string $indexName, ?string $scopeName = null, ?string $collectionName = null): DropIndexRequest
     {
         $request = [
             "bucket_name" => $bucketName,
@@ -94,10 +101,10 @@ class QueryIndexManagementRequestConverter
         if (!is_null($collectionName)) {
             $request["collection_name"] = $collectionName;
         }
-        return $request;
+        return new DropIndexRequest($request);
     }
 
-    public static function getDropPrimaryIndexRequest(string $bucketName, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getDropPrimaryIndexRequest(string $bucketName, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): DropPrimaryIndexRequest
     {
         $request = [
             "bucket_name" => $bucketName
@@ -111,10 +118,10 @@ class QueryIndexManagementRequestConverter
         if (isset($exportedOptions["indexName"])) {
             $request["name"] = $exportedOptions["indexName"];
         }
-        return $request;
+        return new DropPrimaryIndexRequest($request);
     }
 
-    public static function getBuildDeferredIndexesRequest(string $bucketName, ?string $scopeName = null, ?string $collectionName = null): array
+    public static function getBuildDeferredIndexesRequest(string $bucketName, ?string $scopeName = null, ?string $collectionName = null): BuildDeferredIndexesRequest
     {
         $request = [
             "bucket_name" => $bucketName
@@ -125,6 +132,6 @@ class QueryIndexManagementRequestConverter
         if (!is_null($collectionName)) {
             $request["collection_name"] = $collectionName;
         }
-        return $request;
+        return new BuildDeferredIndexesRequest($request);
     }
 }

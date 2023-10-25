@@ -20,12 +20,18 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Management\CollectionManagerInterface;
 use Couchbase\Management\CollectionSpec;
 use Couchbase\Management\CreateCollectionOptions;
+use Couchbase\Management\CreateCollectionSettings;
 use Couchbase\Management\CreateScopeOptions;
 use Couchbase\Management\DropCollectionOptions;
 use Couchbase\Management\DropScopeOptions;
 use Couchbase\Management\GetAllScopesOptions;
+use Couchbase\Management\UpdateCollectionOptions;
+use Couchbase\Management\UpdateCollectionSettings;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateCollectionRequest;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateScopeRequest;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteCollectionRequest;
@@ -37,8 +43,9 @@ use Couchbase\Protostellar\Internal\Management\CollectionManagementResponseConve
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
+use Couchbase\Protostellar\RequestFactory;
 
-class CollectionManager
+class CollectionManager implements CollectionManagerInterface
 {
     private string $bucketName;
     private Client $client;
@@ -52,12 +59,13 @@ class CollectionManager
     public function getAllScopes(GetAllScopesOptions $options = null): array
     {
         $exportedOptions = GetAllScopesOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName
-        ];
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter', 'getGetAllScopesRequest'],
+            [$this->bucketName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ListCollectionsRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->collectionAdmin(), 'ListCollections']
         );
         return CollectionManagementResponseConverter::convertGetAllScopesResult($res);
@@ -66,13 +74,13 @@ class CollectionManager
     public function createScope(string $name, CreateScopeOptions $options = null)
     {
         $exportedOptions = CreateScopeOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $name
-        ];
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter', 'getCreateScopeRequest'],
+            [$this->bucketName, $name]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new CreateScopeRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->collectionAdmin(), 'CreateScope']
         );
     }
@@ -80,36 +88,77 @@ class CollectionManager
     public function dropScope(string $name, DropScopeOptions $options = null)
     {
         $exportedOptions = DropScopeOptions::export($options);
-        $request = [
-            "bucket_name" => $this->bucketName,
-            "scope_name" => $name
-        ];
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter', 'getDropScopeRequest'],
+            [$this->bucketName, $name]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DeleteScopeRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->collectionAdmin(), 'DeleteScope']
         );
     }
 
-    public function createCollection(CollectionSpec $collection, CreateCollectionOptions $options = null)
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function createCollection($scopeName, $collectionName = null, $settings = null, $options = null)
     {
+        if (is_string($scopeName) && is_null($collectionName)) {
+            throw new InvalidArgumentException(
+                "Collection name cannot be null if using the (scopeName, collectionName, settings, options) API"
+            );
+        }
+        // Deprecated usage conversion for (CollectionSpec, CreateCollectionOptions)
+        if ($scopeName instanceof  CollectionSpec) {
+            $options = $collectionName;
+            $collectionName = $scopeName->name();
+            $settings = new CreateCollectionSettings($scopeName->maxExpiry(), $scopeName->history());
+            $scopeName = $scopeName->scopeName();
+        }
+
         $exportedOptions = CreateCollectionOptions::export($options);
-        $request = CollectionManagementRequestConverter::getCreateCollectionRequest($this->bucketName, $collection);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter', 'getCreateCollectionRequest'],
+            [$this->bucketName, $scopeName, $collectionName, $settings]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new CreateCollectionRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->collectionAdmin(), 'CreateCollection']
         );
     }
 
-    public function dropCollection(CollectionSpec $collection, DropCollectionOptions $options = null)
+    public function dropCollection($scopeName, $collectionName = null, $options = null)
     {
+        if (is_string($scopeName) && is_null($collectionName)) {
+            throw new InvalidArgumentException("Collection name cannot be null if using the (scopeName, collectionName, options) API");
+        }
+
+        // Deprecated usage conversion for (CollectionSpec, DropCollectionOptions)
+        if ($scopeName instanceof CollectionSpec) {
+            $options = $collectionName;
+            $collectionName = $scopeName->name();
+            $scopeName = $scopeName->scopeName();
+        }
+
         $exportedOptions = DropCollectionOptions::export($options);
-        $request = CollectionManagementRequestConverter::getDropCollectionRequest($this->bucketName, $collection);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter', 'getDropCollectionRequest'],
+            [$this->bucketName, $scopeName, $collectionName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DeleteCollectionRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->collectionAdmin(), 'DeleteCollection']
         );
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
+    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, UpdateCollectionOptions $options = null)
+    {
+        throw new UnsupportedOperationException("Update collection is not yet supported in CNG");
     }
 }

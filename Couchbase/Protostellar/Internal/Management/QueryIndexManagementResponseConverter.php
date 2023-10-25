@@ -40,13 +40,17 @@ class QueryIndexManagementResponseConverter
         foreach ($response->getIndexes() as $index) {
             $indexArr = [];
             $indexArr["bucketName"] = $index->getBucketName();
-            $indexArr["scopeName"] = $index->getScopeName();
-            $indexArr["collectionName"] = $index->getCollectionName();
             $indexArr["name"] = $index->getName();
             $indexArr["isPrimary"] = $index->getIsPrimary();
             $indexArr["type"] = self::convertIndexType($index->getType());
             $indexArr["state"] = self::convertIndexState($index->getState());
             $indexArr["indexKey"] = SharedUtils::toArray($index->getFields());
+            if ($index->getScopeName() != "_default") {
+                $indexArr["scopeName"] = $index->getScopeName();
+            }
+            if ($index->getCollectionName() != "_default") {
+                $indexArr["collectionName"] = $index->getCollectionName();
+            }
             if ($index->hasCondition()) {
                 $indexArr["condition"] = $index->getCondition();
             }

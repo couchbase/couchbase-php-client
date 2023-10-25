@@ -48,7 +48,7 @@ class CollectionManagementResponseConverter
     {
         $collectionSpecs = [];
         foreach ($collections as $collection) {
-            $collectionSpec = new CollectionSpec($collection['name'], $scopeName);
+            $collectionSpec = new CollectionSpec($collection->getName(), $scopeName);
             if ($collection->hasMaxExpirySecs()) {
                 $collectionSpec->setMaxExpiry($collection->getMaxExpirySecs());
             }

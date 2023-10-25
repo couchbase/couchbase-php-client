@@ -20,31 +20,70 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Management\CollectionSpec;
+use Couchbase\Management\CreateCollectionSettings;
+use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateCollectionRequest;
+use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateScopeRequest;
+use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteCollectionRequest;
+use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteScopeRequest;
+use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsRequest;
 
 class CollectionManagementRequestConverter
 {
-    public static function getCreateCollectionRequest(string $bucketName, CollectionSpec $collectionSpec): array
+    /**
+     * @throws InvalidArgumentException
+     */
+    public static function getCreateCollectionRequest(string $bucketName, string $scopeName, string $collectionName, CreateCollectionSettings $settings = null): CreateCollectionRequest
     {
-        $exportedSpec = CollectionSpec::export($collectionSpec);
+        $exportedSettings = CreateCollectionSettings::export($settings);
         $request = [
             "bucket_name" => $bucketName,
-            "scope_name" => $exportedSpec['scopeName'],
-            "collection_name" => $exportedSpec['collectionName'],
+            "scope_name" => $scopeName,
+            "collection_name" => $collectionName,
         ];
-        if (isset($exportedSpec['maxExpiry'])) {
-            $request['max_expiry_secs'] = $exportedSpec['maxExpiry'];
+        if (isset($exportedSettings['maxExpiry'])) {
+            $request['max_expiry_secs'] = $exportedSettings['maxExpiry'];
         }
-        return $request;
+        if (isset($exportedSettings['history'])) {
+            throw new InvalidArgumentException("History is not yet supported in CNG");
+        }
+        return new CreateCollectionRequest($request);
     }
 
-    public static function getDropCollectionRequest(string $bucketName, CollectionSpec $collectionSpec): array
+    public static function getDropCollectionRequest(string $bucketName, string $scopeName, string $collectionName): DeleteCollectionRequest
     {
-        $exportedSpec = CollectionSpec::export($collectionSpec);
-        return [
+        $request = [
             "bucket_name" => $bucketName,
-            "scope_name" => $exportedSpec['scopeName'],
-            "collection_name" => $exportedSpec["name"]
+            "scope_name" => $scopeName,
+            "collection_name" => $collectionName
         ];
+        return new DeleteCollectionRequest($request);
+    }
+
+    public static function getGetAllScopesRequest(string $bucketName): ListCollectionsRequest
+    {
+        $request = [
+            'bucket_name' => $bucketName
+        ];
+        return new ListCollectionsRequest($request);
+    }
+
+    public static function getCreateScopeRequest(string $bucketName, string $scopeName): CreateScopeRequest
+    {
+        $request = [
+            'bucket_name' => $bucketName,
+            'scope_name' => $scopeName
+        ];
+        return new CreateScopeRequest($request);
+    }
+
+    public static function getDropScopeRequest(string $bucketName, string $scopeName): DeleteScopeRequest
+    {
+        $request = [
+            'bucket_name' => $bucketName,
+            'scope_name' => $scopeName
+        ];
+        return new DeleteScopeRequest($request);
     }
 }

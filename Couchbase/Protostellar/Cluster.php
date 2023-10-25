@@ -40,6 +40,7 @@ use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\Management\BucketManager;
 use Couchbase\Protostellar\Management\QueryIndexManager;
+use Couchbase\Protostellar\Management\SearchIndexManager;
 use Couchbase\QueryOptions;
 use Couchbase\QueryResult;
 use Couchbase\SearchOptions;
@@ -72,10 +73,13 @@ class Cluster implements ClusterInterface
     public function query(string $statement, QueryOptions $options = null): QueryResult
     {
         $exportedOptions = QueryOptions::export($options);
-        $request = QueryRequestConverter::getQueryRequest($statement, $exportedOptions);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Query\QueryRequestConverter', 'getQueryRequest'],
+            [$statement, $exportedOptions]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::QUERY, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
+            SharedUtils::createProtostellarRequest($request, $exportedOptions['readonly'] ?? false, $timeout),
             [$this->client->query(), 'Query']
         );
         $finalArray = QueryResponseConverter::convertQueryResult($response);
@@ -85,10 +89,13 @@ class Cluster implements ClusterInterface
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
         $exportedOptions = AnalyticsOptions::export($options);
-        $request = AnalyticsRequestConverter::getAnalyticsRequest($statement, $exportedOptions);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Analytics\AnalyticsRequestConverter', 'getAnalyticsRequest'],
+            [$statement, $exportedOptions]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::ANALYTICS, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new AnalyticsQueryRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->analytics(), 'AnalyticsQuery']
         );
         $finalArray = AnalyticsResponseConverter::convertAnalyticsResult($response);
@@ -101,10 +108,13 @@ class Cluster implements ClusterInterface
     public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
     {
         $exportedOptions = SearchOptions::export($options);
-        $request = SearchRequestConverter::getSearchRequest($indexName, $query, $exportedOptions);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Search\SearchRequestConverter', 'getSearchRequest'],
+            [$indexName, $query, $exportedOptions]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::SEARCH, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new SearchQueryRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->search(), 'SearchQuery']
         );
         $finalArray = SearchResponseConverter::convertSearchResult($response);

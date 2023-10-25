@@ -124,7 +124,7 @@ class ExceptionConverter
                     if ($protoStatus->getCode() == Code::NOT_FOUND) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentNotFoundException(message: "Specified document was not found", context: $request->context()));
-                        } elseif ($resourceInfo->getResourceType() == "index") {
+                        } elseif ($resourceInfo->getResourceType() == "index" || $resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
                             return RequestBehaviour::fail(new IndexNotFoundException(message: "Specified index was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
                             return RequestBehaviour::fail(new BucketNotFoundException(message: "Specified bucket was not found", context: $request->context()));
@@ -139,7 +139,7 @@ class ExceptionConverter
                     } elseif ($protoStatus->getCode() == Code::ALREADY_EXISTS) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentExistsException(message: "Specified document already exists", context: $request->context()));
-                        } elseif ($resourceInfo->getResourceType() == "index") {
+                        } elseif ($resourceInfo->getResourceType() == "index" || $resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
                             return RequestBehaviour::fail(new IndexExistsException(message: "Specified index already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
                             return RequestBehaviour::fail(new BucketExistsException(message: "Specified bucket already exists", context: $request->context()));

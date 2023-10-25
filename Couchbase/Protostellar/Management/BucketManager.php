@@ -24,6 +24,8 @@ namespace Couchbase\Protostellar\Management;
 use Couchbase\Exception\BucketNotFoundException;
 use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Management\BucketManagerInterface;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\CreateBucketOptions;
 use Couchbase\Management\DropBucketOptions;
@@ -41,8 +43,9 @@ use Couchbase\Protostellar\Internal\Management\BucketManagementResponseConverter
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
+use Couchbase\Protostellar\RequestFactory;
 
-class BucketManager
+class BucketManager implements BucketManagerInterface
 {
     private Client $client;
 
@@ -58,10 +61,13 @@ class BucketManager
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = CreateBucketOptions::export($options);
-        $request = BucketManagementRequestConverter::getCreateBucketRequest($exportedSettings);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\BucketManagementRequestConverter', 'getCreateBucketRequest'],
+            [$exportedSettings]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new CreateBucketRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->bucketAdmin(), 'CreateBucket']
         );
     }
@@ -73,10 +79,13 @@ class BucketManager
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = UpdateBucketOptions::export($options);
-        $request = BucketManagementRequestConverter::getUpdateBucketRequest($exportedSettings);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\BucketManagementRequestConverter', 'getUpdateBucketRequest'],
+            [$exportedSettings]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new UpdateBucketRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->bucketAdmin(), 'UpdateBucket']
         );
     }
@@ -84,10 +93,13 @@ class BucketManager
     public function dropBucket(string $name, DropBucketOptions $options = null)
     {
         $exportedOptions = DropBucketOptions::export($options);
-        $request = ["bucket_name" => $name];
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\BucketManagementRequestConverter', 'getDropBucketRequest'],
+            [$name]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DeleteBucketRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->bucketAdmin(), 'DeleteBucket']
         );
     }
@@ -116,8 +128,12 @@ class BucketManager
     {
         $exportedOptions = GetAllBucketsOptions::export($options);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\BucketManagementRequestConverter', 'getGetAllBucketsRequest'],
+            []
+        );
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ListBucketsRequest(), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->bucketAdmin(), 'ListBuckets']
         );
         $buckets = [];
@@ -127,8 +143,12 @@ class BucketManager
         return $buckets;
     }
 
+    /**
+     * @throws UnsupportedOperationException
+     */
     public function flush(string $name, FlushBucketOptions $options = null)
     {
         //TODO: Implement Flush method (Not yet implemented in PS)
+        throw new UnsupportedOperationException("Flush is not yet available in PS");
     }
 }

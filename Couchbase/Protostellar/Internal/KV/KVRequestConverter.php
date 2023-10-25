@@ -10,10 +10,28 @@ use Couchbase\LookupInOptions;
 use Couchbase\LookupInSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateInSpec;
+use Couchbase\Protostellar\Generated\KV\V1\AppendRequest;
+use Couchbase\Protostellar\Generated\KV\V1\DecrementRequest;
+use Couchbase\Protostellar\Generated\KV\V1\ExistsRequest;
+use Couchbase\Protostellar\Generated\KV\V1\GetAllReplicasRequest;
+use Couchbase\Protostellar\Generated\KV\V1\GetAndLockRequest;
+use Couchbase\Protostellar\Generated\KV\V1\GetAndTouchRequest;
+use Couchbase\Protostellar\Generated\KV\V1\GetRequest;
+use Couchbase\Protostellar\Generated\KV\V1\IncrementRequest;
+use Couchbase\Protostellar\Generated\KV\V1\InsertRequest;
+use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Flags;
 use Couchbase\Protostellar\Generated\KV\V1\LookupInRequest\Spec;
+use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Operation;
 use Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\StoreSemantic;
+use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
+use Couchbase\Protostellar\Generated\KV\V1\RemoveRequest;
+use Couchbase\Protostellar\Generated\KV\V1\ReplaceRequest;
+use Couchbase\Protostellar\Generated\KV\V1\TouchRequest;
+use Couchbase\Protostellar\Generated\KV\V1\UnlockRequest;
+use Couchbase\Protostellar\Generated\KV\V1\UpsertRequest;
+use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\ReplaceOptions;
 use Couchbase\StoreSemantics;
 use Couchbase\UpsertOptions;
@@ -34,7 +52,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getUpsertRequest(string $key, $document, array $location, UpsertOptions $options = null): array
+    public static function getUpsertRequest(string $key, $document, array $location, UpsertOptions $options = null): UpsertRequest
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
         $exportedOptions = UpsertOptions::export($options);
@@ -50,15 +68,16 @@ class KVRequestConverter
             $request["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new UpsertRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getInsertRequest(string $key, $document, array $location, InsertOptions $options = null): array
+    public static function getInsertRequest(string $key, $document, array $location, InsertOptions $options = null): InsertRequest
     {
         [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
         $exportedOptions = InsertOptions::export($options);
@@ -74,15 +93,16 @@ class KVRequestConverter
             $request["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new InsertRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getReplaceRequest(string $key, $document, array $location, ReplaceOptions $options = null): array
+    public static function getReplaceRequest(string $key, $document, array $location, ReplaceOptions $options = null): ReplaceRequest
     {
         [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
         $exportedOptions = ReplaceOptions::export($options);
@@ -98,32 +118,34 @@ class KVRequestConverter
             $request["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["cas"])) {
-            $request["cas"] = $exportedOptions["cas"];
+            $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new ReplaceRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getRemoveRequest(string $key, array $exportedOptions, array $location): array
+    public static function getRemoveRequest(string $key, array $exportedOptions, array $location): RemoveRequest
     {
         $request = [
             "key" => $key,
         ];
         if (isset($exportedOptions["cas"])) {
-            $request["cas"] = $exportedOptions["cas"];
+            $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new RemoveRequest($request);
     }
 
-    public static function getGetRequest(string $key, array $exportedOptions, array $location): array
+    public static function getGetRequest(string $key, array $exportedOptions, array $location): GetRequest
     {
         $request = [
             "key" => $key,
@@ -131,18 +153,20 @@ class KVRequestConverter
         if (isset($exportedOptions["projections"])) {
             $request["project"] = $exportedOptions["projections"];
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new GetRequest($request);
     }
 
-    public static function getExistsRequest(string $key, array $location): array
+    public static function getExistsRequest(string $key, array $location): ExistsRequest
     {
         $request = [
             "key" => $key,
         ];
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new ExistsRequest($request);
     }
 
-    public static function getGetAndTouchRequest(string $key, $expiry, array $location): array
+    public static function getGetAndTouchRequest(string $key, $expiry, array $location): GetAndTouchRequest
     {
         $request = [
             "key" => $key,
@@ -154,28 +178,31 @@ class KVRequestConverter
             $expirySeconds = (int)$expiry;
             $request["expiry_secs"] = $expirySeconds;
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new GetAndTouchRequest($request);
     }
 
-    public static function getGetAndLockRequest(string $key, int $lockTimeSeconds, array $location): array
+    public static function getGetAndLockRequest(string $key, int $lockTimeSeconds, array $location): GetAndLockRequest
     {
         $request = [
             "key" => $key,
             "lock_time" => $lockTimeSeconds
         ];
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new GetAndLockRequest($request);
     }
 
-    public static function getUnlockRequest(string $key, string $cas, array $location): array
+    public static function getUnlockRequest(string $key, string $cas, array $location): UnlockRequest
     {
         $request = [
             "key" => $key,
             "cas" => $cas
         ];
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new UnlockRequest($request);
     }
 
-    public static function getTouchRequest(string $key, $expiry, array $location): array
+    public static function getTouchRequest(string $key, $expiry, array $location): TouchRequest
     {
         $request = [
             "key" => $key,
@@ -187,7 +214,8 @@ class KVRequestConverter
             $expirySeconds = (int)$expiry;
             $request["expiry_secs"] = $expirySeconds;
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new TouchRequest($request);
     }
 
     public static function getLookupInRequest(string $key, array $specs, array $location, LookupInOptions $options = null): array
@@ -210,7 +238,8 @@ class KVRequestConverter
         if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in LookupInOptions
             $request["flags"] = new Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
         }
-        return [array_merge($request, $location), $order];
+        $request = array_merge($request, $location);
+        return [new LookupInRequest($request), $order];
     }
 
     /**
@@ -235,10 +264,10 @@ class KVRequestConverter
             $request["store_semantic"] = self::convertStoreSemantic($exportedOptions["storeSemantics"]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
         if (isset($exportedOptions["cas"])) {
-            $request["cas"] = $exportedOptions["cas"];
+            $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in MutateInOptions
             $request["flags"] = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
@@ -249,58 +278,62 @@ class KVRequestConverter
         if (isset($exportedOptions["expirySeconds"])) {
             $request["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
+        $request = array_merge($request, $location);
+        return [new MutateInRequest($request), $order];
 
-        return [array_merge($request, $location), $order];
     }
 
-    public static function getGetAllReplicasRequest(string $key, array $location): array
+    public static function getGetAllReplicasRequest(string $key, array $location): GetAllReplicasRequest
     {
         $request = [
             "key" => $key
         ];
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new GetAllReplicasRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getAppendRequest(string $key, string $value, array $exportedOptions, array $location): array
+    public static function getAppendRequest(string $key, string $value, array $exportedOptions, array $location): AppendRequest
     {
         $request = [
             "key" => $key,
             "content" => $value
         ];
         if (isset($exportedOptions["cas"])) { //TODO: AppendOptions do not include cas
-            $request["cas"] = $exportedOptions["cas"];
+            $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new AppendRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getPrependRequest(string $key, string $value, array $exportedOptions, array $location): array
+    public static function getPrependRequest(string $key, string $value, array $exportedOptions, array $location): PrependRequest
     {
         $request = [
             "key" => $key,
             "content" => $value
         ];
         if (isset($exportedOptions["cas"])) { //TODO PrependOptions do not include cas
-            $request["cas"] = $exportedOptions["cas"];
+            $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new PrependRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getIncrementRequest(string $key, array $exportedOptions, array $location): array
+    public static function getIncrementRequest(string $key, array $exportedOptions, array $location): IncrementRequest
     {
         $request = [
             "key" => $key
@@ -313,15 +346,16 @@ class KVRequestConverter
             $request["expiry_secs"] = $exportedOptions["expirySeconds"];
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new IncrementRequest($request);
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function getDecrementRequest(string $key, array $exportedOptions, array $location): array
+    public static function getDecrementRequest(string $key, array $exportedOptions, array $location): DecrementRequest
     {
         $request = [
             "key" => $key
@@ -334,9 +368,10 @@ class KVRequestConverter
             $request["expiry"] = new Timestamp(["seconds" => $exportedOptions["expirySeconds"]]);
         }
         if (isset($exportedOptions["durabilityLevel"])) {
-            $request["durability_level"] = self::convertDurabilityLevel($exportedOptions["durabilityLevel"]);
+            $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
         }
-        return array_merge($request, $location);
+        $request = array_merge($request, $location);
+        return new DecrementRequest($request);
     }
 
     public static function getMutateInSpec(array $exportedSpecs): array
@@ -355,12 +390,12 @@ class KVRequestConverter
         ];
         $specs = [];
         foreach ($orderedSpecs as $spec) {
-            $newSpec = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec(
+            $newSpec = new MutateInRequest\Spec(
                 [
                     "operation" => $opcodeToSpecOperation[$spec['opcode']],
                     "path" => $spec['path'],
                     "content" => $spec["value"] ?? "",
-                    "flags" => new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Spec\Flags(
+                    "flags" => new MutateInRequest\Spec\Flags(
                         ["xattr" => $spec["isXattr"], "create_path" => $spec["createPath"]]
                     )
                 ]
@@ -427,27 +462,5 @@ class KVRequestConverter
             unset($exportedSpecs[$i]["order"]);
         }
         return [$exportedSpecs, $order];
-    }
-
-    /**
-     * @param string $durabilityLevel
-     * @return int|null
-     * @throws InvalidArgumentException
-     * @internal
-     */
-    public static function convertDurabilityLevel(string $durabilityLevel): ?int
-    {
-        switch ($durabilityLevel) {
-            case DurabilityLevel::MAJORITY:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY;
-            case DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE;
-            case DurabilityLevel::PERSIST_TO_MAJORITY:
-                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY;
-            case DurabilityLevel::NONE:
-                return null;
-            default:
-                throw new InvalidArgumentException("Unknown durability level specified");
-        }
     }
 }

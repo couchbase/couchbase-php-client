@@ -71,15 +71,13 @@ class BinaryCollection implements BinaryCollectionInterface
     public function append(string $key, string $value, AppendOptions $options = null): MutationResult
     {
         $exportedOptions = AppendOptions::export($options);
-        $request = KVRequestConverter::getAppendRequest(
-            $key,
-            $value,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getAppendRequest'],
+            [$key, $value, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new AppendRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Append']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -91,15 +89,13 @@ class BinaryCollection implements BinaryCollectionInterface
     public function prepend(string $key, string $value, PrependOptions $options = null): MutationResult
     {
         $exportedOptions = PrependOptions::export($options);
-        $request = KVRequestConverter::getPrependRequest(
-            $key,
-            $value,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getPrependRequest'],
+            [$key, $value, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new PrependRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Prepend']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -111,14 +107,13 @@ class BinaryCollection implements BinaryCollectionInterface
     public function increment(string $key, IncrementOptions $options = null): CounterResult
     {
         $exportedOptions = IncrementOptions::export($options);
-        $request = KVRequestConverter::getIncrementRequest(
-            $key,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->scopeName)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getIncrementRequest'],
+            [$key, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new IncrementRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Increment']
         );
         return KVResponseConverter::convertCounterResult($key, $res);
@@ -130,14 +125,13 @@ class BinaryCollection implements BinaryCollectionInterface
     public function decrement(string $key, DecrementOptions $options = null): CounterResult
     {
         $exportedOptions = DecrementOptions::export($options);
-        $request = KVRequestConverter::getDecrementRequest(
-            $key,
-            $exportedOptions,
-            KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\KV\KVRequestConverter', 'getDecrementRequest'],
+            [$key, $exportedOptions, KVRequestConverter::getLocation($this->bucketName, $this->scopeName, $this->name)]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DecrementRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->kv(), 'Decrement']
         );
         return KVResponseConverter::convertCounterResult($key, $res);

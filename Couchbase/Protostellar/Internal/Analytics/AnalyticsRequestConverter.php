@@ -23,6 +23,7 @@ namespace Couchbase\Protostellar\Internal\Analytics;
 
 use Couchbase\AnalyticsScanConsistency;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryRequest;
 use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryRequest\ScanConsistency;
 
 class AnalyticsRequestConverter
@@ -30,7 +31,7 @@ class AnalyticsRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getAnalyticsRequest(string $statement, array $exportedOptions): array
+    public static function getAnalyticsRequest(string $statement, array $exportedOptions): AnalyticsQueryRequest
     {
         $request = [
             'statement' => $statement,
@@ -59,7 +60,7 @@ class AnalyticsRequestConverter
         if (isset($exportedOptions["namedParameters"])) {
             $request["named_parameters"] = $exportedOptions["namedParameters"];
         }
-        return $request;
+        return new AnalyticsQueryRequest($request);
     }
     private static function convertScanConsistency(string $consistencyLevel): int
     {

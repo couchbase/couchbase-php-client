@@ -24,7 +24,9 @@ namespace Couchbase\Protostellar;
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Protostellar\Generated\Analytics\V1\AnalyticsQueryRequest;
 use Couchbase\Protostellar\Generated\Query\V1\QueryRequest;
+use Couchbase\Protostellar\Internal\Analytics\AnalyticsResponseConverter;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\Query\QueryRequestConverter;
 use Couchbase\Protostellar\Internal\Query\QueryResponseConverter;
@@ -67,10 +69,13 @@ class Scope implements ScopeInterface
         $exportedOptions = QueryOptions::export($options);
         $exportedOptions["bucketName"] = $this->bucketName;
         $exportedOptions["scopeName"] = $this->name;
-        $request = QueryRequestConverter::getQueryRequest($statement, $exportedOptions);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Query\QueryRequestConverter', 'getQueryRequest'],
+            [$statement, $exportedOptions]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::QUERY, $exportedOptions);
         $response = ProtostellarOperationRunner::runStreaming(
-            SharedUtils::createProtostellarRequest(new QueryRequest($request), $exportedOptions['readonly'] ?? false, $timeout),
+            SharedUtils::createProtostellarRequest($request, $exportedOptions['readonly'] ?? false, $timeout),
             [$this->client->query(), 'Query']
         );
         $finalArray = QueryResponseConverter::convertQueryResult($response);
@@ -79,7 +84,17 @@ class Scope implements ScopeInterface
 
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
     {
-        return new AnalyticsResult();
-        // TODO: Implement analyticsQuery() method.
+        $exportedOptions = AnalyticsOptions::export($options, $this->name, $this->bucketName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Analytics\AnalyticsRequestConverter', 'getAnalyticsRequest'],
+            [$statement, $exportedOptions]
+        );
+        $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::ANALYTICS, $exportedOptions);
+        $response = ProtostellarOperationRunner::runStreaming(
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            [$this->client->analytics(), 'AnalyticsQuery']
+        );
+        $finalArray = AnalyticsResponseConverter::convertAnalyticsResult($response);
+        return new AnalyticsResult($finalArray, AnalyticsOptions::getTranscoder($options));
     }
 }

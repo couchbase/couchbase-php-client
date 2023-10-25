@@ -21,8 +21,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal;
 
+use Couchbase\DurabilityLevel;
+use Couchbase\Exception\DecodingFailureException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\Retries\BestEffortRetryStrategy;
+use Exception;
 
 class SharedUtils
 {
@@ -73,5 +77,74 @@ class SharedUtils
             (microtime(true) * 1e6) + $timeout,
             $grpcRequest
         );
+    }
+
+    /**
+     * @param string $durabilityLevel
+     * @return int|null
+     * @throws InvalidArgumentException
+     * @internal
+     */
+    public static function convertDurabilityLevelToPS(string $durabilityLevel): ?int
+    {
+        switch ($durabilityLevel) {
+            case DurabilityLevel::MAJORITY:
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY;
+            case DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE:
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE;
+            case DurabilityLevel::PERSIST_TO_MAJORITY:
+                return \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY;
+            case DurabilityLevel::NONE:
+                return null;
+            default:
+                throw new InvalidArgumentException("Unknown durability level specified");
+        }
+    }
+
+    /**
+     * @throws DecodingFailureException
+     */
+    public static function convertDurabilityLevelToCB(int $durabilityLevel): string
+    {
+        switch ($durabilityLevel) {
+            case \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY:
+                return DurabilityLevel::MAJORITY;
+            case \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE:
+                return DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE;
+            case \Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY:
+                return DurabilityLevel::PERSIST_TO_MAJORITY;
+            default:
+                throw new DecodingFailureException("Unknown durability level received from GRPC");
+        }
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public static function assignCas(string $cas): int|float
+    {
+        try {
+            return hexdec($cas);
+        } catch (Exception $exception) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "No valid conversion for encoded cas value: %s. Reason: %s",
+                    $cas,
+                    $exception->getMessage()
+                )
+            );
+        }
+    }
+
+    /**
+     * @throws DecodingFailureException
+     */
+    public static function getCas(int $cas): string
+    {
+        try {
+            return dechex($cas);
+        } catch (Exception $exception) {
+            throw new DecodingFailureException(sprintf("Failure decoding cas value from server: %s", $exception->getMessage()));
+        }
     }
 }

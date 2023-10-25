@@ -23,12 +23,14 @@ namespace Couchbase\Protostellar\Internal\Management;
 
 use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Management\EvictionPolicy;
-use Couchbase\Management\StorageBackend;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ConflictResolutionType;
+use Couchbase\Protostellar\Generated\Admin\Bucket\V1\StorageBackend;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\BucketType;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CompressionMode;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\EvictionMode;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsResponse\Bucket;
 use Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel;
+use Couchbase\Protostellar\Internal\SharedUtils;
 
 class BucketManagementResponseConverter
 {
@@ -37,8 +39,9 @@ class BucketManagementResponseConverter
      */
     public static function convertGetBucketResponse(Bucket $bucket): array
     {
-        return [
+        $convertedBucket = [
             "name" => $bucket->getBucketName(),
+            "flushEnabled" => $bucket->getFlushEnabled(),
             "bucketType" => self::convertBucketType($bucket->getBucketType()),
             "ramQuotaMB" => intval($bucket->getRamQuotaMb()),
             "numReplicas" => $bucket->getNumReplicas(),
@@ -46,9 +49,17 @@ class BucketManagementResponseConverter
             "evictionPolicy" => self::convertEvictionMode($bucket->getEvictionMode()),
             "maxExpiry" => $bucket->getMaxExpirySecs(),
             "compressionMode" => self::convertCompressionMode($bucket->getCompressionMode()),
-            "minimumDurabilityLevel" => self::convertDurabilityLevel($bucket->getMinimumDurabilityLevel()),
-            "storageBackend" => self::convertStorageBackend($bucket->getStorageBackend())
+            "conflictResolutionType" => self::convertConflictResolutionType($bucket->getConflictResolutionType())
         ];
+        if ($bucket->hasMinimumDurabilityLevel()) {
+            $convertedBucket["minimumDurabilityLevel"] = SharedUtils::convertDurabilityLevelToCB($bucket->getMinimumDurabilityLevel());
+        } else {
+            $convertedBucket["minimumDurabilityLevel"] = \Couchbase\DurabilityLevel::NONE;
+        }
+        if ($bucket->hasStorageBackend()) {
+            $convertedBucket["storageBackend"] = self::convertStorageBackend($bucket->getStorageBackend());
+        }
+        return $convertedBucket;
     }
 
     /**
@@ -61,8 +72,6 @@ class BucketManagementResponseConverter
                 return \Couchbase\Management\BucketType::COUCHBASE;
             case BucketType::BUCKET_TYPE_EPHEMERAL:
                 return \Couchbase\Management\BucketType::EPHEMERAL;
-            case BucketType::BUCKET_TYPE_MEMCACHED:
-                return \Couchbase\Management\BucketType::MEMCACHED;
             default:
                 throw new DecodingFailureException("Unknown bucket type received from GRPC");
         }
@@ -110,11 +119,12 @@ class BucketManagementResponseConverter
      */
     private static function convertStorageBackend(int $storageBackend): string
     {
+
         switch ($storageBackend) {
-            case StorageBackend::COUCHSTORE:
-                return StorageBackend::COUCHSTORE;
-            case StorageBackend::MAGMA:
-                return StorageBackend::MAGMA;
+            case StorageBackend::STORAGE_BACKEND_COUCHSTORE:
+                return \Couchbase\Management\StorageBackend::COUCHSTORE;
+            case StorageBackend::STORAGE_BACKEND_MAGMA:
+                return \Couchbase\Management\StorageBackend::MAGMA;
             default:
                 throw new DecodingFailureException("Unknown storage backend received from GRPC");
         }
@@ -123,17 +133,17 @@ class BucketManagementResponseConverter
     /**
      * @throws DecodingFailureException
      */
-    private static function convertDurabilityLevel(int $durabilityLevel): string
+    private static function convertConflictResolutionType(int $conflictResolution): string
     {
-        switch ($durabilityLevel) {
-            case DurabilityLevel::DURABILITY_LEVEL_MAJORITY:
-                return \Couchbase\DurabilityLevel::MAJORITY;
-            case DurabilityLevel::DURABILITY_LEVEL_MAJORITY_AND_PERSIST_TO_ACTIVE:
-                return \Couchbase\DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE;
-            case DurabilityLevel::DURABILITY_LEVEL_PERSIST_TO_MAJORITY:
-                return \Couchbase\DurabilityLevel::PERSIST_TO_MAJORITY;
+        switch ($conflictResolution) {
+            case ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_CUSTOM:
+                return \Couchbase\Management\ConflictResolutionType::CUSTOM;
+            case ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_TIMESTAMP:
+                return \Couchbase\Management\ConflictResolutionType::TIMESTAMP;
+            case ConflictResolutionType::CONFLICT_RESOLUTION_TYPE_SEQUENCE_NUMBER:
+                return \Couchbase\Management\ConflictResolutionType::SEQUENCE_NUMBER;
             default:
-                throw new DecodingFailureException("Unknown durability level received from GRPC");
+                throw new DecodingFailureException("Unknown conflict resolution type received from GRPC");
         }
     }
 }

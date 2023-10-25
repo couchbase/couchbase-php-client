@@ -32,6 +32,7 @@ use Couchbase\Management\GetSearchIndexOptions;
 use Couchbase\Management\PauseIngestSearchIndexOptions;
 use Couchbase\Management\ResumeIngestSearchIndexOptions;
 use Couchbase\Management\SearchIndex;
+use Couchbase\Management\SearchIndexManagerInterface;
 use Couchbase\Management\UnfreezePlanSearchIndexOptions;
 use Couchbase\Management\UpsertSearchIndexOptions;
 use Couchbase\Protostellar\Generated\Admin\Search\V1\AllowIndexQueryingRequest;
@@ -53,8 +54,9 @@ use Couchbase\Protostellar\Internal\Management\SearchIndexManagementResponseConv
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
+use Couchbase\Protostellar\RequestFactory;
 
-class SearchIndexManager
+class SearchIndexManager implements SearchIndexManagerInterface
 {
     private Client $client;
     public function __construct(Client $client)
@@ -68,10 +70,13 @@ class SearchIndexManager
     public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
     {
         $exportedOptions = GetSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getGetIndexRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getGetIndexRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $response = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new GetIndexRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->searchAdmin(), 'GetIndex']
         );
         return SearchIndexManagementResponseConverter::convertGetIndexResult($response);
@@ -83,10 +88,13 @@ class SearchIndexManager
     public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
     {
         $exportedOptions = GetAllSearchIndexesOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getGetAllIndexesRequest();
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getGetAllIndexesRequest'],
+            []
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $response = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ListIndexesRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->searchAdmin(), 'ListIndexes']
         );
         return SearchIndexManagementResponseConverter::convertGetAllIndexesResult($response);
@@ -95,18 +103,25 @@ class SearchIndexManager
     public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
     {
         $exportedOptions = UpsertSearchIndexOptions::export($options);
+        $exportedIndex = SearchIndex::export($indexDefinition);
 
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         if (is_null($indexDefinition->uuid())) {
-            $request = SearchIndexManagementRequestConverter::getCreateIndexRequest(SearchIndex::export($indexDefinition));
+            $request = RequestFactory::makeRequest(
+                ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getCreateIndexRequest'],
+                [$exportedIndex]
+            );
             ProtostellarOperationRunner::runUnary(
-                SharedUtils::createProtostellarRequest(new CreateIndexRequest($request), false, $timeout),
+                SharedUtils::createProtostellarRequest($request, false, $timeout),
                 [$this->client->searchAdmin(), 'CreateIndex']
             );
         } else {
-            $request = SearchIndexManagementRequestConverter::getUpdateIndexRequest(SearchIndex::export($indexDefinition));
+            $request = RequestFactory::makeRequest(
+                ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getUpdateIndexRequest'],
+                [$exportedIndex]
+            );
             ProtostellarOperationRunner::runUnary(
-                SharedUtils::createProtostellarRequest(new UpdateIndexRequest($request), false, $timeout),
+                SharedUtils::createProtostellarRequest($request, false, $timeout),
                 [$this->client->searchAdmin(), 'UpdateIndex']
             );
         }
@@ -115,21 +130,27 @@ class SearchIndexManager
     public function dropIndex(string $name, DropSearchIndexOptions $options = null)
     {
         $exportedOptions = DropSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getDropIndexRequest($name);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getDropIndexRequest'],
+            [$name]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DeleteIndexRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'DeleteIndex']
         );
     }
 
-    public function getIndexesDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
+    public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
     {
         $exportedOptions = GetIndexedSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getGetIndexedDocumentCountRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getGetIndexedDocumentCountRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         return ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new GetIndexedDocumentsCountRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->searchAdmin(), 'GetIndexedDocumentsCount']
         );
     }
@@ -137,10 +158,13 @@ class SearchIndexManager
     public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
     {
         $exportedOptions = PauseIngestSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getPauseIngestRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getPauseIngestRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new PauseIndexIngestRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'PauseIndexIngest']
         );
     }
@@ -148,10 +172,13 @@ class SearchIndexManager
     public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
     {
         $exportedOptions = ResumeIngestSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getResumeIngestRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getResumeIngestRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new ResumeIndexIngestRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'ResumeIndexIngest']
         );
     }
@@ -159,10 +186,13 @@ class SearchIndexManager
     public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
     {
         $exportedOptions = AllowQueryingSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getAllowQueryingRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getAllowQueryingRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new AllowIndexQueryingRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'AllowIndexQuerying']
         );
     }
@@ -170,10 +200,13 @@ class SearchIndexManager
     public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
     {
         $exportedOptions = DisallowQueryingSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getDisallowQueryingRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getDisallowQueryingRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new DisallowIndexQueryingRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'DisallowIndexQuerying']
         );
     }
@@ -181,10 +214,13 @@ class SearchIndexManager
     public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
     {
         $exportedOptions = FreezePlanSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getFreezePlanRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getFreezePlanRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new FreezeIndexPlanRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'FreezeIndexPlan']
         );
     }
@@ -192,10 +228,13 @@ class SearchIndexManager
     public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
     {
         $exportedOptions = UnfreezePlanSearchIndexOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getUnfreezePlanRequest($indexName);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getUnfreezePlanRequest'],
+            [$indexName]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new UnfreezeIndexPlanRequest($request), false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout),
             [$this->client->searchAdmin(), 'UnfreezeIndexPlan']
         );
     }
@@ -203,10 +242,13 @@ class SearchIndexManager
     public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
     {
         $exportedOptions = AnalyzeDocumentOptions::export($options);
-        $request = SearchIndexManagementRequestConverter::getAnalyzeDocumentRequest($indexName, $document);
+        $request = RequestFactory::makeRequest(
+            ['Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter', 'getAnalyzeDocumentRequest'],
+            [$indexName, $document]
+        );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         $response = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest(new AnalyzeDocumentRequest($request), true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout),
             [$this->client->searchAdmin(), 'AnalyzeDocument']
         );
         return SearchIndexManagementResponseConverter::convertAnalyzeDocumentResult($response);

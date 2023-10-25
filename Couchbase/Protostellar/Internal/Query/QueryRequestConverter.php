@@ -35,7 +35,7 @@ class QueryRequestConverter
      * @throws InvalidArgumentException
      * @internal
      */
-    public static function getQueryRequest(string $statement, array $exportedOptions): array
+    public static function getQueryRequest(string $statement, array $exportedOptions): QueryRequest
     {
         $request = [
             'statement' => $statement,
@@ -80,7 +80,7 @@ class QueryRequestConverter
         if (isset($exportedOptions["profile"])) {
             $request["profile_mode"] = self::convertQueryProfile($exportedOptions["profile"]);
         }
-        return $request;
+        return new QueryRequest($request);
     }
 
     private static function getTuningOptions(array $exportedOptions): array

@@ -67,6 +67,7 @@ use Couchbase\Protostellar\Generated\Search\V1\Query;
 use Couchbase\Protostellar\Generated\Search\V1\QueryStringQuery;
 use Couchbase\Protostellar\Generated\Search\V1\RegexpQuery;
 use Couchbase\Protostellar\Generated\Search\V1\ScoreSorting;
+use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest;
 use Couchbase\Protostellar\Generated\Search\V1\SearchQueryRequest\HighlightStyle;
 use Couchbase\Protostellar\Generated\Search\V1\Sorting;
 use Couchbase\Protostellar\Generated\Search\V1\TermFacet;
@@ -87,7 +88,7 @@ class SearchRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getSearchRequest(string $indexName, SearchQuery $query, array $exportedOptions): array
+    public static function getSearchRequest(string $indexName, SearchQuery $query, array $exportedOptions): SearchQueryRequest
     {
         $request = [
             "index_name" => $indexName,
@@ -127,7 +128,8 @@ class SearchRequestConverter
         if (isset($exportedOptions["facets"])) {
             $request["facets"] = self::convertFacets($exportedOptions["facets"]);
         }
-        return $request;
+
+        return new SearchQueryRequest($request);
     }
 
     /**

@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar;
 
 use Couchbase\BucketInterface;
+use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Management\CollectionManager;
 use Couchbase\ViewOptions;
@@ -62,10 +63,13 @@ class Bucket implements BucketInterface
         return $this->collection(Collection::DEFAULT_NAME);
     }
 
+    /**
+     * @throws UnsupportedOperationException
+     */
     public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
     {
         // TODO: Implement viewQuery() method.
-        return new ViewResult();
+        throw new UnsupportedOperationException("Views are not supported in CNG");
     }
 
     public function collections(): CollectionManager
