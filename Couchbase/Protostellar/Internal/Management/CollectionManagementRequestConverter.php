@@ -21,7 +21,6 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar\Internal\Management;
 
 use Couchbase\Exception\InvalidArgumentException;
-use Couchbase\Management\CollectionSpec;
 use Couchbase\Management\CreateCollectionSettings;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateCollectionRequest;
 use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateScopeRequest;

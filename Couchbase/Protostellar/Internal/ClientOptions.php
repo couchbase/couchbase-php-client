@@ -20,7 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase\Protostellar\Internal;
 
-use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
 use Grpc\ChannelCredentials;
 

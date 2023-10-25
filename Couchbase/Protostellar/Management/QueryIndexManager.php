@@ -31,19 +31,12 @@ use Couchbase\Management\GetAllQueryIndexesOptions;
 use Couchbase\Management\QueryIndex;
 use Couchbase\Management\QueryIndexManagerInterface;
 use Couchbase\Management\WatchQueryIndexesOptions;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\BuildDeferredIndexesRequest;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\CreateIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\CreatePrimaryIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\DropIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\DropPrimaryIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Query\V1\GetAllIndexesRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\Management\QueryIndexManagementRequestConverter;
 use Couchbase\Protostellar\Internal\Management\QueryIndexManagementResponseConverter;
+use Couchbase\Protostellar\Internal\RequestFactory;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
-use Couchbase\Protostellar\RequestFactory;
 
 class QueryIndexManager implements QueryIndexManagerInterface
 {

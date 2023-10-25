@@ -35,26 +35,12 @@ use Couchbase\Management\SearchIndex;
 use Couchbase\Management\SearchIndexManagerInterface;
 use Couchbase\Management\UnfreezePlanSearchIndexOptions;
 use Couchbase\Management\UpsertSearchIndexOptions;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\AllowIndexQueryingRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\AnalyzeDocumentRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\CreateIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\DeleteIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\DisallowIndexQueryingRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\FreezeIndexPlanRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\GetIndexedDocumentsCountRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\GetIndexRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\ListIndexesRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\PauseIndexIngestRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\ResumeIndexIngestRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\UnfreezeIndexPlanRequest;
-use Couchbase\Protostellar\Generated\Admin\Search\V1\UpdateIndexRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\Management\SearchIndexManagementRequestConverter;
 use Couchbase\Protostellar\Internal\Management\SearchIndexManagementResponseConverter;
+use Couchbase\Protostellar\Internal\RequestFactory;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
-use Couchbase\Protostellar\RequestFactory;
 
 class SearchIndexManager implements SearchIndexManagerInterface
 {

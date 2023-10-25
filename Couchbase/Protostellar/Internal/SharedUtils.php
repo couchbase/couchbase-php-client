@@ -80,10 +80,7 @@ class SharedUtils
     }
 
     /**
-     * @param string $durabilityLevel
-     * @return int|null
      * @throws InvalidArgumentException
-     * @internal
      */
     public static function convertDurabilityLevelToPS(string $durabilityLevel): ?int
     {

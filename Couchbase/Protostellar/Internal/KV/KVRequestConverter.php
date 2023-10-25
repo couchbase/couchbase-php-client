@@ -2,7 +2,6 @@
 
 namespace Couchbase\Protostellar\Internal\KV;
 
-use Couchbase\DurabilityLevel;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\InsertOptions;
 use Couchbase\LookupInMacro;
@@ -270,7 +269,7 @@ class KVRequestConverter
             $request["cas"] = SharedUtils::assignCas($exportedOptions["cas"]);
         }
         if (isset($exportedOptions["accessDeleted"])) { //TODO accessDeleted doesn't exist in MutateInOptions
-            $request["flags"] = new \Couchbase\Protostellar\Generated\KV\V1\MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
+            $request["flags"] = new MutateInRequest\Flags(["access_deleted" => $exportedOptions["accessDeleted"]]);
         }
         if (isset($exportedOptions["expiryTimestamp"])) {
             $request["expiry_time"] = new Timestamp(["seconds" => $exportedOptions["expiryTimestamp"]]);

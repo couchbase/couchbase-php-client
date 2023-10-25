@@ -32,18 +32,12 @@ use Couchbase\Management\DropScopeOptions;
 use Couchbase\Management\GetAllScopesOptions;
 use Couchbase\Management\UpdateCollectionOptions;
 use Couchbase\Management\UpdateCollectionSettings;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateCollectionRequest;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\CreateScopeRequest;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteCollectionRequest;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\DeleteScopeRequest;
-use Couchbase\Protostellar\Generated\Admin\Collection\V1\ListCollectionsRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\Management\CollectionManagementRequestConverter;
 use Couchbase\Protostellar\Internal\Management\CollectionManagementResponseConverter;
+use Couchbase\Protostellar\Internal\RequestFactory;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
-use Couchbase\Protostellar\RequestFactory;
 
 class CollectionManager implements CollectionManagerInterface
 {

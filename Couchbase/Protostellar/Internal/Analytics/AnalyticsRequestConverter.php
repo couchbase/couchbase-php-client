@@ -62,6 +62,10 @@ class AnalyticsRequestConverter
         }
         return new AnalyticsQueryRequest($request);
     }
+
+    /**
+     * @throws InvalidArgumentException
+     */
     private static function convertScanConsistency(string $consistencyLevel): int
     {
         switch ($consistencyLevel) {

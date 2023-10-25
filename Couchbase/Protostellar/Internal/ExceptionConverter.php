@@ -49,7 +49,6 @@ use Couchbase\Exception\ScopeNotFoundException;
 use Couchbase\Exception\ValueInvalidException;
 use Couchbase\Exception\ValueTooDeepException;
 use Couchbase\Exception\ValueTooLargeException;
-use Couchbase\HttpException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
 use Couchbase\Protostellar\Retries\RetryOrchestrator;
@@ -68,9 +67,6 @@ class ExceptionConverter
     private const TYPE_URL_BAD_REQUEST = "type.googleapis.com/google.rpc.BadRequest";
 
 
-    /**
-     * @throws HttpException
-     */
     public static function convertError(stdClass $status, ProtostellarRequest $request): RequestBehaviour
     {
         try {

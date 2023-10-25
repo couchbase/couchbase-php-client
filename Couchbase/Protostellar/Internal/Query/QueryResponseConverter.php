@@ -26,11 +26,6 @@ use Couchbase\Protostellar\Internal\SharedUtils;
 
 class QueryResponseConverter
 {
-    /**
-     * @param array $response
-     * @return array
-     * @internal
-     */
     public static function convertQueryResult(array $response): array
     {
         $finalArray = [];

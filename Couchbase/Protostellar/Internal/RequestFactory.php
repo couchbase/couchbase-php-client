@@ -1,6 +1,6 @@
 <?php
 
-namespace Couchbase\Protostellar;
+namespace Couchbase\Protostellar\Internal;
 
 use Couchbase\Exception\InvalidArgumentException;
 use Exception;
@@ -9,6 +9,7 @@ class RequestFactory
 {
     /**
      * @throws InvalidArgumentException
+     * @internal
      */
     public static function makeRequest(callable $getRequest, array $params): mixed
     {

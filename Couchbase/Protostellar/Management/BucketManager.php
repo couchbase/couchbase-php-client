@@ -33,17 +33,12 @@ use Couchbase\Management\FlushBucketOptions;
 use Couchbase\Management\GetAllBucketsOptions;
 use Couchbase\Management\GetBucketOptions;
 use Couchbase\Management\UpdateBucketOptions;
-use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CreateBucketRequest;
-use Couchbase\Protostellar\Generated\Admin\Bucket\V1\DeleteBucketRequest;
-use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsRequest;
-use Couchbase\Protostellar\Generated\Admin\Bucket\V1\UpdateBucketRequest;
 use Couchbase\Protostellar\Internal\Client;
-use Couchbase\Protostellar\Internal\Management\BucketManagementRequestConverter;
 use Couchbase\Protostellar\Internal\Management\BucketManagementResponseConverter;
+use Couchbase\Protostellar\Internal\RequestFactory;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 use Couchbase\Protostellar\ProtostellarOperationRunner;
-use Couchbase\Protostellar\RequestFactory;
 
 class BucketManager implements BucketManagerInterface
 {
@@ -122,7 +117,7 @@ class BucketManager implements BucketManagerInterface
     }
 
     /**
-     * @throws DecodingFailureException
+     * @throws DecodingFailureException|InvalidArgumentException
      */
     public function getAllBuckets(GetAllBucketsOptions $options = null): array
     {
@@ -148,7 +143,6 @@ class BucketManager implements BucketManagerInterface
      */
     public function flush(string $name, FlushBucketOptions $options = null)
     {
-        //TODO: Implement Flush method (Not yet implemented in PS)
-        throw new UnsupportedOperationException("Flush is not yet available in PS");
+        throw new UnsupportedOperationException("Flush is not available in CNG");
     }
 }

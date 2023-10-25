@@ -29,7 +29,6 @@ use Couchbase\Protostellar\Generated\Admin\Bucket\V1\BucketType;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\CompressionMode;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\EvictionMode;
 use Couchbase\Protostellar\Generated\Admin\Bucket\V1\ListBucketsResponse\Bucket;
-use Couchbase\Protostellar\Generated\KV\V1\DurabilityLevel;
 use Couchbase\Protostellar\Internal\SharedUtils;
 
 class BucketManagementResponseConverter

@@ -33,7 +33,6 @@ class QueryRequestConverter
 {
     /**
      * @throws InvalidArgumentException
-     * @internal
      */
     public static function getQueryRequest(string $statement, array $exportedOptions): QueryRequest
     {

@@ -22,9 +22,10 @@ namespace Couchbase\Protostellar\Retries;
 
 use Couchbase\Exception\AmbiguousTimeoutException;
 use Couchbase\Exception\UnambiguousTimeoutException;
+use Couchbase\Exception\RequestcanceledException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
-use Couchbase\RequestCanceledException;
+
 
 class RetryOrchestrator
 {
@@ -43,9 +44,7 @@ class RetryOrchestrator
         $duration = $retryAction->duration();
         if (!is_null($duration)) {
             return self::retryWithDuration($request, $reason, $duration);
-            //log retry
         } else {
-            //log not retried
             return RequestBehaviour::fail(new RequestCanceledException(message: "No more retries allowed based on the retry strategy", context: $request->context()));
         }
     }

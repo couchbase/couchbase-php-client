@@ -68,7 +68,6 @@ class Bucket implements BucketInterface
      */
     public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
     {
-        // TODO: Implement viewQuery() method.
         throw new UnsupportedOperationException("Views are not supported in CNG");
     }
 

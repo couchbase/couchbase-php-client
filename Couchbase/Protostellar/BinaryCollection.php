@@ -28,13 +28,10 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\IncrementOptions;
 use Couchbase\MutationResult;
 use Couchbase\PrependOptions;
-use Couchbase\Protostellar\Generated\KV\V1\AppendRequest;
-use Couchbase\Protostellar\Generated\KV\V1\DecrementRequest;
-use Couchbase\Protostellar\Generated\KV\V1\IncrementRequest;
-use Couchbase\Protostellar\Generated\KV\V1\PrependRequest;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\KV\KVRequestConverter;
 use Couchbase\Protostellar\Internal\KV\KVResponseConverter;
+use Couchbase\Protostellar\Internal\RequestFactory;
 use Couchbase\Protostellar\Internal\SharedUtils;
 use Couchbase\Protostellar\Internal\TimeoutHandler;
 
