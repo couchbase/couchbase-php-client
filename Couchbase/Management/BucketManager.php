@@ -22,7 +22,7 @@ namespace Couchbase\Management;
 
 use Couchbase\Extension;
 
-class BucketManager
+class BucketManager implements BucketManagerInterface
 {
     /**
      * @var resource

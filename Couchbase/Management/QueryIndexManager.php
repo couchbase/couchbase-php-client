@@ -23,7 +23,7 @@ namespace Couchbase\Management;
 use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Extension;
 
-class QueryIndexManager
+class QueryIndexManager implements QueryIndexManagerInterface
 {
     /**
      * @var resource

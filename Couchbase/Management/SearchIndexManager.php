@@ -22,7 +22,7 @@ namespace Couchbase\Management;
 
 use Couchbase\Extension;
 
-class SearchIndexManager
+class SearchIndexManager implements SearchIndexManagerInterface
 {
     /**
      * @var resource
