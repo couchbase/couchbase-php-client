@@ -279,7 +279,6 @@ class KVRequestConverter
         }
         $request = array_merge($request, $location);
         return [new MutateInRequest($request), $order];
-
     }
 
     public static function getGetAllReplicasRequest(string $key, array $location): GetAllReplicasRequest

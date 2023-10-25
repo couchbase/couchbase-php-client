@@ -26,7 +26,6 @@ use Couchbase\Exception\RequestcanceledException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
 
-
 class RetryOrchestrator
 {
     public static function maybeRetry(ProtostellarRequest $request, RetryReason $reason): RequestBehaviour

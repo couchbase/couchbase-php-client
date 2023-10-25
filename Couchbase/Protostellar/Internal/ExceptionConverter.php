@@ -131,7 +131,6 @@ class ExceptionConverter
                         } elseif ($resourceInfo->getResourceType() == "path") {
                             return RequestBehaviour::fail(new PathNotFoundException(message: "Specified path was not found", context: $request->context()));
                         }
-
                     } elseif ($protoStatus->getCode() == Code::ALREADY_EXISTS) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentExistsException(message: "Specified document already exists", context: $request->context()));

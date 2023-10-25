@@ -24,7 +24,6 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
 {
-
     public function setUp(): void
     {
         parent::setUp();

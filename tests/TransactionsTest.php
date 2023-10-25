@@ -28,7 +28,6 @@ include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
 
 class TransactionsTest extends Helpers\CouchbaseTestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();
