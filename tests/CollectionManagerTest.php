@@ -7,6 +7,7 @@ use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\CollectionManager;
+use Couchbase\Management\CollectionManagerInterface;
 use Couchbase\Management\CollectionSpec;
 use Couchbase\Management\CreateCollectionSettings;
 use Couchbase\Management\ScopeSpec;
@@ -17,7 +18,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class CollectionManagerTest extends Helpers\CouchbaseTestCase
 {
-    private CollectionManager $manager;
+    private CollectionManagerInterface $manager;
     private string $bucketName;
 
     public function setUp(): void
@@ -237,6 +238,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
     public function testCollectionHistory(): void
     {
         $this->skipIfCaves();
+        $this->skipIfProtostellar();
         $this->skipIfUnsupported($this->version()->supportsMagmaStorageBackend());
         $this->skipIfUnsupported($this->version()->supportsBucketDedup());
 

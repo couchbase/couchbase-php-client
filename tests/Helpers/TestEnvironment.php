@@ -89,6 +89,20 @@ class TestEnvironment
         return !$this->useCaves();
     }
 
+    public function useProtostellar(): bool
+    {
+        if ($this->useCaves()) {
+            return false;
+        }
+        if (
+            preg_match("/^protostellar:\/\//", $this->connectionString) ||
+            preg_match("/^couchbase2:\/\//", $this->connectionString)
+        ) {
+            return true;
+        }
+        return false;
+    }
+
     public function start()
     {
         if ($this->useCaves()) {

@@ -19,7 +19,7 @@
 declare(strict_types=1);
 
 use Couchbase\BooleanSearchQuery;
-use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
 use Couchbase\ConjunctionSearchQuery;
 use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
@@ -53,7 +53,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class SearchTest extends Helpers\CouchbaseTestCase
 {
-    private Cluster $cluster;
+    private ClusterInterface $cluster;
 
     public function setUp(): void
     {
@@ -192,6 +192,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
     public function testSearchWithSort()
     {
         $this->skipIfCaves();
+        $this->skipIfProtostellar(); // PS does not support simple string sort
 
         $query = new MatchPhraseSearchQuery("hop beer");
         $options = SearchOptions::build()

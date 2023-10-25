@@ -3,14 +3,14 @@
 use Couchbase\Exception\IndexExistsException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\Management\SearchIndex;
-use Couchbase\Management\SearchIndexManager;
+use Couchbase\Management\SearchIndexManagerInterface;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 
 class SearchIndexManagerTest extends Helpers\CouchbaseTestCase
 {
-    private SearchIndexManager $manager;
+    private SearchIndexManagerInterface $manager;
     private string $indexName;
 
     public function setUp(): void

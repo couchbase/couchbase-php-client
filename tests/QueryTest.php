@@ -1,6 +1,6 @@
 <?php
 
-use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
 use Couchbase\GetOptions;
 use Couchbase\JsonTranscoder;
 use Couchbase\MutationState;
@@ -12,7 +12,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class QueryTest extends Helpers\CouchbaseTestCase
 {
-    private Cluster $cluster;
+    private ClusterInterface $cluster;
 
     public function setUp(): void
     {
@@ -120,6 +120,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
     public function testAtPlus()
     {
         $this->skipIfCaves();
+        $this->skipIfProtostellar(); // ConsistentWith not supported in CNG
 
         $bucketName = $this->env()->bucketName();
         $nameSpace = $bucketName;

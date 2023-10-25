@@ -1,6 +1,6 @@
 <?php
 
-use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
 use Couchbase\DesignDocumentNamespace;
 use Couchbase\Extension;
 use Couchbase\ViewConsistency;
@@ -10,11 +10,12 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class ViewTest extends Helpers\CouchbaseTestCase
 {
-    private Cluster $cluster;
+    private ClusterInterface $cluster;
 
     public function setUp(): void
     {
         parent::setUp();
+        $this->skipIfProtostellar();
 
         $this->cluster = $this->connectCluster();
     }

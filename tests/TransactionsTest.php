@@ -28,6 +28,13 @@ include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
 
 class TransactionsTest extends Helpers\CouchbaseTestCase
 {
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->skipIfProtostellar();
+    }
+
     public function testSimpleTransaction()
     {
         $this->skipIfUnsupported($this->version()->supportsTransactions());

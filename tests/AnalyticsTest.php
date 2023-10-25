@@ -2,7 +2,7 @@
 
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsScanConsistency;
-use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
 use Couchbase\Exception\DatasetExistsException;
 use Couchbase\JsonTranscoder;
 
@@ -10,11 +10,12 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class AnalyticsTest extends Helpers\CouchbaseTestCase
 {
-    private Cluster $cluster;
+    private ClusterInterface $cluster;
 
     public function setUp(): void
     {
         parent::setUp();
+        $this->skipIfProtostellar();
 
         $this->cluster = $this->connectCluster();
     }

@@ -24,6 +24,8 @@ class DiagnosticsTest extends Helpers\CouchbaseTestCase
 {
     public function testDiagnostics()
     {
+        $this->skipIfProtostellar();
+
         $cluster = $this->connectCluster();
         $result = $cluster->diagnostics();
 
