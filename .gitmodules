@@ -1,3 +1,6 @@
 [submodule "src/deps/couchbase-cxx-client"]
 	path = src/deps/couchbase-cxx-client
 	url = https://github.com/couchbaselabs/couchbase-cxx-client.git
+[submodule "src/deps/protostellar"]
+	path = src/deps/protostellar
+	url = https://github.com/couchbase/protostellar

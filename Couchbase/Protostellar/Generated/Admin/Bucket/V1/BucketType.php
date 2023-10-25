@@ -16,17 +16,12 @@ class BucketType
      */
     const BUCKET_TYPE_COUCHBASE = 0;
     /**
-     * Generated from protobuf enum <code>BUCKET_TYPE_MEMCACHED = 1;</code>
+     * Generated from protobuf enum <code>BUCKET_TYPE_EPHEMERAL = 1;</code>
      */
-    const BUCKET_TYPE_MEMCACHED = 1;
-    /**
-     * Generated from protobuf enum <code>BUCKET_TYPE_EPHEMERAL = 2;</code>
-     */
-    const BUCKET_TYPE_EPHEMERAL = 2;
+    const BUCKET_TYPE_EPHEMERAL = 1;
 
     private static $valueToName = [
         self::BUCKET_TYPE_COUCHBASE => 'BUCKET_TYPE_COUCHBASE',
-        self::BUCKET_TYPE_MEMCACHED => 'BUCKET_TYPE_MEMCACHED',
         self::BUCKET_TYPE_EPHEMERAL => 'BUCKET_TYPE_EPHEMERAL',
     ];
 
