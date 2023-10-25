@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace Couchbase\Datastructures;
 
 use ArrayIterator;
-use Couchbase\Collection;
+use Couchbase\CollectionInterface;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\PathNotFoundException;
@@ -41,19 +41,19 @@ use Traversable;
 class CouchbaseQueue implements Countable, IteratorAggregate
 {
     private string $id;
-    private Collection $collection;
+    private CollectionInterface $collection;
     private Options\CouchbaseQueue $options;
 
     /**
      * CouchbaseQueue constructor.
      *
      * @param string $id identifier of the backing document.
-     * @param Collection $collection collection instance, where the document will be stored
+     * @param CollectionInterface $collection collection instance, where the document will be stored
      * @param Options\CouchbaseQueue|null $options
      *
      * @since 4.0.0
      */
-    public function __construct(string $id, Collection $collection, ?Options\CouchbaseQueue $options = null)
+    public function __construct(string $id, CollectionInterface $collection, ?Options\CouchbaseQueue $options = null)
     {
         $this->id = $id;
         $this->collection = $collection;
