@@ -9,7 +9,6 @@ This repository contains source code of the Couchbase PHP SDK.
 If you find an issue, please file it in [our JIRA issue tracker](https://couchbase.com/issues/browse/PCBC). Also you are
 always welcome on [our forum](https://forums.couchbase.com/c/php-sdk) and [Discord](https://discord.com/invite/sQ5qbPZuTh).
 
-
 ## Getting the Source Code
 
 This repo uses several git submodules. If you are fetching the repo for the first time by command line, the
@@ -57,3 +56,5 @@ The tests are located in the (/tests)[./tests] directory. More tests may be adde
 ```shell
 ./bin/test
 ```
+
+:)
