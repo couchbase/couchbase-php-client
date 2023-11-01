@@ -60,6 +60,7 @@ class Collection implements CollectionInterface
         $this->scopeName = $scopeName;
         $this->bucketName = $bucketName;
         $this->core = $core;
+        print_r("test change");
     }
 
 
