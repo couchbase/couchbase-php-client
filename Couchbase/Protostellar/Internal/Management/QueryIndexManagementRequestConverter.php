@@ -64,6 +64,9 @@ class QueryIndexManagementRequestConverter
         if (isset($exportedOptions["deferred"])) {
             $request["deferred"] = $exportedOptions["deferred"];
         }
+        if (isset($exportedOptions["ignoreIfExists"])) {
+            $request["ignore_if_exists"] = $exportedOptions["ignoreIfExists"];
+        }
         return new CreatePrimaryIndexRequest($request);
     }
 
@@ -86,10 +89,13 @@ class QueryIndexManagementRequestConverter
         if (isset($exportedOptions["deferred"])) {
             $request["deferred"] = $exportedOptions["deferred"];
         }
+        if (isset($exportedOptions["ignoreIfExists"])) {
+            $request["ignore_if_exists"] = $exportedOptions["ignoreIfExists"];
+        }
         return new CreateIndexRequest($request);
     }
 
-    public static function getDropIndexRequest(string $bucketName, string $indexName, ?string $scopeName = null, ?string $collectionName = null): DropIndexRequest
+    public static function getDropIndexRequest(string $bucketName, string $indexName, array $exportedOptions, ?string $scopeName = null, ?string $collectionName = null): DropIndexRequest
     {
         $request = [
             "bucket_name" => $bucketName,
@@ -100,6 +106,9 @@ class QueryIndexManagementRequestConverter
         }
         if (!is_null($collectionName)) {
             $request["collection_name"] = $collectionName;
+        }
+        if (isset($exportedOptions["ignoreIfDoesNotExist"])) {
+            $request["ignore_if_missing"] = $exportedOptions["ignoreIfDoesNotExist"];
         }
         return new DropIndexRequest($request);
     }
@@ -117,6 +126,9 @@ class QueryIndexManagementRequestConverter
         }
         if (isset($exportedOptions["indexName"])) {
             $request["name"] = $exportedOptions["indexName"];
+        }
+        if (isset($exportedOptions["ignoreIfDoesNotExist"])) {
+            $request["ignore_if_missing"] = $exportedOptions["ignoreIfDoesNotExist"];
         }
         return new DropPrimaryIndexRequest($request);
     }

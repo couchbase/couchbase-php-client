@@ -57,7 +57,7 @@ class KVRequestConverter
         $exportedOptions = UpsertOptions::export($options);
         $request = [
             "key" => $key,
-            "content" => $encodedDocument,
+            "content_uncompressed" => $encodedDocument,
             "content_flags" => $contentType,
         ];
         if (isset($exportedOptions["expiryTimestamp"])) {
@@ -68,6 +68,9 @@ class KVRequestConverter
         }
         if (isset($exportedOptions["durabilityLevel"])) {
             $request["durability_level"] = SharedUtils::convertDurabilityLevelToPS($exportedOptions["durabilityLevel"]);
+        }
+        if (isset($exportedOptions["preserveExpiry"])) {
+            $request["preserve_expiry_on_existing"] = $exportedOptions["preserveExpiry"];
         }
         $request = array_merge($request, $location);
         return new UpsertRequest($request);
@@ -82,7 +85,7 @@ class KVRequestConverter
         $exportedOptions = InsertOptions::export($options);
         $request = [
             "key" => $key,
-            "content" => $encodedDocument,
+            "content_uncompressed" => $encodedDocument,
             "content_flags" => $contentType,
         ];
         if (isset($exportedOptions["expiryTimestamp"])) {
@@ -107,7 +110,7 @@ class KVRequestConverter
         $exportedOptions = ReplaceOptions::export($options);
         $request = [
             "key" => $key,
-            "content" => $encodedDocument,
+            "content_uncompressed" => $encodedDocument,
             "content_flags" => $contentType,
         ];
         if (isset($exportedOptions["expiryTimestamp"])) {

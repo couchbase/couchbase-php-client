@@ -60,7 +60,7 @@ class KVResponseConverter
             [
                 "id" => $key,
                 "cas" => SharedUtils::getCas($result->getCas()),
-                "value" => $result->getContent(),
+                "value" => $result->getContentUncompressed(),
                 "flags" => $result->getContentFlags(),
                 "expiry" => $result->getExpiry()?->getSeconds(),
             ],
@@ -91,7 +91,7 @@ class KVResponseConverter
             [
                 "id" => $key,
                 "cas" => SharedUtils::getCas($result->getCas()),
-                "value" => $result->getContent(),
+                "value" => $result->getContentUncompressed(),
                 "flags" => $result->getContentFlags(),
                 "expiry" => $result->getExpiry()?->getSeconds(),
             ],
@@ -108,7 +108,7 @@ class KVResponseConverter
             [
                 "id" => $key,
                 "cas" => SharedUtils::getCas($result->getCas()),
-                "value" => $result->getContent(),
+                "value" => $result->getContentUncompressed(),
                 "flags" => $result->getContentFlags(),
                 "expiry" => $result->getExpiry()?->getSeconds(),
             ],

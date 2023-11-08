@@ -98,7 +98,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $exportedOptions = DropQueryIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
             ['Couchbase\Protostellar\Internal\Management\QueryIndexManagementRequestConverter', 'getDropIndexRequest'],
-            [$bucketName, $indexName, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null]
+            [$bucketName, $indexName, $exportedOptions, $exportedOptions["scopeName"] ?? null, $exportedOptions["collectionName"] ?? null]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(

@@ -118,7 +118,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
         $this->checkOptions($exportedOptions);
         $request = RequestFactory::makeRequest(
             ['Couchbase\Protostellar\Internal\Management\QueryIndexManagementRequestConverter', 'getDropIndexRequest'],
-            [$this->bucketName, $indexName, $this->scopeName, $this->collectionName]
+            [$this->bucketName, $indexName, $exportedOptions, $this->scopeName, $this->collectionName]
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
