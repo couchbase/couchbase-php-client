@@ -28,11 +28,9 @@ use Couchbase\Exception\CasMismatchException;
 use Couchbase\Exception\CollectionExistsException;
 use Couchbase\Exception\CollectionNotFoundException;
 use Couchbase\Exception\CouchbaseException;
-use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\DocumentExistsException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\DocumentNotJsonException;
-use Couchbase\Exception\DurabilityImpossibleException;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexExistsException;
 use Couchbase\Exception\IndexNotFoundException;
@@ -43,11 +41,11 @@ use Couchbase\Exception\PathExistsException;
 use Couchbase\Exception\PathMismatchException;
 use Couchbase\Exception\PathNotFoundException;
 use Couchbase\Exception\PathTooDeepException;
+use Couchbase\Exception\PermissionDeniedException;
 use Couchbase\Exception\RequestCanceledException;
 use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
 use Couchbase\Exception\ValueInvalidException;
-use Couchbase\Exception\ValueTooDeepException;
 use Couchbase\Exception\ValueTooLargeException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
@@ -63,9 +61,7 @@ class ExceptionConverter
 {
     private const TYPE_URL_PRECONDITION_FAILURE = "type.googleapis.com/google.rpc.PreconditionFailure";
     private const TYPE_URL_RESOURCE_INFO = "type.googleapis.com/google.rpc.ResourceInfo";
-    private const TYPE_URL_ERROR_INFO = "type.googleapis.com/google.rpc/ErrorInfo";
-    private const TYPE_URL_BAD_REQUEST = "type.googleapis.com/google.rpc.BadRequest";
-
+    private const TYPE_URL_ERROR_INFO = "type.googleapis.com/google.rpc.ErrorInfo";
 
     public static function convertError(stdClass $status, ProtostellarRequest $request): RequestBehaviour
     {
@@ -76,40 +72,34 @@ class ExceptionConverter
             ErrorDetails::initOnce();
             $details = $status->metadata["grpc-status-details-bin"][0] ?? null;
             if (is_null($details)) {
-                throw new DecodingFailureException($status->details);
+                throw new CouchbaseException($status->details);
             }
             $protoStatus = new Status();
             $protoStatus->mergeFromString($details);
-            $anyDetails = $protoStatus->getDetails()[0];
+            $anyDetails = $protoStatus->getDetails()[0]; // Only parsing first detail block
             $typeUrl = $anyDetails->getTypeUrl();
+            $request->appendContext("server", $protoStatus->getMessage());
             switch ($typeUrl) {
                 case self::TYPE_URL_PRECONDITION_FAILURE:
                     $preconditionFailure = $anyDetails->unpack();
                     $preconditionFailure->discardUnknownFields();
-                    if (count($preconditionFailure->getViolations()) > 0) {
-                        $violation = $preconditionFailure->getViolations()[0];
-                        $type = $violation->getType();
-                        if ($type == "CAS") {
-                            return RequestBehaviour::fail(new CasMismatchException($protoStatus->getMessage()));
-                        } elseif ($type == "LOCKED") {
-                            return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::KV_LOCKED));
-                        } elseif ($type == "VALUE_TOO_LARGE") {
-                            return RequestBehaviour::fail(new ValueTooLargeException($protoStatus->getMessage()));
-                        } elseif ($type == "DURABILITY_IMPOSSIBLE") {
-                            return RequestBehaviour::fail(new DurabilityImpossibleException($protoStatus->getMessage()));
-                        } elseif ($type == "PATH_MISMATCH") {
-                            return RequestBehaviour::fail(new PathMismatchException($protoStatus->getMessage()));
-                        } elseif ($type == "DOC_TOO_DEEP") {
-                            return RequestBehaviour::fail(new PathTooDeepException($protoStatus->getMessage()));
-                        } elseif ($type == "VALUE_TOO_DEEP") {
-                            return RequestBehaviour::fail(new ValueTooDeepException($protoStatus->getMessage()));
-                        } elseif ($type == "WOULD_INVALIDATE_JSON") {
-                            return RequestBehaviour::fail(new ValueInvalidException($protoStatus->getMessage()));
-                        } elseif ($type == "DOC_NOT_JSON") {
-                            return RequestBehaviour::fail(new DocumentNotJsonException($protoStatus->getMessage()));
-                        } elseif ($type == "PATH_VALUE_OUT_OF_RANGE") {
-                            return RequestBehaviour::fail(new NumberTooBigException($protoStatus->getMessage()));
-                        }
+                    $violation = $preconditionFailure->getViolations()[0]; // Only parsing first violation
+                    $request->appendContext("preconditionViolation", $violation->getType());
+                    $type = $violation->getType();
+                    if ($type == "LOCKED") {
+                        return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::KV_LOCKED));
+                    } elseif ($type == "VALUE_TOO_LARGE") {
+                        return RequestBehaviour::fail(new ValueTooLargeException($protoStatus->getMessage()));
+                    } elseif ($type == "PATH_MISMATCH") {
+                        return RequestBehaviour::fail(new PathMismatchException($protoStatus->getMessage()));
+                    } elseif ($type == "DOC_TOO_DEEP") {
+                        return RequestBehaviour::fail(new PathTooDeepException($protoStatus->getMessage()));
+                    } elseif ($type == "DOC_NOT_JSON") {
+                        return RequestBehaviour::fail(new DocumentNotJsonException($protoStatus->getMessage()));
+                    } elseif ($type == "PATH_VALUE_OUT_OF_RANGE") {
+                        return RequestBehaviour::fail(new NumberTooBigException($protoStatus->getMessage()));
+                    } elseif ($type == "VALUE_OUT_OF_RANGE") {
+                        return RequestBehaviour::fail(new ValueInvalidException($protoStatus->getMessage()));
                     }
                     break;
                 case self::TYPE_URL_RESOURCE_INFO:
@@ -120,7 +110,7 @@ class ExceptionConverter
                     if ($protoStatus->getCode() == Code::NOT_FOUND) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentNotFoundException(message: "Specified document was not found", context: $request->context()));
-                        } elseif ($resourceInfo->getResourceType() == "index" || $resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
+                        } elseif ($resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
                             return RequestBehaviour::fail(new IndexNotFoundException(message: "Specified index was not found", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
                             return RequestBehaviour::fail(new BucketNotFoundException(message: "Specified bucket was not found", context: $request->context()));
@@ -134,7 +124,7 @@ class ExceptionConverter
                     } elseif ($protoStatus->getCode() == Code::ALREADY_EXISTS) {
                         if ($resourceInfo->getResourceType() == "document") {
                             return RequestBehaviour::fail(new DocumentExistsException(message: "Specified document already exists", context: $request->context()));
-                        } elseif ($resourceInfo->getResourceType() == "index" || $resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
+                        } elseif ($resourceInfo->getResourceType() == "searchindex" || $resourceInfo->getResourceType() == "queryindex") {
                             return RequestBehaviour::fail(new IndexExistsException(message: "Specified index already exists", context: $request->context()));
                         } elseif ($resourceInfo->getResourceType() == "bucket") {
                             return RequestBehaviour::fail(new BucketExistsException(message: "Specified bucket already exists", context: $request->context()));
@@ -145,29 +135,29 @@ class ExceptionConverter
                         } elseif ($resourceInfo->getResourceType() == "path") {
                             return RequestBehaviour::fail(new PathExistsException(message: "Specified path already exists", context: $request->context()));
                         }
+                    } elseif ($protoStatus->getCode() == Code::PERMISSION_DENIED) {
+                        if ($resourceInfo->getResourceType() == "anything_but_user") {
+                            return RequestBehaviour::fail(new PermissionDeniedException(message: $protoStatus->getMessage()), context: $request->context());
+                        } elseif ($resourceInfo->getResourceType() == "user") {
+                            return RequestBehaviour::fail(new AuthenticationFailureException("Your username or password is invalid", context: $request->context()));
+                        }
                     }
                     break;
                 case self::TYPE_URL_ERROR_INFO:
                     $errorInfo = $anyDetails->unpack();
                     $errorInfo->discardUnknownFields();
-                    $request->appendContext("errorReason", $errorInfo->getReason());
-                    $request->appendContext("errorDomain", $errorInfo->getDomain());
-                    $request->appendContext("errorMetadata", $errorInfo->getMetadata());
-                    break;
-                case self::TYPE_URL_BAD_REQUEST:
-                    $badRequest = $anyDetails->unpack();
-                    $badRequest->discardUnknownFields();
-                    if (count($badRequest->getFieldViolations()) > 0) {
-                        $fieldViolation = $badRequest->getFieldViolations()[0];
-                        $request->appendContext("field", $fieldViolation->getField());
-                        $request->appendContext("description", $fieldViolation->getDescription());
+                    $request->appendContext("reason", $errorInfo->getReason());
+                    if ($protoStatus->getCode() == Code::ABORTED) {
+                        if ($errorInfo->getReason() == "CAS_MISMATCH") {
+                            return RequestBehaviour::fail(new CasMismatchException(message: $protoStatus->getMessage(), context: $request->context()));
+                        }
                     }
                     break;
                 default:
-                    return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
+                    return RequestBehaviour::fail(new CouchbaseException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
             }
         } catch (Exception) {
-            return RequestBehaviour::fail(new DecodingFailureException(message: "Failed to decode GRPC response: " . $status->details, context: $request->context()));
+            return RequestBehaviour::fail(new CouchbaseException(message: $status->details, context: $request->context()));
         }
         return self::convertToCouchbaseException($protoStatus, $request);
     }
@@ -178,15 +168,15 @@ class ExceptionConverter
             case Code::CANCELLED:
                 return RequestBehaviour::fail(new RequestCanceledException(message: "Request cancelled by server", context: $request->context()));
             case Code::INTERNAL:
-                return RequestBehaviour::fail(new InternalServerFailureException(context: $request->context()));
+                return RequestBehaviour::fail(new InternalServerFailureException(message: $status->getMessage(), context: $request->context()));
             case Code::INVALID_ARGUMENT:
-                return RequestBehaviour::fail(new InvalidArgumentException(message: "Invalid argument provided", context: $request->context()));
+                return RequestBehaviour::fail(new InvalidArgumentException(message: $status->getMessage(), context: $request->context()));
             case Code::DEADLINE_EXCEEDED:
                 return RequestBehaviour::fail(new AmbiguousTimeoutException(message: "The server reported the operation timeout, and the state might have been changed", context: $request->context()));
-            case Code::PERMISSION_DENIED:
-                return RequestBehaviour::fail(new AuthenticationFailureException(message: "The server reported that permission to the resource was denied", context: $request->context()));
             case Code::UNIMPLEMENTED:
                 return RequestBehaviour::fail(new FeatureNotAvailableException(message: $status->getMessage(), context: $request->context()));
+            case Code::UNAUTHENTICATED:
+                return RequestBehaviour::fail(new AuthenticationFailureException(message: $status->getMessage(), context: $request->context()));
             case Code::UNAVAILABLE:
                 return RetryOrchestrator::maybeRetry($request, new RetryReason(RetryReason::SOCKET_NOT_AVAILABLE));
             default:
