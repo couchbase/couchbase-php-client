@@ -30,10 +30,6 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
      */
     protected $key = '';
     /**
-     * Generated from protobuf field <code>bytes content = 5;</code>
-     */
-    protected $content = '';
-    /**
      * Generated from protobuf field <code>uint32 content_flags = 12;</code>
      */
     protected $content_flags = 0;
@@ -45,6 +41,7 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>optional .couchbase.kv.v1.DurabilityLevel durability_level = 10;</code>
      */
     protected $durability_level = null;
+    protected $content;
     protected $expiry;
 
     /**
@@ -57,7 +54,8 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
      *     @type string $scope_name
      *     @type string $collection_name
      *     @type string $key
-     *     @type string $content
+     *     @type string $content_uncompressed
+     *     @type string $content_compressed
      *     @type int $content_flags
      *     @type int|string $cas
      *     @type \Google\Protobuf\Timestamp $expiry_time
@@ -159,23 +157,55 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 5;</code>
+     * Generated from protobuf field <code>bytes content_uncompressed = 5;</code>
      * @return string
      */
-    public function getContent()
+    public function getContentUncompressed()
     {
-        return $this->content;
+        return $this->readOneof(5);
+    }
+
+    public function hasContentUncompressed()
+    {
+        return $this->hasOneof(5);
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 5;</code>
+     * Generated from protobuf field <code>bytes content_uncompressed = 5;</code>
      * @param string $var
      * @return $this
      */
-    public function setContent($var)
+    public function setContentUncompressed($var)
     {
         GPBUtil::checkString($var, False);
-        $this->content = $var;
+        $this->writeOneof(5, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>bytes content_compressed = 13;</code>
+     * @return string
+     */
+    public function getContentCompressed()
+    {
+        return $this->readOneof(13);
+    }
+
+    public function hasContentCompressed()
+    {
+        return $this->hasOneof(13);
+    }
+
+    /**
+     * Generated from protobuf field <code>bytes content_compressed = 13;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setContentCompressed($var)
+    {
+        GPBUtil::checkString($var, False);
+        $this->writeOneof(13, $var);
 
         return $this;
     }
@@ -318,6 +348,14 @@ class ReplaceRequest extends \Google\Protobuf\Internal\Message
         $this->durability_level = $var;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContent()
+    {
+        return $this->whichOneof("content");
     }
 
     /**

@@ -29,6 +29,10 @@ class DropPrimaryIndexRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>optional string name = 4;</code>
      */
     protected $name = null;
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_missing = 5;</code>
+     */
+    protected $ignore_if_missing = null;
 
     /**
      * Constructor.
@@ -40,6 +44,7 @@ class DropPrimaryIndexRequest extends \Google\Protobuf\Internal\Message
      *     @type string $scope_name
      *     @type string $collection_name
      *     @type string $name
+     *     @type bool $ignore_if_missing
      * }
      */
     public function __construct($data = NULL) {
@@ -161,6 +166,38 @@ class DropPrimaryIndexRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkString($var, True);
         $this->name = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_missing = 5;</code>
+     * @return bool
+     */
+    public function getIgnoreIfMissing()
+    {
+        return isset($this->ignore_if_missing) ? $this->ignore_if_missing : false;
+    }
+
+    public function hasIgnoreIfMissing()
+    {
+        return isset($this->ignore_if_missing);
+    }
+
+    public function clearIgnoreIfMissing()
+    {
+        unset($this->ignore_if_missing);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_missing = 5;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setIgnoreIfMissing($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->ignore_if_missing = $var;
 
         return $this;
     }

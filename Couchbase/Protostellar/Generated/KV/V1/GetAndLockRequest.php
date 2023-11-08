@@ -33,6 +33,10 @@ class GetAndLockRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>uint32 lock_time = 5;</code>
      */
     protected $lock_time = 0;
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     */
+    protected $compression = null;
 
     /**
      * Constructor.
@@ -45,6 +49,7 @@ class GetAndLockRequest extends \Google\Protobuf\Internal\Message
      *     @type string $collection_name
      *     @type string $key
      *     @type int $lock_time
+     *     @type int $compression
      * }
      */
     public function __construct($data = NULL) {
@@ -158,6 +163,38 @@ class GetAndLockRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkUint32($var);
         $this->lock_time = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     * @return int
+     */
+    public function getCompression()
+    {
+        return isset($this->compression) ? $this->compression : 0;
+    }
+
+    public function hasCompression()
+    {
+        return isset($this->compression);
+    }
+
+    public function clearCompression()
+    {
+        unset($this->compression);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setCompression($var)
+    {
+        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\CompressionEnabled::class);
+        $this->compression = $var;
 
         return $this;
     }

@@ -254,18 +254,4 @@ class KvServiceClient extends \Grpc\BaseStub {
         $metadata, $options);
     }
 
-    /**
-     * @param \Couchbase\Protostellar\Generated\KV\V1\RangeScanRequest $argument input argument
-     * @param array $metadata metadata
-     * @param array $options call options
-     * @return \Grpc\UnaryCall
-     */
-    public function RangeScan(\Couchbase\Protostellar\Generated\KV\V1\RangeScanRequest $argument,
-      $metadata = [], $options = []) {
-        return $this->_simpleRequest('/couchbase.kv.v1.KvService/RangeScan',
-        $argument,
-        ['\Couchbase\Protostellar\Generated\KV\V1\RangeScanResponse', 'decode'],
-        $metadata, $options);
-    }
-
 }

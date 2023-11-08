@@ -29,6 +29,10 @@ class GetAndTouchRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>string key = 4;</code>
      */
     protected $key = '';
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 7;</code>
+     */
+    protected $compression = null;
     protected $expiry;
 
     /**
@@ -43,6 +47,7 @@ class GetAndTouchRequest extends \Google\Protobuf\Internal\Message
      *     @type string $key
      *     @type \Google\Protobuf\Timestamp $expiry_time
      *     @type int $expiry_secs
+     *     @type int $compression
      * }
      */
     public function __construct($data = NULL) {
@@ -188,6 +193,38 @@ class GetAndTouchRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkUint32($var);
         $this->writeOneof(6, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 7;</code>
+     * @return int
+     */
+    public function getCompression()
+    {
+        return isset($this->compression) ? $this->compression : 0;
+    }
+
+    public function hasCompression()
+    {
+        return isset($this->compression);
+    }
+
+    public function clearCompression()
+    {
+        unset($this->compression);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 7;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setCompression($var)
+    {
+        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\CompressionEnabled::class);
+        $this->compression = $var;
 
         return $this;
     }

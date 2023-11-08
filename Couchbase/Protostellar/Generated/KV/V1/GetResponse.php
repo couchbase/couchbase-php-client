@@ -14,10 +14,6 @@ use Google\Protobuf\Internal\GPBUtil;
 class GetResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
-     */
-    protected $content = '';
-    /**
      * Generated from protobuf field <code>uint32 content_flags = 6;</code>
      */
     protected $content_flags = 0;
@@ -29,6 +25,7 @@ class GetResponse extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>.google.protobuf.Timestamp expiry = 4;</code>
      */
     protected $expiry = null;
+    protected $content;
 
     /**
      * Constructor.
@@ -36,7 +33,8 @@ class GetResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type string $content
+     *     @type string $content_uncompressed
+     *     @type string $content_compressed
      *     @type int $content_flags
      *     @type int|string $cas
      *     @type \Google\Protobuf\Timestamp $expiry
@@ -48,23 +46,55 @@ class GetResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
+     * Generated from protobuf field <code>bytes content_uncompressed = 1;</code>
      * @return string
      */
-    public function getContent()
+    public function getContentUncompressed()
     {
-        return $this->content;
+        return $this->readOneof(1);
+    }
+
+    public function hasContentUncompressed()
+    {
+        return $this->hasOneof(1);
     }
 
     /**
-     * Generated from protobuf field <code>bytes content = 1;</code>
+     * Generated from protobuf field <code>bytes content_uncompressed = 1;</code>
      * @param string $var
      * @return $this
      */
-    public function setContent($var)
+    public function setContentUncompressed($var)
     {
         GPBUtil::checkString($var, False);
-        $this->content = $var;
+        $this->writeOneof(1, $var);
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>bytes content_compressed = 7;</code>
+     * @return string
+     */
+    public function getContentCompressed()
+    {
+        return $this->readOneof(7);
+    }
+
+    public function hasContentCompressed()
+    {
+        return $this->hasOneof(7);
+    }
+
+    /**
+     * Generated from protobuf field <code>bytes content_compressed = 7;</code>
+     * @param string $var
+     * @return $this
+     */
+    public function setContentCompressed($var)
+    {
+        GPBUtil::checkString($var, False);
+        $this->writeOneof(7, $var);
 
         return $this;
     }
@@ -143,6 +173,14 @@ class GetResponse extends \Google\Protobuf\Internal\Message
         $this->expiry = $var;
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getContent()
+    {
+        return $this->whichOneof("content");
     }
 
 }

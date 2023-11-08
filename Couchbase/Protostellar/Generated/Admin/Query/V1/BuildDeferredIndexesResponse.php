@@ -14,9 +14,9 @@ use Google\Protobuf\Internal\GPBUtil;
 class BuildDeferredIndexesResponse extends \Google\Protobuf\Internal\Message
 {
     /**
-     * Generated from protobuf field <code>repeated string index_names = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.admin.query.v1.BuildDeferredIndexesResponse.Index indexes = 1;</code>
      */
-    private $index_names;
+    private $indexes;
 
     /**
      * Constructor.
@@ -24,7 +24,7 @@ class BuildDeferredIndexesResponse extends \Google\Protobuf\Internal\Message
      * @param array $data {
      *     Optional. Data for populating the Message object.
      *
-     *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $index_names
+     *     @type array<\Couchbase\Protostellar\Generated\Admin\Query\V1\BuildDeferredIndexesResponse\Index>|\Google\Protobuf\Internal\RepeatedField $indexes
      * }
      */
     public function __construct($data = NULL) {
@@ -33,23 +33,23 @@ class BuildDeferredIndexesResponse extends \Google\Protobuf\Internal\Message
     }
 
     /**
-     * Generated from protobuf field <code>repeated string index_names = 1;</code>
+     * Generated from protobuf field <code>repeated .couchbase.admin.query.v1.BuildDeferredIndexesResponse.Index indexes = 1;</code>
      * @return \Google\Protobuf\Internal\RepeatedField
      */
-    public function getIndexNames()
+    public function getIndexes()
     {
-        return $this->index_names;
+        return $this->indexes;
     }
 
     /**
-     * Generated from protobuf field <code>repeated string index_names = 1;</code>
-     * @param array<string>|\Google\Protobuf\Internal\RepeatedField $var
+     * Generated from protobuf field <code>repeated .couchbase.admin.query.v1.BuildDeferredIndexesResponse.Index indexes = 1;</code>
+     * @param array<\Couchbase\Protostellar\Generated\Admin\Query\V1\BuildDeferredIndexesResponse\Index>|\Google\Protobuf\Internal\RepeatedField $var
      * @return $this
      */
-    public function setIndexNames($var)
+    public function setIndexes($var)
     {
-        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::STRING);
-        $this->index_names = $arr;
+        $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::MESSAGE, \Couchbase\Protostellar\Generated\Admin\Query\V1\BuildDeferredIndexesResponse\Index::class);
+        $this->indexes = $arr;
 
         return $this;
     }

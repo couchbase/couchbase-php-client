@@ -33,6 +33,10 @@ class GetRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>repeated string project = 5;</code>
      */
     private $project;
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     */
+    protected $compression = null;
 
     /**
      * Constructor.
@@ -45,6 +49,7 @@ class GetRequest extends \Google\Protobuf\Internal\Message
      *     @type string $collection_name
      *     @type string $key
      *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $project
+     *     @type int $compression
      * }
      */
     public function __construct($data = NULL) {
@@ -158,6 +163,38 @@ class GetRequest extends \Google\Protobuf\Internal\Message
     {
         $arr = GPBUtil::checkRepeatedField($var, \Google\Protobuf\Internal\GPBType::STRING);
         $this->project = $arr;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     * @return int
+     */
+    public function getCompression()
+    {
+        return isset($this->compression) ? $this->compression : 0;
+    }
+
+    public function hasCompression()
+    {
+        return isset($this->compression);
+    }
+
+    public function clearCompression()
+    {
+        unset($this->compression);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional .couchbase.kv.v1.CompressionEnabled compression = 6;</code>
+     * @param int $var
+     * @return $this
+     */
+    public function setCompression($var)
+    {
+        GPBUtil::checkEnum($var, \Couchbase\Protostellar\Generated\KV\V1\CompressionEnabled::class);
+        $this->compression = $var;
 
         return $this;
     }

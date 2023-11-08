@@ -41,6 +41,10 @@ class CreateIndexRequest extends \Google\Protobuf\Internal\Message
      * Generated from protobuf field <code>optional bool deferred = 7;</code>
      */
     protected $deferred = null;
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_exists = 8;</code>
+     */
+    protected $ignore_if_exists = null;
 
     /**
      * Constructor.
@@ -55,6 +59,7 @@ class CreateIndexRequest extends \Google\Protobuf\Internal\Message
      *     @type int $num_replicas
      *     @type array<string>|\Google\Protobuf\Internal\RepeatedField $fields
      *     @type bool $deferred
+     *     @type bool $ignore_if_exists
      * }
      */
     public function __construct($data = NULL) {
@@ -252,6 +257,38 @@ class CreateIndexRequest extends \Google\Protobuf\Internal\Message
     {
         GPBUtil::checkBool($var);
         $this->deferred = $var;
+
+        return $this;
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_exists = 8;</code>
+     * @return bool
+     */
+    public function getIgnoreIfExists()
+    {
+        return isset($this->ignore_if_exists) ? $this->ignore_if_exists : false;
+    }
+
+    public function hasIgnoreIfExists()
+    {
+        return isset($this->ignore_if_exists);
+    }
+
+    public function clearIgnoreIfExists()
+    {
+        unset($this->ignore_if_exists);
+    }
+
+    /**
+     * Generated from protobuf field <code>optional bool ignore_if_exists = 8;</code>
+     * @param bool $var
+     * @return $this
+     */
+    public function setIgnoreIfExists($var)
+    {
+        GPBUtil::checkBool($var);
+        $this->ignore_if_exists = $var;
 
         return $this;
     }
