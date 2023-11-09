@@ -136,10 +136,10 @@ class ExceptionConverter
                             return RequestBehaviour::fail(new PathExistsException(message: "Specified path already exists", context: $request->context()));
                         }
                     } elseif ($protoStatus->getCode() == Code::PERMISSION_DENIED) {
-                        if ($resourceInfo->getResourceType() == "anything_but_user") {
-                            return RequestBehaviour::fail(new PermissionDeniedException(message: $protoStatus->getMessage()), context: $request->context());
-                        } elseif ($resourceInfo->getResourceType() == "user") {
+                        if ($resourceInfo->getResourceType() == "user") {
                             return RequestBehaviour::fail(new AuthenticationFailureException("Your username or password is invalid", context: $request->context()));
+                        } else {
+                            return RequestBehaviour::fail(new PermissionDeniedException(message: $protoStatus->getMessage(), context: $request->context()));
                         }
                     }
                     break;
@@ -154,7 +154,7 @@ class ExceptionConverter
                     }
                     break;
                 default:
-                    return RequestBehaviour::fail(new CouchbaseException(message: "Failed to decode GRPC response - Unknown typeURL", context: $request->context()));
+                    break;
             }
         } catch (Exception) {
             return RequestBehaviour::fail(new CouchbaseException(message: $status->details, context: $request->context()));
