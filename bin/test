@@ -95,5 +95,5 @@ results_xml = File.join(project_root, "results.xml")
 
 php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
 Dir.chdir(project_root) do 
-  run("#{php_executable} -d extension=#{couchbase_ext} -d extension=grpc -d extension=protobuf -d couchbase.log_stderr=1 -d cuchbase.log_php_log_err=0 #{php_unit_phar.shellescape} --color --bootstrap #{project_root}/vendor/autoload.php --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
+  run("#{php_executable} -d extension=#{couchbase_ext} -d couchbase.log_stderr=1 -d cuchbase.log_php_log_err=0 #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
 end
