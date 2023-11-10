@@ -192,7 +192,6 @@ class SearchTest extends Helpers\CouchbaseTestCase
     public function testSearchWithSort()
     {
         $this->skipIfCaves();
-        $this->skipIfProtostellar(); // PS does not support simple string sort
 
         $query = new MatchPhraseSearchQuery("hop beer");
         $options = SearchOptions::build()

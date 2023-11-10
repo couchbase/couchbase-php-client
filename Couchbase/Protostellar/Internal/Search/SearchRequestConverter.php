@@ -78,6 +78,7 @@ use Couchbase\QueryStringSearchQuery;
 use Couchbase\RegexpSearchQuery;
 use Couchbase\SearchHighlightMode;
 use Couchbase\SearchQuery;
+use Couchbase\SearchSortMissing;
 use Couchbase\TermRangeSearchQuery;
 use Couchbase\TermSearchQuery;
 use Couchbase\WildcardSearchQuery;
@@ -660,8 +661,8 @@ class SearchRequestConverter
             $decodedJSON[] = json_decode($specs);
         }
         foreach ($decodedJSON as $item) {
-            if (gettype($item) == "string") { //TODO: Simple string sort not yet implemented in PS
-                $sort[] = $item;
+            if (gettype($item) == "string") {
+                $sort[] = self::convertSimpleStringSort($item);
             } else {
                 switch ($item->by) {
                     case "id":
@@ -682,6 +683,20 @@ class SearchRequestConverter
             }
         }
         return $sort;
+    }
+
+    private static function convertSimpleStringSort(string $field): Sorting
+    {
+        $data = [];
+        if (substr($field, 0, 1) == "-") {
+            $data["descending"] = true;
+            $data["field"] = substr($field, 1);
+        } else {
+            $data["descending"] = false;
+            $data["field"] = $field;
+        }
+        $fieldSorting = new FieldSorting($data);
+        return new Sorting(["field_sorting" => $fieldSorting]);
     }
 
     private static function convertIdSort(stdClass $spec): Sorting
