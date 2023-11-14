@@ -53,6 +53,12 @@ class Cluster implements ClusterInterface
      */
     public function __construct(string $connectionString, ClusterOptions $options)
     {
+        if (
+            preg_match("/^protostellar:\/\//", $connectionString) ||
+            preg_match("/^couchbase2:\/\//", $connectionString)
+        ) {
+            throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
+        }
         $this->connectionHash = hash("sha256", sprintf("--%s--%s--", $connectionString, $options->authenticatorHash()));
         $this->core = Extension\createConnection($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
@@ -67,7 +73,31 @@ class Cluster implements ClusterInterface
         if (preg_match("/^couchbases?:\/\//", $connectionString)) {
             return new Cluster($connectionString, $options);
         }
+
+        if (
+            preg_match("/^protostellar:\/\//", $connectionString) ||
+            preg_match("/^couchbase2:\/\//", $connectionString)
+        ) {
+            Cluster::enableProtostellar();
+        }
         return ClusterRegistry::connect($connectionString, $options);
+    }
+
+    private static function enableProtostellar(): void
+    {
+        ClusterRegistry::registerConnectionHandler(
+            "/^protostellar:\/\//",
+            function (string $connectionString, ClusterOptions $options) {
+                return new Protostellar\Cluster($connectionString, $options);
+            }
+        );
+
+        ClusterRegistry::registerConnectionHandler(
+            "/^couchbase2:\/\//",
+            function (string $connectionString, ClusterOptions $options) {
+                return new Protostellar\Cluster($connectionString, $options);
+            }
+        );
     }
 
     /**

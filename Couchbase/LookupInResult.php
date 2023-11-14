@@ -81,11 +81,13 @@ class LookupInResult extends Result
     public function contentByPath(string $path)
     {
         foreach ($this->fields as $field) {
-            if ($field['path'] == $path) {
-                if (!array_key_exists('exists', $field) || !$field['exists']) {
-                    throw new PathNotFoundException(sprintf("LookupIn path is not found for path: %s", $path));
+            if (array_key_exists('path', $field)) {
+                if ($field['path'] == $path) {
+                    if (!array_key_exists('exists', $field) || !$field['exists']) {
+                        throw new PathNotFoundException(sprintf("LookupIn path is not found for path: %s", $path));
+                    }
+                    return $this->transcoder->decode($field['value'], 0);
                 }
-                return $this->transcoder->decode($field['value'], 0);
             }
         }
         throw new OutOfBoundsException(sprintf("LookupIn result does not have entry for path: %s", $path));
@@ -102,7 +104,9 @@ class LookupInResult extends Result
     public function exists(int $index): bool
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['exists'];
+            if (array_key_exists('exists', $this->fields[$index])) {
+                return $this->fields[$index]['exists'];
+            }
         }
         return false;
     }
@@ -117,7 +121,9 @@ class LookupInResult extends Result
     {
         foreach ($this->fields as $field) {
             if ($field['path'] == $path) {
-                return $field['exists'];
+                if (array_key_exists('exists', $field)) {
+                    return $field['exists'];
+                }
             }
         }
         return false;
@@ -132,7 +138,9 @@ class LookupInResult extends Result
     public function path(int $index): ?string
     {
         if (array_key_exists($index, $this->fields)) {
-            return $this->fields[$index]['path'];
+            if (array_key_exists('path', $this->fields[$index])) {
+                return $this->fields[$index]['path'];
+            }
         }
         return null;
     }

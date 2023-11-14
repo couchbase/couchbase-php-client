@@ -10,7 +10,12 @@ files = [
     "LICENSE",
     "Makefile.frag",
     "config.m4",
-    "Couchbase/**/*.php",
+#    "Couchbase/**/*.php", Revert this once we choose to package PS
+    "Couchbase/*.php",
+    "Couchbase/Datastructures/**/*.php",
+    "Couchbase/Exception/*.php",
+    "Couchbase/Management/*.php",
+    "Couchbase/Utilities/*.php",
     "src/*.{cxx,hxx}",
     "src/CMakeLists.txt",
     "src/cmake/*",

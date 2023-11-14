@@ -49,6 +49,7 @@ class ServerVersionTest extends Helpers\CouchbaseTestCase
 
     public function testRuntimeVersion()
     {
+        $this->skipIfProtostellar();
         $this->skipIfCaves();
 
         $cluster = $this->connectCluster();

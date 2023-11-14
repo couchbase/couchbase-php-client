@@ -24,6 +24,12 @@ include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
 
 class PingTest extends Helpers\CouchbaseTestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+        $this->skipIfProtostellar();
+    }
+
     public function testClusterPingNoParams()
     {
         $cluster = $this->connectClusterUnique();

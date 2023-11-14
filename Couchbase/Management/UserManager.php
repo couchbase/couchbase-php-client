@@ -22,7 +22,7 @@ namespace Couchbase\Management;
 
 use Couchbase\Extension;
 
-class UserManager
+class UserManager implements UserManagerInterface
 {
     /**
      * @var resource

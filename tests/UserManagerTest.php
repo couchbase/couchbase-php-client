@@ -13,17 +13,18 @@ use Couchbase\Management\RoleAndDescription;
 use Couchbase\Management\RoleAndOrigin;
 use Couchbase\Management\User;
 use Couchbase\Management\UserAndMetadata;
-use Couchbase\Management\UserManager;
+use Couchbase\Management\UserManagerInterface;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class UserManagerTest extends Helpers\CouchbaseTestCase
 {
-    private UserManager $manager;
+    private UserManagerInterface $manager;
 
     public function setUp(): void
     {
         parent::setUp();
+        $this->skipIfProtostellar();
 
         $this->manager = $this->connectCluster()->users();
     }

@@ -18,13 +18,13 @@
 
 declare(strict_types=1);
 
+use Couchbase\CollectionInterface;
 use Couchbase\Exception\CollectionNotFoundException;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\PrefixScan;
 use Couchbase\RangeScan;
 use Couchbase\SamplingScan;
 use Couchbase\ScanOptions;
-use Couchbase\Collection;
 use Couchbase\ScanResults;
 use Couchbase\ScanTerm;
 
@@ -32,7 +32,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class KeyValueScanTest extends Helpers\CouchbaseTestCase
 {
-    private Collection $collection;
+    private CollectionInterface $collection;
     private string $sharedPrefix = "scan-test";
     private array $testIds = [];
     private array $batchByteLimitValues = [0, 1, 25, 100];
@@ -42,6 +42,7 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     public function setUp(): void
     {
         parent::setUp();
+        $this->skipIfProtostellar();
 
         $this->collection = $this->defaultCollection();
         for ($i = 0; $i < 100; $i++) {

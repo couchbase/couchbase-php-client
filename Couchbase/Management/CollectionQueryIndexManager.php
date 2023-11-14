@@ -22,7 +22,7 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Extension;
 
-class CollectionQueryIndexManager
+class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterface
 {
     private string $collectionName;
     private string $scopeName;

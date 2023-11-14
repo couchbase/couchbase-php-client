@@ -101,6 +101,7 @@
                     <file role="php" name="PathNotFoundException.php"/>
                     <file role="php" name="PathTooBigException.php"/>
                     <file role="php" name="PathTooDeepException.php"/>
+                    <file role="php" name="PermissionDeniedException.php"/>
                     <file role="php" name="PlanningFailureException.php"/>
                     <file role="php" name="PreparedStatementFailureException.php"/>
                     <file role="php" name="RequestCanceledException.php"/>
@@ -137,12 +138,15 @@
                     <file role="php" name="AuthDomain.php"/>
                     <file role="php" name="AzureBlobExternalAnalyticsLink.php"/>
                     <file role="php" name="BucketManager.php"/>
+                    <file role="php" name="BucketManagerInterface.php"/>
                     <file role="php" name="BucketSettings.php"/>
                     <file role="php" name="BucketType.php"/>
                     <file role="php" name="BuildQueryIndexesOptions.php"/>
                     <file role="php" name="ChangePasswordOptions.php"/>
                     <file role="php" name="CollectionManager.php"/>
+                    <file role="php" name="CollectionManagerInterface.php"/>
                     <file role="php" name="CollectionQueryIndexManager.php"/>
+                    <file role="php" name="CollectionQueryIndexManagerInterface.php"/>
                     <file role="php" name="CollectionSpec.php"/>
                     <file role="php" name="CompressionMode.php"/>
                     <file role="php" name="ConflictResolutionType.php"/>
@@ -195,6 +199,7 @@
                     <file role="php" name="PauseIngestSearchIndexOptions.php"/>
                     <file role="php" name="QueryIndex.php"/>
                     <file role="php" name="QueryIndexManager.php"/>
+                    <file role="php" name="QueryIndexManagerInterface.php"/>
                     <file role="php" name="QueryIndexType.php"/>
                     <file role="php" name="ReplaceAnalyticsLinkOptions.php"/>
                     <file role="php" name="ResumeIngestSearchIndexOptions.php"/>
@@ -205,6 +210,7 @@
                     <file role="php" name="ScopeSpec.php"/>
                     <file role="php" name="SearchIndex.php"/>
                     <file role="php" name="SearchIndexManager.php"/>
+                    <file role="php" name="SearchIndexManagerInterface.php"/>
                     <file role="php" name="StorageBackend.php"/>
                     <file role="php" name="UnfreezePlanSearchIndexOptions.php"/>
                     <file role="php" name="UpdateBucketOptions.php"/>
@@ -216,6 +222,7 @@
                     <file role="php" name="User.php"/>
                     <file role="php" name="UserAndMetadata.php"/>
                     <file role="php" name="UserManager.php"/>
+                    <file role="php" name="UserManagerInterface.php"/>
                     <file role="php" name="View.php"/>
                     <file role="php" name="ViewIndexManager.php"/>
                     <file role="php" name="WatchQueryIndexesOptions.php"/>

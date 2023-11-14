@@ -80,6 +80,7 @@ zend_class_entry* path_mismatch_exception_ce;
 zend_class_entry* path_not_found_exception_ce;
 zend_class_entry* path_too_big_exception_ce;
 zend_class_entry* path_too_deep_exception_ce;
+zend_class_entry* permission_denied_exception_ce;
 zend_class_entry* planning_failure_exception_ce;
 zend_class_entry* prepared_statement_failure_exception_ce;
 zend_class_entry* request_canceled_exception_ce;
@@ -221,6 +222,8 @@ initialize_exceptions(const zend_function_entry* exception_functions)
     path_too_big_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PathTooDeepException", nullptr);
     path_too_deep_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PermissionDeniedException", nullptr);
+    permission_denied_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PlanningFailureException", nullptr);
     planning_failure_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "PreparedStatementFailureException", nullptr);

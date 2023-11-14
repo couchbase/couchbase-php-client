@@ -3,7 +3,7 @@
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\BucketNotFlushableException;
 use Couchbase\Exception\BucketNotFoundException;
-use Couchbase\Management\BucketManager;
+use Couchbase\Management\BucketManagerInterface;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\BucketType;
 use Couchbase\Management\CompressionMode;
@@ -15,7 +15,7 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
 class BucketManagerTest extends Helpers\CouchbaseTestCase
 {
-    private BucketManager $manager;
+    private BucketManagerInterface $manager;
     private string $bucketName;
 
     public function setUp(): void
@@ -48,6 +48,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateMemcachedBucket()
     {
+        $this->skipIfProtostellar();
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::MEMCACHED);
         $this->manager->createBucket($settings);
@@ -115,6 +116,8 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateBucketFlushEnable()
     {
+        $this->skipIfProtostellar();
+
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->enableFlush(true);
         $this->manager->createBucket($settings);
@@ -127,6 +130,8 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateBucketFlushNotEnabled()
     {
+        $this->skipIfProtostellar();
+
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE);
         $this->manager->createBucket($settings);
@@ -338,6 +343,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
     public function testCreateHistory()
     {
         $this->skipIfCaves();
+        $this->skipIfProtostellar();
         $this->skipIfUnsupported($this->version()->supportsBucketDedup());
 
         $settings = new BucketSettings($this->bucketName);
@@ -355,6 +361,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
     public function testUpdateHistory()
     {
         $this->skipIfCaves();
+        $this->skipIfProtostellar();
         $this->skipIfUnsupported($this->version()->supportsBucketDedup());
 
         $settings = new BucketSettings($this->bucketName);

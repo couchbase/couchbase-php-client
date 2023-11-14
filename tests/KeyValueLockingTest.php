@@ -28,6 +28,7 @@ class KeyValueLockingTest extends Helpers\CouchbaseTestCase
 {
     public function testPessimisticLockingWorkflow()
     {
+        $this->skipIfProtostellar(); //Skipping due to lookupin locked doc get issue
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
 

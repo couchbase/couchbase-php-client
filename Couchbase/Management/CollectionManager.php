@@ -23,7 +23,7 @@ namespace Couchbase\Management;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Extension;
 
-class CollectionManager
+class CollectionManager implements CollectionManagerInterface
 {
     /**
      * @var resource

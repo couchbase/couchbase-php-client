@@ -23,11 +23,12 @@ namespace Helpers;
 include_once __DIR__ . "/TestEnvironment.php";
 include_once __DIR__ . "/../../Couchbase/autoload.php";
 
-use Couchbase\Bucket;
+use Couchbase\BucketInterface;
 use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
-use Couchbase\Collection;
 
+use Couchbase\CollectionInterface;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -53,16 +54,16 @@ class CouchbaseTestCase extends TestCase
         self::env()->stop();
     }
 
-    public function connectCluster(?ClusterOptions $options = null): Cluster
+    public function connectCluster(?ClusterOptions $options = null): ClusterInterface
     {
         if ($options == null) {
             $options = new ClusterOptions();
         }
         $options->authenticator(self::env()->buildPasswordAuthenticator());
-        return new Cluster(self::env()->connectionString(), $options);
+        return Cluster::connect(self::env()->connectionString(), $options);
     }
 
-    public function connectClusterUnique(?ClusterOptions $options = null): Cluster
+    public function connectClusterUnique(?ClusterOptions $options = null): ClusterInterface
     {
         if ($options == null) {
             $options = new ClusterOptions();
@@ -75,10 +76,10 @@ class CouchbaseTestCase extends TestCase
             $connstr .= "?";
         }
         $connstr .= $this->uniqueId() . "=" . $this->uniqueId();
-        return new Cluster($connstr, $options);
+        return Cluster::connect($connstr, $options);
     }
 
-    public function openBucket(string $name = null): Bucket
+    public function openBucket(string $name = null): BucketInterface
     {
         if ($name == null) {
             $name = self::env()->bucketName();
@@ -86,7 +87,7 @@ class CouchbaseTestCase extends TestCase
         return $this->connectCluster()->bucket($name);
     }
 
-    public function defaultCollection(string $bucketName = null): Collection
+    public function defaultCollection(string $bucketName = null): CollectionInterface
     {
         return $this->openBucket($bucketName)->defaultCollection();
     }
@@ -105,6 +106,24 @@ class CouchbaseTestCase extends TestCase
             $caller = debug_backtrace()[1];
             $this->markTestSkipped(sprintf("%s::%s is not supported on CAVES", $caller["class"], $caller["function"]));
         }
+    }
+
+    public function skipIfProtostellar(): void
+    {
+        if ($this->isProtostellar()) {
+            $this->markTestSkipped(sprintf("Test is not supported on Protostellar"));
+        }
+    }
+
+    public function isProtostellar(): bool
+    {
+        if (
+            preg_match("/^protostellar:\/\//", self::env()->connectionString()) ||
+            preg_match("/^couchbase2:\/\//", self::env()->connectionString())
+        ) {
+            return true;
+        }
+        return false;
     }
 
     public function skipIfCouchbase(): void
@@ -138,6 +157,9 @@ class CouchbaseTestCase extends TestCase
 
     public function skipIfReplicasAreNotConfigured(): void
     {
+        if ($this->isProtostellar()) {
+            return;
+        }
         if (!$this->connectCluster()->replicasConfiguredFor($this->env()->bucketName())) {
             $caller = debug_backtrace()[1];
             $this->markTestSkipped(
@@ -203,7 +225,7 @@ class CouchbaseTestCase extends TestCase
             return $this->env()->version();
         }
         $versionString = null;
-        if ($this->env()->useCouchbase()) {
+        if ($this->env()->useCouchbase() && !$this->env()->useProtostellar()) {
             $versionString = $this->connectCluster()->version($this->env()->bucketName());
         }
         if ($versionString == null) {
