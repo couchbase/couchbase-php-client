@@ -585,6 +585,11 @@ connection_handle::connection_handle(std::string connection_string,
     impl_->start();
 }
 
+connection_handle::~connection_handle()
+{
+    impl_->stop();
+}
+
 COUCHBASE_API
 core_error_info
 connection_handle::open()

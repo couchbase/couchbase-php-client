@@ -120,6 +120,15 @@ flush_logger()
 
 COUCHBASE_API
 void
+shutdown_logger()
+{
+    flush_logger();
+    couchbase::core::logger::shutdown();
+}
+
+
+COUCHBASE_API
+void
 initialize_logger()
 {
     auto spd_log_level = spdlog::level::off;

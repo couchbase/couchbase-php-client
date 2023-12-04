@@ -40,4 +40,8 @@ initialize_logger();
 COUCHBASE_API
 void
 flush_logger();
+
+COUCHBASE_API
+void
+shutdown_logger();
 } // namespace couchbase::php
