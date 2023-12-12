@@ -45,6 +45,9 @@ class connection_handle
                       std::chrono::system_clock::time_point idle_expiry);
 
     COUCHBASE_API
+    ~connection_handle();
+
+    COUCHBASE_API
     std::shared_ptr<couchbase::core::cluster> cluster() const;
 
     COUCHBASE_API

@@ -184,7 +184,7 @@ couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
 
 PHP_MSHUTDOWN_FUNCTION(couchbase)
 {
-    couchbase::php::flush_logger();
+    couchbase::php::shutdown_logger();
 
     (void)type;
     (void)module_number;
