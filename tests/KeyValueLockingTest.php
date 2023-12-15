@@ -54,6 +54,7 @@ class KeyValueLockingTest extends Helpers\CouchbaseTestCase
     public function testUnlockingUnlockedDocumentThrowsDocNotLocked()
     {
         $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsDocNotLockedException());
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
 
