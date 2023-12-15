@@ -18,6 +18,7 @@
 
 declare(strict_types=1);
 
+use Couchbase\Exception\DocumentNotLockedException;
 use Couchbase\LookupGetFullSpec;
 use Couchbase\LookupInOptions;
 use Couchbase\UpsertOptions;
@@ -48,5 +49,18 @@ class KeyValueLockingTest extends Helpers\CouchbaseTestCase
 
         $res = $collection->get($id);
         $this->assertEquals($lockedCas, $res->cas());
+    }
+
+    public function testUnlockingUnlockedDocumentThrowsDocNotLocked()
+    {
+        $this->skipIfProtostellar();
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["foo" => "bar"]);
+        $cas = $collection->get($id)->cas();
+
+        $this->expectException(DocumentNotLockedException::class);
+        $collection->unlock($id, $cas);
     }
 }

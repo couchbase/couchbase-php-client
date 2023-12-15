@@ -54,6 +54,7 @@ zend_class_entry* document_exists_exception_ce;
 zend_class_entry* document_irretrievable_exception_ce;
 zend_class_entry* document_locked_exception_ce;
 zend_class_entry* document_not_found_exception_ce;
+zend_class_entry* document_not_locked_exception_ce;
 zend_class_entry* document_not_json_exception_ce;
 zend_class_entry* durability_ambiguous_exception_ce;
 zend_class_entry* durability_impossible_exception_ce;
@@ -170,6 +171,8 @@ initialize_exceptions(const zend_function_entry* exception_functions)
     document_locked_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentNotFoundException", nullptr);
     document_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+    INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentNotLockedException", nullptr);
+    document_not_locked_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DocumentNotJsonException", nullptr);
     document_not_json_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
     INIT_NS_CLASS_ENTRY(ce, "Couchbase\\Exception", "DurabilityAmbiguousException", nullptr);
@@ -345,6 +348,8 @@ map_error_to_exception(const core_error_info& info)
         switch (static_cast<couchbase::errc::key_value>(info.ec.value())) {
             case couchbase::errc::key_value::document_not_found:
                 return document_not_found_exception_ce;
+            case couchbase::errc::key_value::document_not_locked:
+                return document_not_locked_exception_ce;
             case couchbase::errc::key_value::document_irretrievable:
                 return document_irretrievable_exception_ce;
             case couchbase::errc::key_value::document_locked:
