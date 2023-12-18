@@ -186,7 +186,7 @@ create_scan_result_resource(connection_handle* connection,
     // Get operation agent
     auto clust = connection->cluster();
 
-    auto agent_group = couchbase::core::agent_group(clust->io_context(), couchbase::core::agent_group_config{ { clust } });
+    auto agent_group = couchbase::core::agent_group(clust->io_context(), couchbase::core::agent_group_config{ { *clust } });
     agent_group.open_bucket(bucket_name);
     auto agent = agent_group.get_agent(bucket_name);
     if (!agent.has_value()) {

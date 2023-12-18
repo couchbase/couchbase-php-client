@@ -25,7 +25,11 @@
 #include "version.hxx"
 
 #include <core/cluster.hxx>
+#include <core/error_context/analytics.hxx>
+#include <core/error_context/search.hxx>
+#include <core/error_context/view.hxx>
 #include <core/management/bucket_settings.hxx>
+#include <core/operations.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
 #include <core/operations/management/collections.hxx>
@@ -33,6 +37,7 @@
 #include <core/operations/management/search.hxx>
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
+#include <core/utils/connection_string.hxx>
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/collection.hxx>
@@ -40,6 +45,7 @@
 #include <couchbase/retry_reason.hxx>
 
 #include <fmt/core.h>
+#include <openssl/crypto.h>
 
 #include <array>
 #include <thread>
@@ -542,11 +548,14 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                                                              std::optional<std::string> bucket_name,
                                                              std::set<core::service_type> services)
     {
+        std::optional<std::chrono::milliseconds> timeout{}; // not exposing timeout atm
+
         auto barrier = std::make_shared<std::promise<core::diag::ping_result>>();
         auto f = barrier->get_future();
-        cluster_->ping(std::move(report_id), std::move(bucket_name), std::move(services), [barrier](core::diag::ping_result&& resp) {
-            barrier->set_value(std::move(resp));
-        });
+        cluster_->ping(
+          std::move(report_id), std::move(bucket_name), std::move(services), timeout, [barrier](core::diag::ping_result&& resp) {
+              barrier->set_value(std::move(resp));
+          });
         auto resp = f.get();
         return { {}, std::move(resp) };
     }
@@ -562,12 +571,12 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 
     couchbase::collection collection(std::string_view bucket, std::string_view scope, std::string_view collection)
     {
-        return couchbase::cluster(cluster_).bucket(bucket).scope(scope).collection(collection);
+        return couchbase::cluster(*cluster_).bucket(bucket).scope(scope).collection(collection);
     }
 
   private:
     asio::io_context ctx_{};
-    std::shared_ptr<couchbase::core::cluster> cluster_{ couchbase::core::cluster::create(ctx_) };
+    std::shared_ptr<couchbase::core::cluster> cluster_{ std::make_shared<couchbase::core::cluster>(ctx_) };
     std::thread worker;
     core::origin origin_;
 };
@@ -787,8 +796,7 @@ connection_handle::document_insert(zval* return_value,
 
     auto [ctx, resp] =
       impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
-        .insert<couchbase::php::passthrough_transcoder>(
-          cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
+        .insert(cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
         .get();
     if (ctx.ec()) {
         return { ctx.ec(), ERROR_LOCATION, "unable to execute insert", build_error_context(ctx) };
@@ -835,8 +843,7 @@ connection_handle::document_replace(zval* return_value,
 
     auto [ctx, resp] =
       impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
-        .replace<couchbase::php::passthrough_transcoder>(
-          cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
+        .replace(cb_string_new(id), couchbase::codec::encoded_value{ cb_binary_new(value), static_cast<std::uint32_t>(flags) }, opts)
         .get();
     if (ctx.ec()) {
         return { ctx.ec(), ERROR_LOCATION, "unable to execute replace", build_error_context(ctx) };

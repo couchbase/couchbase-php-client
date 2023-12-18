@@ -30,6 +30,8 @@
 
 #include <chrono>
 
+#include <fmt/format.h>
+
 namespace couchbase::transactions
 {
 class transaction_query_options;
