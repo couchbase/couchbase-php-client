@@ -279,6 +279,11 @@ class ServerVersion
         return ($this->major == 7 && $this->minor >= 6) || $this->major > 7;
     }
 
+    public function supportsCollectionMaxTTLNoExpiry(): bool
+    {
+        return ($this->major == 7 && $this->minor >= 6) || $this->major > 7;
+    }
+
     /**
      * @return int
      */

@@ -20,13 +20,22 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 class CreateCollectionSettings
 {
     private ?int $maxExpiry;
     private ?bool $history;
 
+
+    /**
+     * @throws InvalidArgumentException
+     */
     public function __construct(int $maxExpiry = null, bool $history = null)
     {
+        if ($maxExpiry < -1) {
+            throw new InvalidArgumentException("Collection max expiry must be greater than or equal to -1.");
+        }
         $this->maxExpiry = $maxExpiry;
         $this->history = $history;
     }

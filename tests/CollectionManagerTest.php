@@ -3,6 +3,8 @@
 use Couchbase\Exception\CollectionExistsException;
 use Couchbase\Exception\CollectionNotFoundException;
 use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\FeatureNotAvailableException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\ScopeExistsException;
 use Couchbase\Exception\ScopeNotFoundException;
 use Couchbase\Management\BucketSettings;
@@ -291,6 +293,51 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($foundCollection->history());
 
         $bucketManager->dropBucket($bucketName);
+    }
+
+    public function testCreateCollectionNoExpiry()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsCollectionMaxTTLNoExpiry());
+
+        $collectionName = $this->uniqueId("collection");
+        $scopeName = $this->uniqueId("scope");
+        $this->manager->createScope($scopeName);
+        $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1, false));
+
+        $selectedScope = $this->getScope($scopeName);
+
+        $found = false;
+        foreach ($selectedScope->collections() as $collection) {
+            if ($collection->name() == $collectionName) {
+                $found = true;
+                $foundCollection = $collection;
+            }
+        }
+        $this->assertTrue($found);
+
+        $this->assertEquals(-1, $foundCollection->maxExpiry());
+    }
+
+    public function testCreateCollectionNoExpiryNotSupported()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported(!$this->version()->supportsCollectionMaxTTLNoExpiry());
+
+        $collectionName = $this->uniqueId("collection");
+        $scopeName = $this->uniqueId("scope");
+        $this->manager->createScope($scopeName);
+
+        $this->expectException(FeatureNotAvailableException::class);
+        $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1, false));
+    }
+
+    public function testCreateCollectionInvalidExpiry()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        CreateCollectionSettings::build(-5, false);
     }
 
     /**
