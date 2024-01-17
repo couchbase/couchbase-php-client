@@ -1275,7 +1275,7 @@ PHP_FUNCTION(vectorSearch)
     zval* options = nullptr;
     zval* vector_options = nullptr;
 
-    ZEND_PARSE_PARAMETERS_START(3, 4)
+    ZEND_PARSE_PARAMETERS_START(4, 6)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(index_name)
     Z_PARAM_STR(query)
