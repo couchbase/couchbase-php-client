@@ -183,7 +183,7 @@ class Cluster implements ClusterInterface
         }
 
         $vectorSearch = $exportedRequest['vectorSearch'];
-        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query),  json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
         return new SearchResult($result);
     }
 

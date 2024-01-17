@@ -64,7 +64,6 @@ class SearchRequest
     public static function build(SearchQuery|VectorSearch $searchQueryOrVectorSearch): SearchRequest
     {
         return new SearchRequest($searchQueryOrVectorSearch);
-
     }
 
     /**
