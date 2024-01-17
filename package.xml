@@ -491,6 +491,8 @@
                                 <file role="src" name="date_range_facet.cxx"/>
                                 <file role="src" name="date_range_facet_result.cxx"/>
                                 <file role="src" name="date_range_query.cxx"/>
+                                <file role="src" name="diagnostics.cxx"/>
+                                <file role="src" name="diagnostics.hxx"/>
                                 <file role="src" name="disjunction_query.cxx"/>
                                 <file role="src" name="dns_srv_tracker.cxx"/>
                                 <file role="src" name="dns_srv_tracker.hxx"/>
@@ -1375,6 +1377,8 @@
                             <file role="src" name="date_range_facet_result.hxx"/>
                             <file role="src" name="date_range_query.hxx"/>
                             <file role="src" name="decrement_options.hxx"/>
+                            <file role="src" name="diagnostics_options.hxx"/>
+                            <file role="src" name="diagnostics_result.hxx"/>
                             <file role="src" name="disallow_querying_search_index_options.hxx"/>
                             <file role="src" name="disconnect_link_analytics_options.hxx"/>
                             <file role="src" name="disjunction_query.hxx"/>
@@ -1391,6 +1395,8 @@
                             <file role="src" name="drop_scope_options.hxx"/>
                             <file role="src" name="drop_search_index_options.hxx"/>
                             <file role="src" name="durability_level.hxx"/>
+                            <file role="src" name="endpoint_diagnostics.hxx"/>
+                            <file role="src" name="endpoint_ping_report.hxx"/>
                             <file role="src" name="error_codes.hxx"/>
                             <file role="src" name="error_context.hxx"/>
                             <file role="src" name="exists_options.hxx"/>
@@ -1458,6 +1464,8 @@
                             <file role="src" name="pause_ingest_search_index_options.hxx"/>
                             <file role="src" name="persist_to.hxx"/>
                             <file role="src" name="phrase_query.hxx"/>
+                            <file role="src" name="ping_options.hxx"/>
+                            <file role="src" name="ping_result.hxx"/>
                             <file role="src" name="prefix_query.hxx"/>
                             <file role="src" name="prepend_options.hxx"/>
                             <file role="src" name="query_error_context.hxx"/>
@@ -1509,6 +1517,7 @@
                             <file role="src" name="search_sort_score.hxx"/>
                             <file role="src" name="search_term_range.hxx"/>
                             <file role="src" name="security_options.hxx"/>
+                            <file role="src" name="service_type.hxx"/>
                             <file role="src" name="store_semantics.hxx"/>
                             <file role="src" name="subdocument_error_context.hxx"/>
                             <file role="src" name="term_facet.hxx"/>
