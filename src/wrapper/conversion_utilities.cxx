@@ -515,6 +515,270 @@ query_response_to_zval(zval* return_value, const core::operations::query_respons
     add_assoc_zval(return_value, "meta", &meta);
 }
 
+void
+search_query_response_to_zval(zval* return_value, const core::operations::search_response& resp)
+{
+    array_init(return_value);
+
+    add_assoc_string(return_value, "status", resp.status.c_str());
+    add_assoc_string(return_value, "error", resp.error.c_str());
+
+    zval rows;
+    array_init(&rows);
+    for (const auto& row : resp.rows) {
+        zval z_row;
+        array_init(&z_row);
+        add_assoc_string(&z_row, "index", row.index.c_str());
+        add_assoc_string(&z_row, "id", row.id.c_str());
+        add_assoc_string(&z_row, "fields", row.fields.c_str());
+        add_assoc_string(&z_row, "explanation", row.explanation.c_str());
+        add_assoc_double(&z_row, "score", row.score);
+
+        zval z_locations;
+        array_init(&z_locations);
+        for (const auto& location : row.locations) {
+            zval z_location;
+            array_init(&z_location);
+            add_assoc_string(&z_location, "field", location.field.c_str());
+            add_assoc_string(&z_location, "term", location.term.c_str());
+            add_assoc_long(&z_location, "position", location.position);
+            add_assoc_long(&z_location, "startOffset", location.start_offset);
+            add_assoc_long(&z_location, "endOffset", location.end_offset);
+
+            if (location.array_positions.has_value()) {
+                zval z_array_positions;
+                array_init(&z_array_positions);
+                for (const auto& position : location.array_positions.value()) {
+                    add_next_index_long(&z_array_positions, static_cast<zend_long>(position));
+                }
+
+                add_assoc_zval(&z_location, "arrayPositions", &z_array_positions);
+            }
+            add_next_index_zval(&z_locations, &z_location);
+        }
+        add_assoc_zval(&z_row, "locations", &z_locations);
+
+        zval fragments;
+        array_init(&fragments);
+        for (auto const& [field, fragment] : row.fragments) {
+            zval z_fragment_values;
+            array_init(&z_fragment_values);
+
+            for (const auto& fragment_value : fragment) {
+                add_next_index_string(&z_fragment_values, fragment_value.c_str());
+            }
+
+            add_assoc_zval(&fragments, field.c_str(), &z_fragment_values);
+        }
+        add_assoc_zval(&z_row, "fragments", &fragments);
+
+        add_next_index_zval(&rows, &z_row);
+    }
+    add_assoc_zval(return_value, "rows", &rows);
+
+    zval metadata;
+    array_init(&metadata);
+    add_assoc_string(&metadata, "clientContextId", resp.meta.client_context_id.c_str());
+
+    zval metrics;
+    array_init(&metrics);
+    add_assoc_long(&metrics, "tookNanoseconds", resp.meta.metrics.took.count());
+    add_assoc_long(&metrics, "totalRows", resp.meta.metrics.total_rows);
+    add_assoc_double(&metrics, "maxScore", resp.meta.metrics.max_score);
+    add_assoc_long(&metrics, "successPartitionCount", resp.meta.metrics.success_partition_count);
+    add_assoc_long(&metrics, "errorPartitionCount", resp.meta.metrics.error_partition_count);
+    add_assoc_zval(&metadata, "metrics", &metrics);
+
+    zval errors;
+    array_init(&errors);
+    for (const auto& [location, message] : resp.meta.errors) {
+        add_assoc_string(&errors, location.c_str(), message.c_str());
+    }
+    add_assoc_zval(&metadata, "errors", &errors);
+
+    add_assoc_zval(return_value, "meta", &metadata);
+
+    zval facets;
+    array_init(&facets);
+    for (const auto& facet : resp.facets) {
+        zval z_facet;
+        array_init(&z_facet);
+        add_assoc_string(&z_facet, "name", facet.name.c_str());
+        add_assoc_string(&z_facet, "field", facet.field.c_str());
+        add_assoc_long(&z_facet, "total", facet.total);
+        add_assoc_long(&z_facet, "missing", facet.missing);
+        add_assoc_long(&z_facet, "other", facet.other);
+
+        zval terms;
+        array_init(&terms);
+        for (const auto& term : facet.terms) {
+            zval z_term;
+            array_init(&z_term);
+            add_assoc_string(&z_term, "term", term.term.c_str());
+            add_assoc_long(&z_term, "count", term.count);
+            add_next_index_zval(&terms, &z_term);
+        }
+        add_assoc_zval(&z_facet, "terms", &terms);
+
+        zval date_ranges;
+        array_init(&date_ranges);
+        for (const auto& range : facet.date_ranges) {
+            zval z_range;
+            array_init(&z_range);
+            add_assoc_string(&z_range, "name", range.name.c_str());
+            add_assoc_long(&z_range, "count", range.count);
+            if (range.start.has_value()) {
+                add_assoc_string(&z_range, "start", range.start.value().c_str());
+            }
+            if (range.end.has_value()) {
+                add_assoc_string(&z_range, "end", range.end.value().c_str());
+            }
+            add_next_index_zval(&date_ranges, &z_range);
+        }
+        add_assoc_zval(&z_facet, "dateRanges", &date_ranges);
+
+        zval numeric_ranges;
+        array_init(&numeric_ranges);
+        for (const auto& range : facet.numeric_ranges) {
+            zval z_range;
+            array_init(&z_range);
+            add_assoc_string(&z_range, "name", range.name.c_str());
+            add_assoc_long(&z_range, "count", range.count);
+            if (std::holds_alternative<std::uint64_t>(range.min)) {
+                add_assoc_long(&z_range, "min", std::get<std::uint64_t>(range.min));
+            } else if (std::holds_alternative<double>(range.min)) {
+                add_assoc_long(&z_range, "min", std::get<double>(range.min));
+            }
+            if (std::holds_alternative<std::uint64_t>(range.max)) {
+                add_assoc_long(&z_range, "max", std::get<std::uint64_t>(range.max));
+            } else if (std::holds_alternative<double>(range.max)) {
+                add_assoc_long(&z_range, "max", std::get<double>(range.max));
+            }
+            add_next_index_zval(&numeric_ranges, &z_range);
+        }
+        add_assoc_zval(&z_facet, "numericRanges", &numeric_ranges);
+
+        add_next_index_zval(&facets, &z_facet);
+    }
+    add_assoc_zval(return_value, "facets", &facets);
+}
+
+std::pair<core::operations::search_request, core_error_info>
+zval_to_common_search_request(const zend_string* index_name, const zend_string* query, const zval* options)
+{
+    couchbase::core::operations::search_request request{ cb_string_new(index_name), cb_string_new(query) };
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_integer(request.limit, options, "limit"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_integer(request.skip, options, "skip"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_boolean(request.explain, options, "explain"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_boolean(request.disable_scoring, options, "disableScoring"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_boolean(request.include_locations, options, "includeLocations"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_boolean(request.show_request, options, "showRequest"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.highlight_fields, options, "highlightFields"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.fields, options, "fields"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.collections, options, "collections"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_vector_of_strings(request.sort_specs, options, "sortSpecs"); e.ec) {
+        return { {}, e };
+    }
+
+    if (auto [e, highlight_style] = cb_get_string(options, "highlightStyle"); highlight_style) {
+        if (highlight_style == "html" || highlight_style == "simple") {
+            request.highlight_style = core::search_highlight_style::html;
+        } else if (highlight_style == "ansi") {
+            request.highlight_style = core::search_highlight_style::ansi;
+        } else if (highlight_style) {
+            return { {},
+                     { errc::common::invalid_argument,
+                       ERROR_LOCATION,
+                       fmt::format("invalid value used for highlight style: {}", *highlight_style) } };
+        }
+    } else if (e.ec) {
+        return { {}, e };
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("consistentWith"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::vector<mutation_token> vectors{};
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+        {
+            std::uint64_t partition_uuid;
+            std::uint64_t sequence_number;
+            std::uint16_t partition_id;
+            std::string bucket_name;
+            if (auto e = cb_assign_integer(partition_id, options, "partitionId"); e.ec) {
+                return { {}, e };
+            }
+            if (auto e = cb_assign_integer(partition_uuid, options, "partitionUuid"); e.ec) {
+                return { {}, e };
+            }
+            if (auto e = cb_assign_integer(sequence_number, options, "sequenceNumber"); e.ec) {
+                return { {}, e };
+            }
+            if (auto e = cb_assign_string(bucket_name, options, "bucketName"); e.ec) {
+                return { {}, e };
+            }
+            vectors.emplace_back(mutation_token{ partition_uuid, sequence_number, partition_id, bucket_name });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.mutation_state = vectors;
+    }
+
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("raw"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, core::json_string> params{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            params[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.raw = params;
+    }
+    if (const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("facets"));
+        value != nullptr && Z_TYPE_P(value) == IS_ARRAY) {
+        std::map<std::string, std::string> facets{};
+        const zend_string* key = nullptr;
+        const zval* item = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), key, item)
+        {
+            facets[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        }
+        ZEND_HASH_FOREACH_END();
+
+        request.facets = facets;
+    }
+    if (auto e = cb_assign_string(request.client_context_id, options, "clientContextId"); e.ec) {
+        return { {}, e };
+    }
+    return { request, {} };
+}
+
 core_error_info
 cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas)
 {
@@ -579,6 +843,39 @@ cb_assign_cas(couchbase::cas& cas, const zval* document)
             return { errc::common::invalid_argument, ERROR_LOCATION, "expected CAS to be a string in the options" };
     }
     cb_string_to_cas(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)), cas);
+    return {};
+}
+
+core_error_info
+cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options, std::string_view name)
+{
+    if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(options) != IS_ARRAY) {
+        return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options" };
+    }
+
+    const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), name.data(), name.size());
+    if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+        return {};
+    }
+    if (Z_TYPE_P(value) != IS_ARRAY) {
+        return { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected array for options argument \"{}\"", name) };
+    }
+
+    zval* item;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
+    {
+        if (Z_TYPE_P(item) != IS_STRING) {
+            return { errc::common::invalid_argument,
+                     ERROR_LOCATION,
+                     fmt::format("expected \"{}\" option to be an array of strings, detected non-string value", name) };
+        }
+        auto str = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+        field.emplace_back(cb_string_new(item));
+    }
+    ZEND_HASH_FOREACH_END();
     return {};
 }
 
