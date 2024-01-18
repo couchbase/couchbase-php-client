@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-12-15</date>
+    <date>2024-01-17</date>
     <version>
         <release>4.1.6</release>
         <api>4.0.0</api>
@@ -568,6 +568,7 @@
                                 <file role="src" name="search_error_context.cxx"/>
                                 <file role="src" name="search_index_manager.cxx"/>
                                 <file role="src" name="search_meta_data.cxx"/>
+                                <file role="src" name="search_request.cxx"/>
                                 <file role="src" name="search_result.cxx"/>
                                 <file role="src" name="search_row.cxx"/>
                                 <file role="src" name="search_row_location.cxx"/>
@@ -584,6 +585,8 @@
                                 <file role="src" name="transaction_error_category.cxx"/>
                                 <file role="src" name="transaction_get_result.cxx"/>
                                 <file role="src" name="transaction_op_error_category.cxx"/>
+                                <file role="src" name="vector_query.cxx"/>
+                                <file role="src" name="vector_search.cxx"/>
                                 <file role="src" name="view_error_category.cxx"/>
                                 <file role="src" name="wildcard_query.cxx"/>
                                 <file role="src" name="with_legacy_durability.hxx"/>
@@ -1240,6 +1243,7 @@
                             <file role="src" name="timeout_defaults.hxx"/>
                             <file role="src" name="tls_verify_mode.hxx"/>
                             <file role="src" name="transactions.hxx"/>
+                            <file role="src" name="vector_query_combination.hxx"/>
                             <file role="src" name="view_on_error.hxx"/>
                             <file role="src" name="view_query_options.cxx"/>
                             <file role="src" name="view_query_options.hxx"/>
@@ -1502,6 +1506,7 @@
                             <file role="src" name="search_numeric_range.hxx"/>
                             <file role="src" name="search_options.hxx"/>
                             <file role="src" name="search_query.hxx"/>
+                            <file role="src" name="search_request.hxx"/>
                             <file role="src" name="search_result.hxx"/>
                             <file role="src" name="search_row.hxx"/>
                             <file role="src" name="search_row_location.hxx"/>
@@ -1537,6 +1542,9 @@
                             <file role="src" name="update_collection_options.hxx"/>
                             <file role="src" name="upsert_options.hxx"/>
                             <file role="src" name="upsert_search_index_options.hxx"/>
+                            <file role="src" name="vector_query.hxx"/>
+                            <file role="src" name="vector_search.hxx"/>
+                            <file role="src" name="vector_search_options.hxx"/>
                             <file role="src" name="wan_development_configuration_profile.hxx"/>
                             <file role="src" name="watch_query_indexes_options.hxx"/>
                             <file role="src" name="wildcard_query.hxx"/>
