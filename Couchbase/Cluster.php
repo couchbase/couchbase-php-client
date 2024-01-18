@@ -170,6 +170,23 @@ class Cluster implements ClusterInterface
         return new SearchResult($result);
     }
 
+    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
+    {
+        $exportedRequest = SearchRequest::export($request);
+        $exportedOptions = SearchOptions::export($options);
+        $exportedOptions["showRequest"] = false;
+        $query = $exportedRequest['searchQuery'];
+
+        if (!$exportedRequest['vectorSearch']) {
+            $result = Extension\searchQuery($this->core, $indexName, json_encode($query), $exportedOptions);
+            return new SearchResult($result);
+        }
+
+        $vectorSearch = $exportedRequest['vectorSearch'];
+        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+        return new SearchResult($result);
+    }
+
     /**
      * Creates a new bucket manager object for managing buckets.
      *

@@ -1266,6 +1266,37 @@ PHP_FUNCTION(searchQuery)
     }
 }
 
+PHP_FUNCTION(vectorSearch)
+{
+    zval* connection = nullptr;
+    zend_string* index_name = nullptr;
+    zend_string* query = nullptr;
+    zend_string* vector_search = nullptr;
+    zval* options = nullptr;
+    zval* vector_options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_STR(query)
+    Z_PARAM_STR(vector_search)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    Z_PARAM_ARRAY_OR_NULL(vector_options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->search(return_value, index_name, query, options, vector_search, vector_options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(ping)
 {
     zval* connection = nullptr;
@@ -3127,6 +3158,15 @@ ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_vectorSearch, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, query, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, vector_search, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_ARG_TYPE_INFO(0, vector_options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_ping, 0, 0, 1)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
@@ -3539,6 +3579,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", analyticsQuery, ai_CouchbaseExtension_analyticsQuery)
         ZEND_NS_FE("Couchbase\\Extension", viewQuery, ai_CouchbaseExtension_viewQuery)
         ZEND_NS_FE("Couchbase\\Extension", searchQuery, ai_CouchbaseExtension_searchQuery)
+        ZEND_NS_FE("Couchbase\\Extension", vectorSearch, ai_CouchbaseExtension_vectorSearch)
         ZEND_NS_FE("Couchbase\\Extension", ping, ai_CouchbaseExtension_ping)
         ZEND_NS_FE("Couchbase\\Extension", diagnostics, ai_CouchbaseExtension_diagnostics)
 

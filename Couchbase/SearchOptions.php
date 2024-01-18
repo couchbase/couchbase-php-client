@@ -328,6 +328,7 @@ class SearchOptions implements JsonSerializable
             'highlightFields' => $highlightFields,
             'collections' => $options->collectionNames,
             'includeLocations' => $options->includeLocations,
+            'showRequest' => null,
         ];
     }
 }
