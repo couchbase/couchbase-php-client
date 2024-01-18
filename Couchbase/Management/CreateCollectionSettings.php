@@ -33,13 +33,16 @@ class CreateCollectionSettings
      */
     public function __construct(int $maxExpiry = null, bool $history = null)
     {
-        if ($maxExpiry < -1) {
+        if ($maxExpiry && $maxExpiry < -1) {
             throw new InvalidArgumentException("Collection max expiry must be greater than or equal to -1.");
         }
         $this->maxExpiry = $maxExpiry;
         $this->history = $history;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function build(int $maxExpiry = null, bool $history = null): CreateCollectionSettings
     {
         return new CreateCollectionSettings($maxExpiry, $history);
@@ -61,6 +64,12 @@ class CreateCollectionSettings
         return $this->history;
     }
 
+    /**
+     * @param CreateCollectionSettings|null $settings
+     * @return array
+     *
+     * @internal
+     */
     public static function export(?CreateCollectionSettings $settings): array
     {
         if ($settings == null) {

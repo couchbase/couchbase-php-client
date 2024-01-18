@@ -340,6 +340,12 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         CreateCollectionSettings::build(-5, false);
     }
 
+    public function testCreateCollectionZeroExpiry(): void
+    {
+        $settings = CreateCollectionSettings::build(0);
+        $this->assertNotNull($settings);
+    }
+
     /**
      * @throws ScopeNotFoundException
      */

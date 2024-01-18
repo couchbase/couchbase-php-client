@@ -27,15 +27,21 @@ class UpdateCollectionSettings
     private ?int $maxExpiry;
     private ?bool $history;
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function __construct(int $maxExpiry = null, bool $history = null)
     {
-        if ($maxExpiry < -1) {
+        if ($maxExpiry && $maxExpiry < -1) {
             throw new InvalidArgumentException("Collection max expiry must be greater than or equal to -1.");
         }
         $this->maxExpiry = $maxExpiry;
         $this->history = $history;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function build(int $maxExpiry = null, bool $history = null): UpdateCollectionSettings
     {
         return new UpdateCollectionSettings($maxExpiry, $history);
