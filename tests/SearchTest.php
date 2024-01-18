@@ -25,6 +25,7 @@ use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
 use Couchbase\DocIdSearchQuery;
+use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
 use Couchbase\MatchAllSearchQuery;
@@ -38,6 +39,7 @@ use Couchbase\PhraseSearchQuery;
 use Couchbase\RegexpSearchQuery;
 use Couchbase\SearchHighlightMode;
 use Couchbase\SearchOptions;
+use Couchbase\SearchRequest;
 use Couchbase\SearchSortField;
 use Couchbase\SearchSortGeoDistance;
 use Couchbase\SearchSortId;
@@ -47,6 +49,10 @@ use Couchbase\SearchSortType;
 use Couchbase\TermRangeSearchQuery;
 use Couchbase\TermSearchFacet;
 use Couchbase\TermSearchQuery;
+use Couchbase\VectorQuery;
+use Couchbase\VectorQueryCombination;
+use Couchbase\VectorSearch;
+use Couchbase\VectorSearchOptions;
 use Couchbase\WildcardSearchQuery;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
@@ -77,6 +83,28 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options = SearchOptions::build()->limit(3);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+        $this->assertCount(2, $result->rows());
+        $this->assertEquals(2, $result->metaData()->totalHits());
+
+        foreach ($result->rows() as $hit) {
+            $this->assertNotNull($hit['id']);
+            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertGreaterThan(0, $hit['score']);
+        }
+    }
+
+    public function testSearchQueryWithRequestAPI()
+    {
+        $this->skipIfCaves();
+
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options = SearchOptions::build()->limit(3);
+        $request = SearchRequest::build($query);
+
+        $result = $this->cluster->search("beer-search", $request, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -461,6 +489,40 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $result = json_encode($boolQuery);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
         $this->assertEquals('{"must_not":{"disjuncts":[{"match":"hello world"}]}}', $result);
+    }
+
+    public function testVectorSearchThrowsIndexNotFound()
+    {
+        $this->skipIfCaves();
+
+        $vectorQueryOne = VectorQuery::build("foo", [0.32, -0.536, 0.842])->boost(0.5)->numCandidates(4);
+        $vectorQueryTwo = VectorQuery::build("bar", [-0.00810353, 0.6433, 0.52364]);
+
+        $searchRequest = SearchRequest::build(
+            VectorSearch::build(
+                [$vectorQueryOne, $vectorQueryTwo],
+                VectorSearchOptions::build()
+                ->vectorQueryCombination(VectorQueryCombination::AND)
+            )
+        );
+
+        $this->expectException(IndexNotFoundException::class);
+        $this->cluster->search("does-not-exist", $searchRequest);
+    }
+
+    public function testVectorSearchEncoding()
+    {
+        $vectorQueryOne = VectorQuery::build("foo", [0.32, -0.536, 0.842])->boost(0.5)->numCandidates(4);
+        $vectorQueryTwo = VectorQuery::build("bar", [-0.00810353, 0.6433, 0.52364]);
+        $searchRequest = SearchRequest::export(SearchRequest::build(VectorSearch::build([$vectorQueryOne, $vectorQueryTwo])));
+
+        $encodedVectorSearch = json_encode($searchRequest['vectorSearch']);
+        $this->assertEquals(JSON_ERROR_NONE, json_last_error());
+        $this->assertEquals('[{"field":"foo","boost":0.5,"vector":[0.32,-0.536,0.842],"k":4},{"field":"bar","vector":[-0.00810353,0.6433,0.52364],"k":3}]', $encodedVectorSearch);
+
+        $encodedSearchQuery = json_encode($searchRequest['searchQuery']);
+        $this->assertEquals(JSON_ERROR_NONE, json_last_error());
+        $this->assertEquals('{"match_none":"null"}', $encodedSearchQuery);
     }
 }
 

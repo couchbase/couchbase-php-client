@@ -13,7 +13,7 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2023-12-15</date>
+    <date>2024-01-18</date>
     <version>
         <release>4.1.6</release>
         <api>4.0.0</api>
@@ -355,6 +355,7 @@
                 <file role="php" name="SearchMetaData.php"/>
                 <file role="php" name="SearchOptions.php"/>
                 <file role="php" name="SearchQuery.php"/>
+                <file role="php" name="SearchRequest.php"/>
                 <file role="php" name="SearchResult.php"/>
                 <file role="php" name="SearchSort.php"/>
                 <file role="php" name="SearchSortField.php"/>
@@ -389,6 +390,10 @@
                 <file role="php" name="UnlockOptions.php"/>
                 <file role="php" name="UpsertOptions.php"/>
                 <file role="php" name="ValueRecorder.php"/>
+                <file role="php" name="VectorQuery.php"/>
+                <file role="php" name="VectorQueryCombination.php"/>
+                <file role="php" name="VectorSearch.php"/>
+                <file role="php" name="VectorSearchOptions.php"/>
                 <file role="php" name="ViewConsistency.php"/>
                 <file role="php" name="ViewErrorMode.php"/>
                 <file role="php" name="ViewMetaData.php"/>
@@ -491,6 +496,8 @@
                                 <file role="src" name="date_range_facet.cxx"/>
                                 <file role="src" name="date_range_facet_result.cxx"/>
                                 <file role="src" name="date_range_query.cxx"/>
+                                <file role="src" name="diagnostics.cxx"/>
+                                <file role="src" name="diagnostics.hxx"/>
                                 <file role="src" name="disjunction_query.cxx"/>
                                 <file role="src" name="dns_srv_tracker.cxx"/>
                                 <file role="src" name="dns_srv_tracker.hxx"/>
@@ -566,6 +573,7 @@
                                 <file role="src" name="search_error_context.cxx"/>
                                 <file role="src" name="search_index_manager.cxx"/>
                                 <file role="src" name="search_meta_data.cxx"/>
+                                <file role="src" name="search_request.cxx"/>
                                 <file role="src" name="search_result.cxx"/>
                                 <file role="src" name="search_row.cxx"/>
                                 <file role="src" name="search_row_location.cxx"/>
@@ -582,6 +590,8 @@
                                 <file role="src" name="transaction_error_category.cxx"/>
                                 <file role="src" name="transaction_get_result.cxx"/>
                                 <file role="src" name="transaction_op_error_category.cxx"/>
+                                <file role="src" name="vector_query.cxx"/>
+                                <file role="src" name="vector_search.cxx"/>
                                 <file role="src" name="view_error_category.cxx"/>
                                 <file role="src" name="wildcard_query.cxx"/>
                                 <file role="src" name="with_legacy_durability.hxx"/>
@@ -1238,6 +1248,7 @@
                             <file role="src" name="timeout_defaults.hxx"/>
                             <file role="src" name="tls_verify_mode.hxx"/>
                             <file role="src" name="transactions.hxx"/>
+                            <file role="src" name="vector_query_combination.hxx"/>
                             <file role="src" name="view_on_error.hxx"/>
                             <file role="src" name="view_query_options.cxx"/>
                             <file role="src" name="view_query_options.hxx"/>
@@ -1375,6 +1386,8 @@
                             <file role="src" name="date_range_facet_result.hxx"/>
                             <file role="src" name="date_range_query.hxx"/>
                             <file role="src" name="decrement_options.hxx"/>
+                            <file role="src" name="diagnostics_options.hxx"/>
+                            <file role="src" name="diagnostics_result.hxx"/>
                             <file role="src" name="disallow_querying_search_index_options.hxx"/>
                             <file role="src" name="disconnect_link_analytics_options.hxx"/>
                             <file role="src" name="disjunction_query.hxx"/>
@@ -1391,6 +1404,8 @@
                             <file role="src" name="drop_scope_options.hxx"/>
                             <file role="src" name="drop_search_index_options.hxx"/>
                             <file role="src" name="durability_level.hxx"/>
+                            <file role="src" name="endpoint_diagnostics.hxx"/>
+                            <file role="src" name="endpoint_ping_report.hxx"/>
                             <file role="src" name="error_codes.hxx"/>
                             <file role="src" name="error_context.hxx"/>
                             <file role="src" name="exists_options.hxx"/>
@@ -1458,6 +1473,8 @@
                             <file role="src" name="pause_ingest_search_index_options.hxx"/>
                             <file role="src" name="persist_to.hxx"/>
                             <file role="src" name="phrase_query.hxx"/>
+                            <file role="src" name="ping_options.hxx"/>
+                            <file role="src" name="ping_result.hxx"/>
                             <file role="src" name="prefix_query.hxx"/>
                             <file role="src" name="prepend_options.hxx"/>
                             <file role="src" name="query_error_context.hxx"/>
@@ -1494,6 +1511,7 @@
                             <file role="src" name="search_numeric_range.hxx"/>
                             <file role="src" name="search_options.hxx"/>
                             <file role="src" name="search_query.hxx"/>
+                            <file role="src" name="search_request.hxx"/>
                             <file role="src" name="search_result.hxx"/>
                             <file role="src" name="search_row.hxx"/>
                             <file role="src" name="search_row_location.hxx"/>
@@ -1509,6 +1527,7 @@
                             <file role="src" name="search_sort_score.hxx"/>
                             <file role="src" name="search_term_range.hxx"/>
                             <file role="src" name="security_options.hxx"/>
+                            <file role="src" name="service_type.hxx"/>
                             <file role="src" name="store_semantics.hxx"/>
                             <file role="src" name="subdocument_error_context.hxx"/>
                             <file role="src" name="term_facet.hxx"/>
@@ -1528,6 +1547,9 @@
                             <file role="src" name="update_collection_options.hxx"/>
                             <file role="src" name="upsert_options.hxx"/>
                             <file role="src" name="upsert_search_index_options.hxx"/>
+                            <file role="src" name="vector_query.hxx"/>
+                            <file role="src" name="vector_search.hxx"/>
+                            <file role="src" name="vector_search_options.hxx"/>
                             <file role="src" name="wan_development_configuration_profile.hxx"/>
                             <file role="src" name="watch_query_indexes_options.hxx"/>
                             <file role="src" name="wildcard_query.hxx"/>

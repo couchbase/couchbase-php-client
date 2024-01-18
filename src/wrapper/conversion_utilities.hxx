@@ -20,6 +20,7 @@
 #include "couchbase/store_semantics.hxx"
 
 #include <core/operations/document_query.hxx>
+#include <core/operations/document_search.hxx>
 
 #include <couchbase/cas.hxx>
 #include <couchbase/durability_level.hxx>
@@ -57,8 +58,14 @@ zval_to_query_request(const zend_string* statement, const zval* options);
 std::pair<transactions::transaction_query_options, core_error_info>
 zval_to_transactions_query_options(const zval* options);
 
+std::pair<core::operations::search_request, core_error_info>
+zval_to_common_search_request(const zend_string* index_name, const zend_string* query, const zval* options);
+
 void
 query_response_to_zval(zval* return_value, const core::operations::query_response& resp);
+
+void
+search_query_response_to_zval(zval* return_value, const core::operations::search_response& resp);
 
 template<typename Integer>
 static std::pair<core_error_info, std::optional<Integer>>
@@ -317,6 +324,9 @@ cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas);
 
 core_error_info
 cb_assign_cas(couchbase::cas& cas, const zval* document);
+
+core_error_info
+cb_assign_vector_of_strings(std::vector<std::string>& field, const zval* options, std::string_view name);
 
 std::pair<core_error_info, std::optional<couchbase::durability_level>>
 cb_get_durability_level(const zval* options);

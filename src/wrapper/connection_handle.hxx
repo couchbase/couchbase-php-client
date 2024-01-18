@@ -300,6 +300,14 @@ class connection_handle
     core_error_info analytics_query(zval* return_value, const zend_string* statement, const zval* options);
 
     COUCHBASE_API
+    core_error_info search(zval* return_value,
+                           const zend_string* index_name,
+                           const zend_string* query,
+                           const zval* options,
+                           const zend_string* vector_search,
+                           const zval* vector_options);
+
+    COUCHBASE_API
     core_error_info search_query(zval* return_value, const zend_string* index_name, const zend_string* query, const zval* options);
 
     COUCHBASE_API
