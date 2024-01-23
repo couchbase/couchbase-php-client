@@ -7,11 +7,30 @@ AC_SUBST(PHP_COUCHBASE)
 
 if test "$PHP_COUCHBASE" != "no"; then
   PHP_REQUIRE_CXX
+
+  # PHP_REQUIRE_CXX macro might incorrectly format CXX variable,
+  # concatenating standard selection flags directly to the path,
+  # instead of using CXXFLAGS. Let's try to fix this issue.
+  AC_CHECK_FILE([$CXX], [CXX_PATH=$CXX], [CXX_PATH=no])
+  if test "$CXX_PATH" = "no"; then
+    AC_MSG_NOTICE([PHP suggested C++ compiler, which includes flags "$CXX", trying to strip them])
+    # Remove extra flags (considering flags are separated by spaces)
+    CXX_PATH=$(echo "$CXX" | cut -d' ' -f1)
+    AC_CHECK_FILE([$CXX_PATH], [], [CXX_PATH=no])
+    # If a valid path is found, update CXX
+    if test "$CXX_PATH" == "no"; then
+      AC_MSG_NOTICE([Unable to locate path to C++ compiler, falling back to "c++"])
+      AC_SUBST([CXX_PATH], [c++])
+    fi
+  fi
+  AC_MSG_NOTICE([Detected C++ compiler: $CXX_PATH])
+
   AC_PATH_PROG(CMAKE, cmake, no)
   if ! test -x "${CMAKE}"; then
     AC_MSG_ERROR(Please install cmake to build couchbase extension)
   fi
 
+  CXX="${CXX_PATH}"
   CXXFLAGS="${CXXFLAGS} -std=c++17"
   COUCHBASE_CMAKE_SOURCE_DIRECTORY="$srcdir/src"
   COUCHBASE_CMAKE_BUILD_DIRECTORY="$ac_pwd/cmake-build"
