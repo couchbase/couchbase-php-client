@@ -208,6 +208,8 @@
                     <file role="php" name="RoleAndDescription.php"/>
                     <file role="php" name="RoleAndOrigin.php"/>
                     <file role="php" name="S3ExternalAnalyticsLink.php"/>
+                    <file role="php" name="ScopeSearchIndexManager.php"/>
+                    <file role="php" name="ScopeSearchIndexManagerInterface.php"/>
                     <file role="php" name="ScopeSpec.php"/>
                     <file role="php" name="SearchIndex.php"/>
                     <file role="php" name="SearchIndexManager.php"/>
@@ -1500,6 +1502,7 @@
                             <file role="src" name="retry_request.hxx"/>
                             <file role="src" name="retry_strategy.hxx"/>
                             <file role="src" name="scope.hxx"/>
+                            <file role="src" name="scope_search_index_manager.hxx"/>
                             <file role="src" name="search_date_range.hxx"/>
                             <file role="src" name="search_error_context.hxx"/>
                             <file role="src" name="search_facet.hxx"/>
