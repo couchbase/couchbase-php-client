@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Management\ScopeSearchIndexManagerInterface;
+
 /**
  * Scope is an object for providing access to collections.
  */
@@ -31,5 +33,9 @@ interface ScopeInterface
 
     public function query(string $statement, QueryOptions $options = null): QueryResult;
 
+    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult;
+
     public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult;
+
+    public function searchIndexes(): ScopeSearchIndexManagerInterface;
 }

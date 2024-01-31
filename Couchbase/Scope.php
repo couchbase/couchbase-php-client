@@ -21,7 +21,10 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
+use Couchbase\Management\ScopeSearchIndexManager;
+use Couchbase\Management\ScopeSearchIndexManagerInterface;
 
 /**
  * Scope is an object for providing access to collections.
@@ -109,5 +112,55 @@ class Scope implements ScopeInterface
         $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
 
         return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
+    }
+
+    /**
+     * Executes a search query against the full text search services.
+     *
+     * This can be used to perform a traditional FTS query, and/or a vector search.
+     *
+     * @param string $indexName the scope-level fts index to use for the search request
+     * @param SearchRequest $request The search request to run
+     * @param SearchOptions|null $options The options to use when executing the search request
+     *
+     * @return SearchResult
+     * @throws InvalidArgumentException
+     * @since 4.1.7
+     *
+     * @VOLATILE: This API is subject to change at any time.
+     */
+    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
+    {
+        $exportedRequest = SearchRequest::export($request);
+        $exportedOptions = SearchOptions::export($options);
+
+        $exportedOptions['bucketName'] = $this->bucketName;
+        $exportedOptions['scopeName'] = $this->name;
+
+        $exportedOptions["showRequest"] = false;
+        $query = $exportedRequest['searchQuery'];
+
+        if (!$exportedRequest['vectorSearch']) {
+            $result = Extension\searchQuery($this->core, $indexName, json_encode($query), $exportedOptions);
+            return new SearchResult($result);
+        }
+
+        $vectorSearch = $exportedRequest['vectorSearch'];
+        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+        return new SearchResult($result);
+    }
+
+    /**
+     * Provides access to search index management services at the scope level
+     *
+     * @return ScopeSearchIndexManagerInterface
+     *
+     * @since 4.1.7
+     *
+     * @VOLATILE: This API is subject to change at any time.
+     */
+    public function searchIndexes(): ScopeSearchIndexManagerInterface
+    {
+        return new ScopeSearchIndexManager($this->core, $this->bucketName, $this->name);
     }
 }
