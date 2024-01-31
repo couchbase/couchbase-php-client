@@ -2629,6 +2629,43 @@ cb_search_index_to_zval(zval* return_value, const couchbase::core::management::s
 
 COUCHBASE_API
 core_error_info
+zval_to_search_index(couchbase::core::operations::management::search_index_upsert_request& request, const zval* index)
+{
+    couchbase::core::management::search::index idx{};
+    if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.type, index, "type"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.uuid, index, "uuid"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.params_json, index, "params"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.source_uuid, index, "sourceUuid"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.source_name, index, "sourceName"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.source_type, index, "sourceType"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.source_params_json, index, "sourceParams"); e.ec) {
+        return e;
+    }
+    if (auto e = cb_assign_string(idx.plan_params_json, index, "planParams"); e.ec) {
+        return e;
+    }
+   request.index = idx;
+
+   return {};
+}
+
+COUCHBASE_API
+core_error_info
 connection_handle::search_index_get(zval* return_value, const zend_string* index_name, const zval* options)
 {
     couchbase::core::operations::management::search_index_get_request request{ cb_string_new(index_name) };
@@ -2680,37 +2717,11 @@ COUCHBASE_API
 core_error_info
 connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
 {
-    couchbase::core::management::search::index idx{};
-    if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.type, index, "type"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.uuid, index, "uuid"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.params_json, index, "params"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.source_uuid, index, "sourceUuid"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.source_name, index, "sourceName"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.source_type, index, "sourceType"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.source_params_json, index, "sourceParams"); e.ec) {
-        return e;
-    }
-    if (auto e = cb_assign_string(idx.plan_params_json, index, "planParams"); e.ec) {
-        return e;
-    }
-
     couchbase::core::operations::management::search_index_upsert_request request{};
-    request.index = idx;
+
+    if (auto e = zval_to_search_index(request, index); e.ec) {
+        return e;
+    }
 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return e;
@@ -2836,6 +2847,238 @@ core_error_info
 connection_handle::search_index_analyze_document(zval* return_value, const zend_string* index_name, const zend_string* document, const zval* options)
 {
     couchbase::core::operations::management::search_index_analyze_document_request request{};
+    request.index_name = cb_string_new(index_name);
+    request.encoded_document = cb_string_new(document);
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    add_assoc_string(return_value, "analysis", resp.analysis.c_str());
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_get(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+{
+    couchbase::core::operations::management::search_index_get_request request{ cb_string_new(index_name) };
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    if (auto e = cb_search_index_to_zval(return_value, resp.index); e.ec) {
+        return e;
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_get_all(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options)
+{
+    couchbase::core::operations::management::search_index_get_all_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    for (const auto& search_index : resp.indexes) {
+        zval this_index;
+        if (auto e = cb_search_index_to_zval(&this_index, search_index); e.ec) {
+            return e;
+        }
+        add_next_index_zval(return_value, &this_index);
+    }
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_upsert(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* index, const zval* options)
+{
+    couchbase::core::operations::management::search_index_upsert_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    if (auto e = zval_to_search_index(request, index); e.ec) {
+        return e;
+    }
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    add_assoc_string(return_value, "status", resp.status.c_str());
+    add_assoc_string(return_value, "error", resp.error.c_str());
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+{
+    couchbase::core::operations::management::search_index_drop_request request{ cb_string_new(index_name) };
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_get_documents_count(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+{
+    couchbase::core::operations::management::search_index_get_documents_count_request request{ cb_string_new(index_name) };
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    add_assoc_long(return_value, "count", resp.count);
+
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_control_ingest(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool pause, const zval* options)
+{
+    couchbase::core::operations::management::search_index_control_ingest_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    request.index_name = cb_string_new(index_name);
+    request.pause = pause;
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_control_query(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool allow, const zval* options)
+{
+    couchbase::core::operations::management::search_index_control_query_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    request.index_name = cb_string_new(index_name);
+    request.allow = allow;
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_control_plan_freeze(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool freeze, const zval* options)
+{
+    couchbase::core::operations::management::search_index_control_plan_freeze_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
+    request.index_name = cb_string_new(index_name);
+    request.freeze = freeze;
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+        return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    if (err.ec) {
+        return err;
+    }
+
+    array_init(return_value);
+    return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::scope_search_index_analyze_document(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zend_string* document, const zval* options)
+{
+    couchbase::core::operations::management::search_index_analyze_document_request request{};
+
+    request.bucket_name = cb_string_new(bucket_name);
+    request.scope_name = cb_string_new(scope_name);
+
     request.index_name = cb_string_new(index_name);
     request.encoded_document = cb_string_new(document);
 
