@@ -1266,6 +1266,8 @@
                                 <file role="src" name="encoded_value.hxx"/>
                                 <file role="src" name="json_transcoder.hxx"/>
                                 <file role="src" name="raw_binary_transcoder.hxx"/>
+                                <file role="src" name="raw_json_transcoder.hxx"/>
+                                <file role="src" name="raw_string_transcoder.hxx"/>
                                 <file role="src" name="serializer_traits.hxx"/>
                                 <file role="src" name="tao_json_serializer.hxx"/>
                                 <file role="src" name="transcoder_traits.hxx"/>
