@@ -170,6 +170,21 @@ class Cluster implements ClusterInterface
         return new SearchResult($result);
     }
 
+    /**
+     * Executes a search query against the full text search services.
+     *
+     * This can be used to perform a traditional FTS query, and/or a vector search.
+     *
+     * @param string $indexName the cluster-level FTS index to use for the search request
+     * @param SearchRequest $request The search request to run
+     * @param SearchOptions|null $options The options to use when executing the search request
+     *
+     * @return SearchResult
+     * @throws InvalidArgumentException
+     * @since 4.1.7
+     *
+     * @VOLATILE: This API is subject to change at any time.
+     */
     public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
     {
         $exportedRequest = SearchRequest::export($request);

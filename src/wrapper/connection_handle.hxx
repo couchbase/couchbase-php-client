@@ -352,6 +352,33 @@ class connection_handle
     core_error_info search_index_analyze_document(zval* return_value, const zend_string* index_name, const zend_string* document, const zval* options);
 
     COUCHBASE_API
+    core_error_info scope_search_index_get(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_get_all(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_upsert(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* index, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_get_documents_count(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_control_ingest(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool pause, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_control_query(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool allow, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_control_plan_freeze(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool freeze, const zval* options);
+
+    COUCHBASE_API
+    core_error_info scope_search_index_analyze_document(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zend_string* document, const zval* options);
+
+    COUCHBASE_API
     core_error_info view_index_upsert(zval* return_value,
                                       const zend_string* bucket_name,
                                       const zval* design_document,

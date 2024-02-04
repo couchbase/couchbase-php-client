@@ -670,6 +670,12 @@ zval_to_common_search_request(const zend_string* index_name, const zend_string* 
     if (auto e = cb_assign_timeout(request, options); e.ec) {
         return { {}, e };
     }
+    if (auto e = cb_assign_string(request.bucket_name, options, "bucketName"); e.ec) {
+        return { {}, e };
+    }
+    if (auto e = cb_assign_string(request.scope_name, options, "scopeName"); e.ec) {
+        return { {}, e };
+    }
     if (auto e = cb_assign_integer(request.limit, options, "limit"); e.ec) {
         return { {}, e };
     }

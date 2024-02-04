@@ -25,6 +25,7 @@ use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
 use Couchbase\DocIdSearchQuery;
+use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
@@ -523,6 +524,26 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $encodedSearchQuery = json_encode($searchRequest['searchQuery']);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
         $this->assertEquals('{"match_none":"null"}', $encodedSearchQuery);
+    }
+
+    public function testScopeSearch()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsScopeSearchIndexes());
+
+        $searchRequest = SearchRequest::build(new MatchNoneSearchQuery());
+        $this->expectException(IndexNotFoundException::class);
+        $this->openBucket()->defaultScope()->search("unknown-index", $searchRequest);
+    }
+
+    public function testScopeSearchThrowsFeatureNotAvailable()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported(!$this->version()->supportsScopeSearchIndexes());
+
+        $searchRequest = SearchRequest::build(new MatchNoneSearchQuery());
+        $this->expectException(FeatureNotAvailableException::class);
+        $this->openBucket()->defaultScope()->search("unknown-index", $searchRequest);
     }
 }
 

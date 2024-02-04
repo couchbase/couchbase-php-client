@@ -1657,6 +1657,364 @@ PHP_FUNCTION(searchIndexDocumentAnalyze)
     }
 }
 
+PHP_FUNCTION(scopeSearchIndexGet)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->scope_search_index_get(return_value, bucket_name, scope_name, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexGetAll)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(3, 4)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+    if (auto e = handle->scope_search_index_get_all(return_value, bucket_name, scope_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexUpsert)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zval* index = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_ARRAY(index)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_upsert(return_value, bucket_name, scope_name, index, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexDrop)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_drop(return_value, bucket_name, scope_name, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexGetDocumentsCount)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options)
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_get_documents_count(return_value, bucket_name, scope_name, index_name, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexIngestPause)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_ingest(return_value, bucket_name, scope_name, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexIngestResume)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_ingest(return_value, bucket_name, scope_name, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexQueryingAllow)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_query(return_value, bucket_name, scope_name, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexQueryingDisallow)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_query(return_value, bucket_name, scope_name, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexPlanFreeze)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_plan_freeze(return_value, bucket_name, scope_name, index_name, true, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexPlanUnfreeze)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(4, 5)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_control_plan_freeze(return_value, bucket_name, scope_name, index_name, false, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
+PHP_FUNCTION(scopeSearchIndexDocumentAnalyze)
+{
+    zval* connection = nullptr;
+    zend_string* bucket_name = nullptr;
+    zend_string* scope_name = nullptr;
+    zend_string* index_name = nullptr;
+    zend_string* document = nullptr;
+    zval* options = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(5, 6)
+    Z_PARAM_RESOURCE(connection)
+    Z_PARAM_STR(bucket_name)
+    Z_PARAM_STR(scope_name)
+    Z_PARAM_STR(index_name)
+    Z_PARAM_STR(document)
+    Z_PARAM_OPTIONAL
+    Z_PARAM_ARRAY_OR_NULL(options);
+    ZEND_PARSE_PARAMETERS_END();
+
+    logger_flusher guard;
+
+    auto* handle = fetch_couchbase_connection_from_resource(connection);
+    if (handle == nullptr) {
+        RETURN_THROWS();
+    }
+
+    if (auto e = handle->scope_search_index_analyze_document(return_value, bucket_name, scope_name, index_name, document, options); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+}
+
 PHP_FUNCTION(viewIndexUpsert)
 {
     zval* connection = nullptr;
@@ -3250,6 +3608,102 @@ ZEND_ARG_TYPE_INFO(0, document, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexGet, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexGetAll, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexUpsert, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, index, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexDrop, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexGetDocumentsCount, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexIngestPause, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexIngestResume, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexQueryingAllow, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexQueryingDisallow, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexPlanFreeze, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexPlanUnfreeze, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_scopeSearchIndexDocumentAnalyze, 0, 0, 5)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, document, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_viewIndexUpsert, 0, 0, 4)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -3606,6 +4060,18 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", searchIndexPlanFreeze, ai_CouchbaseExtension_searchIndexPlanFreeze)
         ZEND_NS_FE("Couchbase\\Extension", searchIndexPlanUnfreeze, ai_CouchbaseExtension_searchIndexPlanUnfreeze)
         ZEND_NS_FE("Couchbase\\Extension", searchIndexDocumentAnalyze, ai_CouchbaseExtension_searchIndexDocumentAnalyze)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexGet, ai_CouchbaseExtension_scopeSearchIndexGet)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexGetAll, ai_CouchbaseExtension_scopeSearchIndexGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexUpsert, ai_CouchbaseExtension_scopeSearchIndexUpsert)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexDrop, ai_CouchbaseExtension_scopeSearchIndexDrop)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexGetDocumentsCount, ai_CouchbaseExtension_scopeSearchIndexGetDocumentsCount)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexIngestPause, ai_CouchbaseExtension_scopeSearchIndexIngestPause)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexIngestResume, ai_CouchbaseExtension_scopeSearchIndexIngestResume)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexQueryingAllow, ai_CouchbaseExtension_scopeSearchIndexQueryingAllow)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexQueryingDisallow, ai_CouchbaseExtension_scopeSearchIndexQueryingDisallow)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexPlanFreeze, ai_CouchbaseExtension_scopeSearchIndexPlanFreeze)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexPlanUnfreeze, ai_CouchbaseExtension_scopeSearchIndexPlanUnfreeze)
+        ZEND_NS_FE("Couchbase\\Extension", scopeSearchIndexDocumentAnalyze, ai_CouchbaseExtension_scopeSearchIndexDocumentAnalyze)
         ZEND_NS_FE("Couchbase\\Extension", viewIndexUpsert, ai_CouchbaseExtension_viewIndexUpsert)
         ZEND_NS_FE("Couchbase\\Extension", bucketCreate, ai_CouchbaseExtension_bucketCreate)
         ZEND_NS_FE("Couchbase\\Extension", bucketUpdate, ai_CouchbaseExtension_bucketUpdate)
