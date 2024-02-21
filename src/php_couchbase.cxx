@@ -2896,14 +2896,14 @@ PHP_FUNCTION(queryIndexCreate)
     zval* connection = nullptr;
     zend_string* bucket_name = nullptr;
     zend_string* index_name = nullptr;
-    zval* fields = nullptr;
+    zval* keys = nullptr;
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(4, 5)
     Z_PARAM_RESOURCE(connection)
     Z_PARAM_STR(bucket_name)
     Z_PARAM_STR(index_name)
-    Z_PARAM_ARRAY(fields)
+    Z_PARAM_ARRAY(keys)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -2914,7 +2914,7 @@ PHP_FUNCTION(queryIndexCreate)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    if (auto e = handle->query_index_create(bucket_name, index_name, fields, options); e.ec) {
+    if (auto e = handle->query_index_create(bucket_name, index_name, keys, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }
@@ -3063,7 +3063,7 @@ PHP_FUNCTION(collectionQueryIndexCreate)
     zend_string* scope_name = nullptr;
     zend_string* collection_name = nullptr;
     zend_string* index_name = nullptr;
-    zval* fields = nullptr;
+    zval* keys = nullptr;
     zval* options = nullptr;
 
     ZEND_PARSE_PARAMETERS_START(6, 7)
@@ -3072,7 +3072,7 @@ PHP_FUNCTION(collectionQueryIndexCreate)
     Z_PARAM_STR(scope_name)
     Z_PARAM_STR(collection_name)
     Z_PARAM_STR(index_name)
-    Z_PARAM_ARRAY(fields)
+    Z_PARAM_ARRAY(keys)
     Z_PARAM_OPTIONAL
     Z_PARAM_ARRAY_OR_NULL(options)
     ZEND_PARSE_PARAMETERS_END();
@@ -3083,7 +3083,7 @@ PHP_FUNCTION(collectionQueryIndexCreate)
     if (handle == nullptr) {
         RETURN_THROWS();
     }
-    if (auto e = handle->collection_query_index_create(bucket_name, scope_name, collection_name, index_name, fields, options); e.ec) {
+    if (auto e = handle->collection_query_index_create(bucket_name, scope_name, collection_name, index_name, keys, options); e.ec) {
         couchbase_throw_exception(e);
         RETURN_THROWS();
     }

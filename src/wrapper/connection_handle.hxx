@@ -457,7 +457,7 @@ class connection_handle
     COUCHBASE_API
     core_error_info query_index_create(const zend_string* bucket_name,
                                        const zend_string* index_name,
-                                       const zval* fields,
+                                       const zval* keys,
                                        const zval* options);
 
     COUCHBASE_API
@@ -484,7 +484,7 @@ class connection_handle
                                                   const zend_string* scope_name,
                                                   const zend_string* collection_name,
                                                   const zend_string* index_name,
-                                                  const zval* fields,
+                                                  const zval* keys,
                                                   const zval* options);
 
     COUCHBASE_API

@@ -4265,7 +4265,7 @@ connection_handle::query_index_create(const zend_string* bucket_name,
         if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
             return { errc::common::invalid_argument, ERROR_LOCATION, "expected index fields to be array of strings" };
         }
-        request.fields.emplace_back(cb_string_new(value));
+        request.keys.emplace_back(cb_string_new(value));
     }
     ZEND_HASH_FOREACH_END();
 
@@ -4508,7 +4508,7 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
         if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
             return { errc::common::invalid_argument, ERROR_LOCATION, "expected index fields to be array of strings" };
         }
-        request.fields.emplace_back(cb_string_new(value));
+        request.keys.emplace_back(cb_string_new(value));
     }
     ZEND_HASH_FOREACH_END();
 

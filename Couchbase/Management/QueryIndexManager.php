@@ -66,14 +66,14 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @param string $bucketName
      * @param string $indexName
-     * @param array $fields
+     * @param array $keys
      * @param CreateQueryIndexOptions|null $options
      *
      * @since 4.0.0
      */
-    public function createIndex(string $bucketName, string $indexName, array $fields, CreateQueryIndexOptions $options = null)
+    public function createIndex(string $bucketName, string $indexName, array $keys, CreateQueryIndexOptions $options = null)
     {
-        Extension\queryIndexCreate($this->core, $bucketName, $indexName, $fields, CreateQueryIndexOptions::export($options));
+        Extension\queryIndexCreate($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options));
     }
 
     /**
