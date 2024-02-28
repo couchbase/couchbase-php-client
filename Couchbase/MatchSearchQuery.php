@@ -45,6 +45,19 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $match
+     *
+     * @return MatchSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $match): MatchSearchQuery
+    {
+        return new MatchSearchQuery($match);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

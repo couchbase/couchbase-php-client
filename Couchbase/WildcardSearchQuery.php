@@ -40,6 +40,19 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $wildcard
+     *
+     * @return WildcardSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $wildcard): WildcardSearchQuery
+    {
+        return new WildcardSearchQuery($wildcard);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

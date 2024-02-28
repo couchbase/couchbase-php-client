@@ -42,6 +42,19 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param array $queries
+     *
+     * @return DisjunctionSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(array $queries): DisjunctionSearchQuery
+    {
+        return new DisjunctionSearchQuery($queries);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

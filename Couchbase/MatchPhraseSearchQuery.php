@@ -39,6 +39,19 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $phrase
+     *
+     * @return MatchPhraseSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $phrase): MatchPhraseSearchQuery
+    {
+        return new MatchPhraseSearchQuery($phrase);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

@@ -38,6 +38,17 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
     private ?string $datetimeParser = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return DateRangeSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): DateRangeSearchQuery
+    {
+        return new DateRangeSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

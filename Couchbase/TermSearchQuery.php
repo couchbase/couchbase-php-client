@@ -42,6 +42,19 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $term
+     *
+     * @return TermSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $term): TermSearchQuery
+    {
+        return new TermSearchQuery($term);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

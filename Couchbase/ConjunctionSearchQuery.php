@@ -37,6 +37,19 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param array $queries
+     *
+     * @return ConjunctionSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(array $queries): ConjunctionSearchQuery
+    {
+        return new ConjunctionSearchQuery($queries);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

@@ -39,6 +39,19 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $queryString
+     *
+     * @return QueryStringSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $queryString): QueryStringSearchQuery
+    {
+        return new QueryStringSearchQuery($queryString);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.
