@@ -43,6 +43,19 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string ...$terms
+     *
+     * @return PhraseSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string ...$terms): PhraseSearchQuery
+    {
+        return new PhraseSearchQuery(...$terms);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

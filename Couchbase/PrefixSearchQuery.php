@@ -40,6 +40,19 @@ class PrefixSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param string $prefix
+     *
+     * @return PrefixSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(string $prefix): PrefixSearchQuery
+    {
+        return new PrefixSearchQuery($prefix);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

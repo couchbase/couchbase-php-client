@@ -30,6 +30,17 @@ class MatchNoneSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return MatchNoneSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): MatchNoneSearchQuery
+    {
+        return new MatchNoneSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

@@ -50,6 +50,21 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param float $longitude
+     * @param float $latitude
+     * @param string|null $distance
+     *
+     * @return GeoDistanceSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(float $longitude, float $latitude, string $distance = null): GeoDistanceSearchQuery
+    {
+        return new GeoDistanceSearchQuery($longitude, $latitude, $distance);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

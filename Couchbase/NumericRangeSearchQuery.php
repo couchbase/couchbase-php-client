@@ -37,6 +37,17 @@ class NumericRangeSearchQuery implements JsonSerializable, SearchQuery
     private ?bool $inclusiveMax = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return NumericRangeSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): NumericRangeSearchQuery
+    {
+        return new NumericRangeSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

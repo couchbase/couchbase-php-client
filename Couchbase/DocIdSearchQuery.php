@@ -37,6 +37,17 @@ class DocIdSearchQuery implements SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return DocIdSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): DocIdSearchQuery
+    {
+        return new DocIdSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

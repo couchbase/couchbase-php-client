@@ -37,6 +37,17 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
     private ?bool $inclusiveMax = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return TermRangeSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): TermRangeSearchQuery
+    {
+        return new TermRangeSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

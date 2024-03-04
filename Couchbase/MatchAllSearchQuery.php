@@ -30,6 +30,17 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
     private ?float $boost = null;
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return MatchAllSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): MatchAllSearchQuery
+    {
+        return new MatchAllSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

@@ -51,6 +51,22 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @param float $topLeftLongitude
+     * @param float $topLeftLatitude
+     * @param float $bottomRightLongitude
+     * @param float $bottomRightLatitude
+     *
+     * @return GeoBoundingBoxSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(float $topLeftLongitude, float $topLeftLatitude, float $bottomRightLongitude, float $bottomRightLatitude): GeoBoundingBoxSearchQuery
+    {
+        return new GeoBoundingBoxSearchQuery($topLeftLongitude, $topLeftLatitude, $bottomRightLongitude, $bottomRightLatitude);
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

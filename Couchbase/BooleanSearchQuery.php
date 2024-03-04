@@ -40,6 +40,17 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
     }
 
     /**
+     * Static helper to keep code more readable
+     *
+     * @return BooleanSearchQuery
+     * @since 4.1.7
+     */
+    public static function build(): BooleanSearchQuery
+    {
+        return new BooleanSearchQuery();
+    }
+
+    /**
      * Sets the boost for this query.
      *
      * @param float $boost the boost value to use.

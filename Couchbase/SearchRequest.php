@@ -49,7 +49,7 @@ class SearchRequest
     }
 
     /**
-     * Static builder to keep code more readable.
+     * Static helper to keep code more readable
      *
      * Use {@link SearchRequest::searchQuery()} or {@link SearchRequest::vectorSearch()} to combine a SearchQuery
      * with a VectorQuery.
