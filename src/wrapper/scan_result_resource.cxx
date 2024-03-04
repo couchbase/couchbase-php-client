@@ -203,7 +203,7 @@ create_scan_result_resource(connection_handle* connection,
     if (ec) {
         return { nullptr, { ec, ERROR_LOCATION, "Cannot perform scan operation. Unable to get bucket config" } };
     }
-    if (!config.supports_range_scan()) {
+    if (!config.capabilities.supports_range_scan()) {
         return { nullptr,
                  { errc::common::feature_not_available, ERROR_LOCATION, "Server version does not support key-value scan operations" } };
     }

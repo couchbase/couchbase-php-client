@@ -76,17 +76,17 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * Creates a new index
      *
      * @param string $indexName
-     * @param array $fields
+     * @param array $keys
      * @param CreateQueryIndexOptions|null $options
      *
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function createIndex(string $indexName, array $fields, CreateQueryIndexOptions $options = null)
+    public function createIndex(string $indexName, array $keys, CreateQueryIndexOptions $options = null)
     {
         $exported = CreateQueryIndexOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexCreate($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $fields, $exported);
+        Extension\collectionQueryIndexCreate($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported);
     }
 
     /**
