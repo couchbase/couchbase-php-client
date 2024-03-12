@@ -67,6 +67,8 @@ class Cluster implements ClusterInterface
     /**
      * @throws InvalidArgumentException
      * @throws FeatureNotAvailableException
+     *
+     * Note: The couchbase2:// scheme has stability @UNCOMMITTED
      */
     public static function connect(string $connectionString, ClusterOptions $options): ClusterInterface
     {
@@ -182,8 +184,6 @@ class Cluster implements ClusterInterface
      * @return SearchResult
      * @throws InvalidArgumentException
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
     {
