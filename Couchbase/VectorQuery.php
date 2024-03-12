@@ -37,7 +37,7 @@ class VectorQuery
      *
      * @throws InvalidArgumentException
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public function __construct(string $vectorFieldName, array $vectorQuery)
     {
@@ -60,7 +60,7 @@ class VectorQuery
      *
      * @throws InvalidArgumentException
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     static function build(string $vectorFieldName, array $vectorQuery): VectorQuery
     {
@@ -77,7 +77,7 @@ class VectorQuery
      *
      * @throws InvalidArgumentException
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public function numCandidates(int $numCandidates): VectorQuery
     {
@@ -96,7 +96,7 @@ class VectorQuery
      * @return VectorQuery
      * @since 4.1.7
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public function boost(float $boost): VectorQuery
     {

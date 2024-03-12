@@ -28,12 +28,12 @@ class VectorSearch implements JsonSerializable
     private ?VectorSearchOptions $options;
 
     /**
-     * @param array $vectorQueries The vector queries to be run
+     * @param array<VectorQuery> $vectorQueries The vector queries to be run.
      * @param VectorSearchOptions|null $options The options to use on the vector queries
      *
      * @since 4.1.7
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public function __construct(array $vectorQueries, VectorSearchOptions $options = null)
     {
@@ -44,13 +44,13 @@ class VectorSearch implements JsonSerializable
     /**
      * Static helper to keep code more readable.
      *
-     * @param array $vectorQueries The vector queries to be run
+     * @param array<VectorQuery> $vectorQueries The vector queries to be run
      * @param VectorSearchOptions|null $options The options to use on the vector queries
      *
      * @since 4.1.7
      * @return VectorSearch
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public static function build(array $vectorQueries, VectorSearchOptions $options = null): VectorSearch
     {

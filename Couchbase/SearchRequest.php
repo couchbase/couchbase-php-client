@@ -37,7 +37,7 @@ class SearchRequest
      *
      * @since 4.1.7
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * Note: VectorSearch has stability @UNCOMMITTED
      */
     public function __construct(SearchQuery|VectorSearch $searchQueryOrVectorSearch)
     {
@@ -59,7 +59,7 @@ class SearchRequest
      * @since 4.1.7
      * @return SearchRequest
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * Note: VectorSearch has stability @UNCOMMITTED
      */
     public static function build(SearchQuery|VectorSearch $searchQueryOrVectorSearch): SearchRequest
     {
@@ -75,8 +75,6 @@ class SearchRequest
      * @return SearchRequest
      *
      * @throws InvalidArgumentException
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function searchQuery(SearchQuery $searchQuery): SearchRequest
     {
@@ -97,7 +95,7 @@ class SearchRequest
      *
      * @throws InvalidArgumentException
      *
-     * @VOLATILE: This API is subject to change at any time.
+     * @UNCOMMITTED: This API may change in the future.
      */
     public function vectorSearch(VectorSearch $vectorSearch): SearchRequest
     {

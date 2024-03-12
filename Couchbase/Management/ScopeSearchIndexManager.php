@@ -43,8 +43,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @return SearchIndex
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
     {
@@ -60,8 +58,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @return array
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
     {
@@ -80,8 +76,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param UpsertSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
     {
@@ -95,8 +89,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param DropSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function dropIndex(string $name, DropSearchIndexOptions $options = null)
     {
@@ -111,8 +103,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @return int
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
     {
@@ -127,8 +117,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param PauseIngestSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
     {
@@ -142,8 +130,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param ResumeIngestSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
     {
@@ -157,8 +143,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param AllowQueryingSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
     {
@@ -172,8 +156,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param DisallowQueryingSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
     {
@@ -187,8 +169,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param FreezePlanSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
     {
@@ -202,8 +182,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @param UnfreezePlanSearchIndexOptions|null $options
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
     {
@@ -219,8 +197,6 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @return array
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
     {

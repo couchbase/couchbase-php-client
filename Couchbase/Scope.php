@@ -126,8 +126,6 @@ class Scope implements ScopeInterface
      * @return SearchResult
      * @throws InvalidArgumentException
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
     {
@@ -156,8 +154,6 @@ class Scope implements ScopeInterface
      * @return ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
-     *
-     * @VOLATILE: This API is subject to change at any time.
      */
     public function searchIndexes(): ScopeSearchIndexManagerInterface
     {
