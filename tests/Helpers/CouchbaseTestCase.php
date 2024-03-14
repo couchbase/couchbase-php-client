@@ -21,7 +21,20 @@ declare(strict_types=1);
 namespace Helpers;
 
 include_once __DIR__ . "/TestEnvironment.php";
-include_once __DIR__ . "/../../Couchbase/autoload.php";
+
+$defaultPath = __DIR__ . "/../../Couchbase/autoload.php";
+if (file_exists($defaultPath)) {
+    include_once $defaultPath;
+} else {
+    $possibleDirs = glob(__DIR__ . '/../../couchbase-*/');
+    foreach ($possibleDirs as $dir) {
+        $autoloadPath = $dir . 'Couchbase/autoload.php';
+        if (file_exists($autoloadPath)) {
+            include_once $autoloadPath;
+            break;
+        }
+    }
+}
 
 use Couchbase\BucketInterface;
 use Couchbase\Cluster;

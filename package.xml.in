@@ -1,0 +1,278 @@
+<?xml version="1.0"?>
+<!DOCTYPE package SYSTEM "http://pear.php.net/dtd/package-1.0">
+<package xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" packagerversion="1.4.11" version="2.0" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+    <name>couchbase</name>
+    <channel>pecl.php.net</channel>
+    <summary>Couchbase Server PHP extension</summary>
+    <description>
+        The PHP client library provides fast access to documents stored in a Couchbase Server.
+    </description>
+    <lead>
+        <name>Sergey Avseyev</name>
+        <user>avsej</user>
+        <email>sergey@couchbase.com</email>
+        <active>yes</active>
+    </lead>
+    <date></date>
+    <version>
+        <release>4.1.6</release>
+        <api>4.0.0</api>
+    </version>
+    <stability>
+        <release>stable</release>
+        <api>stable</api>
+    </stability>
+    <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+    <notes>
+        * PCBC-956: Update wrapper side bucket settings (#132)
+        * PCBC-950: Support bucket settings for no dedup feature (#131)
+        * Updates to support PHP 8.3. `zend_bool` was removed from 8.3.
+
+        Notable changes in core C++
+        ---------------------------
+        * CXXCBC-376: Revisit what 'create' and 'update' bucket operations send to the server. Make optional bucket
+          settings fields optional, and do not send anything unless the settings explicitly specified. (#451)
+        * CXXCBC-359: Reduce default HTTP idle timeout to 1 second (#448)
+        * CXXCBC-367, CXXCBC-370: Add history retention settings to buckets/collection management. (#446)
+        * CXXCBC-119: Return booleans for subdocument 'exists' operation instead of error code. (#444, #452)
+        * Detect 'collection_not_found' error in 'update_collection' response (#450)
+    </notes>
+    <contents>
+    </contents>
+    <dependencies>
+        <required>
+            <php>
+                <min>8.1.0</min>
+            </php>
+            <pearinstaller>
+                <min>1.10.1</min>
+            </pearinstaller>
+        </required>
+    </dependencies>
+    <providesextension>couchbase</providesextension>
+    <extsrcrelease/>
+    <changelog>
+        <release>
+            <date>2023-08-21</date>
+            <version>
+                <release>4.1.5</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                PCBC-939: Support query with read from replica. (#118)
+                PCBC-831: Implement search index management. (#115)
+                PCBC-945: Expose expiry options for increment/decrement. (#120)
+                PCBC-937: Fix `removeMulti`, which didn't remove documents. (#123)
+                PCBC-938: Override exception constructor in PHP Extension, which allows to initialize context in derived classes. (#117)
+                PCBC-940: Support for subdoc read from replica. (#121)
+                PCBC-884: Support for Native KV range scans.  (#122, #127)
+
+                Notable changes in core C++
+                ---------------------------
+                CXXCBC-333: Fix parsing resolv.conf on Linux (#416)
+                CXXCBC-335: Log connection options (#417)
+                CXXCBC-343: Continue bootsrap if DNS-SRV resolution fails (#422)
+                CXXCBC-242: SDK Support for Native KV Range Scans (#419, #423, #424, #428, #431, #432, #433, #434, #426)
+                CXXCBC-339: Disable older TLS protocols (#418)
+            </notes>
+        </release>
+        <release>
+            <date>2023-05-26</date>
+            <version>
+                <release>4.1.4</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * Add `couchbase::` namespace to `durability_level`, fixes using Sync Durability. (#102)
+                * PCBC-934: Fixed setting timeout for transaction.
+
+                Notable changes in core C++
+                ---------------------------
+
+                * CXXCBC-327: bundle Mozilla certificates with the library (#405, #408)
+                * CXXCBC-324: check port and network name on session restart (#401)
+                * CXXCBC-323: parse bootstrap_timeout and resolve_timeout in connection string (#400)
+                * introduce option dump_configuration for debugging (#398)
+            </notes>
+        </release>
+        <release>
+            <date>2023-04-13</date>
+            <version>
+                <release>4.1.3</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-915: Fixed timestamp as expiry in mutation options (#88)
+                * PCBC-828: Implemented collection management (#89)
+                * PCBC-918: Extra attributes in ExistsResult now optional (deleted, expiry, flags, and sequenceNumber) (#95)
+
+                Notable changes in core C++
+                ---------------------------
+
+                * CXXCBC-31: Allow to use schema-less connection strings (#394)
+                * CXXCBC-318: Always try TCP if UDP fails in DNS-SRV resolver (#390)
+                * CXXCBC-320: Negative expiry in atr can 'stuck' docs. (#393)
+                * CXXCBC-310: Improve shutdown of the LostTxnCleanup thread. (#389)
+            </notes>
+        </release>
+        <release>
+            <date>2023-03-20</date>
+            <version>
+                <release>4.1.2</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-888 handle query context changes (#68)
+                * Added optional context to CouchbaseException constructor (#85)
+
+                Notable changes in core C++
+                ---------------------------
+
+                * OpenSSL and CentOS 7 (#382)
+                * CXXCBC-144: Search query on collections should not require you to pass in the scope name (#379)
+                * CXXCBC-145: Search query request raw option not used (#380)
+                * CXXCBC-194: Support ExtThreadSafe transaction extension. (#374, #376)
+                * CXXCBC-316: Core txn get_optional after query issue (#385)
+                * CXXCBC-310: Fixed race condition in transaction_context state machine (#386, #378)
+            </notes>
+        </release>
+        <release>
+            <date>2023-02-22</date>
+            <version>
+                <release>4.1.1</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                Enhancements
+                ------------
+
+                * PCBC-869: Implemented `changePassword` for management API (#55, #56)
+                * PCBC-891: Append extension version info to HELLO indentifier (#58)
+                * PCBC-901: Attach error details to management exceptions (#71)
+                * Increase required PHP version up to 8.0 (#76)
+
+                Fixes
+                -----
+
+                * PCBC-890: Scope must implement ScopeInterface (#57)
+                * PCBC-902: Make sure that new account is usable in changePassword test (#72)
+                * PCBC-899: Ensure the connection will be closed on error (#70)
+                * PCBC-900: Don't set "function" property on exceptions. (#74)
+                * PCBC-905: Don't dereference empty optional if option is not set (#75)
+                * PCBC-907: assign meta to view query result (#79)
+                * Fix missing header for GCC 13 (#63)
+
+                Notable changes in core C++ 1.0.0-dp.4
+                --------------------------------------
+
+                * CXXCBC-275: Update implementation query context fields passed to the
+                  server. In future versions of the server versions it will become
+                  mandatory to specify context of the statement (bucket, scope and
+                  collection). This change ensures that both future and current server
+                  releases supported transparently.
+
+                * CXXCBC-296: Force PLAIN SASL auth if TLS enabled. Using SCRAM SASL
+                  mechanisms over TLS protocol is unnecesary complication, that slows
+                  down initial connection bootstrap and potentially limits server
+                  ability to improve security and evolve credentials management.
+
+                * CXXCBC-295: The `get with projections` opration should not fail if
+                  one of the the paths is missing in the document, because the
+                  semantics is "get the partial document" and not "get individual
+                  fields" like in `lookup_in` operation.
+
+                * CXXCBC-294: In the Public API, if `get` operation requested to
+                  return expiry time, zero expiry should not be interpreted as
+                  absolute expiry timestamp (zero seconds from UNIX epoch), but rather
+                  as absense of the expiry.
+
+                * CXXCBC-291: Allow to disable mutation tokens for Key/Value mutations
+                  (use `enable_mutation_tokens` in connection string).
+
+                * Resource management and performance improvements:
+                    * Fix tracer and meter ref-counting
+                    * Replace `minstd_rand` with `mt19937_64`, as it gives less
+                      collisions.
+                    * CXXCBC-285: Write to sockets from IO threads, to eliminate
+                      potential race conditions.
+                    * Eliminate looping transform in `mcbp_parser::next`.
+                    * CXXCBC-205: Use thread-local UUID generator.
+                    * CXXCBC-293: Other performance improvements:
+                        * Speed up UUID serialization to string
+                        * Don't allow to copy `mcbp_message` objects
+                        * Avoid extra allocation and initialization
+
+                * Build system fixes:
+                    * Fix build with gcc-13
+                    * Fix gcc 12 issue
+
+                * Enhancements:
+                    * Include OS name in SDK identifier
+            </notes>
+        </release>
+        <release>
+            <date>2023-01-20</date>
+            <version>
+                <release>4.1.0</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-824: implement replica reads
+                * PCBC-630: implement legacy durability for mutations
+                * PCBC-880 support for configuration profiles
+                * PCBC-889 'Skip' SearchOption has no effect
+                * Bug fixes, logger and build improvements
+            </notes>
+        </release>
+        <release>
+            <date>2022-05-11</date>
+            <version>
+                <release>4.0.0</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * Migrate core to C++ SDK
+                * Update query index management API to accept collections
+                * PCBC-836: implemented Transactions API
+            </notes>
+        </release>
+    </changelog>
+</package>
+<!--
+vim: et ts=4 sts=4 sw=4
+-->

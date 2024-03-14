@@ -1,7 +1,6 @@
 *.core
 *.dep
 *.dep
-*.ini
 *.lo
 *.loT
 *.o
@@ -55,3 +54,6 @@ cmake-build*/
 composer.lock
 php_test_results_*.txt
 results.xml
+/src/cmake/pecl_package.cmake
+/src/deps/cache
+/package.xml
