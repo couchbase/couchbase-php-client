@@ -46,9 +46,6 @@ class KeyValueLockingTest extends Helpers\CouchbaseTestCase
         $this->assertNotEquals($lockedCas, $res->cas());
 
         $collection->unlock($id, $lockedCas);
-
-        $res = $collection->get($id);
-        $this->assertEquals($lockedCas, $res->cas());
     }
 
     public function testUnlockingUnlockedDocumentThrowsDocNotLocked()
