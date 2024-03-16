@@ -18,6 +18,9 @@ require "fileutils"
 require "rbconfig"
 require "shellwords"
 
+DEFAULT_PHP_NAME = "php"
+CB_PHP_NAME = ENV.fetch("CB_PHP_NAME", DEFAULT_PHP_NAME)
+
 DEFAULT_PHP_PREFIX =
   case RbConfig::CONFIG["target_os"]
   when /darwin/
@@ -27,6 +30,7 @@ DEFAULT_PHP_PREFIX =
   end
 
 CB_PHP_PREFIX = ENV.fetch("CB_PHP_PREFIX", DEFAULT_PHP_PREFIX)
+CB_PHP_EXECUTABLE = ENV.fetch("CB_PHP_EXECUTABLE", File.join(CB_PHP_PREFIX, "bin", CB_PHP_NAME))
 
 def which(name)
   ENV.fetch("PATH", "")
@@ -46,8 +50,8 @@ build_root = File.join(project_root, "build")
 
 caves_binary = File.join(build_root, "gocaves")
 unless File.file?(caves_binary)
-  caves_version = "v0.0.1-73"
-  basename = 
+  caves_version = "v0.0.1-78"
+  basename =
     case RbConfig::CONFIG["target_os"]
     when /darwin/
       case RUBY_PLATFORM
@@ -81,19 +85,31 @@ unless File.file?(php_unit_phar)
   run("curl -L -o #{php_unit_phar.shellescape} #{php_unit_url}")
 end
 
-couchbase_ext = "#{project_root}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
-unless File.exist?(couchbase_ext)
-  alt_filename = "#{project_root}/modules/couchbase.so"
-  if File.exist?(alt_filename)
-    couchbase_ext = alt_filename
-  end
+module_names = [
+  "couchbase.#{RbConfig::CONFIG["DLEXT"]}",
+  "couchbase.#{RbConfig::CONFIG["SOEXT"]}",
+  "couchbase.so",
+]
+module_locations = module_names.map do |name|
+  [
+    "#{project_root}/modules/#{name}",
+    "#{project_root}/#{name}",
+  ] + Dir["#{project_root}/couchbase*/#{name}"]
+end.flatten.sort.uniq
+
+couchbase_ext = module_locations.find { |path| File.exist?(path) }
+if couchbase_ext
+  puts "Found module: #{couchbase_ext}"
+else
+  abort "Unable to find the module. Candidates: #{module_locations.inspect}"
 end
 
 tests = ARGV.to_a
 tests << File.join(project_root, "tests") if tests.empty?
 results_xml = File.join(project_root, "results.xml")
 
-php_executable = File.join(CB_PHP_PREFIX, "bin", "php")
-Dir.chdir(project_root) do 
-  run("#{php_executable} -d extension=#{couchbase_ext} -d couchbase.log_stderr=1 -d cuchbase.log_php_log_err=0 #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
+Dir.chdir(project_root) do
+  run("#{CB_PHP_EXECUTABLE} -d extension=#{couchbase_ext} -m")
+  run("#{CB_PHP_EXECUTABLE} -d extension=#{couchbase_ext} -i | grep couchbase")
+  run("#{CB_PHP_EXECUTABLE} -d extension=#{couchbase_ext} -d couchbase.log_stderr=1 -d cuchbase.log_php_log_err=0 #{php_unit_phar.shellescape} --color --testdox #{tests.map(&:shellescape).join(' ')} --log-junit #{results_xml}")
 end

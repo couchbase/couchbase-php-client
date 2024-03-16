@@ -4,34 +4,29 @@ project(couchbase C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 99)
 
-include(${PROJECT_SOURCE_DIR}/cmake/revisions.cmake OPTIONAL)
+include(${PROJECT_SOURCE_DIR}/cmake/pecl_package.cmake OPTIONAL)
 
-set(COUCHBASE_CXX_CLIENT_BUILD_TESTS
+set(COUCHBASE_CXX_CLIENT_BUILD_DOCS
     OFF
     CACHE BOOL "" FORCE)
 set(COUCHBASE_CXX_CLIENT_BUILD_EXAMPLES
     OFF
     CACHE BOOL "" FORCE)
+set(COUCHBASE_CXX_CLIENT_BUILD_TESTS
+    OFF
+    CACHE BOOL "" FORCE)
 set(COUCHBASE_CXX_CLIENT_BUILD_TOOLS
     OFF
     CACHE BOOL "" FORCE)
-set(COUCHBASE_CXX_CLIENT_BUILD_DOCS
+set(COUCHBASE_CXX_CLIENT_BUILD_SHARED
     OFF
     CACHE BOOL "" FORCE)
-add_subdirectory(deps/couchbase-cxx-client)
-
-set(COUCHBASE_TXNS_CXX_BUILD_TESTS
-    OFF
-    CACHE BOOL "" FORCE)
-set(COUCHBASE_TXNS_CXX_BUILD_EXAMPLES
-    OFF
-    CACHE BOOL "" FORCE)
-set(COUCHBASE_TXNS_CXX_BUILD_DOC
-    OFF
-    CACHE BOOL "" FORCE)
-set(COUCHBASE_TXNS_CXX_CLIENT_EXTERNAL
+set(COUCHBASE_CXX_CLIENT_STATIC_BORINGSSL
     ON
     CACHE BOOL "" FORCE)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+add_subdirectory(deps/couchbase-cxx-client)
 
 string(
   REGEX
@@ -70,24 +65,43 @@ endif()
 configure_file(${PROJECT_SOURCE_DIR}/cmake/ext_build_version.hxx.in
                ${PROJECT_BINARY_DIR}/generated/ext_build_version.hxx @ONLY)
 
-file(GLOB SOURCE_FILES ${PROJECT_SOURCE_DIR}/wrapper/*.cxx)
-add_library(couchbase_php_wrapper SHARED ${SOURCE_FILES})
-target_include_directories(couchbase_php_wrapper PRIVATE ${PROJECT_BINARY_DIR}/generated)
-target_include_directories(couchbase_php_wrapper PRIVATE ${PHP_INCLUDE_DIRS})
-target_link_libraries(couchbase_php_wrapper PRIVATE project_options project_warnings couchbase_cxx_client taocpp::json fmt::fmt asio Microsoft.GSL::GSL)
+file(
+  GLOB
+  SOURCE_FILES
+  ${PROJECT_SOURCE_DIR}/wrapper/*.cxx
+  ${PROJECT_SOURCE_DIR}/php_couchbase.cxx)
+add_library(couchbase SHARED ${SOURCE_FILES})
+set_target_properties(couchbase PROPERTIES PREFIX "")
 if(APPLE)
-  target_link_libraries(couchbase_php_wrapper PRIVATE -Wl,-undefined,dynamic_lookup)
+  set_target_properties(couchbase PROPERTIES SUFFIX ".so")
+endif()
+target_include_directories(couchbase PRIVATE ${PROJECT_BINARY_DIR}/generated)
+target_include_directories(couchbase PRIVATE ${PHP_INCLUDE_DIRS})
+target_compile_definitions(couchbase PRIVATE ZEND_COMPILE_DL_EXT=1)
+set_target_properties(couchbase_cxx_client PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+target_link_libraries(
+  couchbase
+  PRIVATE project_options
+          project_warnings
+          couchbase_cxx_client
+          spdlog::spdlog
+          taocpp::json
+          fmt::fmt
+          asio
+          Microsoft.GSL::GSL)
+if(APPLE)
+  target_link_libraries(couchbase PRIVATE -Wl,-undefined,dynamic_lookup)
 endif()
 if(WIN32)
-  target_compile_options(couchbase_php_wrapper PRIVATE ${COUCHBASE_PHP_CFLAGS} /bigobj)
-  target_compile_definitions(couchbase_php_wrapper PRIVATE NOMINMAX)
-  target_link_options(couchbase_php_wrapper PUBLIC "${COUCHBASE_PHP_LIB}")
+  target_compile_options(couchbase PRIVATE ${COUCHBASE_PHP_CFLAGS} /bigobj)
+  target_compile_definitions(couchbase PRIVATE NOMINMAX)
+  target_link_options(couchbase PUBLIC "${COUCHBASE_PHP_LIB}")
 endif()
 if(COUCHBASE_PHP_LIBDIR)
   add_custom_command(
-    TARGET couchbase_php_wrapper
+    TARGET couchbase
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase_php_wrapper>"
-            "$<TARGET_LINKER_FILE:couchbase_php_wrapper>" "${COUCHBASE_PHP_LIBDIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:couchbase>" "$<TARGET_LINKER_FILE:couchbase>"
+            "${COUCHBASE_PHP_LIBDIR}/"
     VERBATIM)
 endif()

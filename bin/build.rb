@@ -40,11 +40,6 @@ def run(*args)
 end
 
 PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
-unless File.file?(File.join(PROJECT_ROOT, "src/deps/couchbase-cxx-client/third_party/asio/asio/include/asio.hpp"))
-  Dir.chdir(PROJECT_ROOT) do
-    run("git submodule update --init --recursive")
-  end
-end
 
 DEFAULT_PHP_PREFIX =
   case RbConfig::CONFIG["target_os"]
@@ -93,7 +88,7 @@ Dir.chdir(PROJECT_ROOT) do
   run("make V=1")
 end
 
-COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["DLEXT"]}"
+COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["SOEXT"]}"
 unless File.exist?(COUCHBASE_EXT)
   alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
   if File.exist?(alt_filename)

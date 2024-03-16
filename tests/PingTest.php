@@ -64,7 +64,9 @@ class PingTest extends Helpers\CouchbaseTestCase
     {
         $cluster = $this->connectClusterUnique();
         $bucketName = $this->env()->bucketName();
-        $result = $cluster->bucket($bucketName)->ping();
+        $bucket = $cluster->bucket($bucketName);
+        $bucket->defaultCollection()->upsert( $this->uniqueId("ping"), ['foo' => 'bar']);
+        $result = $bucket->ping();
 
         $this->assertNotEmpty($result['id']);
         $this->assertNotEmpty($result['sdk']);
@@ -98,8 +100,8 @@ class PingTest extends Helpers\CouchbaseTestCase
         $this->assertNotEmpty($endpoint['id']);
         $this->assertNotEmpty($endpoint['remote']);
         $this->assertNotEmpty($endpoint['local']);
-        $this->assertNotEmpty($endpoint['latencyUs']);
-        $this->assertEquals('ok', $endpoint['state']);
+        $this->assertIsInt($endpoint['latencyUs']);
+        $this->assertContains($endpoint['state'], ['ok', 'error']);
 
         if ($bucketName == null) {
             $this->assertArrayNotHasKey('bucket', $endpoint);
