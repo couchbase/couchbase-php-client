@@ -16,13 +16,15 @@
       "email": "sergey.avseyev@gmail.com"
     }
   ],
-  "require": {
-    "ext-json": "*",
+  "suggest": {
     "ext-grpc": "^1.15",
     "ext-protobuf": "^3.21",
     "google/protobuf": "^3.21",
     "grpc/grpc": "^1.42",
     "google/common-protos": "^3.1"
+  },
+  "require": {
+    "ext-json": "*"
   },
   "require-dev": {
     "ext-sockets": "*",
