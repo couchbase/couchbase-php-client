@@ -46,6 +46,7 @@
 /mkinstalldirs
 /modules/
 /package.xml
+/composer.phar
 /phpunit.result.cache
 /run-tests.php
 /src/.idea/

@@ -85,8 +85,17 @@ class Cluster implements ClusterInterface
         return ClusterRegistry::connect($connectionString, $options);
     }
 
+    /**
+     * @throws InvalidArgumentException if runtime dependencies are missing ("protobuf" and "grpc" modules)
+     */
     private static function enableProtostellar(): void
     {
+        if (!extension_loaded("protobuf")) {
+            throw new InvalidArgumentException("couchbase2:// protocol requires protobuf extension");
+        }
+        if (!extension_loaded("grpc")) {
+            throw new InvalidArgumentException("couchbase2:// protocol requires grpc extension");
+        }
         ClusterRegistry::registerConnectionHandler(
             "/^protostellar:\/\//",
             function (string $connectionString, ClusterOptions $options) {
