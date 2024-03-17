@@ -47,6 +47,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      * @param GetSearchIndexOptions|null $options
      * @return SearchIndex
      *
+     * @throws Couchbase\Exception\IndexNotFoundException
+     *
      * @since 4.1.5
      */
     public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex

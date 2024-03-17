@@ -155,6 +155,8 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
     public function testCreateBucketReplicaIndexes()
     {
+        $this->skipIfReplicasAreNotConfigured();
+
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->enableReplicaIndexes(true);
         $this->manager->createBucket($settings);

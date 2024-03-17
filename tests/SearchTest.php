@@ -29,6 +29,8 @@ use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
+use Couchbase\Management\SearchIndex;
+use Couchbase\Management\SearchIndexManager;
 use Couchbase\MatchAllSearchQuery;
 use Couchbase\MatchNoneSearchQuery;
 use Couchbase\MatchPhraseSearchQuery;
@@ -61,12 +63,36 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 class SearchTest extends Helpers\CouchbaseTestCase
 {
     private ClusterInterface $cluster;
+    private SearchIndexManager $indexManager;
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->cluster = $this->connectCluster();
+
+        if (self::env()->useCouchbase()) {
+            $this->indexManager = $this->cluster->searchIndexes();
+            try {
+                $this->indexManager->getIndex("beer-search");
+            } catch (IndexNotFoundException $ex) {
+                $indexDump = json_decode(file_get_contents(__DIR__ . "/beer-search.json"), true);
+                $index = SearchIndex::build("beer-search", "beer-sample");
+                $index->setParams($indexDump["params"]);
+                $this->indexManager->upsertIndex($index);
+            }
+            while (true) {
+                try {
+                    $indexedDocuments = $this->indexManager->getIndexedDocumentsCount("beer-search");
+                    fprintf(STDERR, "Indexing 'beer-search': %d docs\n", $indexedDocuments);
+                    if ($indexedDocuments > 7000) {
+                        break;
+                    }
+                    sleep(3);
+                } catch (\Couchbase\Exception\IndexNotReadyException $ex) {
+                }
+            }
+        }
     }
 
     public function tearDown(): void
@@ -495,6 +521,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
     public function testVectorSearchThrowsIndexNotFound()
     {
         $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsVectorSearch());
 
         $vectorQueryOne = VectorQuery::build("foo", [0.32, -0.536, 0.842])->boost(0.5)->numCandidates(4);
         $vectorQueryTwo = VectorQuery::build("bar", [-0.00810353, 0.6433, 0.52364]);
@@ -546,143 +573,3 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->openBucket()->defaultScope()->search("unknown-index", $searchRequest);
     }
 }
-
-/*
-curl -XPUT -H "Content-Type: application/json" \
--u Administrator:password http://localhost:8094/api/index/beer-search -d \
-'{
-  "type": "fulltext-index",
-  "name": "beer-search",
-  "sourceType": "couchbase",
-  "sourceName": "beer-sample",
-  "planParams": {
-    "maxPartitionsPerPIndex": 171,
-    "indexPartitions": 6
-  },
-  "params": {
-    "doc_config": {
-      "docid_prefix_delim": "",
-      "docid_regexp": "",
-      "mode": "type_field",
-      "type_field": "type"
-    },
-    "mapping": {
-      "analysis": {},
-      "default_analyzer": "standard",
-      "default_datetime_parser": "dateTimeOptional",
-      "default_field": "_all",
-      "default_mapping": {
-        "dynamic": true,
-        "enabled": true
-      },
-      "default_type": "_default",
-      "docvalues_dynamic": true,
-      "index_dynamic": true,
-      "store_dynamic": false,
-      "type_field": "_type",
-      "types": {
-        "beer": {
-          "dynamic": true,
-          "enabled": true,
-          "properties": {
-            "abv": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "abv",
-                  "store": true,
-                  "type": "number"
-                }
-              ]
-            },
-            "category": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "category",
-                  "store": true,
-                  "type": "text"
-                }
-              ]
-            },
-            "description": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "description",
-                  "store": true,
-                  "type": "text"
-                }
-              ]
-            },
-            "name": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "name",
-                  "store": true,
-                  "type": "text"
-                }
-              ]
-            },
-            "style": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "style",
-                  "store": true,
-                  "type": "text"
-                }
-              ]
-            },
-            "updated": {
-              "dynamic": false,
-              "enabled": true,
-              "fields": [
-                {
-                  "docvalues": true,
-                  "include_in_all": true,
-                  "include_term_vectors": true,
-                  "index": true,
-                  "name": "updated",
-                  "store": true,
-                  "type": "datetime"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    "store": {
-      "indexType": "scorch"
-    }
-  },
-  "sourceParams": {}
-}'
-*/
