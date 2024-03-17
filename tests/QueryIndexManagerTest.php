@@ -62,9 +62,9 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
                 $manager->createPrimaryIndex($bucketName, CreateQueryPrimaryIndexOptions::build()->ignoreIfExists(true));
                 break;
             } catch (CouchbaseException $ex) {
-                printf("Error during primary index creation: %s, %s", $ex->getMessage(), var_export($ex->getContext(), true));
+                printf("Error during primary index creation for '%s': %s, %s", $bucketName, $ex->getMessage(), var_export($ex->getContext(), true));
                 if (time() > $deadline) {
-                    $this->assertFalse("timed out waiting for create index to succeed");
+                    $this->fail("timed out waiting for create index to succeed");
                 }
                 sleep(1);
             }

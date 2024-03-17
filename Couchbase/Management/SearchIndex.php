@@ -319,9 +319,9 @@ class SearchIndex implements JsonSerializable
     }
 
     /**
-     * @internal
      * @return array
      *
+     * @internal
      * @since 4.1.5
      */
     public function jsonSerialize(): array
@@ -350,10 +350,10 @@ class SearchIndex implements JsonSerializable
     }
 
     /**
-     * @internal
      * @param array|stdClass $searchIndex
      * @return SearchIndex
      *
+     * @internal
      * @since 4.1.5
      */
     public static function import(array|stdClass $searchIndex): SearchIndex
@@ -386,10 +386,10 @@ class SearchIndex implements JsonSerializable
     }
 
     /**
-     * @internal
      * @param SearchIndex $index
      * @return array
      *
+     * @internal
      * @since 4.1.5
      */
     public static function export(SearchIndex $index): array
