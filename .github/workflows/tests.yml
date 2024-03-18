@@ -26,7 +26,7 @@ jobs:
         run: |
           gem install --no-document --user-install nokogiri
           export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
-          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"]].compact.join(".")' src/php_couchbase.hxx)
+          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
           echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
           export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
           ruby ./bin/package.rb
