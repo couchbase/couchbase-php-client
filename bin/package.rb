@@ -235,7 +235,7 @@ files = [
   "src/wrapper/**/*.{cxx,hxx}",
 ].map do |glob|
   Dir.chdir(project_root) do
-    Dir[glob].select { |path| File.file?(path) }
+    Dir.glob(glob, File::FNM_DOTMATCH).select { |path| File.file?(path) }
   end
 end.flatten
 

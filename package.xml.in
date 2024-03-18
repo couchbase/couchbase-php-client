@@ -13,10 +13,10 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date></date>
+    <date>2024-03-17</date>
     <version>
-        <release>4.1.6</release>
-        <api>4.0.0</api>
+        <release>4.2.0</release>
+        <api>4.2.0</api>
     </version>
     <stability>
         <release>stable</release>
@@ -24,18 +24,111 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        * PCBC-956: Update wrapper side bucket settings (#132)
-        * PCBC-950: Support bucket settings for no dedup feature (#131)
-        * Updates to support PHP 8.3. `zend_bool` was removed from 8.3.
+        Enhancements
+        ============
+
+        * PCBC-979: Add static helpers to SearchQuery types (#149)
+        * PCBC-970: SDK Support for Scoped Search Indexes (#147)
+        * PCBC-968: Support for maxTTL value of -1 for collection "no expiry" (#144)
+        * PCBC-967: Support for vector search (#143)
+        * PCBC-965: Support DocNotLockedException and core update (#142)
+        * PCBC-960: Merge protostellar branch to master (#138, #153)
+
+        Fixes
+        =====
+
+        * PCBC-964: Wait until the core connection is closed (#141)
+        * PCBC-972: Fix C++ detection on MacOS X (#145)
+        * Add missing use statement in class DecrementOptions (#146)
+        * Update core and rename query_index_create fields to keys (#148)
 
         Notable changes in core C++
-        ---------------------------
-        * CXXCBC-376: Revisit what 'create' and 'update' bucket operations send to the server. Make optional bucket
-          settings fields optional, and do not send anything unless the settings explicitly specified. (#451)
-        * CXXCBC-359: Reduce default HTTP idle timeout to 1 second (#448)
-        * CXXCBC-367, CXXCBC-370: Add history retention settings to buckets/collection management. (#446)
-        * CXXCBC-119: Return booleans for subdocument 'exists' operation instead of error code. (#444, #452)
-        * Detect 'collection_not_found' error in 'update_collection' response (#450)
+        ===========================
+
+        Since 1.0.0-dp.14
+        -----------------
+
+        ## Fixes
+
+        * CXXCBC-482: Range scan orchestrator should use best effort retry strategy by default. (#542)
+        * CXXCBC-481: Fix potential crash when parsing search result hits. (#541)
+        * CXXCBC-461: Do not send ping to nodes that have not completed bootstrap. (#540)
+        * CXXCBC-480: LookupInAnyReplica should not enforce any limits on number of specs in the library. (#539)
+        * CXXCBC-479: Fix capabilities check for replica LookupIn operations. (#537)
+        * CXXCBC-336: Do not fallback to 8.8.8.8, if we cannot obtain system DNS server (#533)
+
+        Since 1.0.0-dp.13
+        -----------------
+
+        ## New features and enhancements
+
+        * CXXCBC-456: handle 0x0d (config_only) status from KV (#523).
+        * CXXCBC-191: Create Index Key Encoding (#519)
+        * CXXCBC-442: Add support for raw_json and raw_string transcoders (#514, #515)
+        * Add full_set option to view query options (#517)
+
+        ## Fixes
+
+        * CXXCBC-345: Range scan improvements & resolve concurrency issues (#525).
+        * CXXCBC-284: Do not use session that is not bootstrapped to poll for config (#528)
+        * CXXCBC-447: Use addresses from the config to bootstrap bucket (#516)
+        * CXXCBC-450: Reset bootstrap handler before re-bootstrap (#524).
+        * Update view design_document rev to be optional (#526).
+        * Change encoded search request showrequest param from string to boolean. (#518)
+        * CXXCBC-452: Update capabilities and fail fast when selected feature is not available. (#522, #513)
+            * CXXCBC-431: Add check for history retention bucket capability in collection create/update (#502, #505)
+            * CXXCBC-421: Return feature_not_available when query preserve expiry is not supported (#510)
+
+        Since 1.0.0-dp.12
+        -----------------
+
+        ## New features and enhancements
+
+        * CXXCBC-346: Support for maxTTL value of -1 for collection 'no expiry'. (#500)
+        * CXXCBC-442: Support for raw_json and raw_string transcoders. (#514)
+        * CXXCBC-440: Support for Scoped Search Indexes. (#512, #513)
+
+        ## Fixes
+
+        * CXXCBC-284: Reduce network traffic when polling for cluster configuration. (#504)
+        * CXXCBC-422: Add insufficient credentials error code to common query error code conversion. (#511)
+        * CXXCBC-421: Return `feature_not_available` when query preserve expiry is not supported. (#510)
+        * CXXCBC-426: Get with very large projection test is returning fields outside of the projection. (#499)
+
+        Since 1.0.0-dp.11
+        -----------------
+
+        ## Fixes
+
+        * CXXCBC-404: KV_LOCKED status should be exposed as `cas_mismatch` for unlock. (#479)
+        * CXXCBC-403: Allow retries for KV `not_my_vbucket` response. (#480)
+        * CXXCBC-368: Subscribe to clustermap notifications to speedup failover. (#490)'
+        * CXXCBC-419: Ensure that MCBP protocol parser starts with clean state. Fixes protocol parsing issues when bootstrap sequence is being retried. (#496)
+        * CXXCBC-409: Add handling for 'index does not exist' query error. (#492)
+        * CXXCBC-391: Fix transactions API inconsistencies. (#482)
+          * Remove `kv_timeout`
+          * Rename `expiration_time` to `timeout`
+
+
+        ## New features and enhancements
+
+        * CXXCBC-100: Add ability to set timeout for ping. (#486)
+        * CXXCBC-412: Support `document_not_locked` response. (#491)
+
+        Since 1.0.0-dp.10
+        -----------------
+
+        ## Fixes
+
+        * CXXCBC-383: Map `subdoc_doc_too_deep` KV status to `path_too_deep` error code. (#455)
+        * CXXCBC-382: Fix `raw_binary_transcoder` so that `get`s on binary data are possible. (#459)
+
+        ## New features and enhancements
+
+        * CXXCBC-377: Implement ExtParallelUnstaging in transactions. (#457)
+        * CXXCBC-363: Add examples for bulk operations. (#442)
+        * Add more information to diagnose timeouts on NMV responses. (#475)
+        * Migrate cbc tools from `docopt` to `CLI11`. (#466)
     </notes>
     <contents>
     </contents>
@@ -52,6 +145,32 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2023-10-10</date>
+            <version>
+                <release>4.1.6</release>
+                <api>4.0.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                * PCBC-956: Update wrapper side bucket settings (#132)
+                * PCBC-950: Support bucket settings for no dedup feature (#131)
+                * Updates to support PHP 8.3. `zend_bool` was removed from 8.3.
+
+                Notable changes in core C++
+                ---------------------------
+                * CXXCBC-376: Revisit what 'create' and 'update' bucket operations send to the server. Make optional bucket
+                  settings fields optional, and do not send anything unless the settings explicitly specified. (#451)
+                * CXXCBC-359: Reduce default HTTP idle timeout to 1 second (#448)
+                * CXXCBC-367, CXXCBC-370: Add history retention settings to buckets/collection management. (#446)
+                * CXXCBC-119: Return booleans for subdocument 'exists' operation instead of error code. (#444, #452)
+                * Detect 'collection_not_found' error in 'update_collection' response (#450)
+            </notes>
+        </release>
         <release>
             <date>2023-08-21</date>
             <version>
