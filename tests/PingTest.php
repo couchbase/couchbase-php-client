@@ -65,7 +65,7 @@ class PingTest extends Helpers\CouchbaseTestCase
         $cluster = $this->connectClusterUnique();
         $bucketName = $this->env()->bucketName();
         $bucket = $cluster->bucket($bucketName);
-        $bucket->defaultCollection()->upsert( $this->uniqueId("ping"), ['foo' => 'bar']);
+        $bucket->defaultCollection()->upsert($this->uniqueId("ping"), ['foo' => 'bar']);
         $result = $bucket->ping();
 
         $this->assertNotEmpty($result['id']);

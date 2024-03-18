@@ -198,6 +198,7 @@ jobs:
           check_name: ⛰️ caves, php-${{ matrix.php }}
           report_paths: results.xml
           require_tests: true
+          annotate_only: true
 
   build_linux_x86_64:
     needs: source
@@ -299,6 +300,7 @@ jobs:
           check_name: 🐧caves, php-${{ matrix.php }}-${{ matrix.ts }}
           report_paths: results.xml
           require_tests: true
+          annotate_only: true
 
   build_macos_x86_64:
     needs: source
@@ -402,6 +404,7 @@ jobs:
           check_name: 🍏caves, php-${{ matrix.php }}-${{ matrix.ts }}
           report_paths: results.xml
           require_tests: true
+          annotate_only: true
 
   build_macos_arm64:
     needs: source
@@ -505,3 +508,4 @@ jobs:
           check_name: 🍎caves, php-${{ matrix.php }}-${{ matrix.ts }}
           report_paths: results.xml
           require_tests: true
+          annotate_only: true
