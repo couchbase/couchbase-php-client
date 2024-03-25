@@ -199,6 +199,22 @@ PHP_FUNCTION(version)
     couchbase::php::core_version(return_value);
 }
 
+PHP_FUNCTION(notifyFork)
+{
+    zend_string* fork_event = nullptr;
+
+    ZEND_PARSE_PARAMETERS_START(1, 1)
+    Z_PARAM_STR(fork_event)
+    ZEND_PARSE_PARAMETERS_END();
+
+    if (auto e = couchbase::php::notify_fork(fork_event); e.ec) {
+        couchbase_throw_exception(e);
+        RETURN_THROWS();
+    }
+
+    RETURN_NULL();
+}
+
 PHP_FUNCTION(createConnection)
 {
     zend_string* connection_hash = nullptr;
@@ -3226,6 +3242,10 @@ static PHP_MINFO_FUNCTION(couchbase)
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_version, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_notifyFork, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, forkEvent, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_clusterVersion, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -3998,6 +4018,7 @@ ZEND_END_ARG_INFO()
 
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
+        ZEND_NS_FE("Couchbase\\Extension", notifyFork, ai_CouchbaseExtension_notifyFork)
         ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
         ZEND_NS_FE("Couchbase\\Extension", clusterVersion, ai_CouchbaseExtension_clusterVersion)
         ZEND_NS_FE("Couchbase\\Extension", replicasConfiguredForBucket, ai_CouchbaseExtension_replicasConfiguredForBucket)

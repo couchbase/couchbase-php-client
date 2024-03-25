@@ -39,4 +39,8 @@ destroy_persistent_connection(zend_resource* res);
 
 COUCHBASE_API int
 check_persistent_connection(zval* zv);
+
+COUCHBASE_API
+core_error_info
+notify_fork(const zend_string* fork_event);
 } // namespace couchbase::php

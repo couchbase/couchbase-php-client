@@ -23,6 +23,7 @@
 #include <Zend/zend_API.h>
 
 #include <chrono>
+#include <couchbase/fork_event.hxx>
 #include <memory>
 #include <string>
 #include <system_error>
@@ -80,6 +81,9 @@ class connection_handle
 
     COUCHBASE_API
     bool replicas_configured_for_bucket(const zend_string* bucket_name);
+
+    COUCHBASE_API
+    void notify_fork(fork_event event) const;
 
     COUCHBASE_API
     core_error_info open();

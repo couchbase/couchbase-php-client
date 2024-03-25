@@ -50,6 +50,8 @@ class transactions_resource
     COUCHBASE_API
     core::transactions::transactions& transactions();
 
+    void notify_fork(fork_event event) const;
+
   private:
     class impl;
 
