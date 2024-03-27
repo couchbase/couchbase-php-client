@@ -2,10 +2,8 @@
 
 use Couchbase\Cluster;
 use Couchbase\ClusterInterface;
-use Couchbase\DesignDocumentNamespace;
 use Couchbase\Extension;
-use Couchbase\ViewConsistency;
-use Couchbase\ViewOptions;
+use Couchbase\ForkEvent;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -31,17 +29,17 @@ class ForkTest extends Helpers\CouchbaseTestCase
         $cas = $res->cas();
         $this->assertNotNull($cas);
 
-        Cluster::notifyFork("prepare");
+        Cluster::notifyFork(ForkEvent::PREPARE);
 
         $pid = pcntl_fork();
         $this->assertGreaterThanOrEqual(0, $pid);
         if ($pid == 0) {
-            Cluster::notifyFork("child");
+            Cluster::notifyFork(ForkEvent::CHILD);
             $res = $collection->get($id);
             $this->assertEquals($cas, $res->cas());
             exit(0);
         } else {
-            Cluster::notifyFork("parent");
+            Cluster::notifyFork(ForkEvent::PARENT);
             $res = $collection->get($id);
             $this->assertEquals($cas, $res->cas());
         }

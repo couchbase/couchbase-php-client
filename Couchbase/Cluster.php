@@ -119,17 +119,17 @@ class Cluster implements ClusterInterface
      *
      * Allowed values for `$event` are:
      *
-     * * "prepare" - must be used before `fork()` to ensure the SDK reaches safe point
-     * * "child" - must be used in the child process, the branch where `pcntl_fork()` returns zero
-     * * "parent" - must be used in the parent process, the branch where `pcntl_fork()` returns pid of the child process
+     * * ForkEvent::PREPARE - must be used before `fork()` to ensure the SDK reaches safe point
+     * * ForkEvent::CHILD - must be used in the child process, the branch where `pcntl_fork()` returns zero
+     * * ForkEvent::PARENT - must be used in the parent process, the branch where `pcntl_fork()` returns pid of the child process
      *
-     * In case `pcntl_fork()` returns negative value, and the application decides to continue, `notifyFork("parent")`
+     * In case `pcntl_fork()` returns negative value, and the application decides to continue, `notifyFork(ForkEvent::PARENT)`
      * must be invoked to resume the SDK.
      *
      * @see https://www.php.net/manual/en/function.pcntl-fork.php
      * @see https://www.php.net/manual/en/function.proc-open.php
      *
-     * @param string $event type of the event to send to the library (`"prepare"`, `"parent"`, `"child"`).
+     * @param string $event type of the event to send to the library (one of the constants in ForkEvent).
      * @return void
      *
      * @since 4.2.1
