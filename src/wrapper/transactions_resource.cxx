@@ -66,6 +66,11 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
         return transactions_;
     }
 
+    void notify_fork(couchbase::fork_event event)
+    {
+        transactions_.notify_fork(event);
+    }
+
   private:
     std::shared_ptr<couchbase::core::cluster> cluster_;
     couchbase::core::transactions::transactions transactions_;
@@ -83,6 +88,12 @@ core::transactions::transactions&
 transactions_resource::transactions()
 {
     return impl_->transactions();
+}
+
+void
+transactions_resource::notify_fork(fork_event event) const
+{
+    return impl_->notify_fork(event);
 }
 
 #define ASSIGN_DURATION_OPTION(name, setter, key, value)                                                                                   \

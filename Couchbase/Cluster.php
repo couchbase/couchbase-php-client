@@ -112,6 +112,34 @@ class Cluster implements ClusterInterface
     }
 
     /**
+     * Notifies the SDK about usage of `fork(2)` syscall. Typically PHP exposes it using `pcntl_fork()` function, but
+     * the library should have chance to properly close descriptors and reach safe point to allow forking the process.
+     * This is not a problem in case of `proc_open()` as in this case the memory and descriptors are not inherited by
+     * the child process.
+     *
+     * Allowed values for `$event` are:
+     *
+     * * ForkEvent::PREPARE - must be used before `fork()` to ensure the SDK reaches safe point
+     * * ForkEvent::CHILD - must be used in the child process, the branch where `pcntl_fork()` returns zero
+     * * ForkEvent::PARENT - must be used in the parent process, the branch where `pcntl_fork()` returns pid of the child process
+     *
+     * In case `pcntl_fork()` returns negative value, and the application decides to continue, `notifyFork(ForkEvent::PARENT)`
+     * must be invoked to resume the SDK.
+     *
+     * @see https://www.php.net/manual/en/function.pcntl-fork.php
+     * @see https://www.php.net/manual/en/function.proc-open.php
+     *
+     * @param string $event type of the event to send to the library (one of the constants in ForkEvent).
+     * @return void
+     *
+     * @since 4.2.1
+     */
+    public static function notifyFork(string $event)
+    {
+        return Extension\notifyFork($event);
+    }
+
+    /**
      * Returns a new bucket object.
      *
      * @param string $name the name of the bucket

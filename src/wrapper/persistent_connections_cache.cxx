@@ -18,8 +18,11 @@
 
 #include "common.hxx"
 #include "connection_handle.hxx"
+#include "transactions_resource.hxx"
 
 #include <core/logger/logger.hxx>
+#include <couchbase/error_codes.hxx>
+#include <couchbase/fork_event.hxx>
 
 #include <fmt/chrono.h>
 
@@ -169,6 +172,89 @@ destroy_persistent_connection(zend_resource* res)
                      persistent_connection_destructor_id_,
                      current_persistent);
     }
+}
+
+namespace
+{
+int
+notify_transaction(zval* zv, void* event_ptr)
+{
+    if (event_ptr == nullptr) {
+        return ZEND_HASH_APPLY_KEEP;
+    }
+
+    zend_resource* res = Z_RES_P(zv);
+    const fork_event event = *(static_cast<fork_event*>(event_ptr));
+
+    if (res->type == get_transactions_destructor_id()) {
+        auto const* transaction = static_cast<transactions_resource*>(res->ptr);
+        transaction->notify_fork(event);
+    }
+    return ZEND_HASH_APPLY_KEEP;
+}
+
+int
+notify_connection(zval* zv, void* event_ptr)
+{
+    if (event_ptr == nullptr) {
+        return ZEND_HASH_APPLY_KEEP;
+    }
+
+    zend_resource* res = Z_RES_P(zv);
+    const fork_event event = *(static_cast<fork_event*>(event_ptr));
+
+    if (res->type == persistent_connection_destructor_id_) {
+        const auto* connection = static_cast<connection_handle*>(res->ptr);
+        connection->notify_fork(event);
+    }
+    return ZEND_HASH_APPLY_KEEP;
+}
+
+std::pair<core_error_info, std::optional<couchbase::fork_event>>
+get_fork_event(const zend_string* fork_event_str)
+{
+    if (fork_event_str == nullptr || ZSTR_VAL(fork_event_str) == nullptr || ZSTR_LEN(fork_event_str) == 0) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, "expected non-empty string for forkEvent argument" }, {} };
+    }
+
+    if (zend_binary_strcmp(ZSTR_VAL(fork_event_str), ZSTR_LEN(fork_event_str), ZEND_STRL("prepare")) == 0) {
+        return { {}, couchbase::fork_event::prepare };
+    }
+    if (zend_binary_strcmp(ZSTR_VAL(fork_event_str), ZSTR_LEN(fork_event_str), ZEND_STRL("parent")) == 0) {
+        return { {}, couchbase::fork_event::parent };
+    }
+    if (zend_binary_strcmp(ZSTR_VAL(fork_event_str), ZSTR_LEN(fork_event_str), ZEND_STRL("child")) == 0) {
+        return { {}, couchbase::fork_event::child };
+    }
+    return { { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               fmt::format("unknown forkEvent: {}", std::string_view(ZSTR_VAL(fork_event_str), ZSTR_LEN(fork_event_str))) },
+             {} };
+}
+} // namespace
+
+COUCHBASE_API
+core_error_info
+notify_fork(const zend_string* fork_event)
+{
+    auto [e, event] = get_fork_event(fork_event);
+    if (e.ec) {
+        return e;
+    }
+
+    /* transactions must be first to stop */
+    if (event == fork_event::prepare) {
+        zend_hash_apply_with_argument(&EG(persistent_list), notify_transaction, &event);
+    }
+
+    zend_hash_apply_with_argument(&EG(persistent_list), notify_connection, &event);
+
+    /* transactions must be last to start */
+    if (event != fork_event::prepare) {
+        zend_hash_apply_with_argument(&EG(persistent_list), notify_transaction, &event);
+    }
+
+    return {};
 }
 
 } // namespace couchbase::php

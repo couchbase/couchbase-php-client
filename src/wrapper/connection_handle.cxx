@@ -407,7 +407,7 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
 
     void start()
     {
-        worker = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
+        worker_ = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
     }
 
     void stop()
@@ -418,8 +418,8 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
             cluster_->close([barrier]() { barrier->set_value(); });
             f.wait();
             cluster_.reset();
-            if (worker.joinable()) {
-                worker.join();
+            if (worker_.joinable()) {
+                worker_.join();
             }
         }
     }
@@ -574,10 +574,33 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
         return couchbase::cluster(*cluster_).bucket(bucket).scope(scope).collection(collection);
     }
 
+    void notify_fork(fork_event event)
+    {
+        switch (event) {
+            case fork_event::prepare:
+                ctx_.stop();
+                worker_.join();
+                ctx_.notify_fork(asio::execution_context::fork_prepare);
+                break;
+
+            case fork_event::parent:
+                ctx_.notify_fork(asio::execution_context::fork_parent);
+                ctx_.restart();
+                worker_ = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
+                break;
+
+            case fork_event::child:
+                ctx_.notify_fork(asio::execution_context::fork_child);
+                ctx_.restart();
+                worker_ = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
+                break;
+        }
+    }
+
   private:
     asio::io_context ctx_{};
     std::shared_ptr<couchbase::core::cluster> cluster_{ std::make_shared<couchbase::core::cluster>(ctx_) };
-    std::thread worker;
+    std::thread worker_;
     core::origin origin_;
 };
 
@@ -618,6 +641,12 @@ bool
 connection_handle::replicas_configured_for_bucket(const zend_string* bucket_name)
 {
     return impl_->replicas_configured_for_bucket(cb_string_new(bucket_name));
+}
+
+void
+connection_handle::notify_fork(fork_event event) const
+{
+    return impl_->notify_fork(event);
 }
 
 COUCHBASE_API
@@ -2659,9 +2688,9 @@ zval_to_search_index(couchbase::core::operations::management::search_index_upser
     if (auto e = cb_assign_string(idx.plan_params_json, index, "planParams"); e.ec) {
         return e;
     }
-   request.index = idx;
+    request.index = idx;
 
-   return {};
+    return {};
 }
 
 COUCHBASE_API
@@ -2844,7 +2873,10 @@ connection_handle::search_index_control_plan_freeze(zval* return_value, const ze
 
 COUCHBASE_API
 core_error_info
-connection_handle::search_index_analyze_document(zval* return_value, const zend_string* index_name, const zend_string* document, const zval* options)
+connection_handle::search_index_analyze_document(zval* return_value,
+                                                 const zend_string* index_name,
+                                                 const zend_string* document,
+                                                 const zval* options)
 {
     couchbase::core::operations::management::search_index_analyze_document_request request{};
     request.index_name = cb_string_new(index_name);
@@ -2867,7 +2899,11 @@ connection_handle::search_index_analyze_document(zval* return_value, const zend_
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_get(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+connection_handle::scope_search_index_get(zval* return_value,
+                                          const zend_string* bucket_name,
+                                          const zend_string* scope_name,
+                                          const zend_string* index_name,
+                                          const zval* options)
 {
     couchbase::core::operations::management::search_index_get_request request{ cb_string_new(index_name) };
 
@@ -2892,7 +2928,10 @@ connection_handle::scope_search_index_get(zval* return_value, const zend_string*
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_get_all(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* options)
+connection_handle::scope_search_index_get_all(zval* return_value,
+                                              const zend_string* bucket_name,
+                                              const zend_string* scope_name,
+                                              const zval* options)
 {
     couchbase::core::operations::management::search_index_get_all_request request{};
 
@@ -2922,7 +2961,11 @@ connection_handle::scope_search_index_get_all(zval* return_value, const zend_str
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_upsert(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zval* index, const zval* options)
+connection_handle::scope_search_index_upsert(zval* return_value,
+                                             const zend_string* bucket_name,
+                                             const zend_string* scope_name,
+                                             const zval* index,
+                                             const zval* options)
 {
     couchbase::core::operations::management::search_index_upsert_request request{};
 
@@ -2951,7 +2994,11 @@ connection_handle::scope_search_index_upsert(zval* return_value, const zend_stri
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+connection_handle::scope_search_index_drop(zval* return_value,
+                                           const zend_string* bucket_name,
+                                           const zend_string* scope_name,
+                                           const zend_string* index_name,
+                                           const zval* options)
 {
     couchbase::core::operations::management::search_index_drop_request request{ cb_string_new(index_name) };
 
@@ -2973,7 +3020,11 @@ connection_handle::scope_search_index_drop(zval* return_value, const zend_string
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_get_documents_count(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zval* options)
+connection_handle::scope_search_index_get_documents_count(zval* return_value,
+                                                          const zend_string* bucket_name,
+                                                          const zend_string* scope_name,
+                                                          const zend_string* index_name,
+                                                          const zval* options)
 {
     couchbase::core::operations::management::search_index_get_documents_count_request request{ cb_string_new(index_name) };
 
@@ -2997,7 +3048,12 @@ connection_handle::scope_search_index_get_documents_count(zval* return_value, co
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_control_ingest(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool pause, const zval* options)
+connection_handle::scope_search_index_control_ingest(zval* return_value,
+                                                     const zend_string* bucket_name,
+                                                     const zend_string* scope_name,
+                                                     const zend_string* index_name,
+                                                     bool pause,
+                                                     const zval* options)
 {
     couchbase::core::operations::management::search_index_control_ingest_request request{};
 
@@ -3022,7 +3078,12 @@ connection_handle::scope_search_index_control_ingest(zval* return_value, const z
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_control_query(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool allow, const zval* options)
+connection_handle::scope_search_index_control_query(zval* return_value,
+                                                    const zend_string* bucket_name,
+                                                    const zend_string* scope_name,
+                                                    const zend_string* index_name,
+                                                    bool allow,
+                                                    const zval* options)
 {
     couchbase::core::operations::management::search_index_control_query_request request{};
 
@@ -3047,7 +3108,12 @@ connection_handle::scope_search_index_control_query(zval* return_value, const ze
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_control_plan_freeze(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, bool freeze, const zval* options)
+connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
+                                                          const zend_string* bucket_name,
+                                                          const zend_string* scope_name,
+                                                          const zend_string* index_name,
+                                                          bool freeze,
+                                                          const zval* options)
 {
     couchbase::core::operations::management::search_index_control_plan_freeze_request request{};
 
@@ -3072,7 +3138,12 @@ connection_handle::scope_search_index_control_plan_freeze(zval* return_value, co
 
 COUCHBASE_API
 core_error_info
-connection_handle::scope_search_index_analyze_document(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* index_name, const zend_string* document, const zval* options)
+connection_handle::scope_search_index_analyze_document(zval* return_value,
+                                                       const zend_string* bucket_name,
+                                                       const zend_string* scope_name,
+                                                       const zend_string* index_name,
+                                                       const zend_string* document,
+                                                       const zval* options)
 {
     couchbase::core::operations::management::search_index_analyze_document_request request{};
 
@@ -3286,7 +3357,8 @@ zval_to_bucket_settings(const zval* bucket_settings)
     } else if (e.ec) {
         return { e, {} };
     }
-    if (auto e = cb_assign_boolean(bucket.history_retention_collection_default, bucket_settings, "historyRetentionCollectionDefault"); e.ec) {
+    if (auto e = cb_assign_boolean(bucket.history_retention_collection_default, bucket_settings, "historyRetentionCollectionDefault");
+        e.ec) {
         return { e, {} };
     }
     if (auto e = cb_assign_integer(bucket.history_retention_bytes, bucket_settings, "historyRetentionBytes"); e.ec) {
@@ -3655,7 +3727,12 @@ connection_handle::scope_drop(zval* return_value, const zend_string* bucket_name
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_create(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* settings, const zval* options)
+connection_handle::collection_create(zval* return_value,
+                                     const zend_string* bucket_name,
+                                     const zend_string* scope_name,
+                                     const zend_string* collection_name,
+                                     const zval* settings,
+                                     const zval* options)
 {
     couchbase::core::operations::management::collection_create_request request{};
 
@@ -3686,7 +3763,11 @@ connection_handle::collection_create(zval* return_value, const zend_string* buck
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_drop(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* options)
+connection_handle::collection_drop(zval* return_value,
+                                   const zend_string* bucket_name,
+                                   const zend_string* scope_name,
+                                   const zend_string* collection_name,
+                                   const zval* options)
 {
     couchbase::core::operations::management::collection_drop_request request{};
 
@@ -3709,7 +3790,12 @@ connection_handle::collection_drop(zval* return_value, const zend_string* bucket
 
 COUCHBASE_API
 core_error_info
-connection_handle::collection_update(zval* return_value, const zend_string* bucket_name, const zend_string* scope_name, const zend_string* collection_name, const zval* settings, const zval* options)
+connection_handle::collection_update(zval* return_value,
+                                     const zend_string* bucket_name,
+                                     const zend_string* scope_name,
+                                     const zend_string* collection_name,
+                                     const zval* settings,
+                                     const zval* options)
 {
     couchbase::core::operations::management::collection_update_request request{};
 
