@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.27)
+if(POLICY CMP0149)
+  # BoringSSL requires at least WindowsSDKVersion=10.0.20348.0
+  cmake_policy(SET CMP0149 NEW)
+endif()
+
 project(couchbase C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
