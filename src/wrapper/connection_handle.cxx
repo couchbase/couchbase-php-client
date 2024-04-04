@@ -4827,9 +4827,9 @@ connection_handle::cluster() const
     }
 
 struct dns_options {
-    std::chrono::milliseconds timeout{ core::timeout_defaults::dns_srv_timeout };
-    std::string nameserver{ core::io::dns::dns_config::default_nameserver };
-    std::uint16_t port{ core::io::dns::dns_config::default_port };
+    std::chrono::milliseconds timeout;
+    std::string nameserver;
+    std::uint16_t port;
 };
 
 static core_error_info
@@ -4842,7 +4842,8 @@ apply_options(core::utils::connection_string& connstr, zval* options)
     const zend_string* key;
     const zval* value;
 
-    dns_options dns{};
+    auto system_dns = core::io::dns::dns_config::system_config();
+    dns_options dns{ system_dns.timeout(), system_dns.nameserver(), system_dns.port() };
 
     ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
     {
