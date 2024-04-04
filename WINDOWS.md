@@ -19,6 +19,9 @@ Clone Couchbase SDK source code (note `--recurse-submodules`):
 
     git clone --recurse-submodules https://github.com/couchbaselabs/couchbase-php-client c:\users\user\couchbase-php-client
 
+NOTE: it is important that path to the extension source will not have spaces, otherwise PHP build
+system will not be able to work properly.
+
 Clone PHP interpreter source code (switch to necessary branch):
 
     git clone https://github.com/php/php-src c:\users\user\php-src
@@ -31,10 +34,10 @@ Clone PHP SDK tools
 
 Open "Visual Studio Installer" application and make sure that "Desktop development with C++" workload is installed.
 
-Navigate to PHP SDK tools and load build environment (we assume Visual Studio 2022, aka VS17 here):
+Navigate to PHP SDK tools and load build environment (we assume Visual Studio 2019, aka VS16 here):
 
     cd c:\php-sdk
-    .\phpsdk-vs17-x64.bat
+    .\phpsdk-vs16-x64.bat
 
 Inside the shell with build environment, navigate to PHP interpreter sources
 

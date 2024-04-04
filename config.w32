@@ -4,12 +4,12 @@ if (PHP_COUCHBASE != "no") {
     // we prefer standalone CMake, as the one that comes with MSVS might be too old
     var CMAKE = PATH_PROG("cmake", PROGRAM_FILES + "\\CMake\\bin;" + PROGRAM_FILESx86 + "\\CMake\\bin");
     if (!CMAKE) {
-        ERROR("cmake is required");
+        ERROR("cmake is required (use 'winget install Kitware.CMake')");
     }
     var LOCALAPPDATA = WshShell.Environment("Process").Item("LOCALAPPDATA");
     var NASM = PATH_PROG("nasm", LOCALAPPDATA + "\\bin\\nasm");
     if (!NASM) {
-        ERROR("nasm is required for BoringSSL");
+        ERROR("nasm is required for BoringSSL (use 'winget install NASM.NASM')");
     }
     ADD_FLAG("CFLAGS", "/std:c++17");
 
@@ -48,14 +48,19 @@ if (PHP_COUCHBASE != "no") {
     STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
     STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
 
-    DEFINE("LIBS_COUCHBASE", "$(BUILD_DIR)\\couchbase_php_wrapper.lib");
-    DEFINE("DEPS_COUCHBASE", get_define("LIBS_COUCHBASE"));
-    EXTENSION("couchbase", "src\\php_couchbase.cxx", true);
-
-    MFO.WriteLine("$(BUILD_DIR)\\couchbase_php_wrapper.lib: " + (MODE_PHPIZE ? "" : "$(BUILD_DIR)\\$(PHPDLL)"));
+    // Override build rules. CMake is in charge of the build process.
+    MFO.WriteLine("$(BUILD_DIR)\\php_couchbase.lib: $(BUILD_DIR)\\php_couchbase.dll");
+    MFO.WriteLine("$(BUILD_DIR)\\php_couchbase.dll: " + (MODE_PHPIZE ? "" : "$(BUILD_DIR)\\$(PHPDLL)"));
     MFO.WriteLine("\t\"" + CMAKE + "\" --build \"" + COUCHBASE_CMAKE_BUILD_DIRECTORY + "\" --verbose");
-    MFO.WriteLine("couchbase_php_wrapper.lib: $(BUILD_DIR)\\couchbase_php_wrapper.lib");
-    MFO.WriteLine("\t@echo EXT couchbase wrapper build complete");
+    MFO.WriteLine("php_couchbase.dll: $(BUILD_DIR)\\php_couchbase.dll");
+    MFO.WriteLine("\t@echo EXT couchbase build complete");
+
+    // Create dummy source file to keep PHP build system happy.
+    dummy_source = FSO.CreateTextFile(configure_module_dirname + "\\dummy.c", true);
+    dummy_source.WriteLine("extern void dummy() {}");
+    dummy_source.Close();
+
+    EXTENSION("couchbase", "dummy.c", true);
 
     cmake_command =
         'cmd /c ""' + CMAKE  + '"' +
