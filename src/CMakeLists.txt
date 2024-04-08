@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.27)
+if(POLICY CMP0149)
+  # BoringSSL requires at least WindowsSDKVersion=10.0.20348.0
+  cmake_policy(SET CMP0149 NEW)
+endif()
+
 project(couchbase C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -75,7 +80,11 @@ set_target_properties(couchbase PROPERTIES PREFIX "")
 if(APPLE)
   set_target_properties(couchbase PROPERTIES SUFFIX ".so")
 endif()
+if(MSVC)
+  set_target_properties(couchbase PROPERTIES PREFIX "php_" IMPORT_PREFIX "php_")
+endif()
 target_include_directories(couchbase PRIVATE ${PROJECT_BINARY_DIR}/generated)
+target_include_directories(couchbase PRIVATE ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client)
 target_include_directories(couchbase PRIVATE ${PHP_INCLUDE_DIRS})
 target_compile_definitions(couchbase PRIVATE ZEND_COMPILE_DL_EXT=1)
 set_target_properties(couchbase_cxx_client PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
