@@ -117,8 +117,8 @@ encoder function in the options. SDKv4 fixes this and instead defines the `\Couc
 interface which encapsulates all the logic. Additionally, it provides four implementations of it
 and uses `\Couchbase\JsonTranscoder` by default.
 
-Lets say we want to read/write documents without any conversion, just as a binary streams. To do so,
-we would need to override transcoder, because otherwise our byte strings will be serialized as JSON
+Let's say we want to read/write documents without any conversion, just as a binary streams. To do so,
+we would need to override the transcoder, because otherwise our byte strings will be serialized as JSON
 strings.
 
 Here is how it is done with SDKv3:
