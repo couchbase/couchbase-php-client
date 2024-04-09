@@ -105,9 +105,9 @@ So let us point out immediate differences:
    ```
 
 2. Another important observation is that SDKv4 does not expect any system libraries or headers to be
-   installed to work and uses statically compiled core implementation (just like all other
-   wrappers). Also it statically links TLS library to the extension, which, again, simplifies
-   deployment on Windows platform.
+   installed to work and uses a statically compiled core implementation (just like all other
+   wrappers). Additionally, it statically links the TLS library to the extension, which, again, simplifies
+   deployment on the Windows platform.
 
 ## Transcoder API
 
