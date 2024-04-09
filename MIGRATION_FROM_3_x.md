@@ -1,7 +1,7 @@
 # Migration Guide for 3.x Branch
 
-Couchbase PHP SDK v4 brought a lot of improvements in API. Some of the changes unfortunately break
-compatibility with v3. This guide helps to upgrade application, and highlights the most important
+Couchbase PHP SDK v4 brought a lot of improvements to the API. Some of the changes unfortunately break
+compatibility with v3. This guide helps upgrade applications, and highlights the most important
 differences.
 
 API Reference: https://docs.couchbase.com/sdk-api/couchbase-php-client
