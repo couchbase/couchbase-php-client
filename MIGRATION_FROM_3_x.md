@@ -74,7 +74,7 @@ So let us point out immediate differences:
    composer require couchbase/couchbase
    ```
 
-   the resulting `composer.json` need only two lines to be added:
+   the resulting `composer.json` needs only two lines to be added:
    ```diff
    diff --git i/composer.json w/composer.json
    index b743a66..88e69da 100644
