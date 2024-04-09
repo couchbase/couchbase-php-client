@@ -91,9 +91,9 @@ So let us point out immediate differences:
             "slim/psr7": "^1.5",
    ```
 
-   In case, the Composer cannot be used, we also have autoloader script `Couchbase\autoload.php`,
-   that sets up hook to resolve and automatically require SDK classes, but to use this autoloader,
-   the headers must be installed somewhere in PHP include path, which could be found using one of
+   In case Composer cannot be used, we also have autoloader script `Couchbase\autoload.php`,
+   that sets up a hook to resolve and automatically require SDK classes, but to use this autoloader,
+   the headers must be installed somewhere in the PHP include path, which could be found using one of
    the following commands, or in the `phpinfo()` output.
    ```
    $ pecl config-get php_dir
