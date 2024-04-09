@@ -66,7 +66,7 @@ block-beta
 So let us point out immediate differences:
 
 1. SDKv4 uses Composer to deliver high-level API classes, while SDKv3 defines everything in the
-   extension. While it adds extra step for the Developer, it really simplifies maintaining, reduces
+   extension. While it adds an extra step for the developer, it really simplifies maintenance, reduces
    potential memory issues, allows to keep documentation consistent and improves IDE integration.
 
    It is really easy add classes to the application using Composer.
