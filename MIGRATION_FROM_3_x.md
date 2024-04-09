@@ -35,7 +35,7 @@ block-beta
 ```
 
 
-The following diagram illustrates architecture of PHP SDK v4:
+The following diagram illustrates the architecture of PHP SDK v4:
 
 ```mermaid
 block-beta
