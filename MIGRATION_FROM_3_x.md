@@ -227,8 +227,8 @@ and handle exceptions from SDK, those places should update to use new names.
         <tr>
             <td>\Couchbase\DmlFailureException</td>
             <td>
-                The SDK will detect underlying error that caused the query to fail and throw
-                specific exception.
+                The SDK will detect the underlying error that caused the query to fail and throw
+                the specific exception.
                 <ul>
                     <li>\Couchbase\Exception\CasMismatchException</li>
                     <li>\Couchbase\Exception\DocumentExistsException</li>
