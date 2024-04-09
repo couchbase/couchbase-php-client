@@ -187,8 +187,8 @@ var_dump($res->content());
 
 ## Error Handling
 
-SDKv4 moved exceptions into `\Couchbase\Exception` namespace, so if the application used to catch
-and handle exceptions from SDK, those places should update to use new names.
+SDKv4 moved exceptions into the `\Couchbase\Exception` namespace, so if the application used to catch
+and handle exceptions from the SDK, those places should update to use the new names.
 
 <table>
     <thead>
