@@ -111,10 +111,10 @@ So let us point out immediate differences:
 
 ## Transcoder API
 
-SDKv3 used non-standard way of specifying encoder and decoder for the document objects for KV API.
-This API was inherited from SDKv2, and basically the Developer needed to specify only decoder, or
-encoder function in the options. SDKv4 fixes this and instead defines `\Couchbase\Transcoder`
-interface which encapsulates all logic. In addition it provides four implementations of it
+SDKv3 used a non-standard way of specifying an encoder and decoder for the document objects for the KV API.
+This API was inherited from SDKv2, where the developer needed to specify a decoder or
+encoder function in the options. SDKv4 fixes this and instead defines the `\Couchbase\Transcoder`
+interface which encapsulates all the logic. Additionally, it provides four implementations of it
 and uses `\Couchbase\JsonTranscoder` by default.
 
 Lets say we want to read/write documents without any conversion, just as a binary streams. To do so,
