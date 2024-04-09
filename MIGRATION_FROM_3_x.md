@@ -63,7 +63,7 @@ block-beta
   end
 ```
 
-So let us point to immediate differences:
+So let us point out immediate differences:
 
 1. SDKv4 uses Composer to deliver high-level API classes, while SDKv3 defines everything in the
    extension. While it adds extra step for the Developer, it really simplifies maintaining, reduces
