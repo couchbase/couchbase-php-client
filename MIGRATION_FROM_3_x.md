@@ -6,7 +6,7 @@ differences.
 
 API Reference: https://docs.couchbase.com/sdk-api/couchbase-php-client
 
-## The Components Overview
+## Components Overview
 
 The following diagram illustrates the architecture of PHP SDK v3:
 
