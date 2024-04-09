@@ -152,7 +152,7 @@ $res = $collection->get("foo", $options);
 var_dump($res->content());
 ```
 
-With SDKv4 we ship `\Couchbase\RawBinaryTranscoder`, which could be reimplemented as following:
+With SDKv4 we ship `\Couchbase\RawBinaryTranscoder`, which could be reimplemented as the following:
 
 ```php
 class PassThruTranscoder implements \Couchbase\Transcoder
