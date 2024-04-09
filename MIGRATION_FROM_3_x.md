@@ -8,7 +8,7 @@ API Reference: https://docs.couchbase.com/sdk-api/couchbase-php-client
 
 ## The Components Overview
 
-The following diagram illustrates architecture of PHP SDK v3:
+The following diagram illustrates the architecture of PHP SDK v3:
 
 ```mermaid
 block-beta
