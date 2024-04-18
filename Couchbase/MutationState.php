@@ -60,8 +60,8 @@ class MutationState
         foreach ($this->tokens as $token) {
             $state[] = [
                 "partitionId" => $token->partitionId(),
-                "partitionUuid" => hexdec($token->partitionUuid()),
-                "sequenceNumber" => hexdec($token->sequenceNumber()),
+                "partitionUuid" => $token->partitionUuid(),
+                "sequenceNumber" => $token->sequenceNumber(),
                 "bucketName" => $token->bucketName(),
             ];
         }

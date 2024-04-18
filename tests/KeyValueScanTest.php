@@ -43,6 +43,7 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     {
         parent::setUp();
         $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsCollections());
 
         $this->collection = $this->defaultCollection();
         for ($i = 0; $i < 100; $i++) {

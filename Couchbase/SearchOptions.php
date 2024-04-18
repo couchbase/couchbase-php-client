@@ -29,7 +29,7 @@ class SearchOptions implements JsonSerializable
     private ?int $skip = null;
     private ?bool $explain = null;
     private ?bool $disableScoring = null;
-    private ?array $consistentWith = null;
+    private ?MutationState $consistentWith = null;
     private ?array $fields = null;
     private ?array $facets = null;
     private ?array $sort = null;
@@ -132,16 +132,7 @@ class SearchOptions implements JsonSerializable
      */
     public function consistentWith(string $index, MutationState $state): SearchOptions
     {
-        $vectors = [];
-        foreach ($state->tokens() as $token) {
-            $vectors[] = [
-                'partitionId' => $token->partitionId(),
-                'partitionUuid' => $token->partitionUuid(),
-                'sequenceNumber' => $token->sequenceNumber(),
-                'bucketName' => $token->bucketName(),
-            ];
-        }
-        $this->consistentWith = $vectors;
+        $this->consistentWith = $state;
         return $this;
     }
 
@@ -322,7 +313,7 @@ class SearchOptions implements JsonSerializable
             'disableScoring' => $options->disableScoring,
             'fields' => $options->fields,
             'sortSpecs' => $sort,
-            'consistentWith' => $options->consistentWith,
+            'consistentWith' => $options->consistentWith == null ? null : $options->consistentWith->export(),
             'facets' => $options->facets,
             'highlightStyle' => $highlightStyle,
             'highlightFields' => $highlightFields,

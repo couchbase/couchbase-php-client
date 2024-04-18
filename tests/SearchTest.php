@@ -20,11 +20,13 @@ declare(strict_types=1);
 
 use Couchbase\BooleanSearchQuery;
 use Couchbase\ClusterInterface;
+use Couchbase\CollectionInterface;
 use Couchbase\ConjunctionSearchQuery;
 use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
 use Couchbase\DocIdSearchQuery;
+use Couchbase\DurabilityLevel;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\GeoBoundingBoxSearchQuery;
@@ -52,6 +54,7 @@ use Couchbase\SearchSortType;
 use Couchbase\TermRangeSearchQuery;
 use Couchbase\TermSearchFacet;
 use Couchbase\TermSearchQuery;
+use Couchbase\UpsertOptions;
 use Couchbase\VectorQuery;
 use Couchbase\VectorQueryCombination;
 use Couchbase\VectorSearch;
@@ -63,34 +66,59 @@ include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 class SearchTest extends Helpers\CouchbaseTestCase
 {
     private ClusterInterface $cluster;
+    private CollectionInterface $collection;
     private SearchIndexManager $indexManager;
+
+    /**
+     * @return number of the documents in dataset
+     */
+    public function loadDataset(): int
+    {
+        $dataset = json_decode(file_get_contents(__DIR__ . "/beer-data.json"), true);
+
+        $options = UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        foreach ($dataset as $id => $document) {
+            $this->collection->upsert($id, $document, $options);
+        }
+
+        return count($dataset);
+    }
+
+    public function createSearchIndex(int $datasetSize): void
+    {
+        fprintf(STDERR, "Create 'beer-search' to index %d docs\n", $datasetSize);
+        $indexDump = json_decode(file_get_contents(__DIR__ . "/beer-search.json"), true);
+        $index = SearchIndex::build("beer-search", self::env()->bucketName());
+        $index->setParams($indexDump["params"]);
+        $this->indexManager->upsertIndex($index);
+
+        $start = time();
+        while (true) {
+            try {
+                $indexedDocuments = $this->indexManager->getIndexedDocumentsCount("beer-search");
+                fprintf(STDERR, "%ds, Indexing 'beer-search': %d docs\n", time() - $start, $indexedDocuments);
+                if ($indexedDocuments >= $datasetSize) {
+                    break;
+                }
+                sleep(5);
+            } catch (\Couchbase\Exception\IndexNotReadyException $ex) {
+            }
+        }
+    }
 
     public function setUp(): void
     {
         parent::setUp();
 
         $this->cluster = $this->connectCluster();
+        $this->collection = $this->openBucket(self::env()->bucketName())->defaultCollection();
 
         if (self::env()->useCouchbase()) {
             $this->indexManager = $this->cluster->searchIndexes();
             try {
                 $this->indexManager->getIndex("beer-search");
             } catch (IndexNotFoundException $ex) {
-                $indexDump = json_decode(file_get_contents(__DIR__ . "/beer-search.json"), true);
-                $index = SearchIndex::build("beer-search", "beer-sample");
-                $index->setParams($indexDump["params"]);
-                $this->indexManager->upsertIndex($index);
-            }
-            while (true) {
-                try {
-                    $indexedDocuments = $this->indexManager->getIndexedDocumentsCount("beer-search");
-                    fprintf(STDERR, "Indexing 'beer-search': %d docs\n", $indexedDocuments);
-                    if ($indexedDocuments > 7000) {
-                        break;
-                    }
-                    sleep(3);
-                } catch (\Couchbase\Exception\IndexNotReadyException $ex) {
-                }
+                $this->createSearchIndex($this->loadDataset());
             }
         }
     }
@@ -159,6 +187,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(0, $result->metaData()->totalHits());
     }
 
+
     public function testSearchWithConsistency()
     {
         $this->skipIfCaves();
@@ -173,8 +202,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEmpty($result->rows());
         $this->assertEquals(0, $result->metaData()->totalHits());
 
-        $collection = $this->cluster->bucket('beer-sample')->defaultCollection();
-        $result = $collection->upsert($id, ["type" => "beer", "name" => $id]);
+        $result = $this->collection->upsert($id, ["type" => "beer", "name" => $id]);
         $mutationState = new MutationState();
         $mutationState->add($result);
 
@@ -358,7 +386,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $disjunctionQuery = new DisjunctionSearchQuery([$nameQuery, $descriptionQuery]);
         $options = SearchOptions::build()->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
-        $this->assertGreaterThan(1000, $result->metaData()->totalHits());
+        $this->assertGreaterThan(20, $result->metaData()->totalHits());
         $this->assertNotEmpty($result->rows());
         $this->assertMatchesRegularExpression('/green/i', $result->rows()[0]['fields']['name']);
         $this->assertDoesNotMatchRegularExpression('/hop/i', $result->rows()[0]['fields']['name']);
@@ -434,18 +462,18 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($result->facets()['foo']);
         $this->assertEquals('name', $result->facets()['foo']->field());
         $this->assertEquals('ale', $result->facets()['foo']->terms()[0]->term());
-        $this->assertGreaterThan(1000, $result->facets()['foo']->terms()[0]->count());
+        $this->assertGreaterThan(10, $result->facets()['foo']->terms()[0]->count());
 
         $this->assertNotNull($result->facets()['bar']);
         $this->assertEquals('updated', $result->facets()['bar']->field());
         $this->assertEquals('old', $result->facets()['bar']->dateRanges()[0]->name());
-        $this->assertGreaterThan(5000, $result->facets()['bar']->dateRanges()[0]->count());
+        $this->assertGreaterThan(30, $result->facets()['bar']->dateRanges()[0]->count());
 
         $this->assertNotNull($result->facets()['baz']);
         $this->assertEquals('abv', $result->facets()['baz']->field());
         $this->assertEquals('light', $result->facets()['baz']->numericRanges()[0]->name());
         $this->assertGreaterThan(0, $result->facets()['baz']->numericRanges()[0]->max());
-        $this->assertGreaterThan(100, $result->facets()['baz']->numericRanges()[0]->count());
+        $this->assertGreaterThan(15, $result->facets()['baz']->numericRanges()[0]->count());
     }
 
     public function testNullInNumericRangeFacet()
