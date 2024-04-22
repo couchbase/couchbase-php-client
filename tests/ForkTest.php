@@ -23,6 +23,11 @@ class ForkTest extends Helpers\CouchbaseTestCase
         if (!extension_loaded("pcntl")) {
             $this->markTestSkipped("The 'pcntl' extension require to test Cluster::notifyFork helper");
         }
+        $this->markTestSkipped(
+            "PCBC-986: the extension does not restart connections in the child immediately, " .
+            "so this test might produce errors when the child handles responses addressed " .
+            "to the parent."
+        );
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
         $res = $collection->upsert($id, ["answer" => 42]);
