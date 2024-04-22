@@ -32,6 +32,7 @@
 #include <chrono>
 
 #include <fmt/format.h>
+#include <type_traits>
 
 namespace couchbase::transactions
 {
@@ -67,6 +68,44 @@ query_response_to_zval(zval* return_value, const core::operations::query_respons
 void
 search_query_response_to_zval(zval* return_value, const core::operations::search_response& resp);
 
+template <typename Integer>
+static Integer
+parse_integer(const std::string& str, std::size_t* pos = 0, int base = 10)
+{
+    if constexpr (std::is_signed_v<Integer>) {
+        return std::stoll(str, pos, base);
+    } else {
+        return std::stoull(str, pos, base);
+    }
+}
+
+template<typename Integer>
+static std::pair<core_error_info, std::optional<Integer>>
+cb_get_integer_from_hex(const zend_string* value, std::string_view name)
+{
+    auto hex_string = cb_string_new(value);
+
+    if(hex_string.empty()) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("unexpected empty string for {}", name) }, {} };
+    }
+
+    try {
+        std::size_t pos;
+        auto result = parse_integer<Integer>(hex_string, &pos, 16);
+        if (result < std::numeric_limits<Integer>::min() || result > std::numeric_limits<Integer>::max()) {
+            return { { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("number out of range for {}", name) }, {} };
+        }
+        if (pos != hex_string.length()) {
+            return { { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("trailing garbage in {}", name) }, {} };
+        }
+        return {{}, result};
+    } catch (const std::invalid_argument& e) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("invalid hex number for {}", name) }, {} };
+    } catch (const std::out_of_range& e) {
+        return { { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("number out of range for {}", name) }, {} };
+    }
+}
+
 template<typename Integer>
 static std::pair<core_error_info, std::optional<Integer>>
 cb_get_integer(const zval* options, std::string_view name)
@@ -87,6 +126,8 @@ cb_get_integer(const zval* options, std::string_view name)
             return {};
         case IS_LONG:
             break;
+        case IS_STRING:
+            return cb_get_integer_from_hex<Integer>(Z_STR_P(value), name);
         default:
             return {
                 { errc::common::invalid_argument, ERROR_LOCATION, fmt::format("expected {} to be a integer value in the options", name) },
