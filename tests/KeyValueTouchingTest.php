@@ -36,7 +36,7 @@ class KeyValueTouchingTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($id, GetOptions::build()->withExpiry(true));
         $this->assertNull($res->expiryTime());
 
-        $res = $collection->getAndTouch($id, 5);
+        $res = $collection->getAndTouch($id, 10);
         $gatCas = $res->cas();
         $this->assertNotNull($gatCas);
         $this->assertNotEquals($originalCas, $gatCas);

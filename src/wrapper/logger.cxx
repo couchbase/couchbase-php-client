@@ -159,11 +159,10 @@ initialize_logger()
         couchbase::core::logger::configuration configuration{};
         if (const char* ini_val = COUCHBASE_G(log_path); ini_val != nullptr && std::strlen(ini_val) > 0) {
             configuration.filename = ini_val;
+            configuration.filename += fmt::format(".{}", spdlog::details::os::pid());
         }
-        if (COUCHBASE_G(log_stderr)) {
-            configuration.console = true;
-            configuration.unit_test = true;
-        }
+        configuration.unit_test = true;
+        configuration.console = COUCHBASE_G(log_stderr);
         configuration.log_level = cbpp_log_level;
         if (COUCHBASE_G(log_php_log_err)) {
             configuration.sink = global_php_log_err_sink;

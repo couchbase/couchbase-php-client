@@ -29,6 +29,36 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->manager = $this->connectCluster()->users();
     }
 
+    public function waitForGroupCreated(string $groupName)
+    {
+        $seenNewGroup = 0;
+
+        while ($seenNewGroup < 10) {
+            try {
+                return $this->manager->getGroup($groupName);
+            } catch (Exception $ex) {
+                usleep(100000);
+                continue;
+            }
+            $seenNewGroup += 1;
+        }
+    }
+
+    public function waitForUserCreated(string $userName)
+    {
+        $seenNewUser = 0;
+
+        while ($seenNewUser < 10) {
+            try {
+                return $this->manager->getUser($userName);
+            } catch (Exception $ex) {
+                usleep(100000);
+                continue;
+            }
+            $seenNewUser += 1;
+        }
+    }
+
     public function testGetRoles()
     {
         // Caves doesn't include display name and description for roles.
@@ -57,20 +87,19 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->assertEquals($groupName, $result->name());
         $this->assertEquals($desc, $result->description());
         $roles = $result->roles();
-        $this->assertCount(4, $roles);
-
         $this->assertGreaterThan(0, count($roles));
+
         /** @var Role $role */
         foreach ($roles as $role) {
             switch ($role->name()) {
                 case 'bucket_full_access':
                 case 'bucket_admin':
-                    if (!($role->bucket() == 'travel-sample' || $role->bucket() == 'beer-sample')) {
-                        $this->fail(sprintf('wrong bucket for group role $%s', $role->name()));
+                    if ($role->bucket() != 'travel-sample' && $role->bucket() != self::env()->bucketName()) {
+                        $this->fail(sprintf('wrong bucket "%s" for group role "%s"', $role->bucket(), $role->name()));
                     }
                     break;
                 default:
-                    $this->fail(sprintf('unknown group role $%s', $role->name()));
+                    $this->fail(sprintf('unknown group role "%s"', $role->name()));
             }
         }
     }
@@ -80,25 +109,22 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
         $groupName = $this->uniqueId('test');
         $desc = 'Users who have full access to sample buckets';
+        $defaultBucket = self::env()->bucketName();
         $group = Group::build()->setName($groupName)->setDescription($desc)->setRoles(
             [
                 Role::build()->setName('bucket_admin')->setBucket('travel-sample'),
                 Role::build()->setName('bucket_full_access')->setBucket('travel-sample'),
-                Role::build()->setName('bucket_admin')->setBucket('beer-sample'),
-                Role::build()->setName('bucket_full_access')->setBucket('beer-sample'),
+                Role::build()->setName('bucket_admin')->setBucket($defaultBucket),
+                Role::build()->setName('bucket_full_access')->setBucket($defaultBucket),
             ]
         );
 
         $this->manager->upsertGroup($group);
+        $this->waitForGroupCreated($groupName);
 
-        $result = $this->retryFor(
-            5,
-            100,
-            function () use ($groupName) {
-                return $this->manager->getGroup($groupName);
-            }
-        );
+        $result = $this->manager->getGroup($groupName);
         $this->assertGroup($result, $groupName, $desc);
+        $this->assertCount(4, $result->roles());
 
         $result = $this->manager->getAllGroups();
         $this->assertGreaterThan(0, count($result));
@@ -114,8 +140,14 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropGroup($groupName);
+
         $this->expectException(GroupNotFoundException::class);
-        $this->manager->getGroup($groupName);
+        $retry = 10;
+        while ($retry > 0) {
+            $this->manager->getGroup($groupName);
+            $retry -= 1;
+            usleep(100000);
+        }
     }
 
     protected function assertUser(UserAndMetadata $result, string $username, string $displayName, Group $group, Role $userRole)
@@ -157,6 +189,10 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         );
 
         $this->manager->upsertGroup($group);
+        $this->waitForGroupCreated($groupName);
+
+        $result = $this->manager->getGroup($groupName);
+        $this->assertGroup($result, $groupName, $desc);
 
         $role = Role::build()->setName('bucket_full_access')->setBucket('*');
 
@@ -165,15 +201,9 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $user = User::build()->setUsername($username)->setPassword('secret')->setDisplayName($display)
             ->setGroups([$groupName])->setRoles([$role]);
         $this->manager->upsertUser($user);
+        $this->waitForUserCreated($username);
 
-        $result = $this->retryFor(
-            5,
-            100,
-            function () use ($username) {
-                return $this->manager->getUser($username);
-            }
-        );
-
+        $result = $this->manager->getUser($username);
         $this->assertUser($result, $username, $display, $group, $role);
 
         $result = $this->manager->getAllUsers();
@@ -191,7 +221,12 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
 
         $this->manager->dropUser($username);
         $this->expectException(UserNotFoundException::class);
-        $this->manager->getUser($username);
+        $retry = 10;
+        while ($retry > 0) {
+            $this->manager->getUser($username);
+            $retry -= 1;
+            usleep(100000);
+        }
     }
 
     public function testChangePassword()
@@ -203,14 +238,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $display = 'Test User';
         $user = User::build()->setUsername($username)->setPassword("secret")->setDisplayName($display)->setRoles([$role]);
         $this->manager->upsertUser($user);
-
-        $this->retryFor(
-            5,
-            100,
-            function () use ($username) {
-                return $this->manager->getUser($username);
-            }
-        );
+        $this->waitForUserCreated($username);
 
         $options = new ClusterOptions();
         $options->credentials($username, "secret");

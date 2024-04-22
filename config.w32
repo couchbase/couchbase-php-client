@@ -7,7 +7,7 @@ if (PHP_COUCHBASE != "no") {
         ERROR("cmake is required (use 'winget install Kitware.CMake')");
     }
     var LOCALAPPDATA = WshShell.Environment("Process").Item("LOCALAPPDATA");
-    var NASM = PATH_PROG("nasm", LOCALAPPDATA + "\\bin\\nasm");
+    var NASM = PATH_PROG("nasm", LOCALAPPDATA + "\\bin\\nasm;" + PROGRAM_FILES + "\\NASM");
     if (!NASM) {
         ERROR("nasm is required for BoringSSL (use 'winget install NASM.NASM')");
     }

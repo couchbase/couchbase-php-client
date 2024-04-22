@@ -10,7 +10,9 @@
 .deps
 .libs/
 .phpdoc
+.cache
 /*.out
+/logs
 /.idea/
 /.phpunit.result.cache
 /Debug/
