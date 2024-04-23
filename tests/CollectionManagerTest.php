@@ -93,7 +93,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->dropScope($scopeName);
     }
 
-    public function testCreateCollectionDeprecatedAPI(): void
+    public function testCreateCollectionDeprecatedApi(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -112,7 +112,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
     }
 
-    public function testCreateCollectionExistsDeprecatedAPI(): void
+    public function testCreateCollectionExistsDeprecatedApi(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -123,7 +123,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->createCollection($collectionSpec);
     }
 
-    public function testDropCollectionNotExistsDeprecatedAPI(): void
+    public function testDropCollectionNotExistsDeprecatedApi(): void
     {
         $this->skipIfCaves();
 
@@ -135,7 +135,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->dropCollection($collectionSpec);
     }
 
-    public function testDropCollectionDeprecatedAPI(): void
+    public function testDropCollectionDeprecatedApi(): void
     {
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
@@ -304,7 +304,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1, false));
+        $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1));
 
         $selectedScope = $this->getScope($scopeName);
 

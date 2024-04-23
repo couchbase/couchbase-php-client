@@ -20,7 +20,7 @@
 #include "common.hxx"
 #include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
-#include "core/utils/json.hxx"
+#include "logger.hxx"
 #include "passthrough_transcoder.hxx"
 #include "version.hxx"
 
@@ -28,6 +28,7 @@
 #include <core/error_context/analytics.hxx>
 #include <core/error_context/search.hxx>
 #include <core/error_context/view.hxx>
+#include <core/logger/logger.hxx>
 #include <core/management/bucket_settings.hxx>
 #include <core/operations.hxx>
 #include <core/operations/management/bucket.hxx>
@@ -38,6 +39,7 @@
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
 #include <core/utils/connection_string.hxx>
+#include <core/utils/json.hxx>
 
 #include <couchbase/cluster.hxx>
 #include <couchbase/collection.hxx>
@@ -581,15 +583,21 @@ class connection_handle::impl : public std::enable_shared_from_this<connection_h
                 ctx_.stop();
                 worker_.join();
                 ctx_.notify_fork(asio::execution_context::fork_prepare);
+                CB_LOG_INFO("Prepare for fork()");
+                shutdown_logger();
                 break;
 
             case fork_event::parent:
+                initialize_logger();
+                CB_LOG_INFO("Resume parent after fork()");
                 ctx_.notify_fork(asio::execution_context::fork_parent);
                 ctx_.restart();
                 worker_ = std::thread([self = shared_from_this()]() { self->ctx_.run(); });
                 break;
 
             case fork_event::child:
+                initialize_logger();
+                CB_LOG_INFO("Resume child after fork()");
                 ctx_.notify_fork(asio::execution_context::fork_child);
                 ctx_.restart();
                 worker_ = std::thread([self = shared_from_this()]() { self->ctx_.run(); });

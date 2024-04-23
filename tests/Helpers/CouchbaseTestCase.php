@@ -26,7 +26,10 @@ $defaultPath = __DIR__ . "/../../Couchbase/autoload.php";
 if (file_exists($defaultPath)) {
     include_once $defaultPath;
 } else {
-    $possibleDirs = glob(__DIR__ . '/../../couchbase-*/');
+    $possibleDirs = array_merge(
+        glob(__DIR__ . '/../../couchbase-*/'),
+        glob(__DIR__ . '/../../couchbase-*/couchbase-*/')
+    );
     foreach ($possibleDirs as $dir) {
         $autoloadPath = $dir . 'Couchbase/autoload.php';
         if (file_exists($autoloadPath)) {
@@ -73,6 +76,9 @@ class CouchbaseTestCase extends TestCase
             $options = new ClusterOptions();
         }
         $options->authenticator(self::env()->buildPasswordAuthenticator());
+        if (getenv("TEST_USE_WAN_DEVELOPMENT_PROFILE") == "true") {
+            $options->applyProfile("wan_development");
+        }
         return Cluster::connect(self::env()->connectionString(), $options);
     }
 
@@ -200,7 +206,7 @@ class CouchbaseTestCase extends TestCase
             try {
                 return $fn();
             } catch (Exception $ex) {
-                printf("%s(%s) returned exception, will retry: %s\n", $caller, $message, $ex->getMessage());
+                fprintf(STDERR, "%s(%s) returned exception, will retry: %s\n", $caller, $message, $ex->getMessage());
                 $endException = $ex;
             }
 
@@ -298,5 +304,11 @@ class CouchbaseTestCase extends TestCase
                 $ex->getMessage()
             )
         );
+    }
+
+    protected function fixCavesTimeResolutionOnWindows() {
+        if (PHP_OS_FAMILY === 'Windows' && self::env()->useCaves()) {
+            usleep(1);
+        }
     }
 }

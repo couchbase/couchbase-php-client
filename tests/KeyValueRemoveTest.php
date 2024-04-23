@@ -78,6 +78,7 @@ class KeyValueRemoveTest extends Helpers\CouchbaseTestCase
         $originalCas = $res->cas();
         $this->assertNotNull($originalCas);
 
+        $this->fixCavesTimeResolutionOnWindows();
         $res = $collection->remove($id, RemoveOptions::build()->cas($originalCas));
         $this->assertNotEquals($originalCas, $res->cas());
     }

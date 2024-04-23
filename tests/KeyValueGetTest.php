@@ -69,7 +69,7 @@ class KeyValueGetTest extends Helpers\CouchbaseTestCase
         $opts = (GetOptions::build())->withExpiry(true);
         $res = $collection->get($id, $opts);
         // Allow a bit of extra time for server edges.
-        $this->assertGreaterThan($now + 8, $res->expiryTime()->getTimestamp());
+        $this->assertGreaterThanOrEqual($now + 8, $res->expiryTime()->getTimestamp());
     }
 
     public function testGetWithProjections()

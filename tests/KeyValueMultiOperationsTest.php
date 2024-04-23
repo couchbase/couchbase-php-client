@@ -70,6 +70,7 @@ class KeyValueMultiOperationsTest extends Helpers\CouchbaseTestCase
         $resFoo = $collection->upsert($idFoo, ["value" => "foo"]);
         $resBar = $collection->upsert($idBar, ["value" => "bar"]);
 
+        $this->fixCavesTimeResolutionOnWindows();
         $res = $collection->removeMulti([$idFoo, $idMiss, $idBar]);
         $this->assertCount(3, $res);
 

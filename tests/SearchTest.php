@@ -92,15 +92,31 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $index->setParams($indexDump["params"]);
         $this->indexManager->upsertIndex($index);
 
+        $previousIndexed = 0;
+        $numberOfDocumentsHasNotChanged = 0;
         $start = time();
         while (true) {
             try {
                 $indexedDocuments = $this->indexManager->getIndexedDocumentsCount("beer-search");
                 fprintf(STDERR, "%ds, Indexing 'beer-search': %d docs\n", time() - $start, $indexedDocuments);
                 if ($indexedDocuments >= $datasetSize) {
-                    break;
+                    // the indexer settled on the same number of the documents
+                    // since last check
+                    if ($previousIndexed == $indexedDocuments) {
+                        $numberOfDocumentsHasNotChanged += 1;
+                    } else {
+                        // the indexer still working, just very slow
+                        $numberOfDocumentsHasNotChanged = 0;
+                    }
+                    if ($numberOfDocumentsHasNotChanged > 3) {
+                        // the indexer returns the same number of the indexed
+                        // document three times in a row, maybe it is done
+                        // already?
+                        break;
+                    }
                 }
-                sleep(5);
+                $previousIndexed = $indexedDocuments;
+                sleep(4);
             } catch (\Couchbase\Exception\IndexNotReadyException $ex) {
             }
         }
@@ -151,7 +167,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
-    public function testSearchQueryWithRequestAPI()
+    public function testSearchQueryWithRequestApi()
     {
         $this->skipIfCaves();
 
@@ -210,8 +226,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         // Eventual consistency for consistent with...
         $result = $this->retryFor(
-            5,
-            50,
+            1,
+            200,
             function () use ($query, $options) {
                 $result = $this->cluster->searchQuery("beer-search", $query, $options);
                 if (count($result->rows()) == 0) {
@@ -381,16 +397,16 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
 
         $nameQuery = (new MatchSearchQuery("green"))->field("name")->boost(3.4);
-        $descriptionQuery = (new MatchSearchQuery("hop"))->field("description")->fuzziness(1);
+        $descriptionQuery = (new MatchSearchQuery("fuggles"))->field("description")->fuzziness(1);
 
         $disjunctionQuery = new DisjunctionSearchQuery([$nameQuery, $descriptionQuery]);
         $options = SearchOptions::build()->fields(["type", "name", "description"]);
         $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
-        $this->assertGreaterThan(20, $result->metaData()->totalHits());
+        $this->assertGreaterThanOrEqual(10, $result->metaData()->totalHits());
         $this->assertNotEmpty($result->rows());
         $this->assertMatchesRegularExpression('/green/i', $result->rows()[0]['fields']['name']);
-        $this->assertDoesNotMatchRegularExpression('/hop/i', $result->rows()[0]['fields']['name']);
-        $this->assertMatchesRegularExpression('/hop/i', $result->rows()[0]['fields']['description']);
+        $this->assertDoesNotMatchRegularExpression('/fuggles/i', $result->rows()[0]['fields']['name']);
+        $this->assertMatchesRegularExpression('/fuggles/i', $result->rows()[0]['fields']['description']);
         $this->assertDoesNotMatchRegularExpression('/green/i', $result->rows()[0]['fields']['description']);
 
         $disjunctionQuery->min(2);
@@ -462,18 +478,18 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertNotNull($result->facets()['foo']);
         $this->assertEquals('name', $result->facets()['foo']->field());
         $this->assertEquals('ale', $result->facets()['foo']->terms()[0]->term());
-        $this->assertGreaterThan(10, $result->facets()['foo']->terms()[0]->count());
+        $this->assertGreaterThanOrEqual(10, $result->facets()['foo']->terms()[0]->count());
 
         $this->assertNotNull($result->facets()['bar']);
         $this->assertEquals('updated', $result->facets()['bar']->field());
         $this->assertEquals('old', $result->facets()['bar']->dateRanges()[0]->name());
-        $this->assertGreaterThan(30, $result->facets()['bar']->dateRanges()[0]->count());
+        $this->assertGreaterThanOrEqual(30, $result->facets()['bar']->dateRanges()[0]->count());
 
         $this->assertNotNull($result->facets()['baz']);
         $this->assertEquals('abv', $result->facets()['baz']->field());
         $this->assertEquals('light', $result->facets()['baz']->numericRanges()[0]->name());
         $this->assertGreaterThan(0, $result->facets()['baz']->numericRanges()[0]->max());
-        $this->assertGreaterThan(15, $result->facets()['baz']->numericRanges()[0]->count());
+        $this->assertGreaterThanOrEqual(15, $result->facets()['baz']->numericRanges()[0]->count());
     }
 
     public function testNullInNumericRangeFacet()

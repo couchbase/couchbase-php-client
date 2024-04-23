@@ -21,10 +21,14 @@ declare(strict_types=1);
 use Couchbase\CollectionInterface;
 use Couchbase\Exception\CollectionNotFoundException;
 use Couchbase\Exception\FeatureNotAvailableException;
+use Couchbase\Management\CollectionSpec;
+use Couchbase\Management\CollectionManager;
 use Couchbase\PrefixScan;
 use Couchbase\RangeScan;
 use Couchbase\SamplingScan;
 use Couchbase\ScanOptions;
+use Couchbase\UpsertOptions;
+use Couchbase\DurabilityLevel;
 use Couchbase\ScanResults;
 use Couchbase\ScanTerm;
 
@@ -38,6 +42,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     private array $batchByteLimitValues = [0, 1, 25, 100];
     private array $batchItemLimitValues = [0, 1, 25, 100];
     private array $concurrencyValues = [1, 2, 4, 8, 32, 128];
+    private CollectionManager $manager;
+    private CollectionSpec $collectionSpec;
 
     public function setUp(): void
     {
@@ -45,11 +51,37 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
         $this->skipIfProtostellar();
         $this->skipIfUnsupported($this->version()->supportsCollections());
 
-        $this->collection = $this->defaultCollection();
+        $bucket = $this->openBucket(self::env()->bucketName());
+        $defaultScope = $bucket->defaultScope();
+        $this->manager = $bucket->collections();
+
+        $collectionName = $this->uniqueId("collection");
+        $this->collectionSpec = new CollectionSpec($collectionName, $defaultScope->name());
+        $this->manager->createCollection($this->collectionSpec);
+
+        $seenNewCollection = 0;
+
+        while ($seenNewCollection < 10) {
+            usleep(10000);
+            foreach ($this->manager->getAllScopes() as $scope) {
+                if ($scope->name() == $defaultScope->name()) {
+                    foreach ($scope->collections() as $collection) {
+                        if ($collection->name() == $collectionName) {
+                            $seenNewCollection += 1;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        $this->collection = $defaultScope->collection($collectionName);
+        $options = UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
         for ($i = 0; $i < 100; $i++) {
             $s = str_pad((string)$i, 2, "0", STR_PAD_LEFT);
             $id = $this->sharedPrefix . "-" . $s;
-            $this->collection->upsert($id, ['num' => $s]);
+            $this->collection->upsert($id, ['num' => $s], $options);
             $this->testIds[] = $id;
         }
     }
@@ -64,6 +96,8 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
             } catch (Exception $exception) {
             }
         }
+
+        $this->manager->dropCollection($this->collectionSpec);
     }
 
     public function validateScan(ScanResults $scanResults, array $expectedIds, bool $idsOnly = false)
@@ -440,7 +474,6 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
-        $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
 
         $expectedIds = range("10", "29");
         $expectedIds = array_map(
@@ -466,7 +499,6 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
-        $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
 
         $expectedIds = range("10", "19");
         $expectedIds = array_map(
@@ -489,7 +521,6 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsRangeScan());
-        $this->markTestSkipped("Skipped until CXXCBC-345 is resolved");
 
         $limit = 20;
 

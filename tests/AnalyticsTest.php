@@ -35,10 +35,12 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsCollections());
 
-        $this->maybeCreateAnalyticsIndex("beer-sample");
+        $bucketName = self::env()->bucketName();
+
+        $this->maybeCreateAnalyticsIndex($bucketName);
 
         $id = $this->uniqueId();
-        $bucket = $this->cluster->bucket('beer-sample');
+        $bucket = $this->cluster->bucket($bucketName);
         $collection = $bucket->defaultCollection();
         $scope = $bucket->scope("_default");
         $collection->upsert($id, ["bar" => 42]);
@@ -46,6 +48,7 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $options = AnalyticsOptions::build()
             ->scanConsistency(AnalyticsScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$id]);
+
         $res = $scope->analyticsQuery("SELECT * FROM `_default` where meta().id = \$1", $options);
         $this->assertNotEmpty($res->rows());
         $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
@@ -56,17 +59,19 @@ class AnalyticsTest extends Helpers\CouchbaseTestCase
         $this->skipIfCaves();
         $this->skipIfUnsupported($this->version()->supportsCollections());
 
-        $this->maybeCreateAnalyticsIndex("beer-sample");
+        $bucketName = self::env()->bucketName();
+
+        $this->maybeCreateAnalyticsIndex($bucketName);
 
         $id = $this->uniqueId();
-        $bucket = $this->cluster->bucket('beer-sample');
+        $bucket = $this->cluster->bucket($bucketName);
         $collection = $bucket->defaultCollection();
         $collection->upsert($id, ["bar" => 42]);
 
         $options = AnalyticsOptions::build()
             ->scanConsistency(AnalyticsScanConsistency::REQUEST_PLUS)
             ->positionalParameters([$id]);
-        $res = $this->cluster->analyticsQuery("SELECT * FROM `beer-sample`.`_default`.`_default` where meta().id = \$1", $options);
+        $res = $this->cluster->analyticsQuery("SELECT * FROM `$bucketName`.`_default`.`_default` where meta().id = \$1", $options);
         $this->assertNotEmpty($res->rows());
         $this->assertEquals(42, $res->rows()[0]["_default"]['bar']);
     }

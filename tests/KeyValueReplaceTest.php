@@ -43,6 +43,7 @@ class KeyValueReplaceTest extends Helpers\CouchbaseTestCase
         $res = $collection->insert($id, ["answer" => 42]);
         $originalCas = $res->cas();
 
+        $this->fixCavesTimeResolutionOnWindows();
         $res = $collection->replace($id, ["answer" => "foo"]);
         $replacedCas = $res->cas();
         $this->assertNotEquals($originalCas, $replacedCas);

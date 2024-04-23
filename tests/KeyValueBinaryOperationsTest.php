@@ -38,6 +38,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
         $originalCas = $res->cas();
 
+        $this->fixCavesTimeResolutionOnWindows();
         $res = $collection->binary()->append($id, "bar");
         $appendedCas = $res->cas();
         $this->assertNotEquals($appendedCas, $originalCas);
@@ -55,6 +56,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
         $originalCas = $res->cas();
 
+        $this->fixCavesTimeResolutionOnWindows();
         $res = $collection->binary()->prepend($id, "bar");
         $prependedCas = $res->cas();
         $this->assertNotEquals($prependedCas, $originalCas);

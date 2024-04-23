@@ -246,6 +246,19 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings->setMaxExpiry(10);
         $this->manager->updateBucket($settings);
 
+        $manager = $this->manager;
+        $bucketName = $this->bucketName;
+        $result = $this->retryFor(
+            10,
+            1000,
+            function () use ($manager, $bucketName) {
+                $result = $manager->getBucket($bucketName);
+                if ($result->maxExpiry() == 5) {
+                    throw new RuntimeException("the bucket still has old maxExpiry, retrying");
+                }
+            }
+        );
+
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(10, $result->maxExpiry());
     }

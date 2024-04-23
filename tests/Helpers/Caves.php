@@ -42,17 +42,19 @@ class Caves
                     sprintf("--control-port=%d", $this->controlPort()),
                 ],
                 [
-                    1 => ["file", sprintf("%s/%s.out.txt", $this->buildDirectory(), $this->logPrefix), "a"],
-                    2 => ["file", sprintf("%s/%s.err.txt", $this->buildDirectory(), $this->logPrefix), "a"],
+                    1 => ["file", sprintf("%s/%s.out.txt", $this->logsDirectory(), $this->logPrefix), "a"],
+                    2 => ["file", sprintf("%s/%s.err.txt", $this->logsDirectory(), $this->logPrefix), "a"],
                 ],
                 $pipes,
                 $this->buildDirectory(),
-                $env,
+                null,
                 ['suppress_errors' => true]
             );
             if (is_resource($proc)) {
                 $started = true;
                 $this->cavesProcess = $proc;
+            } else {
+                fprintf(STDERR, "--- %s, unable to start the process\n", $this->executablePath());
             }
         }
         $this->cavesSocket = socket_accept($this->controlSocket);
@@ -61,7 +63,7 @@ class Caves
                 "--- %s, control_port: %d, logs: %s\n",
                 $this->executablePath(),
                 $this->controlPort(),
-                sprintf("%s/%s.{out,err}.txt", $this->buildDirectory(), $this->logPrefix)
+                sprintf("%s/%s.{out,err}.txt", $this->logsDirectory(), $this->logPrefix)
             );
         }
         $helloCommand = $this->readCommand();
@@ -105,9 +107,19 @@ class Caves
         return $this->buildDirectory() . "/gocaves";
     }
 
+    private function projectDirectory(): string
+    {
+        return realpath(__DIR__ . "/../..");
+    }
+
     private function buildDirectory(): string
     {
-        return realpath(__DIR__ . "/../../build");
+        return $this->projectDirectory() . "/build";
+    }
+
+    private function logsDirectory(): string
+    {
+        return $this->projectDirectory() . "/logs";
     }
 
     private function controlPort(): int
@@ -124,6 +136,7 @@ class Caves
         socket_bind($this->controlSocket, "127.0.0.1");
         socket_listen($this->controlSocket);
         socket_getsockname($this->controlSocket, $address, $this->controlPort);
+        fprintf(STDERR, "address=%s, port=%d\n", $address, $this->controlPort);
     }
 
     private function roundTripCommand($cmd)
@@ -139,7 +152,14 @@ class Caves
 
     private function readCommand()
     {
-        $response = socket_read($this->cavesSocket, 10000);
+        $response = "";
+        do {
+            $byte = socket_read($this->cavesSocket, 1);
+            if ($byte === "\0") {
+                break;
+            }
+            $response .= $byte;
+        } while (true);
         return json_decode(trim($response), true);
     }
 }
