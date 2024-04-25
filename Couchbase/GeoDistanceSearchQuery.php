@@ -96,7 +96,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return GeoDistanceSearchQuery::export($this);
     }

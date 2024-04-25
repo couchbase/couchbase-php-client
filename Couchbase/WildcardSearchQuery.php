@@ -84,7 +84,7 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
      * @internal
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return WildcardSearchQuery::export($this);
     }

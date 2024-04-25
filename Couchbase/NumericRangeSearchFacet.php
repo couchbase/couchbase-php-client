@@ -68,7 +68,7 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
     /**
      * @throws InvalidArgumentException
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return NumericRangeSearchFacet::export($this);
     }

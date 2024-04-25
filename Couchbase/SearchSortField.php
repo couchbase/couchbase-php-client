@@ -106,7 +106,7 @@ class SearchSortField implements JsonSerializable, SearchSort
      * @internal
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return SearchSortField::export($this);
     }
