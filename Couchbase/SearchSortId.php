@@ -47,7 +47,7 @@ class SearchSortId implements JsonSerializable, SearchSort
      * @internal
      * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return SearchSortId::export($this);
     }
