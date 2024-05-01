@@ -33,7 +33,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
     {
         $scopeName = uniqid("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $this->expectException(ScopeExistsException::class);
         $this->manager->createScope($scopeName);
     }
@@ -42,7 +42,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
     {
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $scopes = $this->manager->getAllScopes();
         $this->assertNotNull($scopes);
         $found = false;
@@ -58,7 +58,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
     {
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
 
         $scopes = $this->manager->getAllScopes();
         $this->assertNotNull($scopes);
@@ -72,7 +72,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopeDropped($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopeDropped(self::env()->bucketName(), $scopeName);
 
         $scopes = $this->manager->getAllScopes();
         $this->assertNotNull($scopes);
@@ -100,10 +100,10 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $collectionSpec = new CollectionSpec($collectionName, $scopeName);
         $this->manager->createCollection($collectionSpec);
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -121,10 +121,10 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $collectionSpec = new CollectionSpec($collectionName, $scopeName);
         $this->manager->createCollection($collectionSpec);
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
         $this->expectException(CollectionExistsException::class);
         $this->manager->createCollection($collectionSpec);
     }
@@ -136,7 +136,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $collectionSpec = new CollectionSpec($collectionName, $scopeName);
         $this->expectException(CollectionNotFoundException::class);
         $this->manager->dropCollection($collectionSpec);
@@ -147,10 +147,10 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $collectionSpec = new CollectionSpec($collectionName, $scopeName);
         $this->manager->createCollection($collectionSpec);
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -163,7 +163,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropCollection($collectionSpec);
-        $this->consistencyUtil()->waitUntilCollectionDropped($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionDropped(self::env()->bucketName(), $scopeName, $collectionName);
         $scopes = $this->manager->getAllScopes();
 
         $selectedScope = null;
@@ -190,9 +190,9 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $this->manager->createCollection($scopeName, $collectionName);
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -208,7 +208,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(0, $foundCollection->maxExpiry());
 
         $this->manager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(3));
-        $this->consistencyUtil()->waitUntilCollectionUpdated($this->bucketName(), $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
+        $this->consistencyUtil()->waitUntilCollectionUpdated(self::env()->bucketName(), $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
                     foreach ($scope->collections as $collection) {
@@ -237,9 +237,9 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $this->manager->createCollection($scopeName, $collectionName);
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -252,7 +252,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropCollection($scopeName, $collectionName);
-        $this->consistencyUtil()->waitUntilCollectionDropped($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionDropped(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -312,8 +312,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertFalse($foundCollection->history());
 
         $collectionManager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(null, true));
-        $this->consistencyUtil()->waitUntilCollectionUpdated($this->bucketName(), $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
-            print_r($response);
+        $this->consistencyUtil()->waitUntilCollectionUpdated($bucketName, $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
                     foreach ($scope->collections as $collection) {
@@ -348,9 +347,9 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
         $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1));
-        $this->consistencyUtil()->waitUntilCollectionPresent($this->bucketName(), $scopeName, $collectionName);
+        $this->consistencyUtil()->waitUntilCollectionPresent(self::env()->bucketName(), $scopeName, $collectionName);
 
         $selectedScope = $this->getScope($scopeName);
 
@@ -375,7 +374,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $collectionName = $this->uniqueId("collection");
         $scopeName = $this->uniqueId("scope");
         $this->manager->createScope($scopeName);
-        $this->consistencyUtil()->waitUntilScopePresent($this->bucketName(), $scopeName);
+        $this->consistencyUtil()->waitUntilScopePresent(self::env()->bucketName(), $scopeName);
 
         $this->expectException(FeatureNotAvailableException::class);
         $this->manager->createCollection($scopeName, $collectionName, CreateCollectionSettings::build(-1, false));

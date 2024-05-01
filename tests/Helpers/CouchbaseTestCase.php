@@ -117,11 +117,6 @@ class CouchbaseTestCase extends TestCase
         return self::env()->consistencyUtil();
     }
 
-    public function bucketName(): string
-    {
-        return self::env()->bucketName();
-    }
-
     public function uniqueId(string $prefix = null): string
     {
         if ($prefix != null) {
