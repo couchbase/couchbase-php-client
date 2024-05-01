@@ -208,18 +208,25 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(0, $foundCollection->maxExpiry());
 
         $this->manager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(3));
-        $this->consistencyUtil()->waitUntilCollectionUpdated(self::env()->bucketName(), $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
-            foreach ($response->scopes as $scope) {
-                if ($scope->name == $scopeName) {
-                    foreach ($scope->collections as $collection) {
-                        if ($collection->name == $collectionName) {
-                            if ($collection->maxTTL == 3) return true;
+        $this->consistencyUtil()->waitUntilCollectionUpdated(
+            self::env()->bucketName(),
+            $scopeName,
+            $collectionName,
+            function ($response) use ($scopeName, $collectionName) {
+                foreach ($response->scopes as $scope) {
+                    if ($scope->name == $scopeName) {
+                        foreach ($scope->collections as $collection) {
+                            if ($collection->name == $collectionName) {
+                                if ($collection->maxTTL == 3) {
+                                    return true;
+                                }
+                            }
                         }
                     }
                 }
+                return false;
             }
-            return false;
-        });
+        );
 
         $updatedScope = $this->getScope($scopeName);
 
@@ -312,18 +319,25 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
         $this->assertFalse($foundCollection->history());
 
         $collectionManager->updateCollection($scopeName, $collectionName, UpdateCollectionSettings::build(null, true));
-        $this->consistencyUtil()->waitUntilCollectionUpdated($bucketName, $scopeName, $collectionName, function ($response) use ($scopeName, $collectionName) {
-            foreach ($response->scopes as $scope) {
-                if ($scope->name == $scopeName) {
-                    foreach ($scope->collections as $collection) {
-                        if ($collection->name == $collectionName) {
-                            if ($collection->history) return true;
+        $this->consistencyUtil()->waitUntilCollectionUpdated(
+            $bucketName,
+            $scopeName,
+            $collectionName,
+            function ($response) use ($scopeName, $collectionName) {
+                foreach ($response->scopes as $scope) {
+                    if ($scope->name == $scopeName) {
+                        foreach ($scope->collections as $collection) {
+                            if ($collection->name == $collectionName) {
+                                if ($collection->history) {
+                                    return true;
+                                }
+                            }
                         }
                     }
                 }
+                return false;
             }
-            return false;
-        });
+        );
 
         $selectedScope = $this->getScope($scopeName, $collectionManager);
 

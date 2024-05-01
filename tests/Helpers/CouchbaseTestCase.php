@@ -312,7 +312,8 @@ class CouchbaseTestCase extends TestCase
         );
     }
 
-    protected function fixCavesTimeResolutionOnWindows() {
+    protected function fixCavesTimeResolutionOnWindows()
+    {
         if (PHP_OS_FAMILY === 'Windows' && self::env()->useCaves()) {
             usleep(1);
         }

@@ -192,9 +192,12 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
         $settings->setEvictionPolicy(EvictionPolicy::VALUE_ONLY);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->evictionPolicy == "valueOnly";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->evictionPolicy == "valueOnly";
+            }
+        );
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(EvictionPolicy::VALUE_ONLY, $result->evictionPolicy());
     }
@@ -267,9 +270,12 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
         $settings->setMaxExpiry(10);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->maxTTL == 10;
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->maxTTL == 10;
+            }
+        );
 
         $manager = $this->manager;
         $bucketName = $this->bucketName;
@@ -302,19 +308,24 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
         $settings->setCompressionMode(CompressionMode::PASSIVE);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            print_r($response);
-            return $response->compressionMode == "passive";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->compressionMode == "passive";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(CompressionMode::PASSIVE, $result->compressionMode());
 
         $settings->setCompressionMode(CompressionMode::ACTIVE);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->compressionMode == "active";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->compressionMode == "active";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(CompressionMode::ACTIVE, $result->compressionMode());
@@ -335,27 +346,36 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::MAJORITY);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->durabilityMinLevel == "majority";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "majority";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::MAJORITY, $result->minimumDurabilityLevel());
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->durabilityMinLevel == "majorityAndPersistActive";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "majorityAndPersistActive";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE, $result->minimumDurabilityLevel());
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->durabilityMinLevel == "persistToMajority";
-        });
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "persistToMajority";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::PERSIST_TO_MAJORITY, $result->minimumDurabilityLevel());
@@ -442,11 +462,14 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
             ->setHistoryRetentionBytes(2147483648);
 
         $this->manager->updateBucket($settings);
-        $this->consistencyUtil()->waitUntilBucketUpdated($this->bucketName, function ($response) {
-            return $response->historyRetentionSeconds == 100 &&
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->historyRetentionSeconds == 100 &&
                 $response->historyRetentionBytes == 2147483648 &&
                 $response->historyRetentionCollectionDefault;
-        });
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->historyRetentionCollectionDefault());
