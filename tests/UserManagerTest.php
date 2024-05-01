@@ -202,14 +202,6 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->upsertUser($user);
         $this->consistencyUtil()->waitUntilUserPresent($username);
 
-        $this->retryFor(
-            5,
-            100,
-            function () use ($username) {
-                return $this->manager->getUser($username);
-            }
-        );
-
         $options = new ClusterOptions();
         $options->credentials($username, "secret");
         $cluster = $this->retryFor(
