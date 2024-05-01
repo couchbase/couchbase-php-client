@@ -22,6 +22,7 @@ namespace Helpers;
 
 include_once __DIR__ . "/Caves.php";
 include_once __DIR__ . "/ServerVersion.php";
+include_once __DIR__ . "/ConsistencyUtils.php";
 
 use Couchbase\PasswordAuthenticator;
 use Exception;
@@ -36,6 +37,7 @@ class TestEnvironment
     private string $password;
     private string $bucketName;
     private ServerVersion $version;
+    private ConsistencyUtils $consistencyUtils;
 
     private static function checkExtension(string $name)
     {
@@ -72,6 +74,7 @@ class TestEnvironment
         $this->username = getenv("TEST_USERNAME") ?: "Administrator";
         $this->password = getenv("TEST_PASSWORD") ?: "password";
         $this->bucketName = getenv("TEST_BUCKET") ?: "default";
+        $this->intializeConsistencyUtils();
     }
 
     public function bucketName(): string
@@ -87,6 +90,11 @@ class TestEnvironment
     public function useCouchbase(): bool
     {
         return !$this->useCaves();
+    }
+
+    public function consistencyUtil(): ConsistencyUtils
+    {
+        return $this->consistencyUtils;
     }
 
     public function useProtostellar(): bool
@@ -156,5 +164,17 @@ class TestEnvironment
         } catch (Exception $e) {
             return sprintf("%s_%s", time(), rand());
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function intializeConsistencyUtils(): void
+    {
+        $auth = "$this->username:$this->password";
+        $hostname = $this->useCaves() ? "" : parse_url($this->connectionString)["host"];
+
+        $this->consistencyUtils = new ConsistencyUtils($hostname, $auth);
+        $this->consistencyUtils->waitForConfig($this->useCaves());
     }
 }
