@@ -40,6 +40,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $bucketName = $this->env()->bucketName();
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
+        $this->consistencyUtil()->waitUntilViewPresent($bucketName, $ddocName, 'test');
         sleep(1); // give design document a second to settle
 
         $key = $this->uniqueId($ddocName);
@@ -79,7 +80,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $bucketName = $this->env()->bucketName();
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
-        sleep(1); // give design document a second to settle
+        $this->consistencyUtil()->waitUntilViewPresent($bucketName, $ddocName, 'test');
 
         $bucket = $this->cluster->bucket($bucketName);
         $collection = $bucket->defaultCollection();
