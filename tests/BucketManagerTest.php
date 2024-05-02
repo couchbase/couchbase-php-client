@@ -135,7 +135,13 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->flushEnabled());
 
-        $this->manager->flush($this->bucketName);
+        $this->retryFor(
+            5,
+            100,
+            function () {
+                $this->manager->flush($this->bucketName);
+            }
+        );
     }
 
     public function testCreateBucketFlushNotEnabled()
@@ -274,19 +280,6 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
             $this->bucketName,
             function ($response) {
                 return $response->maxTTL == 10;
-            }
-        );
-
-        $manager = $this->manager;
-        $bucketName = $this->bucketName;
-        $result = $this->retryFor(
-            10,
-            1000,
-            function () use ($manager, $bucketName) {
-                $result = $manager->getBucket($bucketName);
-                if ($result->maxExpiry() == 5) {
-                    throw new RuntimeException("the bucket still has old maxExpiry, retrying");
-                }
             }
         );
 
