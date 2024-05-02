@@ -81,6 +81,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $bucketName = $this->env()->bucketName();
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
         $this->consistencyUtil()->waitUntilViewPresent($bucketName, $ddocName, 'test');
+        sleep(1); // give design document a second to settle
 
         $bucket = $this->cluster->bucket($bucketName);
         $collection = $bucket->defaultCollection();
