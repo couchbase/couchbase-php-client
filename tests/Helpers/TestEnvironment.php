@@ -173,7 +173,9 @@ class TestEnvironment
     {
         $auth = "$this->username:$this->password";
         $hostname = $this->useCaves() ? "" : parse_url($this->connectionString)["host"];
-
+        if (str_contains($hostname, ",")) {
+            $hostname = explode(",", $hostname)[0];
+        }
         $this->consistencyUtils = new ConsistencyUtils($hostname, $auth);
         $this->consistencyUtils->waitForConfig($this->useCaves());
     }
