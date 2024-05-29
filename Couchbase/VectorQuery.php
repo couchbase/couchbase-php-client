@@ -25,13 +25,15 @@ use Couchbase\Exception\InvalidArgumentException;
 class VectorQuery
 {
     private string $vectorFieldName;
-    private array $vectorQuery;
     private int $numCandidates;
+    private ?array $vectorQuery = null;
+    private ?string $base64VectorQuery = null;
     private ?float $boost = null;
 
     /**
      * @param string $vectorFieldName the document field that contains the vector
-     * @param array $vectorQuery the vector query to run. Cannot be empty.
+     * @param array<float>|string $vectorQuery the vector query to run. Cannot be empty. Either a vector array,
+     * or the vector query encoded into a base64 string.
      *
      * @since 4.1.7
      *
@@ -39,13 +41,19 @@ class VectorQuery
      *
      * @UNCOMMITTED: This API may change in the future.
      */
-    public function __construct(string $vectorFieldName, array $vectorQuery)
+    public function __construct(string $vectorFieldName, array|string $vectorQuery)
     {
         if (empty($vectorQuery)) {
             throw new InvalidArgumentException("The vectorQuery cannot be empty");
         }
+
+        if (is_array($vectorQuery)) {
+            $this->vectorQuery = $vectorQuery;
+        } else {
+            $this->base64VectorQuery = $vectorQuery;
+        }
+
         $this->vectorFieldName = $vectorFieldName;
-        $this->vectorQuery = $vectorQuery;
         $this->numCandidates = 3;
     }
 
@@ -53,7 +61,8 @@ class VectorQuery
      * Static helper to keep code more readable
      *
      * @param string $vectorFieldName the document field that contains the vector
-     * @param array $vectorQuery the vector query to run. Cannot be empty.
+     * @param array<float>|string $vectorQuery the vector query to run. Cannot be empty. Either a vector array,
+     * or the vector query encoded into a base64 string.
      *
      * @since 4.1.7
      * @return VectorQuery
@@ -62,7 +71,7 @@ class VectorQuery
      *
      * @UNCOMMITTED: This API may change in the future.
      */
-    static function build(string $vectorFieldName, array $vectorQuery): VectorQuery
+    static function build(string $vectorFieldName, array|string $vectorQuery): VectorQuery
     {
         return new VectorQuery($vectorFieldName, $vectorQuery);
     }
@@ -70,7 +79,7 @@ class VectorQuery
     /**
      * Sets the number of results that will be returned from this vector query. Defaults to 3.
      *
-     * @param int|null $numCandidates the number of results returned.
+     * @param int $numCandidates the number of results returned.
      *
      * @since 4.1.7
      * @return VectorQuery
@@ -122,11 +131,16 @@ class VectorQuery
             $json['boost'] = $query->boost;
         }
 
-        $vectorQueries = [];
-        foreach ($query->vectorQuery as $value) {
-            $vectorQueries[] = $value;
+        if ($query->vectorQuery != null) {
+            $vectorQueries = [];
+            foreach ($query->vectorQuery as $value) {
+                $vectorQueries[] = $value;
+            }
+            $json['vector'] = $vectorQueries;
+        } else {
+            $json['vector_base64'] = $query->base64VectorQuery;
         }
-        $json['vector'] = $vectorQueries;
+
         $json['k'] = $query->numCandidates;
         return $json;
     }
