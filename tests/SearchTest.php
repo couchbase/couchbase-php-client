@@ -605,13 +605,13 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
     public function testVectorSearchEncodingWithBase64()
     {
-        $base64EncodedVector = base64_encode('[0.32, -0.536, 0.842]');
+        $base64EncodedVector = "aOeYBEXJ4kI=";
         $vectorQueryOne = VectorQuery::build("foo", $base64EncodedVector)->boost(0.5)->numCandidates(4);
         $vectorQueryTwo = VectorQuery::build("bar", [-0.00810353, 0.6433, 0.52364]);
         $searchRequest = SearchRequest::export(SearchRequest::build(VectorSearch::build([$vectorQueryOne, $vectorQueryTwo])));
         $encodedVectorQuery = json_encode($searchRequest['vectorSearch']);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
-        $this->assertEquals("[{\"field\":\"foo\",\"boost\":0.5,\"vector_base64\":\"{$base64EncodedVector}\",\"k\":4},{\"field\":\"bar\",\"vector\":[-0.00810353,0.6433,0.52364],\"k\":3}]", $encodedVectorQuery);
+        $this->assertEquals(sprintf('[{"field":"foo","boost":0.5,"vector_base64":"%s","k":4},{"field":"bar","vector":[-0.00810353,0.6433,0.52364],"k":3}]', $base64EncodedVector), $encodedVectorQuery);
     }
 
     public function testScopeSearch()
