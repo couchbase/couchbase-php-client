@@ -597,6 +597,23 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals('{"match_none":"null"}', $encodedSearchQuery);
     }
 
+    public function testVectorSearchEmptyStringThrowsInvalidArgument()
+    {
+        $this->expectException(\Couchbase\Exception\InvalidArgumentException::class);
+        VectorQuery::build("vectorField", "");
+    }
+
+    public function testVectorSearchEncodingWithBase64()
+    {
+        $base64EncodedVector = "aOeYBEXJ4kI=";
+        $vectorQueryOne = VectorQuery::build("foo", $base64EncodedVector)->boost(0.5)->numCandidates(4);
+        $vectorQueryTwo = VectorQuery::build("bar", [-0.00810353, 0.6433, 0.52364]);
+        $searchRequest = SearchRequest::export(SearchRequest::build(VectorSearch::build([$vectorQueryOne, $vectorQueryTwo])));
+        $encodedVectorQuery = json_encode($searchRequest['vectorSearch']);
+        $this->assertEquals(JSON_ERROR_NONE, json_last_error());
+        $this->assertEquals(sprintf('[{"field":"foo","boost":0.5,"vector_base64":"%s","k":4},{"field":"bar","vector":[-0.00810353,0.6433,0.52364],"k":3}]', $base64EncodedVector), $encodedVectorQuery);
+    }
+
     public function testScopeSearch()
     {
         $this->skipIfCaves();
