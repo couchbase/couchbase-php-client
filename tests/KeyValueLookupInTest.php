@@ -142,14 +142,24 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $birthday = DateTime::createFromFormat(DateTimeInterface::ISO8601, "2027-04-07T00:00:00UTC");
         $collection->upsert($id, ["foo" => "bar"], UpsertOptions::build()->expiry($birthday));
 
-        $res = $collection->lookupInAnyReplica(
-            $id,
-            [
-                LookupGetFullSpec::build(),
-            ],
-            LookupInAnyReplicaOptions::build()->withExpiry(true)
-        );
-        $this->assertEquals($birthday, $res->expiryTime());
+
+        $deadline = time() + 5; /* 5 seconds from now */
+        $success = false;
+        while ($deadline > time()) {
+            $res = $collection->lookupInAnyReplica(
+                $id,
+                [
+                    LookupGetFullSpec::build(),
+                ],
+                LookupInAnyReplicaOptions::build()->withExpiry(true)
+            );
+            if ($res->expiryTime() == $birthday) {
+                $success = true;
+                break;
+            }
+            sleep(1);
+        }
+        $this->assertTrue($success);
     }
 
     public function testSubdocumentLookupAllReplicas()
