@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use JsonSerializable;
 
 class VectorSearch implements JsonSerializable
@@ -31,12 +32,17 @@ class VectorSearch implements JsonSerializable
      * @param array<VectorQuery> $vectorQueries The vector queries to be run.
      * @param VectorSearchOptions|null $options The options to use on the vector queries
      *
+     * @throws InvalidArgumentException
+     *
      * @since 4.1.7
      *
      * @UNCOMMITTED: This API may change in the future.
      */
     public function __construct(array $vectorQueries, VectorSearchOptions $options = null)
     {
+        if (empty($vectorQueries)) {
+            throw new InvalidArgumentException("At least one vector query must be specified");
+        }
         $this->vectorQueries = $vectorQueries;
         $this->options = $options;
     }

@@ -33,7 +33,7 @@ class VectorQuery
     /**
      * @param string $vectorFieldName the document field that contains the vector
      * @param array<float>|string $vectorQuery the vector query to run. Cannot be empty. Either a vector array,
-     * or the vector query encoded into a base64 string.
+     * or a base64-encoded sequence of little-endian IEEE 754 floats.
      *
      * @since 4.1.7
      *
