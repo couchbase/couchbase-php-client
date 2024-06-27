@@ -45,6 +45,7 @@ use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 
 use Couchbase\CollectionInterface;
+use Couchbase\WanDevelopmentProfile;
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -109,6 +110,11 @@ class CouchbaseTestCase extends TestCase
     public function defaultCollection(string $bucketName = null): CollectionInterface
     {
         return $this->openBucket($bucketName)->defaultCollection();
+    }
+
+    public function consistencyUtil(): ConsistencyUtils
+    {
+        return self::env()->consistencyUtil();
     }
 
     public function uniqueId(string $prefix = null): string

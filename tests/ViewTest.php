@@ -40,6 +40,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $bucketName = $this->env()->bucketName();
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
+        $this->consistencyUtil()->waitUntilViewPresent($bucketName, $ddocName, 'test');
         sleep(1); // give design document a second to settle
 
         $key = $this->uniqueId($ddocName);
@@ -51,7 +52,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $options = ViewOptions::build()
             ->scanConsistency(ViewConsistency::REQUEST_PLUS)
-            ->reduce(false);
+            ->reduce(false)
+            ->timeout(120_000);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals($key, $res->rows()[0]->id());
@@ -79,6 +81,7 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $bucketName = $this->env()->bucketName();
         Extension\viewIndexUpsert($this->cluster->core(), $bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
+        $this->consistencyUtil()->waitUntilViewPresent($bucketName, $ddocName, 'test');
         sleep(1); // give design document a second to settle
 
         $bucket = $this->cluster->bucket($bucketName);
@@ -102,14 +105,15 @@ class ViewTest extends Helpers\CouchbaseTestCase
         );
         sleep(1); // give docs time to propagate
 
-        $options = ViewOptions::build()->scanConsistency(ViewConsistency::REQUEST_PLUS);
+        $options = ViewOptions::build()->scanConsistency(ViewConsistency::REQUEST_PLUS)->timeout(120_000);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals(4, $res->rows()[0]->value());
 
         $options = ViewOptions::build()
             ->scanConsistency(ViewConsistency::REQUEST_PLUS)
-            ->groupLevel(1);
+            ->groupLevel(1)
+            ->timeout(120_000);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(2, $res->rows());
         $this->assertEquals(["France"], $res->rows()[0]->key());
@@ -119,7 +123,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
 
         $options = ViewOptions::build()
             ->scanConsistency(ViewConsistency::REQUEST_PLUS)
-            ->group(true);
+            ->group(true)
+            ->timeout(120_000);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(3, $res->rows());
         $this->assertEquals(["France", "Paris"], $res->rows()[0]->key());
@@ -133,7 +138,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
             ->scanConsistency(ViewConsistency::REQUEST_PLUS)
             ->group(true)
             ->reduce(true)
-            ->keys(array_values([['USA', 'New York']]));
+            ->keys(array_values([['USA', 'New York']]))
+            ->timeout(120_000);
         $res = $bucket->viewQuery($ddocName, 'test', $options);
         $this->assertCount(1, $res->rows());
         $this->assertEquals(["USA", "New York"], $res->rows()[0]->key());

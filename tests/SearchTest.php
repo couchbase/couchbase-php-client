@@ -210,7 +210,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $id = $this->uniqueId();
         $query = new MatchPhraseSearchQuery($id);
-        $options = SearchOptions::build()->limit(3);
+        $options = SearchOptions::build()->limit(3)->timeout(120_000);
 
         $result = $this->cluster->searchQuery("beer-search", $query, $options);
 
@@ -226,8 +226,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         // Eventual consistency for consistent with...
         $result = $this->retryFor(
-            1,
-            200,
+            120,
+            1000,
             function () use ($query, $options) {
                 $result = $this->cluster->searchQuery("beer-search", $query, $options);
                 if (count($result->rows()) == 0) {

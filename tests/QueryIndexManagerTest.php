@@ -38,6 +38,7 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
         if (self::env()->useCouchbase()) {
             try {
                 $this->bucketManager->dropBucket($this->bucketName);
+                $this->consistencyUtil()->waitUntilBucketDropped($this->bucketName);
             } catch (BucketNotFoundException $ex) {
                 /* do nothing */
             }
@@ -54,6 +55,7 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($bucketName);
         $settings->setBucketType(BucketType::COUCHBASE);
         $this->bucketManager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($bucketName);
 
         $deadline = time() + 5; /* 5 seconds from now */
 
