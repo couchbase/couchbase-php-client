@@ -31,6 +31,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         parent::tearDown();
         try {
             $this->manager->dropBucket($this->bucketName);
+            $this->consistencyUtil()->waitUntilBucketDropped($this->bucketName);
         } catch (BucketNotFoundException $ex) {
         }
     }
@@ -40,6 +41,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals($this->bucketName, $result->name());
@@ -52,6 +54,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::MEMCACHED);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals($this->bucketName, $result->name());
@@ -63,6 +66,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::EPHEMERAL);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals($this->bucketName, $result->name());
@@ -75,8 +79,10 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($bucketName);
         $settings->setBucketType(BucketType::COUCHBASE);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($bucketName);
 
         $this->manager->dropBucket($bucketName);
+        $this->consistencyUtil()->waitUntilBucketDropped($bucketName);
 
         $this->expectException(BucketNotFoundException::class);
         $this->manager->getBucket($bucketName);
@@ -93,6 +99,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
             $settings = new BucketSettings($name);
             $settings->setBucketType(BucketType::COUCHBASE);
             $this->manager->createBucket($settings);
+            $this->consistencyUtil()->waitUntilBucketPresent($name);
         }
 
         $result = $this->manager->getAllBuckets();
@@ -100,6 +107,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
 
         foreach ($names as $name) {
             $this->manager->dropBucket($name);
+            $this->consistencyUtil()->waitUntilBucketDropped($name);
         }
     }
 
@@ -108,6 +116,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setRamQuotaMb(200);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals($this->bucketName, $result->name());
@@ -121,11 +130,18 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->enableFlush(true);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->flushEnabled());
 
-        $this->manager->flush($this->bucketName);
+        $this->retryFor(
+            5,
+            100,
+            function () {
+                $this->manager->flush($this->bucketName);
+            }
+        );
     }
 
     public function testCreateBucketFlushNotEnabled()
@@ -135,6 +151,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertFalse($result->flushEnabled());
@@ -148,6 +165,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setNumReplicas(2);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(2, $result->numReplicas());
@@ -160,6 +178,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->enableReplicaIndexes(true);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->replicaIndexes());
@@ -172,12 +191,19 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setEvictionPolicy(EvictionPolicy::FULL);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(EvictionPolicy::FULL, $result->evictionPolicy());
 
         $settings->setEvictionPolicy(EvictionPolicy::VALUE_ONLY);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->evictionPolicy == "valueOnly";
+            }
+        );
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(EvictionPolicy::VALUE_ONLY, $result->evictionPolicy());
     }
@@ -189,6 +215,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::EPHEMERAL)->setEvictionPolicy(EvictionPolicy::NO_EVICTION);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(EvictionPolicy::NO_EVICTION, $result->evictionPolicy());
@@ -201,6 +228,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::EPHEMERAL)->setEvictionPolicy(EvictionPolicy::NOT_RECENTLY_USED);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(EvictionPolicy::NOT_RECENTLY_USED, $result->evictionPolicy());
@@ -214,6 +242,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::COUCHSTORE);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(StorageBackend::COUCHSTORE, $result->storageBackend());
@@ -227,6 +256,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::MAGMA)->setRamQuotaMb(1024);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(StorageBackend::MAGMA, $result->storageBackend());
@@ -239,23 +269,17 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setMaxExpiry(5);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(5, $result->maxExpiry());
 
         $settings->setMaxExpiry(10);
         $this->manager->updateBucket($settings);
-
-        $manager = $this->manager;
-        $bucketName = $this->bucketName;
-        $result = $this->retryFor(
-            10,
-            1000,
-            function () use ($manager, $bucketName) {
-                $result = $manager->getBucket($bucketName);
-                if ($result->maxExpiry() == 5) {
-                    throw new RuntimeException("the bucket still has old maxExpiry, retrying");
-                }
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->maxTTL == 10;
             }
         );
 
@@ -270,18 +294,31 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setCompressionMode(CompressionMode::OFF);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(CompressionMode::OFF, $result->compressionMode());
 
         $settings->setCompressionMode(CompressionMode::PASSIVE);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->compressionMode == "passive";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(CompressionMode::PASSIVE, $result->compressionMode());
 
         $settings->setCompressionMode(CompressionMode::ACTIVE);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->compressionMode == "active";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(CompressionMode::ACTIVE, $result->compressionMode());
@@ -295,24 +332,43 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setMinimumDurabilityLevel(DurabilityLevel::NONE);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::NONE, $result->minimumDurabilityLevel());
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::MAJORITY);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "majority";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::MAJORITY, $result->minimumDurabilityLevel());
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "majorityAndPersistActive";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE, $result->minimumDurabilityLevel());
 
         $settings->setMinimumDurabilityLevel(DurabilityLevel::PERSIST_TO_MAJORITY);
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->durabilityMinLevel == "persistToMajority";
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(DurabilityLevel::PERSIST_TO_MAJORITY, $result->minimumDurabilityLevel());
@@ -325,6 +381,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setConflictResolutionType(ConflictResolutionType::SEQUENCE_NUMBER);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(ConflictResolutionType::SEQUENCE_NUMBER, $result->conflictResolutionType());
@@ -337,6 +394,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setConflictResolutionType(ConflictResolutionType::TIMESTAMP);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(ConflictResolutionType::TIMESTAMP, $result->conflictResolutionType());
@@ -350,6 +408,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::COUCHBASE)->setConflictResolutionType(ConflictResolutionType::CUSTOM);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertEquals(ConflictResolutionType::CUSTOM, $result->conflictResolutionType());
@@ -366,6 +425,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
             ->enableHistoryRetentionCollectionDefault(true)->setHistoryRetentionBytes(2147483648)
             ->setHistoryRetentionDuration(13000);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->historyRetentionCollectionDefault());
@@ -383,6 +443,7 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $settings->setBucketType(BucketType::COUCHBASE)->setStorageBackend(StorageBackend::MAGMA)->setRamQuotaMb(1024)
             ->enableHistoryRetentionCollectionDefault(false);
         $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
         $result = $this->manager->getBucket($this->bucketName);
 
@@ -394,6 +455,14 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
             ->setHistoryRetentionBytes(2147483648);
 
         $this->manager->updateBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketUpdated(
+            $this->bucketName,
+            function ($response) {
+                return $response->historyRetentionSeconds == 100 &&
+                $response->historyRetentionBytes == 2147483648 &&
+                $response->historyRetentionCollectionDefault;
+            }
+        );
 
         $result = $this->manager->getBucket($this->bucketName);
         $this->assertTrue($result->historyRetentionCollectionDefault());

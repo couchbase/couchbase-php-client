@@ -29,36 +29,6 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->manager = $this->connectCluster()->users();
     }
 
-    public function waitForGroupCreated(string $groupName)
-    {
-        $seenNewGroup = 0;
-
-        while ($seenNewGroup < 10) {
-            try {
-                return $this->manager->getGroup($groupName);
-            } catch (Exception $ex) {
-                usleep(100000);
-                continue;
-            }
-            $seenNewGroup += 1;
-        }
-    }
-
-    public function waitForUserCreated(string $userName)
-    {
-        $seenNewUser = 0;
-
-        while ($seenNewUser < 10) {
-            try {
-                return $this->manager->getUser($userName);
-            } catch (Exception $ex) {
-                usleep(100000);
-                continue;
-            }
-            $seenNewUser += 1;
-        }
-    }
-
     public function testGetRoles()
     {
         // Caves doesn't include display name and description for roles.
@@ -120,7 +90,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         );
 
         $this->manager->upsertGroup($group);
-        $this->waitForGroupCreated($groupName);
+        $this->consistencyUtil()->waitUntilGroupPresent($groupName);
 
         $result = $this->manager->getGroup($groupName);
         $this->assertGroup($result, $groupName, $desc);
@@ -140,14 +110,10 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropGroup($groupName);
+        $this->consistencyUtil()->waitUntilGroupDropped($groupName);
 
         $this->expectException(GroupNotFoundException::class);
-        $retry = 10;
-        while ($retry > 0) {
-            $this->manager->getGroup($groupName);
-            $retry -= 1;
-            usleep(100000);
-        }
+        $this->manager->getGroup($groupName);
     }
 
     protected function assertUser(UserAndMetadata $result, string $username, string $displayName, Group $group, Role $userRole)
@@ -189,7 +155,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         );
 
         $this->manager->upsertGroup($group);
-        $this->waitForGroupCreated($groupName);
+        $this->consistencyUtil()->waitUntilGroupPresent($groupName);
 
         $result = $this->manager->getGroup($groupName);
         $this->assertGroup($result, $groupName, $desc);
@@ -201,7 +167,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $user = User::build()->setUsername($username)->setPassword('secret')->setDisplayName($display)
             ->setGroups([$groupName])->setRoles([$role]);
         $this->manager->upsertUser($user);
-        $this->waitForUserCreated($username);
+        $this->consistencyUtil()->waitUntilUserPresent($username);
 
         $result = $this->manager->getUser($username);
         $this->assertUser($result, $username, $display, $group, $role);
@@ -220,13 +186,9 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($found);
 
         $this->manager->dropUser($username);
+        $this->consistencyUtil()->waitUntilUserDropped($username);
         $this->expectException(UserNotFoundException::class);
-        $retry = 10;
-        while ($retry > 0) {
-            $this->manager->getUser($username);
-            $retry -= 1;
-            usleep(100000);
-        }
+        $this->manager->getUser($username);
     }
 
     public function testChangePassword()
@@ -238,7 +200,7 @@ class UserManagerTest extends Helpers\CouchbaseTestCase
         $display = 'Test User';
         $user = User::build()->setUsername($username)->setPassword("secret")->setDisplayName($display)->setRoles([$role]);
         $this->manager->upsertUser($user);
-        $this->waitForUserCreated($username);
+        $this->consistencyUtil()->waitUntilUserPresent($username);
 
         $options = new ClusterOptions();
         $options->credentials($username, "secret");
