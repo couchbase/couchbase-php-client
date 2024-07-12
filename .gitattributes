@@ -1,0 +1,6 @@
+/*.yaml export-ignore
+/.* export-ignore
+/bin export-ignore
+/compile_commands.json export-ignore
+/src export-ignore
+/tests export-ignore
