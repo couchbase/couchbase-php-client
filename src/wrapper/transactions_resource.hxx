@@ -43,19 +43,20 @@ namespace couchbase::php
 {
 class transactions_resource
 {
-  public:
-    COUCHBASE_API
-    transactions_resource(connection_handle* connection, const couchbase::transactions::transactions_config& configuration);
+public:
+  COUCHBASE_API
+  transactions_resource(connection_handle* connection,
+                        const couchbase::transactions::transactions_config& configuration);
 
-    COUCHBASE_API
-    core::transactions::transactions& transactions();
+  COUCHBASE_API
+  core::transactions::transactions& transactions();
 
-    void notify_fork(fork_event event) const;
+  void notify_fork(fork_event event) const;
 
-  private:
-    class impl;
+private:
+  class impl;
 
-    std::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 };
 
 COUCHBASE_API std::pair<zend_resource*, core_error_info>

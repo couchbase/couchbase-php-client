@@ -17,7 +17,8 @@
 #pragma once
 
 /**
- * core library depends on PHP runtime, so make sure it does not demand PHP symbols during link phase
+ * core library depends on PHP runtime, so make sure it does not demand PHP symbols during link
+ * phase
  */
 #undef LIBZEND_EXPORTS
 #undef COUCHBASE_EXPORTS

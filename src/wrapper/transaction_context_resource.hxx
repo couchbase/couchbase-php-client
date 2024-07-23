@@ -36,44 +36,45 @@ namespace couchbase::php
 {
 class transaction_context_resource
 {
-  public:
-    COUCHBASE_API
-    transaction_context_resource(transactions_resource* transactions, const couchbase::transactions::transaction_options& configuration);
+public:
+  COUCHBASE_API
+  transaction_context_resource(transactions_resource* transactions,
+                               const couchbase::transactions::transaction_options& configuration);
 
-    COUCHBASE_API
-    core_error_info new_attempt();
-    COUCHBASE_API
-    core_error_info commit(zval* return_value);
-    COUCHBASE_API
-    core_error_info rollback();
+  COUCHBASE_API
+  core_error_info new_attempt();
+  COUCHBASE_API
+  core_error_info commit(zval* return_value);
+  COUCHBASE_API
+  core_error_info rollback();
 
-    COUCHBASE_API
-    core_error_info get(zval* return_value,
-                        const zend_string* bucket,
-                        const zend_string* scope,
-                        const zend_string* collection,
-                        const zend_string* id);
+  COUCHBASE_API
+  core_error_info get(zval* return_value,
+                      const zend_string* bucket,
+                      const zend_string* scope,
+                      const zend_string* collection,
+                      const zend_string* id);
 
-    COUCHBASE_API
-    core_error_info insert(zval* return_value,
-                           const zend_string* bucket,
-                           const zend_string* scope,
-                           const zend_string* collection,
-                           const zend_string* id,
-                           const zend_string* value);
+  COUCHBASE_API
+  core_error_info insert(zval* return_value,
+                         const zend_string* bucket,
+                         const zend_string* scope,
+                         const zend_string* collection,
+                         const zend_string* id,
+                         const zend_string* value);
 
-    COUCHBASE_API
-    core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
-    COUCHBASE_API
-    core_error_info remove(const zval* document);
+  COUCHBASE_API
+  core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
+  COUCHBASE_API
+  core_error_info remove(const zval* document);
 
-    COUCHBASE_API
-    core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
+  COUCHBASE_API
+  core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
 
-  private:
-    class impl;
+private:
+  class impl;
 
-    std::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 };
 
 COUCHBASE_API std::pair<zend_resource*, core_error_info>

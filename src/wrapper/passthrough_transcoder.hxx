@@ -26,17 +26,17 @@ namespace php
 {
 
 struct passthrough_transcoder {
-    using document_type = codec::encoded_value;
+  using document_type = codec::encoded_value;
 
-    static auto decode(const codec::encoded_value& data) -> document_type
-    {
-        return data;
-    }
+  static auto decode(const codec::encoded_value& data) -> document_type
+  {
+    return data;
+  }
 
-    static auto encode(codec::encoded_value document) -> codec::encoded_value
-    {
-        return document;
-    }
+  static auto encode(codec::encoded_value document) -> codec::encoded_value
+  {
+    return document;
+  }
 };
 } // namespace php
 
