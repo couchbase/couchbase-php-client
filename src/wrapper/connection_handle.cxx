@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "core_error_info.hxx"
 #include "wrapper.hxx"
 
 #include "../php_couchbase.hxx"
@@ -45,12 +46,11 @@
 #include <couchbase/collection.hxx>
 #include <couchbase/mutation_token.hxx>
 #include <couchbase/retry_reason.hxx>
+#include <couchbase/tls_verify_mode.hxx>
 
 #include <fmt/core.h>
-#include <openssl/crypto.h>
 
 #include <array>
-#include <thread>
 
 namespace couchbase::php
 {
@@ -240,7 +240,8 @@ decode_mutation_subdoc_opcode(const zval* spec)
 }
 
 static void
-build_error_context(const couchbase::key_value_error_context& ctx, key_value_error_context& out)
+build_error_context(const couchbase::core::key_value_error_context& ctx,
+                    key_value_error_context& out)
 {
   out.bucket = ctx.bucket();
   out.scope = ctx.scope();
@@ -270,21 +271,22 @@ build_error_context(const couchbase::key_value_error_context& ctx, key_value_err
 }
 
 static key_value_error_context
-build_error_context(const couchbase::key_value_error_context& ctx)
+build_error_context(const couchbase::core::key_value_error_context& ctx)
 {
   key_value_error_context out;
   build_error_context(ctx, out);
   return out;
 }
 
-static subdocument_error_context
-build_error_context(const couchbase::subdocument_error_context& ctx)
+static generic_error_context
+build_error_context(const couchbase::error& error)
 {
-  subdocument_error_context out;
-  build_error_context(ctx, out);
-  out.deleted = ctx.deleted();
-  out.first_error_index = ctx.first_error_index();
-  out.first_error_path = ctx.first_error_path();
+  generic_error_context out;
+  out.message = error.message();
+  out.json_data = error.ctx().to_json();
+  if (auto cause = error.cause(); cause) {
+    out.cause = std::make_shared<generic_error_context>(build_error_context(cause.value()));
+  }
   return out;
 }
 
@@ -398,8 +400,9 @@ build_error_context(const core::error_context::http& ctx)
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
 public:
-  explicit impl(couchbase::core::origin origin)
-    : origin_(std::move(origin))
+  impl(std::string connection_string, couchbase::cluster_options cluster_options)
+    : connection_string_{ std::move(connection_string) }
+    , cluster_options_{ std::move(cluster_options) }
   {
   }
 
@@ -416,31 +419,15 @@ public:
     stop();
   }
 
-  [[nodiscard]] std::shared_ptr<couchbase::core::cluster> cluster() const
-  {
-    return cluster_;
-  }
-
-  void start()
-  {
-    worker_ = std::thread([self = shared_from_this()]() {
-      self->ctx_.run();
-    });
-  }
-
   void stop()
   {
-    if (cluster_) {
+    if (auto cluster = std::move(cluster_); cluster) {
       auto barrier = std::make_shared<std::promise<void>>();
       auto f = barrier->get_future();
-      cluster_->close([barrier]() {
+      cluster->close([barrier]() {
         barrier->set_value();
       });
       f.wait();
-      cluster_.reset();
-      if (worker_.joinable()) {
-        worker_.join();
-      }
     }
   }
 
@@ -449,7 +436,7 @@ public:
     auto barrier = std::make_shared<
       std::promise<couchbase::core::operations::management::cluster_describe_response>>();
     auto f = barrier->get_future();
-    cluster_->execute(
+    core_api().execute(
       couchbase::core::operations::management::cluster_describe_request{},
       [barrier](couchbase::core::operations::management::cluster_describe_response&& resp) {
         barrier->set_value(std::move(resp));
@@ -475,7 +462,7 @@ public:
     auto barrier =
       std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
     auto f = barrier->get_future();
-    cluster_->with_bucket_configuration(
+    core_api().with_bucket_configuration(
       bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
         barrier->set_value({ ec, config });
       });
@@ -484,17 +471,25 @@ public:
            config.nodes.size() > config.num_replicas;
   }
 
-  core_error_info open()
+  auto open() -> core_error_info
   {
-    auto barrier = std::make_shared<std::promise<std::error_code>>();
+    auto barrier =
+      std::make_shared<std::promise<std::pair<couchbase::error, couchbase::cluster>>>();
     auto f = barrier->get_future();
-    cluster_->open(origin_, [barrier](std::error_code ec) {
-      barrier->set_value(ec);
-    });
-    if (auto ec = f.get()) {
-      stop();
-      return { ec, { __LINE__, __FILE__, __func__ } };
+
+    couchbase::cluster::connect(
+      connection_string_, cluster_options_, [barrier](auto&& error, auto&& cluster) {
+        barrier->set_value({
+          std::forward<decltype(error)>(error),
+          std::forward<decltype(cluster)>(cluster),
+        });
+      });
+    auto [error, cluster] = f.get();
+    if (error.ec()) {
+      return { error.ec(), { __LINE__, __FILE__, __func__ } };
     }
+
+    cluster_ = std::make_unique<couchbase::cluster>(std::move(cluster));
     return {};
   }
 
@@ -502,7 +497,7 @@ public:
   {
     auto barrier = std::make_shared<std::promise<std::error_code>>();
     auto f = barrier->get_future();
-    cluster_->open_bucket(name, [barrier](std::error_code ec) {
+    core_api().open_bucket(name, [barrier](std::error_code ec) {
       barrier->set_value(ec);
     });
     if (auto ec = f.get()) {
@@ -515,7 +510,7 @@ public:
   {
     auto barrier = std::make_shared<std::promise<std::error_code>>();
     auto f = barrier->get_future();
-    cluster_->close_bucket(name, [barrier](std::error_code ec) {
+    core_api().close_bucket(name, [barrier](std::error_code ec) {
       barrier->set_value(ec);
     });
     if (auto ec = f.get()) {
@@ -529,7 +524,7 @@ public:
   {
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
-    cluster_->execute(std::move(request), [barrier](Response&& resp) {
+    core_api().execute(std::move(request), [barrier](Response&& resp) {
       barrier->set_value(std::move(resp));
     });
     auto resp = f.get();
@@ -548,7 +543,7 @@ public:
   {
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
-    cluster_->execute(std::move(request), [barrier](Response&& resp) {
+    core_api().execute(std::move(request), [barrier](Response&& resp) {
       barrier->set_value(std::move(resp));
     });
     auto resp = f.get();
@@ -569,7 +564,7 @@ public:
     barriers.reserve(requests.size());
     for (auto&& request : requests) {
       auto barrier = std::make_shared<std::promise<Response>>();
-      cluster_->execute(request, [barrier](Response&& resp) {
+      core_api().execute(request, [barrier](Response&& resp) {
         barrier->set_value(std::move(resp));
       });
       barriers.emplace_back(barrier);
@@ -590,42 +585,48 @@ public:
 
     auto barrier = std::make_shared<std::promise<core::diag::ping_result>>();
     auto f = barrier->get_future();
-    cluster_->ping(std::move(report_id),
-                   std::move(bucket_name),
-                   std::move(services),
-                   timeout,
-                   [barrier](core::diag::ping_result&& resp) {
-                     barrier->set_value(std::move(resp));
-                   });
-    auto resp = f.get();
-    return { {}, std::move(resp) };
+    core_api().ping(std::move(report_id),
+                    std::move(bucket_name),
+                    std::move(services),
+                    timeout,
+                    [barrier](core::diag::ping_result&& resp) {
+                      barrier->set_value(std::move(resp));
+                    });
+    return { {}, f.get() };
   }
 
   std::pair<core_error_info, core::diag::diagnostics_result> diagnostics(std::string report_id)
   {
     auto barrier = std::make_shared<std::promise<core::diag::diagnostics_result>>();
     auto f = barrier->get_future();
-    cluster_->diagnostics(report_id, [barrier](core::diag::diagnostics_result&& resp) {
+    core_api().diagnostics(report_id, [barrier](core::diag::diagnostics_result&& resp) {
       barrier->set_value(std::move(resp));
     });
-    auto resp = f.get();
-    return { {}, std::move(resp) };
+    return { {}, f.get() };
   }
 
   couchbase::collection collection(std::string_view bucket,
                                    std::string_view scope,
                                    std::string_view collection)
   {
-    return couchbase::cluster(*cluster_).bucket(bucket).scope(scope).collection(collection);
+    return public_api().bucket(bucket).scope(scope).collection(collection);
+  }
+
+  auto public_api() -> couchbase::cluster
+  {
+    return *cluster_;
+  }
+
+  auto core_api() -> core::cluster
+  {
+    return core::get_core_cluster(public_api());
   }
 
   void notify_fork(fork_event event)
   {
     switch (event) {
       case fork_event::prepare:
-        ctx_.stop();
-        worker_.join();
-        ctx_.notify_fork(asio::execution_context::fork_prepare);
+        cluster_->notify_fork(couchbase::fork_event::prepare);
         CB_LOG_INFO("Prepare for fork()");
         shutdown_logger();
         break;
@@ -633,44 +634,34 @@ public:
       case fork_event::parent:
         initialize_logger();
         CB_LOG_INFO("Resume parent after fork()");
-        ctx_.notify_fork(asio::execution_context::fork_parent);
-        ctx_.restart();
-        worker_ = std::thread([self = shared_from_this()]() {
-          self->ctx_.run();
-        });
+        cluster_->notify_fork(couchbase::fork_event::parent);
         break;
 
       case fork_event::child:
         initialize_logger();
         CB_LOG_INFO("Resume child after fork()");
-        ctx_.notify_fork(asio::execution_context::fork_child);
-        ctx_.restart();
-        worker_ = std::thread([self = shared_from_this()]() {
-          self->ctx_.run();
-        });
+        cluster_->notify_fork(couchbase::fork_event::child);
         break;
     }
   }
 
 private:
-  asio::io_context ctx_{};
-  std::shared_ptr<couchbase::core::cluster> cluster_{ std::make_shared<couchbase::core::cluster>(
-    ctx_) };
-  std::thread worker_;
-  core::origin origin_;
+  std::string connection_string_;
+  couchbase::cluster_options cluster_options_;
+  std::unique_ptr<couchbase::cluster> cluster_{ nullptr };
 };
 
 COUCHBASE_API
 connection_handle::connection_handle(std::string connection_string,
                                      std::string connection_hash,
-                                     couchbase::core::origin origin,
+                                     couchbase::cluster_options cluster_options,
                                      std::chrono::system_clock::time_point idle_expiry)
   : idle_expiry_{ idle_expiry }
-  , impl_{ std::make_shared<connection_handle::impl>(std::move(origin)) }
   , connection_string_(std::move(connection_string))
   , connection_hash_(std::move(connection_hash))
+  , impl_{ std::make_shared<connection_handle::impl>(connection_string_,
+                                                     std::move(cluster_options)) }
 {
-  impl_->start();
 }
 
 connection_handle::~connection_handle()
@@ -821,7 +812,7 @@ connection_handle::document_upsert(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute upsert", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -865,7 +856,7 @@ connection_handle::document_insert(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute insert", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -915,7 +906,7 @@ connection_handle::document_replace(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute replace", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -953,7 +944,7 @@ connection_handle::document_append(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute append", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -991,7 +982,7 @@ connection_handle::document_prepend(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute prepend", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -1038,7 +1029,7 @@ connection_handle::document_increment(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_long(return_value, "value", resp.content());
   auto value_str = fmt::format("{}", resp.content());
   add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
@@ -1088,7 +1079,7 @@ connection_handle::document_decrement(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_long(return_value, "value", resp.content());
   auto value_str = fmt::format("{}", resp.content());
   add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
@@ -1137,7 +1128,7 @@ connection_handle::document_get(zval* return_value,
       return err;
     }
     array_init(return_value);
-    add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+    add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
     auto cas = fmt::format("{:x}", resp.cas.value());
     add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
     add_assoc_long(return_value, "flags", resp.flags);
@@ -1156,7 +1147,7 @@ connection_handle::document_get(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas.value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   add_assoc_long(return_value, "flags", resp.flags);
@@ -1191,7 +1182,7 @@ connection_handle::document_get_any_replica(zval* return_value,
              build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   auto encoded = resp.content_as<passthrough_transcoder>();
@@ -1228,7 +1219,7 @@ connection_handle::document_get_all_replicas(zval* return_value,
   for (const auto& resp : responses) {
     zval entry;
     array_init(&entry);
-    add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_stringl(&entry, "id", ZSTR_VAL(id), ZSTR_LEN(id));
     auto cas = fmt::format("{:x}", resp.cas().value());
     add_assoc_stringl(&entry, "cas", cas.data(), cas.size());
     add_assoc_bool(&entry, "isReplica", resp.is_replica());
@@ -1269,7 +1260,7 @@ connection_handle::document_get_and_lock(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas.value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   add_assoc_long(return_value, "flags", resp.flags);
@@ -1306,7 +1297,7 @@ connection_handle::document_get_and_touch(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas.value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   add_assoc_long(return_value, "flags", resp.flags);
@@ -1343,7 +1334,7 @@ connection_handle::document_touch(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas.value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   return {};
@@ -1381,7 +1372,7 @@ connection_handle::document_unlock(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas.value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   return {};
@@ -1415,7 +1406,7 @@ connection_handle::document_remove(zval* return_value,
     return { ctx.ec(), ERROR_LOCATION, "unable to execute remove", build_error_context(ctx) };
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
   if (resp.mutation_token() && is_mutation_token_valid(resp.mutation_token().value())) {
@@ -1451,7 +1442,7 @@ connection_handle::document_exists(zval* return_value,
     return err;
   }
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", resp.ctx.id().data(), resp.ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_bool(return_value, "exists", resp.exists());
   add_assoc_bool(return_value, "deleted", resp.deleted);
   auto cas = fmt::format("{:x}", resp.cas.value());
@@ -1613,7 +1604,7 @@ connection_handle::document_mutate_in(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_bool(return_value, "deleted", resp.is_deleted());
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
@@ -1705,7 +1696,7 @@ connection_handle::document_lookup_in(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_bool(return_value, "deleted", resp.is_deleted());
   auto cas = fmt::format("{:x}", resp.cas().value());
   add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
@@ -1791,7 +1782,7 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_stringl(return_value, "id", ctx.id().data(), ctx.id().size());
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
   add_assoc_bool(return_value, "deleted", resp.is_deleted());
   add_assoc_bool(return_value, "isReplica", resp.is_replica());
   auto cas = fmt::format("{:x}", resp.cas().value());
@@ -1881,7 +1872,7 @@ connection_handle::document_lookup_in_all_replicas(zval* return_value,
   for (const auto& resp : responses) {
     zval lookup_in_entry;
     array_init(&lookup_in_entry);
-    add_assoc_stringl(&lookup_in_entry, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_stringl(&lookup_in_entry, "id", ZSTR_VAL(id), ZSTR_LEN(id));
     add_assoc_bool(&lookup_in_entry, "deleted", resp.is_deleted());
     add_assoc_bool(&lookup_in_entry, "isReplica", resp.is_replica());
     auto cas = fmt::format("{:x}", resp.cas().value());
@@ -1927,31 +1918,34 @@ connection_handle::document_get_multi(zval* return_value,
   std::vector<std::string> requests{};
   requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
 
-  const zval* id = nullptr;
-  ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
   {
-    requests.emplace_back(cb_string_new(id));
+    const zval* id = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
+    {
+      requests.emplace_back(cb_string_new(id));
+    }
+    ZEND_HASH_FOREACH_END();
   }
-  ZEND_HASH_FOREACH_END();
 
-  std::vector<std::future<std::pair<couchbase::key_value_error_context, couchbase::get_result>>>
+  std::vector<
+    std::pair<std::string, std::future<std::pair<couchbase::error, couchbase::get_result>>>>
     futures;
   futures.reserve(requests.size());
 
   auto c =
     impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
 
-  for (auto&& request : requests) {
-    futures.emplace_back(c.get(std::move(request), opts));
+  for (const auto& id : requests) {
+    futures.emplace_back(id, c.get(id, opts));
   }
 
   array_init(return_value);
-  for (auto& f : futures) {
+  for (auto& [id, f] : futures) {
     auto [ctx, resp] = f.get();
 
     zval entry;
     array_init(&entry);
-    add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_stringl(&entry, "id", id.data(), id.size());
     if (ctx.ec()) {
       zval ex;
       create_exception(&ex,
@@ -2040,24 +2034,26 @@ connection_handle::document_remove_multi(zval* return_value,
   ZEND_HASH_FOREACH_END();
 
   std::vector<
-    std::future<std::pair<couchbase::key_value_error_context, couchbase::mutation_result>>>
+    std::pair<std::string, std::future<std::pair<couchbase::error, couchbase::mutation_result>>>>
     futures;
   futures.reserve(requests.size());
 
   auto c =
     impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
 
-  for (auto& [id, content] : requests) {
-    futures.emplace_back(c.remove(std::move(id), opts));
+  for (const auto& [id, cas] : requests) {
+    auto local_opts = opts;
+    local_opts.cas(cas);
+    futures.emplace_back(id, c.remove(id, local_opts));
   }
 
   array_init(return_value);
-  for (auto& f : futures) {
+  for (auto& [id, f] : futures) {
     auto [ctx, resp] = f.get();
 
     zval entry;
     array_init(&entry);
-    add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_stringl(&entry, "id", id.data(), id.size());
     if (ctx.ec()) {
       zval ex;
       create_exception(&ex,
@@ -2144,24 +2140,24 @@ connection_handle::document_upsert_multi(zval* return_value,
   ZEND_HASH_FOREACH_END();
 
   std::vector<
-    std::future<std::pair<couchbase::key_value_error_context, couchbase::mutation_result>>>
+    std::pair<std::string, std::future<std::pair<couchbase::error, couchbase::mutation_result>>>>
     futures;
   futures.reserve(requests.size());
 
   auto c =
     impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
 
-  for (auto& [id, content] : requests) {
-    futures.emplace_back(c.upsert<php::passthrough_transcoder>(std::move(id), content, opts));
+  for (const auto& [id, content] : requests) {
+    futures.emplace_back(id, c.upsert<php::passthrough_transcoder>(id, content, opts));
   }
 
   array_init(return_value);
-  for (auto& f : futures) {
+  for (auto& [id, f] : futures) {
     auto [ctx, resp] = f.get();
 
     zval entry;
     array_init(&entry);
-    add_assoc_stringl(&entry, "id", ctx.id().data(), ctx.id().size());
+    add_assoc_stringl(&entry, "id", id.data(), id.size());
     if (ctx.ec()) {
       zval ex;
       create_exception(&ex,
@@ -2447,7 +2443,7 @@ connection_handle::view_query(zval* return_value,
                               const zend_long name_space,
                               const zval* options)
 {
-  core::design_document_namespace cxx_name_space;
+  core::design_document_namespace cxx_name_space{};
   switch (auto name_space_val = static_cast<std::uint32_t>(name_space); name_space_val) {
     case 1:
       cxx_name_space = core::design_document_namespace::development;
@@ -2584,8 +2580,8 @@ connection_handle::view_query(zval* return_value,
   for (auto& row : resp.rows) {
     zval zrow;
     array_init(&zrow);
-    if (row.id.has_value()) {
-      add_assoc_string(&zrow, "id", row.id.value().c_str());
+    if (auto id = row.id; id.has_value()) {
+      add_assoc_stringl(&zrow, "id", id->data(), id->size());
     }
     add_assoc_string(&zrow, "value", row.value.c_str());
     add_assoc_string(&zrow, "key", row.key.c_str());
@@ -4592,7 +4588,7 @@ connection_handle::query_index_create(const zend_string* bucket_name,
   request.bucket_name = cb_string_new(bucket_name);
   request.index_name = cb_string_new(index_name);
 
-  const zval* value;
+  const zval* value = nullptr;
   ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(fields), value)
   {
     if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
@@ -4844,7 +4840,7 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
   request.collection_name = cb_string_new(collection_name);
   request.index_name = cb_string_new(index_name);
 
-  const zval* value;
+  const zval* value = nullptr;
   ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(fields), value)
   {
     if (value == nullptr && Z_TYPE_P(value) == IS_STRING) {
@@ -5011,361 +5007,467 @@ connection_handle::is_expired(std::chrono::system_clock::time_point now) const
   return idle_expiry_ < now;
 }
 
-std::shared_ptr<couchbase::core::cluster>
+couchbase::core::cluster
 connection_handle::cluster() const
 {
-  return impl_->cluster();
+  return impl_->core_api();
 }
 
-#define ASSIGN_DURATION_OPTION(name, field, key, value)                                            \
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
-    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                        \
-      continue;                                                                                    \
-    }                                                                                              \
-    if (Z_TYPE_P(value) != IS_LONG) {                                                              \
-      return { errc::common::invalid_argument,                                                     \
-               ERROR_LOCATION,                                                                     \
-               fmt::format("expected duration as a number for {}",                                 \
-                           std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                           \
-    }                                                                                              \
-    zend_long ms = Z_LVAL_P(value);                                                                \
-    if (ms < 0) {                                                                                  \
-      return { errc::common::invalid_argument,                                                     \
-               ERROR_LOCATION,                                                                     \
-               fmt::format("expected duration as a positive number for {}",                        \
-                           std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                           \
-    }                                                                                              \
-    (field) = std::chrono::milliseconds(ms);                                                       \
+namespace options
+{
+template<typename Setter>
+void
+assign_duration(const char* name, const zend_string* key, const zval* value, Setter setter)
+{
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
+      return;
+    }
+    if (Z_TYPE_P(value) != IS_LONG) {
+      throw core_error_info{ errc::common::invalid_argument,
+                             ERROR_LOCATION,
+                             fmt::format("expected duration as a number for {}",
+                                         std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+    }
+    zend_long ms = Z_LVAL_P(value);
+    if (ms < 0) {
+      throw core_error_info{ errc::common::invalid_argument,
+                             ERROR_LOCATION,
+                             fmt::format("expected duration as a positive number for {}",
+                                         std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+    }
+    setter(std::chrono::milliseconds{ ms });
   }
+}
 
-#define ASSIGN_NUMBER_OPTION(name, field, key, value)                                              \
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
-    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                        \
-      continue;                                                                                    \
-    }                                                                                              \
-    if (Z_TYPE_P(value) != IS_LONG) {                                                              \
-      return { errc::common::invalid_argument,                                                     \
-               ERROR_LOCATION,                                                                     \
-               fmt::format("expected number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) }; \
-    }                                                                                              \
-    (field) = Z_LVAL_P(value);                                                                     \
+template<typename Setter>
+void
+assign_boolean(const char* name, const zend_string* key, const zval* value, Setter setter)
+{
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
+      return;
+    }
+    switch (Z_TYPE_P(value)) {
+      case IS_TRUE:
+        setter(true);
+        return;
+      case IS_FALSE:
+        setter(false);
+        return;
+      default:
+        throw core_error_info{
+          errc::common::invalid_argument,
+          ERROR_LOCATION,
+          fmt::format("expected boolean for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))),
+        };
+    }
   }
+}
 
-#define ASSIGN_BOOLEAN_OPTION(name, field, key, value)                                             \
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
-    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                        \
-      continue;                                                                                    \
-    }                                                                                              \
-    switch (Z_TYPE_P(value)) {                                                                     \
-      case IS_TRUE:                                                                                \
-        (field) = true;                                                                            \
-        break;                                                                                     \
-      case IS_FALSE:                                                                               \
-        (field) = false;                                                                           \
-        break;                                                                                     \
-      default:                                                                                     \
-        return { errc::common::invalid_argument,                                                   \
-                 ERROR_LOCATION,                                                                   \
-                 fmt::format("expected boolean for {}",                                            \
-                             std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                         \
-    }                                                                                              \
+template<typename Setter>
+void
+assign_number(const char* name, const zend_string* key, const zval* value, Setter setter)
+{
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
+      return;
+    }
+    if (Z_TYPE_P(value) != IS_LONG) {
+      throw core_error_info{
+        errc::common::invalid_argument,
+        ERROR_LOCATION,
+        fmt::format("expected number for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))),
+      };
+    }
+    setter(Z_LVAL_P(value));
   }
+}
 
-#define ASSIGN_STRING_OPTION(name, field, key, value)                                              \
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
-    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                        \
-      continue;                                                                                    \
-    }                                                                                              \
-    if (Z_TYPE_P(value) != IS_STRING) {                                                            \
-      return { errc::common::invalid_argument,                                                     \
-               ERROR_LOCATION,                                                                     \
-               fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) }; \
-    }                                                                                              \
-    if (Z_STRLEN_P(value) == 0) {                                                                  \
-      return { errc::common::invalid_argument,                                                     \
-               ERROR_LOCATION,                                                                     \
-               fmt::format("expected non-empty string for {}",                                     \
-                           std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };                           \
-    }                                                                                              \
-    (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                          \
+template<typename Setter>
+void
+assign_string(const char* name, const zend_string* key, const zval* value, Setter setter)
+{
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+    if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
+      return;
+    }
+    if (Z_TYPE_P(value) != IS_STRING) {
+      throw core_error_info{
+        errc::common::invalid_argument,
+        ERROR_LOCATION,
+        fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))),
+      };
+    }
+    if (Z_STRLEN_P(value) == 0) {
+      throw core_error_info{
+        errc::common::invalid_argument,
+        ERROR_LOCATION,
+        fmt::format("expected non-empty string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))),
+      };
+    }
+    setter(std::string(Z_STRVAL_P(value), Z_STRLEN_P(value)));
   }
+}
+
+} // namespace options
 
 struct dns_options {
-  std::chrono::milliseconds timeout;
-  std::string nameserver;
-  std::uint16_t port;
+  std::optional<std::chrono::milliseconds> timeout{};
+  std::optional<std::string> nameserver{};
+  std::optional<std::uint16_t> port{};
 };
 
 static core_error_info
-apply_options(core::utils::connection_string& connstr, zval* options)
+apply_options(couchbase::cluster_options& cluster_options, zval* options)
 {
+  cluster_options.behavior().append_to_user_agent(
+    fmt::format("php_sdk/{}/{};php/{}",
+                PHP_COUCHBASE_VERSION,
+                std::string(extension_revision()).substr(0, 8),
+                PHP_VERSION
+#if ZTS
+                "/z"
+#else
+                "/n"
+#endif
+                ));
+
   if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" };
   }
 
-  const zend_string* key;
-  const zval* value;
+  const zend_string* key = nullptr;
+  const zval* value = nullptr;
 
-  auto system_dns = core::io::dns::dns_config::system_config();
-  dns_options dns{ system_dns.timeout(), system_dns.nameserver(), system_dns.port() };
+  dns_options dns;
 
   ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
   {
-    ASSIGN_DURATION_OPTION("analyticsTimeout", connstr.options.analytics_timeout, key, value);
-    ASSIGN_DURATION_OPTION("bootstrapTimeout", connstr.options.bootstrap_timeout, key, value);
-    ASSIGN_DURATION_OPTION("connectTimeout", connstr.options.connect_timeout, key, value);
+    try {
+      options::assign_duration("analyticsTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().analytics_timeout(v);
+      });
+      options::assign_duration("bootstrapTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().bootstrap_timeout(v);
+      });
+      options::assign_duration("connectTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().connect_timeout(v);
+      });
+      options::assign_duration("keyValueDurableTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().key_value_durable_timeout(v);
+      });
+      options::assign_duration("keyValueTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().key_value_timeout(v);
+      });
+      options::assign_duration("managementTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().management_timeout(v);
+      });
+      options::assign_duration("queryTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().query_timeout(v);
+      });
+      options::assign_duration("resolveTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().resolve_timeout(v);
+      });
+      options::assign_duration("searchTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().search_timeout(v);
+      });
+      options::assign_duration("viewTimeout", key, value, [&](auto v) {
+        cluster_options.timeouts().view_timeout(v);
+      });
+      options::assign_duration("configPollInterval", key, value, [&](auto v) {
+        cluster_options.network().config_poll_interval(v);
+      });
+      options::assign_duration("idleHttpConnectionTimeout", key, value, [&](auto v) {
+        cluster_options.network().idle_http_connection_timeout(v);
+      });
+      options::assign_duration("tcpKeepAliveInterval", key, value, [&](auto v) {
+        cluster_options.network().tcp_keep_alive_interval(v);
+      });
 
-    ASSIGN_DURATION_OPTION("dnsSrvTimeout", dns.timeout, key, value);
-    ASSIGN_STRING_OPTION("dnsSrvNameserver", dns.nameserver, key, value);
-    ASSIGN_NUMBER_OPTION("dnsSrvPort", dns.port, key, value);
+      options::assign_boolean("enableClustermapNotification", key, value, [&](auto v) {
+        cluster_options.behavior().enable_clustermap_notification(v);
+      });
+      options::assign_boolean("enableCompression", key, value, [&](auto v) {
+        cluster_options.compression().enabled(v);
+      });
+      options::assign_boolean("enableMutationTokens", key, value, [&](auto v) {
+        cluster_options.behavior().enable_mutation_tokens(v);
+      });
+      options::assign_boolean("enableTcpKeepAlive", key, value, [&](auto v) {
+        cluster_options.network().enable_tcp_keep_alive(v);
+      });
+      options::assign_boolean("enableUnorderedExecution", key, value, [&](auto v) {
+        cluster_options.behavior().enable_unordered_execution(v);
+      });
+      options::assign_boolean("showQueries", key, value, [&](auto v) {
+        cluster_options.behavior().show_queries(v);
+      });
+      options::assign_boolean("enableMetrics", key, value, [&](auto v) {
+        cluster_options.metrics().enable(v);
+      });
+      options::assign_boolean("enableTracing", key, value, [&](auto v) {
+        cluster_options.tracing().enable(v);
+      });
 
-    ASSIGN_DURATION_OPTION(
-      "keyValueDurableTimeout", connstr.options.key_value_durable_timeout, key, value);
-    ASSIGN_DURATION_OPTION("keyValueTimeout", connstr.options.key_value_timeout, key, value);
-    ASSIGN_DURATION_OPTION("managementTimeout", connstr.options.management_timeout, key, value);
-    ASSIGN_DURATION_OPTION("queryTimeout", connstr.options.query_timeout, key, value);
-    ASSIGN_DURATION_OPTION("resolveTimeout", connstr.options.resolve_timeout, key, value);
-    ASSIGN_DURATION_OPTION("searchTimeout", connstr.options.search_timeout, key, value);
-    ASSIGN_DURATION_OPTION("viewTimeout", connstr.options.view_timeout, key, value);
+      options::assign_number("maxHttpConnections", key, value, [&](auto v) {
+        cluster_options.network().max_http_connections(v);
+      });
 
-    ASSIGN_NUMBER_OPTION("maxHttpConnections", connstr.options.max_http_connections, key, value);
+      options::assign_string("network", key, value, [&](auto v) {
+        cluster_options.network().preferred_network(v);
+        cluster_options.behavior().network(v);
+      });
 
-    ASSIGN_DURATION_OPTION(
-      "configIdleRedialTimeout", connstr.options.config_idle_redial_timeout, key, value);
-    ASSIGN_DURATION_OPTION("configPollFloor", connstr.options.config_poll_floor, key, value);
-    ASSIGN_DURATION_OPTION("configPollInterval", connstr.options.config_poll_interval, key, value);
-    ASSIGN_DURATION_OPTION(
-      "idleHttpConnectionTimeout", connstr.options.idle_http_connection_timeout, key, value);
-    ASSIGN_DURATION_OPTION(
-      "tcpKeepAliveInterval", connstr.options.tcp_keep_alive_interval, key, value);
+      options::assign_string("trustCertificate", key, value, [&](auto v) {
+        cluster_options.security().trust_certificate(v);
+      });
 
-    ASSIGN_BOOLEAN_OPTION(
-      "enableClustermapNotification", connstr.options.enable_clustermap_notification, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableCompression", connstr.options.enable_compression, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableDnsSrv", connstr.options.enable_dns_srv, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableMetrics", connstr.options.enable_metrics, key, value);
-    ASSIGN_BOOLEAN_OPTION(
-      "enableMutationTokens", connstr.options.enable_mutation_tokens, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableTcpKeepAlive", connstr.options.enable_tcp_keep_alive, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableTls", connstr.options.enable_tls, key, value);
-    ASSIGN_BOOLEAN_OPTION("enableTracing", connstr.options.enable_tracing, key, value);
-    ASSIGN_BOOLEAN_OPTION(
-      "enableUnorderedExecution", connstr.options.enable_unordered_execution, key, value);
-    ASSIGN_BOOLEAN_OPTION("showQueries", connstr.options.show_queries, key, value);
+      options::assign_string("trustCertificateValue", key, value, [&](auto v) {
+        cluster_options.security().trust_certificate_value(v);
+      });
 
-    ASSIGN_STRING_OPTION("network", connstr.options.network, key, value);
-    ASSIGN_STRING_OPTION("trustCertificate", connstr.options.trust_certificate, key, value);
-    ASSIGN_STRING_OPTION("userAgentExtra", connstr.options.user_agent_extra, key, value);
+      options::assign_number("dnsSrvPort", key, value, [&](auto v) {
+        dns.port = v;
+      });
+      options::assign_string("dnsSrvNameserver", key, value, [&](auto v) {
+        dns.nameserver = v;
+      });
+      options::assign_duration("dnsSrvTimeout", key, value, [&](auto v) {
+        dns.timeout = v;
+      });
 
-    if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("useIpProtocol")) == 0) {
-      if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
-        continue;
+      options::assign_string("useIpProtocol", key, value, [&](auto v) {
+        if (v == "any") {
+          cluster_options.network().force_ip_protocol(couchbase::ip_protocol::any);
+        } else if (v == "forceIpv4") {
+          cluster_options.network().force_ip_protocol(couchbase::ip_protocol::force_ipv4);
+        } else if (v == "forceIpv6") {
+          cluster_options.network().force_ip_protocol(couchbase::ip_protocol::force_ipv6);
+        } else {
+          throw core_error_info{
+            errc::common::invalid_argument,
+            ERROR_LOCATION,
+            fmt::format(
+              R"(expected mode for IP protocol mode ({}), supported modes are "any", "forceIpv4" and "forceIpv6")",
+              std::string(ZSTR_VAL(key), ZSTR_LEN(key)))
+          };
+        }
+      });
+
+      options::assign_string("tlsVerify", key, value, [&](auto v) {
+        if (v == "peer") {
+          cluster_options.security().tls_verify(couchbase::tls_verify_mode::peer);
+        } else if (v == "none") {
+          cluster_options.security().tls_verify(couchbase::tls_verify_mode::none);
+        } else {
+          throw core_error_info{
+            errc::common::invalid_argument,
+            ERROR_LOCATION,
+            fmt::format(
+              R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
+              std::string(ZSTR_VAL(key), ZSTR_LEN(key)))
+          };
+        }
+      });
+
+      if (zend_binary_strcmp(
+            ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("thresholdLoggingTracerOptions")) == 0) {
+        if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+          continue;
+        }
+        if (Z_TYPE_P(value) != IS_ARRAY) {
+          return { errc::common::invalid_argument,
+                   ERROR_LOCATION,
+                   fmt::format("expected array for {} as tracer options",
+                               std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
+        }
+
+        const zend_string* k = nullptr;
+        const zval* v = nullptr;
+
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
+        {
+          options::assign_number("orphanedSampleSize", k, v, [&](auto v) {
+            cluster_options.tracing().orphaned_sample_size(v);
+          });
+
+          options::assign_duration("orphanedEmitInterval", k, v, [&](auto v) {
+            cluster_options.tracing().orphaned_emit_interval(v);
+          });
+
+          options::assign_number("thresholdSampleSize", k, v, [&](auto v) {
+            cluster_options.tracing().threshold_sample_size(v);
+          });
+
+          options::assign_duration("thresholdEmitInterval", k, v, [&](auto v) {
+            cluster_options.tracing().threshold_emit_interval(v);
+          });
+
+          options::assign_duration("analyticsThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().analytics_threshold(v);
+          });
+
+          options::assign_duration("eventingThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().eventing_threshold(v);
+          });
+
+          options::assign_duration("keyValueThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().key_value_threshold(v);
+          });
+
+          options::assign_duration("managementThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().management_threshold(v);
+          });
+
+          options::assign_duration("queryThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().query_threshold(v);
+          });
+
+          options::assign_duration("searchThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().search_threshold(v);
+          });
+
+          options::assign_duration("viewThreshold", k, v, [&](auto v) {
+            cluster_options.tracing().view_threshold(v);
+          });
+        }
+        ZEND_HASH_FOREACH_END();
       }
-      if (Z_TYPE_P(value) != IS_STRING) {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
-      }
-      if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("any")) == 0) {
-        connstr.options.use_ip_protocol = core::io::ip_protocol::any;
-      } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv4")) ==
-                 0) {
-        connstr.options.use_ip_protocol = core::io::ip_protocol::force_ipv4;
-      } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("forceIpv6")) ==
-                 0) {
-        connstr.options.use_ip_protocol = core::io::ip_protocol::force_ipv6;
-      } else {
-        return {
-          errc::common::invalid_argument,
-          ERROR_LOCATION,
-          fmt::format(
-            R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
-            std::string(ZSTR_VAL(key), ZSTR_LEN(key)))
-        };
-      }
-    }
 
-    if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("tlsVerify")) == 0) {
-      if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
-        continue;
-      }
-      if (Z_TYPE_P(value) != IS_STRING) {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 fmt::format("expected string for {}", std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
-      }
-      if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("peer")) == 0) {
-        connstr.options.tls_verify = core::tls_verify_mode::peer;
-      } else if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("none")) == 0) {
-        connstr.options.tls_verify = core::tls_verify_mode::none;
-      } else {
-        return {
-          errc::common::invalid_argument,
-          ERROR_LOCATION,
-          fmt::format(
-            R"(expected mode for TLS verification ({}), supported modes are "peer" and "none")",
-            std::string(ZSTR_VAL(key), ZSTR_LEN(key)))
-        };
-      }
-    }
+      if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("loggingMeterOptions")) == 0) {
+        if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+          continue;
+        }
 
-    if (zend_binary_strcmp(
-          ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("thresholdLoggingTracerOptions")) == 0) {
-      if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
-        continue;
+        const zend_string* k = nullptr;
+        const zval* v = nullptr;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
+        {
+          options::assign_duration("emitInterval", k, v, [&](auto v) {
+            cluster_options.metrics().emit_interval(v);
+          });
+        }
+        ZEND_HASH_FOREACH_END();
       }
-      if (Z_TYPE_P(value) != IS_ARRAY) {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 fmt::format("expected array for {} as tracer options",
-                             std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
-      }
-
-      const zend_string* k;
-      const zval* v;
-
-      ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
-      {
-        ASSIGN_NUMBER_OPTION(
-          "orphanedSampleSize", connstr.options.tracing_options.orphaned_sample_size, k, v);
-        ASSIGN_DURATION_OPTION(
-          "orphanedEmitInterval", connstr.options.tracing_options.orphaned_emit_interval, k, v);
-
-        ASSIGN_NUMBER_OPTION(
-          "thresholdSampleSize", connstr.options.tracing_options.threshold_sample_size, k, v);
-        ASSIGN_DURATION_OPTION(
-          "thresholdEmitInterval", connstr.options.tracing_options.threshold_emit_interval, k, v);
-        ASSIGN_DURATION_OPTION(
-          "analyticsThreshold", connstr.options.tracing_options.analytics_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "eventingThreshold", connstr.options.tracing_options.eventing_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "keyValueThreshold", connstr.options.tracing_options.key_value_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "managementThreshold", connstr.options.tracing_options.management_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "queryThreshold", connstr.options.tracing_options.query_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "searchThreshold", connstr.options.tracing_options.search_threshold, k, v);
-        ASSIGN_DURATION_OPTION(
-          "viewThreshold", connstr.options.tracing_options.view_threshold, k, v);
-      }
-      ZEND_HASH_FOREACH_END();
-    }
-
-    if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("loggingMeterOptions")) == 0) {
-      if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
-        continue;
-      }
-      if (Z_TYPE_P(value) != IS_ARRAY) {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 fmt::format("expected array for {} as meter options",
-                             std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
-      }
-
-      const zend_string* k;
-      const zval* v;
-
-      ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
-      {
-        ASSIGN_DURATION_OPTION("emitInterval", connstr.options.metrics_options.emit_interval, k, v);
-      }
-      ZEND_HASH_FOREACH_END();
+    } catch (const core_error_info& e) {
+      return e;
     }
   }
   ZEND_HASH_FOREACH_END();
 
-  connstr.options.dns_config = core::io::dns::dns_config(dns.nameserver, dns.port, dns.timeout);
+  if (auto timeout = dns.timeout; timeout) {
+    cluster_options.dns().timeout(timeout.value());
+  }
+  if (auto nameserver = dns.nameserver; nameserver) {
+    if (auto port = dns.port; port) {
+      cluster_options.dns().nameserver(nameserver.value(), port.value());
+    } else {
+      cluster_options.dns().nameserver(nameserver.value());
+    }
+  }
 
   return {};
 }
 
-#undef ASSIGN_DURATION_OPTION
-#undef ASSIGN_NUMBER_OPTION
-#undef ASSIGN_BOOLEAN_OPTION
-#undef ASSIGN_STRING_OPTION
-
-static core_error_info
-extract_credentials(couchbase::core::cluster_credentials& credentials, zval* options)
+namespace
+{
+auto
+construct_cluster_options(zval* options)
+  -> std::pair<core_error_info, std::optional<couchbase::cluster_options>>
 {
   if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
-    return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" };
+    return {
+      { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" },
+      {},
+    };
   }
 
   const zval* auth = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("authenticator"));
   if (auth == nullptr || Z_TYPE_P(auth) != IS_ARRAY) {
-    return { errc::common::invalid_argument, ERROR_LOCATION, "missing authenticator" };
+    return {
+      { errc::common::invalid_argument, ERROR_LOCATION, "missing authenticator" },
+      {},
+    };
   }
 
   const zval* auth_type = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("type"));
   if (auth_type == nullptr || Z_TYPE_P(auth_type) != IS_STRING) {
-    return { errc::common::invalid_argument,
-             ERROR_LOCATION,
-             "unexpected type of the authenticator" };
+    return {
+      { errc::common::invalid_argument, ERROR_LOCATION, "unexpected type of the authenticator" },
+      {},
+    };
   }
   if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("password")) ==
       0) {
     const zval* username = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("username"));
     if (username == nullptr || Z_TYPE_P(username) != IS_STRING) {
-      return { errc::common::invalid_argument,
-               ERROR_LOCATION,
-               "expected username to be a string in the authenticator" };
+      return {
+        { errc::common::invalid_argument,
+          ERROR_LOCATION,
+          "expected username to be a string in the authenticator" },
+        {},
+      };
     }
     const zval* password = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("password"));
     if (password == nullptr || Z_TYPE_P(password) != IS_STRING) {
-      return { errc::common::invalid_argument,
-               ERROR_LOCATION,
-               "expected password to be a string in the authenticator" };
+      return {
+        { errc::common::invalid_argument,
+          ERROR_LOCATION,
+          "expected password to be a string in the authenticator" },
+        {},
+      };
     }
-    credentials.username.assign(Z_STRVAL_P(username));
-    credentials.password.assign(Z_STRVAL_P(password));
-
-    if (const zval* allowed_sasl_mechanisms =
-          zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("allowedSaslMechanisms"));
-        allowed_sasl_mechanisms != nullptr && Z_TYPE_P(allowed_sasl_mechanisms) != IS_NULL) {
-      if (Z_TYPE_P(allowed_sasl_mechanisms) != IS_ARRAY) {
-        return { errc::common::invalid_argument,
-                 ERROR_LOCATION,
-                 "expected allowedSaslMechanisms to be an array in the authenticator" };
-      }
-      std::vector<std::string> mechanisms;
-      const zval* mech;
-      ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(allowed_sasl_mechanisms), mech)
-      {
-        if (mech != nullptr && Z_TYPE_P(mech) == IS_STRING) {
-          mechanisms.emplace_back(Z_STRVAL_P(mech), Z_STRLEN_P(mech));
-        }
-      }
-      ZEND_HASH_FOREACH_END();
-      credentials.allowed_sasl_mechanisms = mechanisms;
-    }
-    return {};
+    return {
+      {},
+      cluster_options{
+        password_authenticator{
+          Z_STRVAL_P(username),
+          Z_STRVAL_P(password),
+        },
+      },
+    };
   }
   if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("certificate")) ==
       0) {
     const zval* certificate_path =
       zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("certificatePath"));
     if (certificate_path == nullptr || Z_TYPE_P(certificate_path) != IS_STRING) {
-      return { errc::common::invalid_argument,
-               ERROR_LOCATION,
-               "expected certificate path to be a string in the authenticator" };
+      return {
+        { errc::common::invalid_argument,
+          ERROR_LOCATION,
+          "expected certificate path to be a string in the authenticator" },
+        {},
+      };
     }
     const zval* key_path = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("keyPath"));
     if (key_path == nullptr || Z_TYPE_P(key_path) != IS_STRING) {
-      return { errc::common::invalid_argument,
-               ERROR_LOCATION,
-               "expected key path to be a string in the authenticator" };
+      return {
+        { errc::common::invalid_argument,
+          ERROR_LOCATION,
+          "expected key path to be a string in the authenticator" },
+        {},
+      };
     }
-    credentials.certificate_path.assign(Z_STRVAL_P(certificate_path));
-    credentials.key_path.assign(Z_STRVAL_P(key_path));
-    return {};
+    return {
+      {},
+      cluster_options{
+        certificate_authenticator{
+          Z_STRVAL_P(certificate_path),
+          Z_STRVAL_P(key_path),
+        },
+      },
+    };
   }
-  return { errc::common::invalid_argument,
-           ERROR_LOCATION,
-           fmt::format("unknown type of the authenticator: {}",
-                       std::string(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type))) };
+  return {
+    { errc::common::invalid_argument,
+      ERROR_LOCATION,
+      fmt::format("unknown type of the authenticator: {}",
+                  std::string(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type))) },
+    {},
+  };
 }
+} // namespace
 
 COUCHBASE_API
 std::pair<connection_handle*, core_error_info>
@@ -5375,33 +5477,21 @@ create_connection_handle(const zend_string* connection_string,
                          std::chrono::system_clock::time_point idle_expiry)
 {
   std::string connection_str(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string));
-  auto connstr = core::utils::parse_connection_string(connection_str);
-  if (connstr.error) {
+
+  if (auto connstr = core::utils::parse_connection_string(connection_str); connstr.error) {
     return { nullptr,
              { couchbase::errc::common::parsing_failure, ERROR_LOCATION, connstr.error.value() } };
   }
-  if (auto e = apply_options(connstr, options); e.ec) {
-    return { nullptr, e };
+  auto [e1, cluster_options] = construct_cluster_options(options);
+  if (e1.ec) {
+    return { nullptr, e1 };
   }
-  couchbase::core::cluster_credentials credentials;
-  if (auto e = extract_credentials(credentials, options); e.ec) {
-    return { nullptr, e };
+  if (auto e2 = apply_options(cluster_options.value(), options); e2.ec) {
+    return { nullptr, e2 };
   }
-  connstr.options.user_agent_extra = fmt::format("php_sdk/{}/{};ssl/{:x};php/{}",
-                                                 PHP_COUCHBASE_VERSION,
-                                                 std::string(extension_revision()).substr(0, 8),
-                                                 OpenSSL_version_num(),
-                                                 PHP_VERSION
-#if ZTS
-                                                 "/z"
-#else
-                                                 "/n"
-#endif
-  );
-  couchbase::core::origin origin{ credentials, connstr };
   return { new connection_handle(std::move(connection_str),
                                  std::string(ZSTR_VAL(connection_hash), ZSTR_LEN(connection_hash)),
-                                 origin,
+                                 std::move(cluster_options.value()),
                                  idle_expiry),
            {} };
 }

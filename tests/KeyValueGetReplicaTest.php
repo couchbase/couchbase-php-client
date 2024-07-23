@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\UpsertOptions;
+use Couchbase\DurabilityLevel;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -44,9 +46,13 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
 
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
-        $res = $collection->upsert($id, ["answer" => 42]);
+        $opts = UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->upsert($id, ["answer" => 42], $opts);
         $cas = $res->cas();
         $this->assertNotNull($cas);
+        if (self::env()->useCaves()) {
+            sleep(1);
+        }
         $results = $collection->getAllReplicas($id);
         $this->assertGreaterThanOrEqual(1, count($results));
         $seenActiveVersion = false;

@@ -73,9 +73,8 @@ public:
     scan_result_->next([barrier](couchbase::core::range_scan_item item, std::error_code ec) {
       if (ec) {
         return barrier->set_value(tl::unexpected(ec));
-      } else {
-        return barrier->set_value(item);
       }
+      return barrier->set_value(std::move(item));
     });
     auto resp = f.get();
     if (!resp.has_value()) {
@@ -88,7 +87,7 @@ public:
   }
 
 private:
-  std::shared_ptr<couchbase::core::cluster> cluster_;
+  couchbase::core::cluster cluster_;
   std::unique_ptr<couchbase::core::scan_result> scan_result_;
 };
 
@@ -120,9 +119,9 @@ scan_result_resource::next_item(zval* return_value)
       add_assoc_stringl(
         return_value, "value", reinterpret_cast<const char*>(body.value.data()), body.value.size());
       add_assoc_long(return_value, "expiry", body.expiry);
-      add_assoc_bool(return_value, "idsOnly", 0);
+      add_assoc_bool(return_value, "idsOnly", false);
     } else {
-      add_assoc_bool(return_value, "idsOnly", 1);
+      add_assoc_bool(return_value, "idsOnly", true);
     }
   }
   return {};
@@ -179,7 +178,7 @@ create_scan_result_resource(connection_handle* connection,
         return { nullptr, e };
       }
       mutation_state.tokens.emplace_back(
-        mutation_token{ partition_uuid, sequence_number, partition_id, bucket_name });
+        partition_uuid, sequence_number, partition_id, bucket_name);
     }
     ZEND_HASH_FOREACH_END();
 
@@ -193,8 +192,8 @@ create_scan_result_resource(connection_handle* connection,
   // Get operation agent
   auto clust = connection->cluster();
 
-  auto agent_group = couchbase::core::agent_group(
-    clust->io_context(), couchbase::core::agent_group_config{ { *clust } });
+  auto agent_group = couchbase::core::agent_group(clust.io_context(),
+                                                  couchbase::core::agent_group_config{ { clust } });
   agent_group.open_bucket(bucket_name);
   auto agent = agent_group.get_agent(bucket_name);
   if (!agent.has_value()) {
@@ -208,7 +207,7 @@ create_scan_result_resource(connection_handle* connection,
   auto barrier =
     std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
   auto f = barrier->get_future();
-  clust->with_bucket_configuration(
+  clust.with_bucket_configuration(
     bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
       barrier->set_value({ ec, config });
     });
@@ -287,7 +286,7 @@ create_scan_result_resource(connection_handle* connection,
   } else if (e.ec) {
     return { nullptr, e };
   }
-  auto orchestrator = couchbase::core::range_scan_orchestrator(clust->io_context(),
+  auto orchestrator = couchbase::core::range_scan_orchestrator(clust.io_context(),
                                                                agent.value(),
                                                                vbucket_map.value(),
                                                                scope_name,

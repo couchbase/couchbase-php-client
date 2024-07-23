@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "core_error_info.hxx"
 #include "wrapper.hxx"
 
 #include "common.hxx"
@@ -700,6 +701,34 @@ error_context_to_zval(const empty_error_context& /* ctx */,
                       std::string& /* enhanced_error_message */)
 {
   /* nothing to do */
+}
+
+COUCHBASE_API
+void
+error_context_to_zval(const generic_error_context& ctx,
+                      zval* return_value,
+                      std::string& enhanced_error_message)
+{
+  if (!ctx.message.empty()) {
+    if (!enhanced_error_message.empty()) {
+      enhanced_error_message.append(", ");
+    }
+    enhanced_error_message.append(ctx.message);
+    add_assoc_stringl(return_value, "message", ctx.message.data(), ctx.message.size());
+  }
+  if (!ctx.json_data.empty()) {
+    if (!enhanced_error_message.empty()) {
+      enhanced_error_message.append(", ");
+    }
+    enhanced_error_message.append(ctx.json_data);
+    add_assoc_stringl(return_value, "json", ctx.json_data.data(), ctx.json_data.size());
+  }
+  if (ctx.cause != nullptr) {
+    zval cause;
+    array_init(&cause);
+    error_context_to_zval(*ctx.cause, &cause, enhanced_error_message);
+    add_assoc_zval(return_value, "cause", &cause);
+  }
 }
 
 COUCHBASE_API
