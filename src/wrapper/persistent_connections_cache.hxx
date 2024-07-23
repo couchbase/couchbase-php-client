@@ -32,7 +32,9 @@ COUCHBASE_API int
 get_persistent_connection_destructor_id();
 
 COUCHBASE_API std::pair<zend_resource*, core_error_info>
-create_persistent_connection(zend_string* connection_hash, zend_string* connection_string, zval* options);
+create_persistent_connection(zend_string* connection_hash,
+                             zend_string* connection_string,
+                             zval* options);
 
 COUCHBASE_API void
 destroy_persistent_connection(zend_resource* res);

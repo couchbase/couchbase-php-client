@@ -39,17 +39,18 @@ namespace couchbase::php
 {
 class scan_result_resource
 {
-  public:
-    COUCHBASE_API
-    scan_result_resource(connection_handle* connection, const couchbase::core::scan_result& scan_result);
+public:
+  COUCHBASE_API
+  scan_result_resource(connection_handle* connection,
+                       const couchbase::core::scan_result& scan_result);
 
-    COUCHBASE_API
-    core_error_info next_item(zval* return_value);
+  COUCHBASE_API
+  core_error_info next_item(zval* return_value);
 
-  private:
-    class impl;
+private:
+  class impl;
 
-    std::shared_ptr<impl> impl_;
+  std::shared_ptr<impl> impl_;
 };
 
 COUCHBASE_API std::pair<zend_resource*, core_error_info>
