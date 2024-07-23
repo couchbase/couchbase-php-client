@@ -22,17 +22,21 @@
 
 #include <Zend/zend_API.h>
 
-#include <chrono>
 #include <couchbase/fork_event.hxx>
+
+#include <chrono>
 #include <memory>
 #include <string>
 #include <system_error>
 
-namespace couchbase::core
+namespace couchbase
 {
-struct origin;
+class cluster_options;
+namespace core
+{
 class cluster;
-} // namespace couchbase::core
+} // namespace core
+} // namespace couchbase
 
 namespace couchbase::php
 {
@@ -42,14 +46,14 @@ public:
   COUCHBASE_API
   connection_handle(std::string connection_string,
                     std::string connection_hash,
-                    couchbase::core::origin origin,
+                    couchbase::cluster_options cluster_options,
                     std::chrono::system_clock::time_point idle_expiry);
 
   COUCHBASE_API
   ~connection_handle();
 
   COUCHBASE_API
-  std::shared_ptr<couchbase::core::cluster> cluster() const;
+  couchbase::core::cluster cluster() const;
 
   COUCHBASE_API
   bool is_expired(std::chrono::system_clock::time_point now) const;
@@ -619,10 +623,10 @@ private:
   std::chrono::system_clock::time_point
     idle_expiry_; /* time when the connection will be considered as expired */
 
-  std::shared_ptr<impl> impl_;
-
   std::string connection_string_;
   std::string connection_hash_;
+
+  std::shared_ptr<impl> impl_;
 };
 
 COUCHBASE_API

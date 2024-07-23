@@ -19,6 +19,7 @@
 #include "api_visibility.hxx"
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <set>
 #include <system_error>
@@ -35,6 +36,12 @@ struct source_location {
 };
 
 struct empty_error_context {
+};
+
+struct generic_error_context {
+  std::string message{};
+  std::string json_data{};
+  std::shared_ptr<generic_error_context> cause{ nullptr };
 };
 
 struct common_error_context {
@@ -124,6 +131,7 @@ struct core_error_info {
   source_location location{};
   std::string message{};
   std::variant<empty_error_context,
+               generic_error_context,
                key_value_error_context,
                query_error_context,
                analytics_error_context,

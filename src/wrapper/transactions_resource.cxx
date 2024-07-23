@@ -23,7 +23,6 @@
 
 #include <fmt/core.h>
 
-#include <array>
 #include <thread>
 
 namespace couchbase::php
@@ -49,7 +48,7 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
 public:
   impl(connection_handle* connection, const couchbase::transactions::transactions_config& config)
     : cluster_{ connection->cluster() }
-    , transactions_(*cluster_, config)
+    , transactions_(cluster_, config)
   {
   }
 
@@ -72,7 +71,7 @@ public:
   }
 
 private:
-  std::shared_ptr<couchbase::core::cluster> cluster_;
+  couchbase::core::cluster cluster_;
   couchbase::core::transactions::transactions transactions_;
 };
 

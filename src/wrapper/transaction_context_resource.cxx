@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+#include "couchbase/codec/codec_flags.hxx"
+#include "couchbase/codec/encoded_value.hxx"
 #include "wrapper.hxx"
 
 #include "common.hxx"
 #include "conversion_utilities.hxx"
 #include "transaction_context_resource.hxx"
 #include "transactions_resource.hxx"
+#include "zend_API.h"
 
 #include <core/transactions.hxx>
 #include <core/transactions/internal/exceptions_internal.hxx>
@@ -159,7 +162,9 @@ class transaction_context_resource::impl
 public:
   impl(core::transactions::transactions& transactions,
        const transactions::transaction_options& configuration)
-    : transaction_context_(transactions, configuration)
+    : transaction_context_{
+      core::transactions::transaction_context::create(transactions, configuration),
+    }
   {
   }
 
@@ -174,7 +179,7 @@ public:
   [[nodiscard]] core_error_info new_attempt()
   {
     try {
-      transaction_context_.new_attempt_context();
+      transaction_context_->new_attempt_context();
     } catch (const core::transactions::transaction_operation_failed& e) {
       return { transactions_errc::operation_failed,
                ERROR_LOCATION,
@@ -199,7 +204,7 @@ public:
     try {
       auto barrier = std::make_shared<std::promise<void>>();
       auto f = barrier->get_future();
-      transaction_context_.rollback([barrier](std::exception_ptr e) {
+      transaction_context_->rollback([barrier](std::exception_ptr e) {
         if (e) {
           return barrier->set_exception(std::move(e));
         }
@@ -231,7 +236,7 @@ public:
       auto barrier =
         std::make_shared<std::promise<std::optional<transactions::transaction_result>>>();
       auto f = barrier->get_future();
-      transaction_context_.finalize(
+      transaction_context_->finalize(
         [barrier](std::optional<core::transactions::transaction_exception> e,
                   std::optional<transactions::transaction_result> res) {
           if (e) {
@@ -270,7 +275,7 @@ public:
       auto barrier =
         std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
       auto f = barrier->get_future();
-      transaction_context_.get_optional(
+      transaction_context_->get_optional(
         id,
         [barrier](std::exception_ptr e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
@@ -311,9 +316,9 @@ public:
       auto barrier =
         std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
       auto f = barrier->get_future();
-      transaction_context_.insert(
+      transaction_context_->insert(
         id,
-        content,
+        { content, codec::codec_flags::json_common_flags },
         [barrier](std::exception_ptr e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
@@ -355,9 +360,9 @@ public:
       auto barrier =
         std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
       auto f = barrier->get_future();
-      transaction_context_.replace(
+      transaction_context_->replace(
         document,
-        content,
+        { content, codec::codec_flags::json_common_flags },
         [barrier](std::exception_ptr e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
@@ -396,7 +401,7 @@ public:
     try {
       auto barrier = std::make_shared<std::promise<void>>();
       auto f = barrier->get_future();
-      transaction_context_.remove(document, [barrier](std::exception_ptr e) {
+      transaction_context_->remove(document, [barrier](std::exception_ptr e) {
         if (e) {
           return barrier->set_exception(std::move(e));
         }
@@ -432,7 +437,7 @@ public:
       auto barrier =
         std::make_shared<std::promise<std::optional<core::operations::query_response>>>();
       auto f = barrier->get_future();
-      transaction_context_.query(
+      transaction_context_->query(
         statement,
         options,
         [barrier](std::exception_ptr e, std::optional<core::operations::query_response> res) {
@@ -465,7 +470,7 @@ public:
   }
 
 private:
-  core::transactions::transaction_context transaction_context_;
+  std::shared_ptr<core::transactions::transaction_context> transaction_context_;
 };
 
 COUCHBASE_API
@@ -526,8 +531,9 @@ transaction_get_result_to_zval(zval* return_value,
   }
   {
     const auto& value = res.content();
+    add_assoc_long(return_value, "flags", value.flags);
     add_assoc_stringl(
-      return_value, "value", reinterpret_cast<const char*>(value.data()), value.size());
+      return_value, "value", reinterpret_cast<const char*>(value.data.data()), value.data.size());
   }
   if (res.metadata()) {
     zval meta;
@@ -587,8 +593,8 @@ transaction_get_result_to_zval(zval* return_value,
     }
     add_assoc_stringl(&links,
                       "staged_content",
-                      reinterpret_cast<const char*>(res.links().staged_content().data()),
-                      res.links().staged_content().size());
+                      reinterpret_cast<const char*>(res.links().staged_content_json().data.data()),
+                      res.links().staged_content_json().data.size());
     if (res.links().cas_pre_txn()) {
       add_assoc_stringl(&links,
                         "cas_pre_txn",
@@ -679,6 +685,10 @@ zval_to_links(const zval* document)
   if (forward_compat) {
     forward_compat_json = core::utils::json::parse(forward_compat.value());
   }
+  std::optional<codec::encoded_value> staged_content_json;
+  if (staged_content) {
+    staged_content_json = { staged_content.value(), codec::codec_flags::json_common_flags };
+  }
 
   return { core::transactions::transaction_links{ atr_id,
                                                   atr_bucket_name,
@@ -687,7 +697,8 @@ zval_to_links(const zval* document)
                                                   staged_transaction_id,
                                                   staged_attempt_id,
                                                   staged_operation_id,
-                                                  staged_content,
+                                                  staged_content_json,
+                                                  {},
                                                   cas_pre_txn,
                                                   revid_pre_txn,
                                                   exptime_pre_txn,
@@ -748,9 +759,12 @@ zval_to_transaction_get_result(const zval* document)
   if (err.ec) {
     return { {}, err };
   }
-
   return { core::transactions::transaction_get_result(
-             zval_to_document_id(document), content, cas.value(), links, metadata),
+             zval_to_document_id(document),
+             { content, codec::codec_flags::json_common_flags },
+             cas.value(),
+             links,
+             metadata),
            {} };
 }
 
