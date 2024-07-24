@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2024-04-23</date>
+    <date>2024-07-24</date>
     <version>
-        <release>4.2.1</release>
+        <release>4.2.2</release>
         <api>4.2.1</api>
     </version>
     <stability>
@@ -27,44 +27,23 @@
         Fixes
         =====
 
-        * PCBC-987: Fix consistency vector encoding for FTS (#163)
-        * PCBC-985: Use system DNS config by default, and disable DNS-SRV if
-          system does not provide DNS server. (#159)
+        * PCBC-997: Do not export development files. (#172)
+          Exclude C++ files, tests and development scripts, so that Packagist will
+          not install them to the application ./vendor directory.
+
+        * PCBC-991: Add consistency utility for testing (#168)
+
+        * PCBC-989: Rollback to cmake 3.19 (#167)
+
+        * PCBC-988: Fix type annotation for JsonSerializable implementations (#166)
 
         Enhancements
         ============
 
-        * PCBC-859: Update build scripts and instructions for Windows (#158, #164)
-        * PCBC-984, PCBC-987: Improve compatiblity with pcntl_fork() (#157, #162)
+        * PCBC-994: Support for base64 encoded vector types (#169, #170)
 
-        Notable changes in core C++
-        ===========================
-
-        1.0.0-dp.14
-        -----------
-
-        ## Enhancements
-
-            * CXXCBC-489: Support scoped eventing functions. (#548)
-            * CXXCBC-489: Add `version_7_2_0 eventing` function language compatibility. (#554)
-            * CXXCBC-470: Distinguish between 'unset' and 'off' query_profile (#551)
-
-        ## Fixes
-
-            * CXXCBC-487: Check if alternate addressing is used when bootstrapping. (#545)
-            * CXXCBC-503: Ignore configuration if it contains an empty vBucketMap. (#556, #558)
-            * CXXCBC-30: Inconsistent behaviour when using subdoc opcodes incorrectly (#559)
-            * CXXCBC-492: Use retry strategy in collections_component's get_collection_id. (#552)
-            * CXXCBC-494: Fix memory issue in range scan implementation. (#549)
-            * Always attempt to extract common query code if error has not been
-              set. (#561) Fixes quota/rate limit checks for older servers.
-
-        ## Build and Tests Fixes
-
-            * CXXCBC-502: Apply `/bigobj` for SDK objects only. (#550) Avoid using
-              global add_definitions() as it might leak to non-CXX languages (like
-              `ASM_NASM` on Windows).
-            * Add feature check for scoped analyze_document in tests (#555)
+        * Core updated to 1.0.0. Release notes:
+          https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-0-26-june-2024
     </notes>
     <contents>
     </contents>
@@ -81,6 +60,61 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2024-04-23</date>
+            <version>
+                <release>4.2.1</release>
+                <api>4.2.1</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                Fixes
+                =====
+
+                * PCBC-987: Fix consistency vector encoding for FTS (#163)
+                * PCBC-985: Use system DNS config by default, and disable DNS-SRV if
+                  system does not provide DNS server. (#159)
+
+                Enhancements
+                ============
+
+                * PCBC-859: Update build scripts and instructions for Windows (#158, #164)
+                * PCBC-984, PCBC-987: Improve compatiblity with pcntl_fork() (#157, #162)
+
+                Notable changes in core C++
+                ===========================
+
+                1.0.0-dp.14
+                -----------
+
+                ## Enhancements
+
+                    * CXXCBC-489: Support scoped eventing functions. (#548)
+                    * CXXCBC-489: Add `version_7_2_0 eventing` function language compatibility. (#554)
+                    * CXXCBC-470: Distinguish between 'unset' and 'off' query_profile (#551)
+
+                ## Fixes
+
+                    * CXXCBC-487: Check if alternate addressing is used when bootstrapping. (#545)
+                    * CXXCBC-503: Ignore configuration if it contains an empty vBucketMap. (#556, #558)
+                    * CXXCBC-30: Inconsistent behaviour when using subdoc opcodes incorrectly (#559)
+                    * CXXCBC-492: Use retry strategy in collections_component's get_collection_id. (#552)
+                    * CXXCBC-494: Fix memory issue in range scan implementation. (#549)
+                    * Always attempt to extract common query code if error has not been
+                      set. (#561) Fixes quota/rate limit checks for older servers.
+
+                ## Build and Tests Fixes
+
+                    * CXXCBC-502: Apply `/bigobj` for SDK objects only. (#550) Avoid using
+                      global add_definitions() as it might leak to non-CXX languages (like
+                      `ASM_NASM` on Windows).
+                    * Add feature check for scoped analyze_document in tests (#555)
+            </notes>
+        </release>
         <release>
             <date>2024-03-17</date>
             <version>
