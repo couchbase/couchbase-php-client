@@ -23,6 +23,7 @@
 #include <couchbase/error_codes.hxx>
 
 #include <fmt/core.h>
+#include <tao/json/value.hpp>
 #include <tao/pegtl/parse_error.hpp>
 
 #include <sstream>
