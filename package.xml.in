@@ -15,7 +15,7 @@
     </lead>
     <date>2024-07-24</date>
     <version>
-        <release>4.2.2</release>
+        <release>4.2.3</release>
         <api>4.2.1</api>
     </version>
     <stability>
@@ -24,26 +24,11 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        Fixes
-        =====
-
-        * PCBC-997: Do not export development files. (#172)
-          Exclude C++ files, tests and development scripts, so that Packagist will
-          not install them to the application ./vendor directory.
-
-        * PCBC-991: Add consistency utility for testing (#168)
-
-        * PCBC-989: Rollback to cmake 3.19 (#167)
-
-        * PCBC-988: Fix type annotation for JsonSerializable implementations (#166)
-
         Enhancements
         ============
 
-        * PCBC-994: Support for base64 encoded vector types (#169, #170)
-
-        * Core updated to 1.0.0. Release notes:
-          https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-0-26-june-2024
+        * Core updated to 1.0.1. Release notes:
+          https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-1-22-august-2024
     </notes>
     <contents>
     </contents>
@@ -60,6 +45,40 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2024-07-24</date>
+            <version>
+                <release>4.2.2</release>
+                <api>4.2.1</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                Fixes
+                =====
+
+                * PCBC-997: Do not export development files. (#172)
+                  Exclude C++ files, tests and development scripts, so that Packagist will
+                  not install them to the application ./vendor directory.
+
+                * PCBC-991: Add consistency utility for testing (#168)
+
+                * PCBC-989: Rollback to cmake 3.19 (#167)
+
+                * PCBC-988: Fix type annotation for JsonSerializable implementations (#166)
+
+                Enhancements
+                ============
+
+                * PCBC-994: Support for base64 encoded vector types (#169, #170)
+
+                * Core updated to 1.0.0. Release notes:
+                  https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-0-26-june-2024
+            </notes>
+        </release>
         <release>
             <date>2024-04-23</date>
             <version>
