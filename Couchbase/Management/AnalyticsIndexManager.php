@@ -24,7 +24,7 @@ use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Extension;
 
-class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
+class AnalyticsIndexManager
 {
     /**
      * @var resource
