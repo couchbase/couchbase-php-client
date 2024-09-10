@@ -38,7 +38,13 @@ class AnalyticsManagerTest extends Helpers\CouchbaseTestCase
         $this->skipIfProtostellar();
         $this->skipIfCaves();
 
-        $this->manager->createDataverse($this->dataverseName);
+        $this->retryFor(
+            5,
+            1000,
+            function () {
+                $this->manager->createDataverse($this->dataverseName);
+            }
+        );
 
         $this->manager->createDataset($this->datasetName, self::env()->bucketName(), CreateAnalyticsDatasetOptions::build()->dataverseName($this->dataverseName));
 
@@ -101,7 +107,13 @@ class AnalyticsManagerTest extends Helpers\CouchbaseTestCase
         $this->skipIfProtostellar();
         $this->skipIfCaves();
 
-        $this->manager->createDataverse($this->dataverseName, CreateAnalyticsDataverseOptions::build()->ignoreIfExists(true));
+        $this->retryFor(
+            5,
+            1000,
+            function () {
+                $this->manager->createDataverse($this->dataverseName, CreateAnalyticsDataverseOptions::build()->ignoreIfExists(true));
+            }
+        );
 
         $s3Link = S3ExternalAnalyticsLink::build($this->linkName, $this->dataverseName, "accessKeyId", "us-east-1", "secretAccessKey");
 
@@ -140,7 +152,13 @@ class AnalyticsManagerTest extends Helpers\CouchbaseTestCase
         $this->skipIfProtostellar();
         $this->skipIfCaves();
 
-        $this->manager->createDataverse($this->dataverseName, CreateAnalyticsDataverseOptions::build()->ignoreIfExists(true));
+        $this->retryFor(
+            5,
+            1000,
+            function () {
+                $this->manager->createDataverse($this->dataverseName, CreateAnalyticsDataverseOptions::build()->ignoreIfExists(true));
+            }
+        );
 
         $this->manager->createDataset("dataset1", self::env()->bucketName(), CreateAnalyticsDatasetOptions::build()->ignoreIfExists(true));
         $this->manager->createDataset("dataset2", self::env()->bucketName(), CreateAnalyticsDatasetOptions::build()->dataverseName($this->dataverseName)->ignoreIfExists(true));
