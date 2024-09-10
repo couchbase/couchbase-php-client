@@ -53,7 +53,7 @@ check_persistent_connection(zval* zv)
   auto now = std::chrono::system_clock::now();
 
   if (res->type == persistent_connection_destructor_id_) {
-    auto const* connection = static_cast<connection_handle*>(res->ptr);
+    const auto* connection = static_cast<connection_handle*>(res->ptr);
     if (COUCHBASE_G(persistent_timeout) != -1 && connection->is_expired(now)) {
       /* connection has timed out */
       return ZEND_HASH_APPLY_REMOVE;
@@ -201,7 +201,7 @@ notify_transaction(zval* zv, void* event_ptr)
   const fork_event event = *(static_cast<fork_event*>(event_ptr));
 
   if (res->type == get_transactions_destructor_id()) {
-    auto const* transaction = static_cast<transactions_resource*>(res->ptr);
+    const auto* transaction = static_cast<transactions_resource*>(res->ptr);
     transaction->notify_fork(event);
   }
   return ZEND_HASH_APPLY_KEEP;

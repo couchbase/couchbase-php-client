@@ -22,7 +22,58 @@ namespace Couchbase\Management;
 
 class CreateAnalyticsDataverseOptions
 {
+    private ?int $timeoutMilliseconds = null;
+    private ?bool $ignoreIfExists = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return CreateAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
+    public static function build(): CreateAnalyticsDataverseOptions
+    {
+        return new CreateAnalyticsDataverseOptions();
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return CreateAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
     public function ignoreIfExists(bool $shouldIgnore): CreateAnalyticsDataverseOptions
     {
+        $this->ignoreIfExists = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return CreateAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): CreateAnalyticsDataverseOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function export(?CreateAnalyticsDataverseOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'ignoreIfExists' => $options->ignoreIfExists,
+        ];
     }
 }

@@ -265,12 +265,11 @@ class Cluster implements ClusterInterface
      * Creates a new manager object for managing analytics query indexes.
      *
      * @return AnalyticsIndexManager
-     * @throws UnsupportedOperationException
      * @since 4.0.0
      */
     public function analyticsIndexes(): AnalyticsIndexManager
     {
-        throw new UnsupportedOperationException();
+        return new AnalyticsIndexManager($this->core);
     }
 
     /**

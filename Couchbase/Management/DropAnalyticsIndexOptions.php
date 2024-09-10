@@ -22,11 +22,74 @@ namespace Couchbase\Management;
 
 class DropAnalyticsIndexOptions
 {
-    public function ignoreIfNotExists(bool $shouldIgnore): DropAnalyticsIndexOptions
+    private ?int $timeoutMilliseconds = null;
+    private ?bool $ignoreIfDoesNotExist = null;
+    private ?string $dataverseName = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return DropAnalyticsIndexOptions
+     * @since 4.2.4
+     */
+    public static function build(): DropAnalyticsIndexOptions
     {
+        return new DropAnalyticsIndexOptions();
     }
 
+    /**
+     * Customizes the dataverse from which this index should be created.
+     *
+     * @param string $dataverseName The name of the dataverse
+     *
+     * @return DropAnalyticsIndexOptions
+     * @since 4.2.4
+     */
     public function dataverseName(string $dataverseName): DropAnalyticsIndexOptions
     {
+        $this->dataverseName = $dataverseName;
+        return $this;
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return DropAnalyticsIndexOptions
+     * @since 4.2.4
+     */
+    public function ignoreIfDoesNotExist(bool $shouldIgnore): DropAnalyticsIndexOptions
+    {
+        $this->ignoreIfDoesNotExist = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return DropAnalyticsIndexOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): DropAnalyticsIndexOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function export(?DropAnalyticsIndexOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'ignoreIfDoesNotExist' => $options->ignoreIfDoesNotExist,
+            'dataverseName' => $options->dataverseName,
+        ];
     }
 }

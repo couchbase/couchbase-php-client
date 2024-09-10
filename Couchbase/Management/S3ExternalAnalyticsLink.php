@@ -20,72 +20,60 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class S3ExternalAnalyticsLink implements AnalyticsLink
+class S3ExternalAnalyticsLink extends AnalyticsLink
 {
+    private string $dataverseName;
+    private string $name;
+    private string $accessKeyID;
+    private string $secretAccessKey;
+    private string $region;
+
+    private ?string $sessionToken = null;
+
+    private ?string $serviceEndpoint = null;
+
+    public function __construct(
+        string $name,
+        string $dataverseName,
+        string $accessKeyID,
+        string $region,
+        string $secretAccessKey,
+    )
+    {
+        $this->name = $name;
+        $this->dataverseName = $dataverseName;
+        $this->accessKeyID = $accessKeyID;
+        $this->region = $region;
+        $this->secretAccessKey = $secretAccessKey;
+    }
+
     /**
-     * Sets name of the link
-     *
+     * Static helper to keep code more readable
+
      * @param string $name
-     *
-     * @return S3ExternalAnalyticsLink
-     */
-    public function name(string $name): S3ExternalAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets dataverse this link belongs to
-     *
-     * @param string $dataverse
-     *
-     * @return S3ExternalAnalyticsLink
-     */
-    public function dataverse(string $dataverse): S3ExternalAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets AWS S3 access key ID
-     *
-     * @param string $accessKeyId
-     *
-     * @return S3ExternalAnalyticsLink
-     */
-    public function accessKeyId(string $accessKeyId): S3ExternalAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets AWS S3 secret key
-     *
+     * @param string $dataverseName
+     * @param string $accessKeyID
+     * @param string $region
      * @param string $secretAccessKey
      *
      * @return S3ExternalAnalyticsLink
+     * @since 4.2.4
      */
-    public function secretAccessKey(string $secretAccessKey): S3ExternalAnalyticsLink
+    public static function build(
+        string $name,
+        string $dataverseName,
+        string $accessKeyID,
+        string $region,
+        string $secretAccessKey,
+    ): S3ExternalAnalyticsLink
     {
-    }
-
-    /**
-     * Sets AWS S3 region
-     *
-     * @param string $region
-     *
-     * @return S3ExternalAnalyticsLink
-     */
-    public function region(string $region): S3ExternalAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets AWS S3 token if temporary credentials are provided. Only available in 7.0+
-     *
-     * @param string $sessionToken
-     *
-     * @return S3ExternalAnalyticsLink
-     */
-    public function sessionToken(string $sessionToken): S3ExternalAnalyticsLink
-    {
+        return new S3ExternalAnalyticsLink(
+            $name,
+            $dataverseName,
+            $accessKeyID,
+            $region,
+            $secretAccessKey,
+        );
     }
 
     /**
@@ -94,8 +82,73 @@ class S3ExternalAnalyticsLink implements AnalyticsLink
      * @param string $serviceEndpoint
      *
      * @return S3ExternalAnalyticsLink
+     * @since 4.2.4
      */
-    public function serviceEndpoint(string $serviceEndpoint): S3ExternalAnalyticsLink
+    public function setServiceEndpoint(string $serviceEndpoint): S3ExternalAnalyticsLink
     {
+        $this->serviceEndpoint = $serviceEndpoint;
+        return $this;
+    }
+
+    /**
+     * Sets the session token
+     *
+     * @param string $sessionToken
+     *
+     * @return S3ExternalAnalyticsLink
+     * @since 4.2.4
+     */
+    public function setSessionToken(string $sessionToken): S3ExternalAnalyticsLink
+    {
+        $this->sessionToken = $sessionToken;
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function dataverseName(): string
+    {
+        return $this->dataverseName;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function linkType(): string
+    {
+        return AnalyticsLinkType::S3;
+    }
+
+    /**
+     * @internal
+     */
+    public function export(): array
+    {
+        $json = [
+            "type" => "s3",
+            "linkName" => $this->name,
+            "dataverse" => $this->dataverseName,
+            "accessKeyId" => $this->accessKeyID,
+            "secretAccessKey" => $this->secretAccessKey,
+            "region" => $this->region
+        ];
+
+        if ($this->sessionToken != null) {
+            $json["sessionToken"] = $this->sessionToken;
+        }
+        if ($this->serviceEndpoint != null) {
+            $json["serviceEndpoint"] = $this->serviceEndpoint;
+        }
+
+        return $json;
     }
 }

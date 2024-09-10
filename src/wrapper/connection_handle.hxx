@@ -617,6 +617,74 @@ public:
                                                         const zend_string* collection_name,
                                                         const zval* options);
 
+  COUCHBASE_API
+  core_error_info analytics_create_dataverse(zval* return_value,
+                                             const zend_string* dataverse_name,
+                                             const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_drop_dataverse(zval* return_value,
+                                           const zend_string* dataverse_name,
+                                           const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_create_dataset(zval* return_value,
+                                           const zend_string* dataset_name,
+                                           const zend_string* bucket_name,
+                                           const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_drop_dataset(zval* return_value,
+                                         const zend_string* dataset_name,
+                                         const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_get_all_datasets(zval* return_value, const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_create_index(zval* return_value,
+                                         const zend_string* dataset_name,
+                                         const zend_string* index_name,
+                                         const zval* fields,
+                                         const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_drop_index(zval* return_value,
+                                       const zend_string* dataset_name,
+                                       const zend_string* index_name,
+                                       const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_get_all_indexes(zval* return_value, const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_connect_link(zval* return_value, const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_disconnect_link(zval* return_value, const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_get_pending_mutations(zval* return_value, const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_create_link(zval* return_value,
+                                        const zval* analytics_link,
+                                        const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_replace_link(zval* return_value,
+                                         const zval* analytics_link,
+                                         const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_drop_link(zval* return_value,
+                                      const zend_string* link_name,
+                                      const zend_string* dataverse_name,
+                                      const zval* options);
+
+  COUCHBASE_API
+  core_error_info analytics_get_all_links(zval* return_value, const zval* options);
+
 private:
   class impl;
 

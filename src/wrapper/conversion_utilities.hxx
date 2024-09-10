@@ -22,6 +22,10 @@
 #include <core/operations/document_query.hxx>
 #include <core/operations/document_search.hxx>
 
+#include <core/management/analytics_link_azure_blob_external.hxx>
+#include <core/management/analytics_link_couchbase_remote.hxx>
+#include <core/management/analytics_link_s3_external.hxx>
+
 #include <couchbase/cas.hxx>
 #include <couchbase/durability_level.hxx>
 #include <couchbase/persist_to.hxx>
@@ -63,6 +67,15 @@ std::pair<core::operations::search_request, core_error_info>
 zval_to_common_search_request(const zend_string* index_name,
                               const zend_string* query,
                               const zval* options);
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::couchbase_remote_link& dst, const zval* src);
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::azure_blob_external_link& dst, const zval* src);
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::s3_external_link& dst, const zval* src);
 
 void
 query_response_to_zval(zval* return_value, const core::operations::query_response& resp);

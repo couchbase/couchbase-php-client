@@ -20,19 +20,19 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class DropAnalyticsLinkOptions
+class GetAnalyticsPendingMutationsOptions
 {
     private ?int $timeoutMilliseconds = null;
 
     /**
      * Static helper to keep code more readable
      *
-     * @return DropAnalyticsLinkOptions
+     * @return GetAnalyticsPendingMutationsOptions
      * @since 4.2.4
      */
-    public static function build(): DropAnalyticsLinkOptions
+    public static function build(): GetAnalyticsPendingMutationsOptions
     {
-        return new DropAnalyticsLinkOptions();
+        return new GetAnalyticsPendingMutationsOptions();
     }
 
     /**
@@ -40,10 +40,10 @@ class DropAnalyticsLinkOptions
      *
      * @param int $milliseconds the operation timeout to apply
      *
-     * @return DropAnalyticsLinkOptions
+     * @return GetAnalyticsPendingMutationsOptions
      * @since 4.2.4
      */
-    public function timeout(int $milliseconds): DropAnalyticsLinkOptions
+    public function timeout(int $milliseconds): GetAnalyticsPendingMutationsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
@@ -52,7 +52,7 @@ class DropAnalyticsLinkOptions
     /**
      * @internal
      */
-    public static function export(?DropAnalyticsLinkOptions $options): array
+    public static function export(?GetAnalyticsPendingMutationsOptions $options): array
     {
         if ($options == null) {
             return [];
@@ -61,5 +61,19 @@ class DropAnalyticsLinkOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
         ];
+    }
+
+    /**
+     * @internal
+     */
+    public static function import(array $pendingMutations): array
+    {
+        $finalArray = [];
+        foreach ($pendingMutations as $mutation) {
+            $splitKey = explode(".", $mutation["key"]);
+            $dataverseName = $splitKey[0];
+            $finalArray[$dataverseName][$splitKey[1]] = $mutation["count"];
+        }
+        return $finalArray;
     }
 }
