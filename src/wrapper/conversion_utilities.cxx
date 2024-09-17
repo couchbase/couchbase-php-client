@@ -586,7 +586,7 @@ search_query_response_to_zval(zval* return_value, const core::operations::search
 
     zval fragments;
     array_init(&fragments);
-    for (auto const& [field, fragment] : row.fragments) {
+    for (const auto& [field, fragment] : row.fragments) {
       zval z_fragment_values;
       array_init(&z_fragment_values);
 
@@ -814,6 +814,134 @@ zval_to_common_search_request(const zend_string* index_name,
     return { {}, e };
   }
   return { request, {} };
+}
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::couchbase_remote_link& dst, const zval* src)
+{
+  if (auto e = cb_assign_string(dst.link_name, src, "linkName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.dataverse, src, "dataverse"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.hostname, src, "hostname"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.username, src, "username"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.password, src, "password"); e.ec) {
+    return e;
+  }
+
+  auto [err, encryption_level] = cb_get_string(src, "encryptionLevel");
+  if (err.ec) {
+    return err;
+  }
+
+  if (!encryption_level.has_value()) {
+    dst.encryption.level = core::management::analytics::couchbase_link_encryption_level::none;
+  } else if (encryption_level.value() == "none") {
+    dst.encryption.level = core::management::analytics::couchbase_link_encryption_level::none;
+  } else if (encryption_level.value() == "half") {
+    dst.encryption.level = core::management::analytics::couchbase_link_encryption_level::half;
+  } else if (encryption_level.value() == "full") {
+    dst.encryption.level = core::management::analytics::couchbase_link_encryption_level::full;
+  } else {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("invalid value used for encryptionLevel: {}", *encryption_level) };
+  }
+
+  if (auto e = cb_assign_string(dst.encryption.certificate, src, "certificate"); e.ec) {
+    return e;
+  }
+  if (auto e = cb_assign_string(dst.encryption.client_certificate, src, "clientCertificate");
+      e.ec) {
+    return e;
+  }
+  if (auto e = cb_assign_string(dst.encryption.client_key, src, "clientKey"); e.ec) {
+    return e;
+  }
+
+  return {};
+}
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::azure_blob_external_link& dst, const zval* src)
+{
+  if (auto e = cb_assign_string(dst.link_name, src, "linkName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.dataverse, src, "dataverse"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.connection_string, src, "connectionString"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.account_name, src, "accountName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.account_key, src, "accountKey"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.shared_access_signature, src, "sharedAccessSignature"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.blob_endpoint, src, "blobEndpoint"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.endpoint_suffix, src, "endpointSuffix"); e.ec) {
+    return e;
+  }
+
+  return {};
+}
+
+core_error_info
+cb_fill_analytics_link(core::management::analytics::s3_external_link& dst, const zval* src)
+{
+  if (auto e = cb_assign_string(dst.link_name, src, "linkName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.dataverse, src, "dataverse"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.access_key_id, src, "accessKeyId"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.secret_access_key, src, "secretAccessKey"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.session_token, src, "sessionToken"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.region, src, "region"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(dst.service_endpoint, src, "serviceEndpoint"); e.ec) {
+    return e;
+  }
+
+  return {};
 }
 
 core_error_info

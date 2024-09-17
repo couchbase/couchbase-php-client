@@ -32,6 +32,7 @@
 #include <core/logger/logger.hxx>
 #include <core/management/bucket_settings.hxx>
 #include <core/operations.hxx>
+#include <core/operations/management/analytics.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
 #include <core/operations/management/collections.hxx>
@@ -4996,6 +4997,804 @@ connection_handle::collection_query_index_build_deferred(zval* return_value,
   auto [resp, err] = impl_->http_execute(__func__, std::move(request));
   if (err.ec) {
     return err;
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_create_dataverse(zval* return_value,
+                                              const zend_string* dataverse_name,
+                                              const zval* options)
+{
+
+  couchbase::core::operations::management::analytics_dataverse_create_request request{};
+
+  request.dataverse_name = cb_string_new(dataverse_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to create dataverse" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format(
+                 "Unable to create dataverse ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_drop_dataverse(zval* return_value,
+                                            const zend_string* dataverse_name,
+                                            const zval* options)
+{
+  couchbase::core::operations::management::analytics_dataverse_drop_request request{};
+
+  request.dataverse_name = cb_string_new(dataverse_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist");
+      e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to drop dataverse" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format(
+                 "Unable to drop dataverse ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_create_dataset(zval* return_value,
+                                            const zend_string* dataset_name,
+                                            const zend_string* bucket_name,
+                                            const zval* options)
+{
+  couchbase::core::operations::management::analytics_dataset_create_request request{};
+
+  request.dataset_name = cb_string_new(dataset_name);
+  request.bucket_name = cb_string_new(bucket_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.condition, options, "condition"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to create dataset" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format(
+                 "Unable to create dataset ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_drop_dataset(zval* return_value,
+                                          const zend_string* dataset_name,
+                                          const zval* options)
+{
+  couchbase::core::operations::management::analytics_dataset_drop_request request{};
+
+  request.dataset_name = cb_string_new(dataset_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist");
+      e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to drop dataset" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format(
+                 "Unable to drop dataset ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_get_all_datasets(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_dataset_get_all_request request{};
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to fetch all datasets" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format(
+                 "Unable to fetch all datasets ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  array_init(return_value);
+  for (const auto& dataset : resp.datasets) {
+    zval data;
+    array_init(&data);
+    add_assoc_string(&data, "name", dataset.name.c_str());
+    add_assoc_string(&data, "dataverseName", dataset.dataverse_name.c_str());
+    add_assoc_string(&data, "linkName", dataset.link_name.c_str());
+    add_assoc_string(&data, "bucketName", dataset.bucket_name.c_str());
+    add_next_index_zval(return_value, &data);
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_create_index(zval* return_value,
+                                          const zend_string* dataset_name,
+                                          const zend_string* index_name,
+                                          const zval* fields,
+                                          const zval* options)
+{
+  couchbase::core::operations::management::analytics_index_create_request request{};
+
+  request.dataset_name = cb_string_new(dataset_name);
+  request.index_name = cb_string_new(index_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_exists, options, "ignoreIfExists"); e.ec) {
+    return e;
+  }
+
+  if (fields != nullptr && Z_TYPE_P(fields) == IS_ARRAY) {
+    std::map<std::string, std::string> req_fields{};
+    const zend_string* key = nullptr;
+    const zval* item = nullptr;
+
+    ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(fields), key, item)
+    {
+      req_fields[cb_string_new(key)] = std::string({ Z_STRVAL_P(item), Z_STRLEN_P(item) });
+    }
+    ZEND_HASH_FOREACH_END();
+
+    request.fields = req_fields;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to create analytics index" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to create analytics index ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_drop_index(zval* return_value,
+                                        const zend_string* dataset_name,
+                                        const zend_string* index_name,
+                                        const zval* options)
+{
+  couchbase::core::operations::management::analytics_index_drop_request request{};
+
+  request.dataset_name = cb_string_new(dataset_name);
+  request.index_name = cb_string_new(index_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.ignore_if_does_not_exist, options, "ignoreIfDoesNotExist");
+      e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to drop analytics index" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to drop analytics index ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_get_all_indexes(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_index_get_all_request request{};
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to fetch all analytics indexes" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("Unable to fetch all analytics indexes ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  array_init(return_value);
+  for (const auto& idx : resp.indexes) {
+    zval index;
+    array_init(&index);
+    add_assoc_string(&index, "name", idx.name.c_str());
+    add_assoc_string(&index, "dataverseName", idx.dataverse_name.c_str());
+    add_assoc_string(&index, "datasetName", idx.dataset_name.c_str());
+    add_assoc_bool(&index, "isPrimary", idx.is_primary);
+    add_next_index_zval(return_value, &index);
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_connect_link(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_link_connect_request request{};
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.link_name, options, "linkName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_boolean(request.force, options, "force"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to connect analytics link" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to connect analytics link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_disconnect_link(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_link_disconnect_request request{};
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.link_name, options, "linkName"); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to disconnect analytics link" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to disconnect analytics link({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_get_pending_mutations(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_get_pending_mutations_request request{};
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               "unable to get pending mutations for the analytics service" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to get pending mutations for the analytics service ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  array_init(return_value);
+  for (const auto& [key, mutation_count] : resp.stats) {
+    zval mut;
+    array_init(&mut);
+    add_assoc_string(&mut, "key", key.c_str());
+    add_assoc_long(&mut, "count", mutation_count);
+    add_next_index_zval(return_value, &mut);
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_create_link(zval* return_value,
+                                         const zval* analytics_link,
+                                         const zval* options)
+{
+  auto [err, type] = cb_get_string(analytics_link, "type");
+
+  if (err.ec) {
+    return err;
+  }
+  if (!type.has_value()) {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             "Did not receive an analytics link type" };
+  }
+
+  if (type.value() == "couchbase") {
+    couchbase::core::operations::management::analytics_link_create_request<
+      couchbase::core::management::analytics::couchbase_remote_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to create couchbase_remote link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to create couchbase_remote link ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else if (type.value() == "azureblob") {
+    couchbase::core::operations::management::analytics_link_create_request<
+      couchbase::core::management::analytics::azure_blob_external_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to create azure_blob_external link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to create azure_blob_external link ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else if (type.value() == "s3") {
+    couchbase::core::operations::management::analytics_link_create_request<
+      couchbase::core::management::analytics::s3_external_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to create s3_external link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to create s3_external link ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unexpected analytics link type {}", type.value()) };
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_replace_link(zval* return_value,
+                                          const zval* analytics_link,
+                                          const zval* options)
+{
+  auto [err, type] = cb_get_string(analytics_link, "type");
+
+  if (err.ec) {
+    return err;
+  }
+  if (!type.has_value()) {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             "Did not receive an analytics link type" };
+  }
+
+  if (type.value() == "couchbase") {
+    couchbase::core::operations::management::analytics_link_replace_request<
+      couchbase::core::management::analytics::couchbase_remote_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to replace couchbase_remote link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to replace couchbase_remote link ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else if (type.value() == "azureblob") {
+    couchbase::core::operations::management::analytics_link_replace_request<
+      couchbase::core::management::analytics::azure_blob_external_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to replace azure_blob_external link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to replace azure_blob_external link  ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else if (type.value() == "s3") {
+    couchbase::core::operations::management::analytics_link_replace_request<
+      couchbase::core::management::analytics::s3_external_link>
+      request{};
+
+    if (auto e = cb_assign_timeout(request, options); e.ec) {
+      return e;
+    }
+
+    if (auto e = cb_fill_analytics_link(request.link, analytics_link); e.ec) {
+      return e;
+    }
+
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+    if (err.ec) {
+      if (resp.errors.empty()) {
+        return { resp.ctx.ec, ERROR_LOCATION, "unable to replace s3_external link" };
+      } else {
+        const auto& first_error = resp.errors.front();
+        return { resp.ctx.ec,
+                 ERROR_LOCATION,
+                 fmt::format("unable to replace s3_external link ({}: {})",
+                             first_error.code,
+                             first_error.message) };
+      }
+    }
+  } else {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unexpected analytics link type {}", type.value()) };
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_drop_link(zval* return_value,
+                                       const zend_string* link_name,
+                                       const zend_string* dataverse_name,
+                                       const zval* options)
+{
+  couchbase::core::operations::management::analytics_link_drop_request request{};
+
+  request.link_name = cb_string_new(link_name);
+  request.dataverse_name = cb_string_new(dataverse_name);
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to drop link" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to drop link ({}: {})", first_error.code, first_error.message) };
+    }
+  }
+
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+connection_handle::analytics_get_all_links(zval* return_value, const zval* options)
+{
+  couchbase::core::operations::management::analytics_link_get_all_request request{};
+
+  if (auto e = cb_assign_string(request.link_type, options, "linkType"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.link_name, options, "name"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_string(request.dataverse_name, options, "dataverseName"); e.ec) {
+    return e;
+  }
+
+  if (auto e = cb_assign_timeout(request, options); e.ec) {
+    return e;
+  }
+
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+
+  if (err.ec) {
+    if (resp.errors.empty()) {
+      return { resp.ctx.ec, ERROR_LOCATION, "unable to retrieve analytics links" };
+    } else {
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to retrieve analytics links ({}: {})",
+                           first_error.code,
+                           first_error.message) };
+    }
+  }
+
+  array_init(return_value);
+  for (const auto& link : resp.couchbase) {
+    zval row;
+    array_init(&row);
+    add_assoc_string(&row, "type", "couchbase");
+    add_assoc_string(&row, "name", link.link_name.c_str());
+    add_assoc_string(&row, "dataverseName", link.dataverse.c_str());
+    add_assoc_string(&row, "hostname", link.hostname.c_str());
+    if (link.username.has_value()) {
+      add_assoc_string(&row, "username", link.username.value().c_str());
+    }
+    switch (link.encryption.level) {
+      case core::management::analytics::couchbase_link_encryption_level::none:
+        add_assoc_string(&row, "encryptionLevel", "none");
+        break;
+      case core::management::analytics::couchbase_link_encryption_level::half:
+        add_assoc_string(&row, "encryptionLevel", "half");
+        break;
+      case core::management::analytics::couchbase_link_encryption_level::full:
+        add_assoc_string(&row, "encryptionLevel", "full");
+        break;
+    }
+    if (link.encryption.certificate.has_value()) {
+      add_assoc_string(&row, "certificate", link.encryption.certificate.value().c_str());
+    }
+    if (link.encryption.client_certificate.has_value()) {
+      add_assoc_string(
+        &row, "clientCertificate", link.encryption.client_certificate.value().c_str());
+    }
+    add_next_index_zval(return_value, &row);
+  }
+  for (const auto& link : resp.s3) {
+    zval row;
+    array_init(&row);
+    add_assoc_string(&row, "type", "s3");
+    add_assoc_string(&row, "name", link.link_name.c_str());
+    add_assoc_string(&row, "dataverseName", link.dataverse.c_str());
+    add_assoc_string(&row, "accessKeyId", link.access_key_id.c_str());
+    add_assoc_string(&row, "region", link.region.c_str());
+    if (link.service_endpoint.has_value()) {
+      add_assoc_string(&row, "serviceEndpoint", link.service_endpoint.value().c_str());
+    }
+    add_next_index_zval(return_value, &row);
+  }
+
+  for (const auto& link : resp.azure_blob) {
+    zval row;
+    array_init(&row);
+    add_assoc_string(&row, "type", "azureblob");
+    add_assoc_string(&row, "name", link.link_name.c_str());
+    add_assoc_string(&row, "dataverseName", link.dataverse.c_str());
+    if (link.account_name.has_value()) {
+      add_assoc_string(&row, "accountName", link.account_name.value().c_str());
+    }
+    if (link.blob_endpoint.has_value()) {
+      add_assoc_string(&row, "blobEndpoint", link.blob_endpoint.value().c_str());
+    }
+    if (link.endpoint_suffix.has_value()) {
+      add_assoc_string(&row, "endpointSuffix", link.endpoint_suffix.value().c_str());
+    }
+    add_next_index_zval(return_value, &row);
   }
 
   return {};

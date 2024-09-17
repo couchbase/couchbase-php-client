@@ -20,28 +20,36 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class AzureBlobExternalAnalyticsLink implements AnalyticsLink
+class AzureBlobExternalAnalyticsLink extends AnalyticsLink
 {
-    /**
-     * Sets name of the link
-     *
-     * @param string $name
-     *
-     * @return AzureBlobExternalAnalyticsLink
-     */
-    public function name(string $name): AzureBlobExternalAnalyticsLink
+    private string $dataverseName;
+    private string $name;
+
+    private ?string $connectionString = null;
+    private ?string $accountName = null;
+    private ?string $accountKey = null;
+    private ?string $sharedAccessSignature = null;
+    private ?string $blobEndpoint = null;
+    private ?string $endpointSuffix = null;
+
+    public function __construct(string $name, string $dataverseName)
     {
+        $this->name = $name;
+        $this->dataverseName = $dataverseName;
     }
 
     /**
-     * Sets dataverse this link belongs to
+     * Static helper to keep code more readable
      *
-     * @param string $dataverse
+     * @param string $name
+     * @param string $dataverseName
      *
      * @return AzureBlobExternalAnalyticsLink
+     * @since 4.2.4
      */
-    public function dataverse(string $dataverse): AzureBlobExternalAnalyticsLink
+    public static function build(string $name, string $dataverseName): AzureBlobExternalAnalyticsLink
     {
+        return new AzureBlobExternalAnalyticsLink($name, $dataverseName);
     }
 
     /**
@@ -53,8 +61,10 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function connectionString(string $connectionString): AzureBlobExternalAnalyticsLink
+    public function setConnectionString(string $connectionString): AzureBlobExternalAnalyticsLink
     {
+        $this->connectionString = $connectionString;
+        return $this;
     }
 
     /**
@@ -64,8 +74,10 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function accountName(string $accountName): AzureBlobExternalAnalyticsLink
+    public function setAccountName(string $accountName): AzureBlobExternalAnalyticsLink
     {
+        $this->accountName = $accountName;
+        return $this;
     }
 
     /**
@@ -75,8 +87,10 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function accountKey(string $accountKey): AzureBlobExternalAnalyticsLink
+    public function setAccountKey(string $accountKey): AzureBlobExternalAnalyticsLink
     {
+        $this->accountKey = $accountKey;
+        return $this;
     }
 
     /**
@@ -86,8 +100,10 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function sharedAccessSignature(string $signature): AzureBlobExternalAnalyticsLink
+    public function setSharedAccessSignature(string $signature): AzureBlobExternalAnalyticsLink
     {
+        $this->sharedAccessSignature = $signature;
+        return $this;
     }
 
     /**
@@ -97,8 +113,10 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function blobEndpoint(string $blobEndpoint): AzureBlobExternalAnalyticsLink
+    public function setBlobEndpoint(string $blobEndpoint): AzureBlobExternalAnalyticsLink
     {
+        $this->blobEndpoint = $blobEndpoint;
+        return $this;
     }
 
     /**
@@ -108,7 +126,71 @@ class AzureBlobExternalAnalyticsLink implements AnalyticsLink
      *
      * @return AzureBlobExternalAnalyticsLink
      */
-    public function endpointSuffix(string $suffix): AzureBlobExternalAnalyticsLink
+    public function setEndpointSuffix(string $suffix): AzureBlobExternalAnalyticsLink
     {
+        $this->endpointSuffix = $suffix;
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function dataverseName(): string
+    {
+        return $this->dataverseName;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function linkType(): string
+    {
+        return AnalyticsLinkType::AZURE_BLOB;
+    }
+
+    /**
+     * @internal
+     */
+    public function export(): array
+    {
+        $json = [
+            "type" => "azureblob",
+            "linkName" => $this->name,
+            "dataverse" => $this->dataverseName,
+        ];
+
+        if ($this->connectionString != null) {
+            $json["connectionString"] = $this->connectionString;
+        }
+
+        if ($this->accountName != null) {
+            $json["accountName"] = $this->accountName;
+        }
+
+        if ($this->accountKey != null) {
+            $json["accountKey"] = $this->accountKey;
+        }
+
+        if ($this->sharedAccessSignature != null) {
+            $json["sharedAccessSignature"] = $this->sharedAccessSignature;
+        }
+
+        if ($this->blobEndpoint != null) {
+            $json["blobEndpoint"] = $this->blobEndpoint;
+        }
+
+        if ($this->endpointSuffix != null) {
+            $json["endpointSuffix"] = $this->endpointSuffix;
+        }
+
+        return $json;
     }
 }

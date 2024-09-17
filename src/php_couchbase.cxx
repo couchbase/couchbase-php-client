@@ -3331,6 +3331,384 @@ PHP_FUNCTION(collectionQueryIndexBuildDeferred)
   }
 }
 
+PHP_FUNCTION(analyticsDataverseCreate)
+{
+  zval* connection = nullptr;
+  zend_string* dataverse_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataverse_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_create_dataverse(return_value, dataverse_name, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsDataverseDrop)
+{
+  zval* connection = nullptr;
+  zend_string* dataverse_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataverse_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_drop_dataverse(return_value, dataverse_name, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsDatasetCreate)
+{
+  zval* connection = nullptr;
+  zend_string* dataset_name = nullptr;
+  zend_string* bucket_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(3, 4)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataset_name)
+  Z_PARAM_STR(bucket_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_create_dataset(return_value, dataset_name, bucket_name, options);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsDatasetDrop)
+{
+  zval* connection = nullptr;
+  zend_string* dataset_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataset_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_drop_dataset(return_value, dataset_name, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsDatasetGetAll)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_get_all_datasets(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsIndexCreate)
+{
+  zval* connection = nullptr;
+  zend_string* dataset_name = nullptr;
+  zend_string* index_name = nullptr;
+  zval* fields = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(4, 5)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataset_name)
+  Z_PARAM_STR(index_name)
+  Z_PARAM_ARRAY(fields)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e =
+        handle->analytics_create_index(return_value, dataset_name, index_name, fields, options);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsIndexDrop)
+{
+  zval* connection = nullptr;
+  zend_string* dataset_name = nullptr;
+  zend_string* index_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(3, 4)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(dataset_name)
+  Z_PARAM_STR(index_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_drop_index(return_value, dataset_name, index_name, options);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsIndexGetAll)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_get_all_indexes(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkConnect)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_connect_link(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkDisconnect)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_disconnect_link(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsPendingMutationsGet)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_get_pending_mutations(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkCreate)
+{
+  zval* connection = nullptr;
+  zval* analytics_link = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_ARRAY(analytics_link)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_create_link(return_value, analytics_link, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkReplace)
+{
+  zval* connection = nullptr;
+  zval* analytics_link = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_ARRAY(analytics_link)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_replace_link(return_value, analytics_link, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkDrop)
+{
+  zval* connection = nullptr;
+  zend_string* link_name = nullptr;
+  zend_string* dataverse_name = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(3, 4)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(link_name)
+  Z_PARAM_STR(dataverse_name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_drop_link(return_value, link_name, dataverse_name, options);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(analyticsLinkGetAll)
+{
+  zval* connection = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = handle->analytics_get_all_links(return_value, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
   php_info_print_table_start();
@@ -4131,6 +4509,95 @@ ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsDataverseCreate, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, dataverseName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsDataverseDrop, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, dataverseName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsDatasetCreate, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, datasetName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsDatasetDrop, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, datasetName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsDatasetGetAll, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsIndexCreate, 0, 0, 4)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, datasetName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, fields, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsIndexDrop, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, datasetName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, indexName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsIndexGetAll, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkConnect, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkDisconnect, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsPendingMutationsGet, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkCreate, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, analyticsLink, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkReplace, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, analyticsLink, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkDrop, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, linkName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, dataverseName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_analyticsLinkGetAll, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", notifyFork, ai_CouchbaseExtension_notifyFork)
@@ -4244,6 +4711,22 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexDrop, ai_CouchbaseExtension_collectionQueryIndexDrop)
         ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexDropPrimary, ai_CouchbaseExtension_collectionQueryIndexDropPrimary)
         ZEND_NS_FE("Couchbase\\Extension", collectionQueryIndexBuildDeferred, ai_CouchbaseExtension_collectionQueryIndexBuildDeferred)
+
+        ZEND_NS_FE("Couchbase\\Extension", analyticsDataverseCreate, ai_CouchbaseExtension_analyticsDataverseCreate)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsDataverseDrop, ai_CouchbaseExtension_analyticsDataverseDrop)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsDatasetCreate, ai_CouchbaseExtension_analyticsDatasetCreate)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsDatasetDrop, ai_CouchbaseExtension_analyticsDatasetDrop)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsDatasetGetAll, ai_CouchbaseExtension_analyticsDatasetGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsIndexCreate, ai_CouchbaseExtension_analyticsIndexCreate)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsIndexDrop, ai_CouchbaseExtension_analyticsIndexDrop)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsIndexGetAll, ai_CouchbaseExtension_analyticsIndexGetAll)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkConnect, ai_CouchbaseExtension_analyticsLinkConnect)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkDisconnect, ai_CouchbaseExtension_analyticsLinkDisconnect)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsPendingMutationsGet, ai_CouchbaseExtension_analyticsPendingMutationsGet)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkCreate, ai_CouchbaseExtension_analyticsLinkCreate)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkReplace, ai_CouchbaseExtension_analyticsLinkReplace)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkDrop, ai_CouchbaseExtension_analyticsLinkDrop)
+        ZEND_NS_FE("Couchbase\\Extension", analyticsLinkGetAll, ai_CouchbaseExtension_analyticsLinkGetAll)
         PHP_FE_END
 };
 

@@ -22,7 +22,44 @@ namespace Couchbase\Management;
 
 class ReplaceAnalyticsLinkOptions
 {
-    public function timeout(int $arg): ReplaceAnalyticsLinkOptions
+    private ?int $timeoutMilliseconds = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return ReplaceAnalyticsLinkOptions
+     * @since 4.2.4
+     */
+    public static function build(): ReplaceAnalyticsLinkOptions
     {
+        return new ReplaceAnalyticsLinkOptions();
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return ReplaceAnalyticsLinkOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): ReplaceAnalyticsLinkOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function export(?ReplaceAnalyticsLinkOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+        ];
     }
 }

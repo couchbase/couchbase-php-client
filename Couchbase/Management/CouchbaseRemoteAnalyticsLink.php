@@ -20,39 +20,35 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
+class CouchbaseRemoteAnalyticsLink extends AnalyticsLink
 {
+    private string $dataverseName;
+    private string $name;
+    private string $hostname;
+
+    private ?CouchbaseAnalyticsEncryptionSettings $encryption = null;
+    private ?string $username = null;
+    private ?string $password = null;
+
+    public function __construct(string $name, string $dataverseName, string $hostname)
+    {
+        $this->name = $name;
+        $this->dataverseName = $dataverseName;
+        $this->hostname = $hostname;
+    }
+
     /**
-     * Sets name of the link
-     *
+     * Static helper to keep code more readable
      * @param string $name
-     *
-     * @return CouchbaseRemoteAnalyticsLink
-     */
-    public function name(string $name): CouchbaseRemoteAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets dataverse this link belongs to
-     *
-     * @param string $dataverse
-     *
-     * @return CouchbaseRemoteAnalyticsLink
-     */
-    public function dataverse(string $dataverse): CouchbaseRemoteAnalyticsLink
-    {
-    }
-
-    /**
-     * Sets the hostname of the target Couchbase cluster
-     *
+     * @param string $dataverseName
      * @param string $hostname
      *
      * @return CouchbaseRemoteAnalyticsLink
+     * @since 4.2.4
      */
-    public function hostname(string $hostname): CouchbaseRemoteAnalyticsLink
+    public static function build(string $name, string $dataverseName, string $hostname): CouchbaseRemoteAnalyticsLink
     {
+        return new CouchbaseRemoteAnalyticsLink($name, $dataverseName, $hostname);
     }
 
     /**
@@ -63,9 +59,12 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * @param string $username
      *
      * @return CouchbaseRemoteAnalyticsLink
+     * @since 4.2.4
      */
-    public function username(string $username): CouchbaseRemoteAnalyticsLink
+    public function setUsername(string $username): CouchbaseRemoteAnalyticsLink
     {
+        $this->username = $username;
+        return $this;
     }
 
     /**
@@ -76,19 +75,88 @@ class CouchbaseRemoteAnalyticsLink implements AnalyticsLink
      * @param string $password
      *
      * @return CouchbaseRemoteAnalyticsLink
+     * @since 4.2.4
      */
-    public function password(string $password): CouchbaseRemoteAnalyticsLink
+    public function setPassword(string $password): CouchbaseRemoteAnalyticsLink
     {
+        $this->password = $password;
+        return $this;
     }
 
     /**
      * Sets settings for connection encryption
      *
-     * @param EncryptionSettings $settings
+     * @param CouchbaseAnalyticsEncryptionSettings $settings
      *
      * @return CouchbaseRemoteAnalyticsLink
+     * @since 4.2.4
      */
-    public function encryption(EncryptionSettings $settings): CouchbaseRemoteAnalyticsLink
+    public function setEncryption(CouchbaseAnalyticsEncryptionSettings $settings): CouchbaseRemoteAnalyticsLink
     {
+        $this->encryption = $settings;
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function dataverseName(): string
+    {
+        return $this->dataverseName;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function linkType(): string
+    {
+        return AnalyticsLinkType::COUCHBASE;
+    }
+
+    /**
+     * @internal
+     */
+    public function export(): array
+    {
+        $json = [
+            "type" => "couchbase",
+            "linkName" => $this->name,
+            "dataverse" => $this->dataverseName,
+            "hostname" => $this->hostname,
+        ];
+
+        if ($this->username != null) {
+            $json["username"] = $this->username;
+        }
+        if ($this->password != null) {
+            $json["password"] = $this->password;
+        }
+        if ($this->encryption != null) {
+            $json["encryptionLevel"] = $this->encryption->encryptionLevel();
+
+            if ($this->encryption->certificate() != null) {
+                $json["certificate"] = $this->encryption->certificate();
+            }
+
+            if ($this->encryption->clientCertificate() != null) {
+                $json["clientCertificate"] = $this->encryption->clientCertificate();
+            }
+
+            if ($this->encryption->clientKey() != null) {
+                $json["clientKey"] = $this->encryption->clientKey();
+            }
+        } else {
+            $json["encryptionLevel"] = AnalyticsEncryptionLevel::NONE;
+        }
+
+        return $json;
     }
 }

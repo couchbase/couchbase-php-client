@@ -22,7 +22,58 @@ namespace Couchbase\Management;
 
 class DropAnalyticsDataverseOptions
 {
-    public function ignoreIfNotExists(bool $shouldIgnore): DropAnalyticsDataverseOptions
+    private ?int $timeoutMilliseconds = null;
+    private ?bool $ignoreIfDoesNotExist = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return DropAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
+    public static function build(): DropAnalyticsDataverseOptions
     {
+        return new DropAnalyticsDataverseOptions();
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return DropAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
+    public function ignoreIfDoesNotExist(bool $shouldIgnore): DropAnalyticsDataverseOptions
+    {
+        $this->ignoreIfDoesNotExist = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return DropAnalyticsDataverseOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): DropAnalyticsDataverseOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function export(?DropAnalyticsDataverseOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'ignoreIfDoesNotExist' => $options->ignoreIfDoesNotExist,
+        ];
     }
 }

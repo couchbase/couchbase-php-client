@@ -22,15 +22,90 @@ namespace Couchbase\Management;
 
 class CreateAnalyticsDatasetOptions
 {
-    public function ignoreIfExists(bool $shouldIgnore): CreateAnalyticsDatasetOptions
+    private ?int $timeoutMilliseconds = null;
+    private ?bool $ignoreIfExists = null;
+    private ?string $condition = null;
+    private ?string $dataverseName = null;
+
+    /**
+     * Static helper to keep code more readable
+     *
+     * @return CreateAnalyticsDatasetOptions
+     * @since 4.2.4
+     */
+    public static function build(): CreateAnalyticsDatasetOptions
     {
+        return new CreateAnalyticsDatasetOptions();
     }
 
+    /**
+     * Sets the where clause to use for creating the dataset
+     *
+     * @param string $condition
+     *
+     * @return CreateAnalyticsDatasetOptions
+     * @since 4.2.4
+     */
     public function condition(string $condition): CreateAnalyticsDatasetOptions
     {
+        $this->condition = $condition;
+        return $this;
     }
 
+    /**
+     * Customizes the dataverse from which this dataset should be created.
+     *
+     * @param string $dataverseName The name of the dataverse
+     *
+     * @return CreateAnalyticsDatasetOptions
+     * @since 4.2.4
+     */
     public function dataverseName(string $dataverseName): CreateAnalyticsDatasetOptions
     {
+        $this->dataverseName = $dataverseName;
+        return $this;
+    }
+
+    /**
+     * @param bool $shouldIgnore
+     *
+     * @return CreateAnalyticsDatasetOptions
+     * @since 4.2.4
+     */
+    public function ignoreIfExists(bool $shouldIgnore): CreateAnalyticsDatasetOptions
+    {
+        $this->ignoreIfExists = $shouldIgnore;
+        return $this;
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return CreateAnalyticsDatasetOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): CreateAnalyticsDatasetOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function export(?CreateAnalyticsDatasetOptions $options): array
+    {
+        if ($options == null) {
+            return [];
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'ignoreIfExists' => $options->ignoreIfExists,
+            'condition' => $options->condition,
+            'dataverseName' => $options->dataverseName,
+        ];
     }
 }

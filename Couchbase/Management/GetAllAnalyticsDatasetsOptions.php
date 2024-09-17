@@ -20,19 +20,19 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
-class DropAnalyticsLinkOptions
+class GetAllAnalyticsDatasetsOptions
 {
     private ?int $timeoutMilliseconds = null;
 
     /**
      * Static helper to keep code more readable
      *
-     * @return DropAnalyticsLinkOptions
+     * @return GetAllAnalyticsDatasetsOptions
      * @since 4.2.4
      */
-    public static function build(): DropAnalyticsLinkOptions
+    public static function build(): GetAllAnalyticsDatasetsOptions
     {
-        return new DropAnalyticsLinkOptions();
+        return new GetAllAnalyticsDatasetsOptions();
     }
 
     /**
@@ -40,10 +40,10 @@ class DropAnalyticsLinkOptions
      *
      * @param int $milliseconds the operation timeout to apply
      *
-     * @return DropAnalyticsLinkOptions
+     * @return GetAllAnalyticsDatasetsOptions
      * @since 4.2.4
      */
-    public function timeout(int $milliseconds): DropAnalyticsLinkOptions
+    public function timeout(int $milliseconds): GetAllAnalyticsDatasetsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
@@ -52,7 +52,7 @@ class DropAnalyticsLinkOptions
     /**
      * @internal
      */
-    public static function export(?DropAnalyticsLinkOptions $options): array
+    public static function export(?GetAllAnalyticsDatasetsOptions $options): array
     {
         if ($options == null) {
             return [];

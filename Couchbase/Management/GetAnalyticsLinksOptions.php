@@ -20,36 +20,113 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 class GetAnalyticsLinksOptions
 {
-    public function timeout(int $arg): DropAnalyticsLinkOptions
-    {
-    }
+    private ?int $timeoutMilliseconds = null;
+    private ?string $dataverseName = null;
+    private ?string $name = null;
+    private ?string $linkType = null;
 
     /**
-     * @param string $tupe restricts the results to the given link type.
+     * Static helper to keep code more readable
      *
-     * @see AnalyticsLinkType::COUCHBASE
-     * @see AnalyticsLinkType::S3
+     * @return GetAnalyticsLinksOptions
+     * @since 4.2.4
+     */
+    public static function build(): GetAnalyticsLinksOptions
+    {
+        return new GetAnalyticsLinksOptions();
+    }
+
+    /**
+     * Sets the operation timeout in milliseconds.
+     *
+     * @param int $milliseconds the operation timeout to apply
+     *
+     * @return GetAnalyticsLinksOptions
+     * @since 4.2.4
+     */
+    public function timeout(int $milliseconds): GetAnalyticsLinksOptions
+    {
+        $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Customizes the dataverse to restrict links to
+     *
+     * @param string $dataverseName The name of the dataverse
+     *
+     * @return GetAnalyticsLinksOptions
+     * @since 4.2.4
+     */
+    public function dataverseName(string $dataverseName): GetAnalyticsLinksOptions
+    {
+        $this->dataverseName = $dataverseName;
+        return $this;
+    }
+
+    /**
+     * The type of links to restrict returned links to.
+     *
+     * @param string $type the link type, must be value one of 'couchbase', 's3', or 'azureblob'
+     *
      * @see AnalyticsLinkType::AZURE_BLOB
+     * @see AnalyticsLinkType::S3
+     * @see AnalyticsLinkType::COUCHBASE
+     *
+     * @throws InvalidArgumentException
+     *
+     * @return GetAnalyticsLinksOptions
+     * @since 4.2.4
      */
-    public function linkType(string $type): DropAnalyticsLinkOptions
+    public function linkType(string $type): GetAnalyticsLinksOptions
     {
+        if (
+            $type != AnalyticsLinkType::COUCHBASE &&
+            $type != AnalyticsLinkType::AZURE_BLOB &&
+            $type != AnalyticsLinkType::S3
+        ) {
+            throw new InvalidArgumentException("linkType value must be one of 'couchbase', 's3', or 'azureblob'");
+        }
+        $this->linkType = $type;
+        return $this;
     }
 
     /**
-     * @param string $dataverse restricts the results to a given dataverse, can be given in the form of "namepart" or
-     *     "namepart1/namepart2".
+     * Sets the name of the link to fetch. If set, then dataverse must also be set.
+     *
+     * @param string $name The name of the link
+     *
+     * @return GetAnalyticsLinksOptions
+     * @since 4.2.4
      */
-    public function dataverse(string $dataverse): DropAnalyticsLinkOptions
+    public function name(string $name): GetAnalyticsLinksOptions
     {
+        $this->name = $name;
+        return $this;
     }
 
     /**
-     * @param string $name restricts the results to the link with the specified name. If set then dataverse must also
-     *     be set.
+     * @internal
      */
-    public function name(string $name): DropAnalyticsLinkOptions
+    public static function export(?GetAnalyticsLinksOptions $options): array
     {
+        if ($options == null) {
+            return [];
+        }
+
+        if (isset($options->name) && !isset($options->dataverseName)) {
+            throw new InvalidArgumentException("If the link name is set, the dataverseName must also be set.");
+        }
+
+        return [
+            'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'dataverseName' => $options->dataverseName,
+            'name' => $options->name,
+            'linkType' => $options->linkType
+        ];
     }
 }
