@@ -38,7 +38,7 @@ core_describe = Dir.chdir(cxx_core_source_dir) { `git describe --long --always H
 output_dir = Dir.mktmpdir("cxx_output_")
 output_tarball = File.join(output_dir, "cache.tar")
 cpm_cache_dir = Dir.mktmpdir("cxx_cache_")
-cxx_core_build_dir =  Dir.mktmpdir("cxx_build_")
+cxx_core_build_dir = Dir.mktmpdir("cxx_build_")
 cc = ENV.fetch("CB_CC", nil)
 cxx = ENV.fetch("CB_CXX", nil)
 ar = ENV.fetch("CB_AR", nil)
@@ -90,6 +90,7 @@ File.open(output_tarball, "w+b") do |file|
         "asio/*/asio/COPYING",
         "asio/*/asio/asio/include/*.hpp",
         "asio/*/asio/asio/include/asio/**/*.[hi]pp",
+        "asio/*/asio/asio/src/*.cpp",
         "boringssl/*/boringssl/**/*.{cc,h,c,asm,S}",
         "boringssl/*/boringssl/**/CMakeLists.txt",
         "boringssl/*/boringssl/LICENSE",
@@ -292,7 +293,5 @@ Dir.chdir(project_root) do
   main_header = File.read(File.join(project_root, "src/php_couchbase.hxx"))
   sdk_version = main_header[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1]
   snapshot = ENV.fetch("BUILD_NUMBER", 0).to_i
-  if snapshot > 0
-    FileUtils.mv("couchbase-#{sdk_version}.tgz", "couchbase-#{sdk_version}.#{snapshot}.tgz", verbose: true)
-  end
+  FileUtils.mv("couchbase-#{sdk_version}.tgz", "couchbase-#{sdk_version}.#{snapshot}.tgz", verbose: true) if snapshot > 0
 end

@@ -44,6 +44,7 @@
 #include <core/utils/json.hxx>
 
 #include <couchbase/cluster.hxx>
+#include <couchbase/codec/tao_json_serializer.hxx>
 #include <couchbase/collection.hxx>
 #include <couchbase/mutation_token.hxx>
 #include <couchbase/retry_reason.hxx>
@@ -6015,7 +6016,6 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
 
       options::assign_string("network", key, value, [&](auto v) {
         cluster_options.network().preferred_network(v);
-        cluster_options.behavior().network(v);
       });
 
       options::assign_string("trustCertificate", key, value, [&](auto v) {
