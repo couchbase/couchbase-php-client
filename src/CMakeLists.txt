@@ -23,12 +23,16 @@ set(COUCHBASE_CXX_CLIENT_BUILD_TESTS
 set(COUCHBASE_CXX_CLIENT_BUILD_TOOLS
     OFF
     CACHE BOOL "" FORCE)
+set(COUCHBASE_CXX_CLIENT_BUILD_STATIC
+    ON
+    CACHE BOOL "" FORCE)
 set(COUCHBASE_CXX_CLIENT_BUILD_SHARED
     OFF
     CACHE BOOL "" FORCE)
 set(COUCHBASE_CXX_CLIENT_STATIC_BORINGSSL
     ON
     CACHE BOOL "" FORCE)
+set(COUCHBASE_CXX_CLIENT_INSTALL OFF CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(deps/couchbase-cxx-client)
@@ -83,16 +87,19 @@ endif()
 if(MSVC)
   set_target_properties(couchbase PROPERTIES PREFIX "php_" IMPORT_PREFIX "php_")
 endif()
-target_include_directories(couchbase PRIVATE ${PROJECT_BINARY_DIR}/generated)
-target_include_directories(couchbase PRIVATE ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client)
-target_include_directories(couchbase PRIVATE ${PHP_INCLUDE_DIRS})
+target_include_directories(couchbase SYSTEM PRIVATE
+    ${PHP_INCLUDE_DIRS}
+    ${PROJECT_BINARY_DIR}/generated
+    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client
+    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/cxx_function
+    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/expected/include)
 target_compile_definitions(couchbase PRIVATE ZEND_COMPILE_DL_EXT=1)
-set_target_properties(couchbase_cxx_client PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+set_target_properties(couchbase_cxx_client_static PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
 target_link_libraries(
   couchbase
   PRIVATE project_options
           project_warnings
-          couchbase_cxx_client
+          couchbase_cxx_client_static
           spdlog::spdlog
           taocpp::json
           fmt::fmt
