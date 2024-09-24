@@ -147,7 +147,7 @@ create_persistent_connection(zend_string* connection_hash,
     return { nullptr, rc };
   }
   zend_register_persistent_resource_ex(
-    zend_string_dup(connection_hash, 1), handle, persistent_connection_destructor_id_);
+    zend_string_dup(connection_hash, false), handle, persistent_connection_destructor_id_);
   auto current_persistent = ++COUCHBASE_G(num_persistent);
   CB_LOG_DEBUG("persistent connection miss, created new connection: handle={}, connection_hash={}, "
                "connection_string=\"{}\", "
