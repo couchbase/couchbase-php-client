@@ -26,7 +26,7 @@
       "default_type": "_default",
       "docvalues_dynamic": true,
       "index_dynamic": true,
-      "store_dynamic": false,
+      "store_dynamic": true,
       "type_field": "type",
       "types": {
         "beer": {

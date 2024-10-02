@@ -68,6 +68,11 @@ def capture(*args)
   output
 end
 
+if ENV["CB_VALGRIND"]
+  ENV["USE_ZEND_ALLOC"] = 0
+  ENV["ZEND_DONT_UNLOAD_MODULES"] = 1
+end
+
 project_root = File.expand_path(File.join(__dir__, ".."))
 build_root = File.join(project_root, "build")
 

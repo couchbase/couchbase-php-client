@@ -25,6 +25,7 @@ use Couchbase\LookupGetFullSpec;
 use Couchbase\LookupGetSpec;
 use Couchbase\LookupInOptions;
 use Couchbase\UpsertOptions;
+use Couchbase\DurabilityLevel;
 use Couchbase\LookupInAnyReplicaOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
@@ -124,7 +125,9 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId("foo");
         $collection = $this->defaultCollection();
 
-        $res = $collection->upsert($id, ["foo" => "bar"]);
+        $options = UpsertOptions::build()
+            ->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->upsert($id, ["foo" => "bar"], $options);
         $cas = $res->cas();
 
         $res = $collection->lookupInAnyReplica(
@@ -140,7 +143,10 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         $this->assertNull($res->expiryTime());
 
         $birthday = DateTime::createFromFormat(DateTimeInterface::ISO8601, "2027-04-07T00:00:00UTC");
-        $collection->upsert($id, ["foo" => "bar"], UpsertOptions::build()->expiry($birthday));
+        $options = UpsertOptions::build()
+            ->expiry($birthday)
+            ->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $collection->upsert($id, ["foo" => "bar"], $options);
 
 
         $deadline = time() + 5; /* 5 seconds from now */
@@ -169,7 +175,9 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
 
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
-        $res = $collection->upsert($id, ["answer" => 42]);
+        $options = UpsertOptions::build()
+            ->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->upsert($id, ["answer" => 42], $options);
         $cas = $res->cas();
         $this->assertNotNull($cas);
         $results = $collection->lookupInAllReplicas(

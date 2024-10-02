@@ -4,8 +4,13 @@ namespace Helpers;
 
 use Exception;
 
-const MANAGEMENT_PORT = 8091;
-const VIEWS_PORT = 8092;
+const PORTS = [
+    'mgmt' => 8091,
+    'views' => 8092,
+    'n1ql' => 8093,
+    'fts' => 8094,
+];
+
 class ConsistencyUtils
 {
     private string $hostname;
@@ -33,13 +38,13 @@ class ConsistencyUtils
      */
     public function waitUntilUserPresent(string $userName, string $domain = 'local'): void
     {
-        printf("waiting until user %s present on all nodes\n", $userName);
+        fprintf(STDERR, "waiting until user %s present on all nodes\n", $userName);
         $this->waitUntilAllNodesMatchPredicate(
             "/settings/rbac/users/$domain/$userName",
             [$this, 'resourceIsPresent'],
             "User $userName is not present on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
@@ -48,13 +53,13 @@ class ConsistencyUtils
      */
     public function waitUntilUserDropped(string $userName, string $domain = 'local'): void
     {
-        printf("waiting until user %s dropped on all nodes\n", $userName);
+        fprintf(STDERR, "waiting until user %s dropped on all nodes\n", $userName);
         $this->waitUntilAllNodesMatchPredicate(
             "/settings/rbac/users/$domain/$userName",
             [$this, 'resourceIsDropped'],
             "User $userName is not dropped on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
@@ -63,103 +68,103 @@ class ConsistencyUtils
      */
     public function waitUntilGroupPresent(string $groupName): void
     {
-        printf("waiting until group %s present on all nodes\n", $groupName);
+        fprintf(STDERR, "waiting until group %s present on all nodes\n", $groupName);
         $this->waitUntilAllNodesMatchPredicate(
             "/settings/rbac/groups/$groupName",
             [$this, 'resourceIsPresent'],
             "Group $groupName is not present on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilGroupDropped(string $groupName): void
     {
-        printf("waiting until group %s dropped on all nodes\n", $groupName);
+        fprintf(STDERR, "waiting until group %s dropped on all nodes\n", $groupName);
         $this->waitUntilAllNodesMatchPredicate(
             "/settings/rbac/groups/$groupName",
             [$this, 'resourceIsDropped'],
             "Group $groupName is not dropped on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilBucketPresent(string $bucketName): void
     {
-        printf("waiting until bucket %s present on all nodes\n", $bucketName);
+        fprintf(STDERR, "waiting until bucket %s present on all nodes\n", $bucketName);
         $this->waitUntilAllNodesMatchPredicate(
             "/pools/default/buckets/$bucketName",
             [$this, 'resourceIsPresent'],
             "Bucket $bucketName is not present on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilBucketDropped(string $bucketName): void
     {
-        printf("waiting until bucket %s dropped on all nodes\n", $bucketName);
+        fprintf(STDERR, "waiting until bucket %s dropped on all nodes\n", $bucketName);
         $this->waitUntilAllNodesMatchPredicate(
             "/pools/default/buckets/$bucketName",
             [$this, 'resourceIsDropped'],
             "Bucket $bucketName is not dropped on all nodes",
             true,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilDesignDocumentPresent(string $bucketName, string $designDocumentName): void
     {
-        printf("waiting until design document %s present on all nodes\n", $designDocumentName);
+        fprintf(STDERR, "waiting until design document %s present on all nodes\n", $designDocumentName);
         $this->waitUntilAllNodesMatchPredicate(
             "/{$bucketName}/_design/$designDocumentName",
             [$this, 'resourceIsPresent'],
             "Design document $designDocumentName on bucket $bucketName is not present on all nodes",
             true,
-            VIEWS_PORT
+            'views'
         );
     }
 
     public function waitUntilDesignDocumentDropped(string $bucketName, string $designDocumentName): void
     {
-        printf("waiting until design document %s dropped on all nodes\n", $designDocumentName);
+        fprintf(STDERR, "waiting until design document %s dropped on all nodes\n", $designDocumentName);
         $this->waitUntilAllNodesMatchPredicate(
             "/$bucketName/_design/$designDocumentName",
             [$this, 'resourceIsDropped'],
             "Design document $designDocumentName on bucket $bucketName is not dropped on all nodes",
             true,
-            VIEWS_PORT
+            'views'
         );
     }
 
     public function waitUntilViewPresent(string $bucketName, string $designDocumentName, string $viewName): void
     {
-        printf("waiting until view %s present on all nodes\n", $viewName);
+        fprintf(STDERR, "waiting until view %s present on all nodes\n", $viewName);
         $this->waitUntilAllNodesMatchPredicate(
             "/$bucketName/_design/$designDocumentName/_view/$viewName",
             [$this, 'resourceIsPresent'],
             "View $viewName on design document $designDocumentName on bucket $bucketName is not present on all nodes",
             true,
-            VIEWS_PORT
+            'views'
         );
     }
 
     public function waitUntilViewDropped(string $bucketName, string $designDocumentName, string $viewName): void
     {
-        printf("waiting until view %s dropped on all nodes\n", $viewName);
+        fprintf(STDERR, "waiting until view %s dropped on all nodes\n", $viewName);
         $this->waitUntilAllNodesMatchPredicate(
             "/$bucketName/_design/$designDocumentName/_view/$viewName",
             [$this, 'resourceIsDropped'],
             "View $viewName on design document $designDocumentName on bucket $bucketName is not dropped on all nodes",
             true,
-            VIEWS_PORT
+            'views'
         );
     }
 
     public function waitUntilScopePresent(string $bucketName, string $scopeName): void
     {
-        printf("waiting until scope %s present on all nodes\n", $scopeName);
+        fprintf(STDERR, "waiting until scope %s present on all nodes\n", $scopeName);
         $scopePresent = function ($response) use ($scopeName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
@@ -174,13 +179,13 @@ class ConsistencyUtils
             $scopePresent,
             "Scope $scopeName on bucket $bucketName is not present on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilScopeDropped(string $bucketName, string $scopeName): void
     {
-        printf("waiting until scope %s dropped on all nodes\n", $scopeName);
+        fprintf(STDERR, "waiting until scope %s dropped on all nodes\n", $scopeName);
         $scopeDropped = function ($response) use ($scopeName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
@@ -195,13 +200,13 @@ class ConsistencyUtils
             $scopeDropped,
             "Scope $scopeName on bucket $bucketName is not dropped on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilCollectionPresent(string $bucketName, string $scopeName, string $collectionName): void
     {
-        printf("waiting until collection %s present on all nodes\n", $collectionName);
+        fprintf(STDERR, "waiting until collection %s present on all nodes\n", $collectionName);
         $collectionPresent = function ($response) use ($scopeName, $collectionName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
@@ -220,13 +225,13 @@ class ConsistencyUtils
             $collectionPresent,
             "Collection $collectionName on scope $scopeName on bucket $bucketName is not present on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilCollectionDropped(string $bucketName, string $scopeName, string $collectionName): void
     {
-        printf("waiting until collection %s dropped on all nodes\n", $collectionName);
+        fprintf(STDERR, "waiting until collection %s dropped on all nodes\n", $collectionName);
         $collectionDropped = function ($response) use ($scopeName, $collectionName) {
             foreach ($response->scopes as $scope) {
                 if ($scope->name == $scopeName) {
@@ -245,54 +250,55 @@ class ConsistencyUtils
             $collectionDropped,
             "Collection $collectionName on scope $scopeName on bucket $bucketName is not dropped on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilBucketUpdated(string $bucketName, callable $predicate, string $errorMsg = null): void
     {
-        printf("waiting until bucket %s has been updated\n", $bucketName);
+        fprintf(STDERR, "waiting until bucket %s has been updated\n", $bucketName);
 
         $this->waitUntilAllNodesMatchPredicate(
             "/pools/default/buckets/$bucketName",
             $predicate,
             $errorMsg ?? "Bucket $bucketName has not been updated on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     public function waitUntilCollectionUpdated(string $bucketName, string $scopeName, string $collectionName, callable $predicate, string $errorMsg = null): void
     {
-        printf("waiting until collection %s on scope %s on bucket %s has updated\n", $collectionName, $scopeName, $bucketName);
+        fprintf(STDERR, "waiting until collection %s on scope %s on bucket %s has updated\n", $collectionName, $scopeName, $bucketName);
 
         $this->waitUntilAllNodesMatchPredicate(
             "/pools/default/buckets/$bucketName/scopes",
             $predicate,
             $errorMsg ?? "Collection $collectionName has not been updated on all nodes",
             false,
-            MANAGEMENT_PORT
+            'mgmt'
         );
     }
 
     /**
      * @throws Exception
      */
-    public function waitUntilAllNodesMatchPredicate(string $path, callable $predicate, string $errorMsg, bool $onlyStatusCode, int $port): void
+    public function waitUntilAllNodesMatchPredicate(string $path, callable $predicate, string $errorMsg, bool $onlyStatusCode, string $service, array $request = []): void
     {
         try {
-            $deadline = $this->currentTimeMillis() + 2000;
+            $deadline = $this->currentTimeMillis() + 200_000;
             while ($this->currentTimeMillis() < $deadline) {
                 $predicateMatched = $this->allNodesMatchPredicate(
                     $path,
                     $predicate,
                     $onlyStatusCode,
-                    $port
+                    $service,
+                    $request
                 );
                 if ($predicateMatched) {
                     return;
                 }
-                usleep(10_000);
+                usleep(100_000);
             }
             throw new Exception("Timed out waiting for nodes to match predicate");
         } catch (Exception $e) {
@@ -321,7 +327,7 @@ class ConsistencyUtils
                 }
                 usleep(10_000);
             } catch (Exception $e) {
-                printf("Ignoring error waiting for config: %s", $e->getMessage());
+                fprintf(STDERR, "Ignoring error waiting for config: %s", $e->getMessage());
             }
             if (($this->currentTimeMillis() - $start) > 2000) {
                 throw new Exception("Timeout waiting for config");
@@ -332,11 +338,70 @@ class ConsistencyUtils
     /**
      * @throws Exception
      */
-    private function allNodesMatchPredicate(string $path, callable $predicate, bool $onlyStatusCode, int $port): bool
+    public function waitUntilQueryIndexReady(string $bucketName, string $indexName, bool $isPrimary): void
     {
-        foreach ($this->nodes as $key => $value) {
-            $url = "http://" . $key . ":" . $port . $path;
-            $response = $this->runHttpRequest($url, $onlyStatusCode);
+        fprintf(
+            STDERR,
+            "waiting until query index \"%s\" (is_primary=%s) of bucket \"%s\" present on all nodes\n",
+            $indexName,
+            $isPrimary ? "true" : "false",
+            $bucketName
+        );
+        $indexPresent = function ($response) use ($bucketName, $indexName, $isPrimary) {
+            foreach ($response->results as $result) {
+                $index = $result->indexes;
+
+                if (
+                    $index->state == "online" &&
+                    $index->keyspace_id == $bucketName &&
+                    $index->name == $indexName &&
+                    (isset($index->is_primary) && $index->is_primary) == $isPrimary
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+
+        $this->waitUntilAllNodesMatchPredicate(
+            "/query/service",
+            $indexPresent,
+            sprintf("index %s (primary=%s) is not present on all nodes\n", $indexName, $isPrimary ? "true" : "false"),
+            false,
+            "n1ql",
+            [
+                'method' => 'POST',
+                'header'  => ['Content-type: application/json'],
+                'content' => json_encode(
+                    [
+                    'statement' => 'SELECT * FROM system:indexes'
+                    ]
+                )
+            ]
+        );
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function allNodesMatchPredicate(string $path, callable $predicate, bool $onlyStatusCode, string $service, array $request): bool
+    {
+        foreach ($this->nodes as $hostname => $services) {
+            if ($service != "mgmt" && $service != "views") {
+                $found = false;
+                foreach ($services as $name) {
+                    if ($service == $name) {
+                        $found = true;
+                        break;
+                    }
+                }
+                if (!$found) {
+                    continue;
+                }
+            }
+            $url = "http://" . $hostname . ":" . PORTS[$service] . $path;
+            $response = $this->runHttpRequest($url, $request, $onlyStatusCode);
             $predicateMatched = $predicate($response);
             if (!$predicateMatched) {
                 return false;
@@ -348,13 +413,18 @@ class ConsistencyUtils
     /**
      * @throws Exception
      */
-    private function runHttpRequest(string $url, bool $onlyStatusCode)
+    private function runHttpRequest(string $url, array $request, bool $onlyStatusCode)
     {
+        $headers = $request['header'] ?? [];
+        unset($request['header']);
         $opts = array('http' =>
-            array(
+            array_merge(
+                [
                 'method' => 'GET',
-                'header' => $this->basicAuthString,
+                'header' => array_merge([$this->basicAuthString], $headers),
                 'ignore_errors' => true,
+                ],
+                $request
             )
         );
         $context = stream_context_create($opts);
@@ -363,7 +433,7 @@ class ConsistencyUtils
         if ($onlyStatusCode) {
             return $statusCode;
         } elseif ($statusCode != 200) {
-            throw new Exception("Non 200 status code from response");
+            throw new Exception(sprintf("Non 200 status code from response (%d).\n%s", $statusCode, $response));
         }
         return json_decode($response);
     }
