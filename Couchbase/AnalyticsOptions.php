@@ -204,7 +204,7 @@ class AnalyticsOptions
         return $options->transcoder;
     }
 
-    public static function export(?AnalyticsOptions $options, string $scopeName = null, string $bucketName = null): array
+    public static function export(?AnalyticsOptions $options, ?string $scopeName = null, ?string $bucketName = null): array
     {
         if ($options == null) {
             return [

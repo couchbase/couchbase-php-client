@@ -89,7 +89,7 @@ class Scope implements ScopeInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function query(string $statement, QueryOptions $options = null): QueryResult
+    public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
         $result = Extension\query($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
 
@@ -107,7 +107,7 @@ class Scope implements ScopeInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
         $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
 
@@ -127,7 +127,7 @@ class Scope implements ScopeInterface
      * @throws InvalidArgumentException
      * @since 4.1.7
      */
-    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
+    public function search(string $indexName, SearchRequest $request, ?SearchOptions $options = null): SearchResult
     {
         $exportedRequest = SearchRequest::export($request);
         $exportedOptions = SearchOptions::export($options);

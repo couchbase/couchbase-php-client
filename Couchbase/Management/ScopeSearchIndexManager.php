@@ -44,7 +44,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
+    public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
         $result = Extension\scopeSearchIndexGet($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options));
 
@@ -59,7 +59,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
+    public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
         $result = Extension\scopeSearchIndexGetAll($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options));
         $indexes = [];
@@ -77,7 +77,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
+    public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexUpsert($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
     }
@@ -90,7 +90,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function dropIndex(string $name, DropSearchIndexOptions $options = null)
+    public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexDrop($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options));
     }
@@ -104,7 +104,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @return int
      * @since 4.1.7
      */
-    public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
+    public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
         $result = Extension\scopeSearchIndexGetDocumentsCount($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options));
         return $result['count'];
@@ -118,7 +118,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
+    public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexIngestPause($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options));
     }
@@ -131,7 +131,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
+    public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexIngestResume($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options));
     }
@@ -144,7 +144,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
+    public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexQueryingAllow($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options));
     }
@@ -157,7 +157,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
+    public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexQueryingDisallow($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options));
     }
@@ -170,7 +170,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
+    public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexPlanFreeze($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options));
     }
@@ -183,7 +183,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      *
      * @since 4.1.7
      */
-    public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
+    public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
         Extension\scopeSearchIndexPlanUnfreeze($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options));
     }
@@ -198,7 +198,7 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      * @return array
      * @since 4.1.7
      */
-    public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
+    public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
         $result = Extension\scopeSearchIndexDocumentAnalyze($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
         return json_decode($result["analysis"], true);

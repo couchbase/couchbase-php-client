@@ -44,7 +44,7 @@ class CollectionManager implements CollectionManagerInterface
      * @see ScopeSpec
      * @return array array of scopes within the bucket
      */
-    public function getAllScopes(GetAllScopesOptions $options = null): array
+    public function getAllScopes(?GetAllScopesOptions $options = null): array
     {
         $result = Extension\scopeGetAll($this->core, $this->bucketName, GetAllScopesOptions::export($options));
         $scopes = [];
@@ -61,7 +61,7 @@ class CollectionManager implements CollectionManagerInterface
      * @param CreateScopeOptions|null $options the options to use when creating a scope
      * @since 4.1.3
      */
-    public function createScope(string $name, CreateScopeOptions $options = null)
+    public function createScope(string $name, ?CreateScopeOptions $options = null)
     {
         Extension\scopeCreate($this->core, $this->bucketName, $name, CreateScopeOptions::export($options));
     }
@@ -73,7 +73,7 @@ class CollectionManager implements CollectionManagerInterface
      * @param DropScopeOptions|null $options the options to use when dropping a scope
      * @since 4.1.3
      */
-    public function dropScope(string $name, DropScopeOptions $options = null)
+    public function dropScope(string $name, ?DropScopeOptions $options = null)
     {
         Extension\scopeDrop($this->core, $this->bucketName, $name, DropScopeOptions::export($options));
     }
@@ -142,7 +142,7 @@ class CollectionManager implements CollectionManagerInterface
      * @param UpdateCollectionOptions|null $options The options to use when updating the collection
      * @since 4.1.6
      */
-    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, UpdateCollectionOptions $options = null)
+    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, ?UpdateCollectionOptions $options = null)
     {
         Extension\collectionUpdate($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateBucketOptions::export($options));
     }

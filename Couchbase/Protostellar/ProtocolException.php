@@ -45,7 +45,7 @@ class ProtocolException extends Exception
 {
     private ?object $grpcStatus = null;
 
-    public function __construct($message, $grpcStatus = null, Throwable $previous = null)
+    public function __construct($message, $grpcStatus = null, ?Throwable $previous = null)
     {
         $code = 0;
         if ($grpcStatus) {

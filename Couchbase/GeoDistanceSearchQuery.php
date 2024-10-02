@@ -42,7 +42,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      *
      * @since 4.0.0
      */
-    public function __construct(float $longitude, float $latitude, string $distance = null)
+    public function __construct(float $longitude, float $latitude, ?string $distance = null)
     {
         $this->longitude = $longitude;
         $this->latitude = $latitude;
@@ -59,7 +59,7 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      * @return GeoDistanceSearchQuery
      * @since 4.1.7
      */
-    public static function build(float $longitude, float $latitude, string $distance = null): GeoDistanceSearchQuery
+    public static function build(float $longitude, float $latitude, ?string $distance = null): GeoDistanceSearchQuery
     {
         return new GeoDistanceSearchQuery($longitude, $latitude, $distance);
     }

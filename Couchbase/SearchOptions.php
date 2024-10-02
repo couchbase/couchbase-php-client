@@ -220,7 +220,7 @@ class SearchOptions implements JsonSerializable
      * @see \SearchHighlightMode::ANSI
      * @see \SearchHighlightMode::SIMPLE
      */
-    public function highlight(string $style = null, array $fields = null): SearchOptions
+    public function highlight(?string $style = null, ?array $fields = null): SearchOptions
     {
         $this->highlight['style'] = $style;
         $this->highlight['fields'] = $fields;

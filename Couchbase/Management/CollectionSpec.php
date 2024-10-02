@@ -33,7 +33,7 @@ class CollectionSpec
      * @param int|null $maxExpiry
      * @since 4.1.3
      */
-    public function __construct(string $name, string $scopeName, int $maxExpiry = null, bool $history = null)
+    public function __construct(string $name, string $scopeName, ?int $maxExpiry = null, ?bool $history = null)
     {
         $this->name = $name;
         $this->scopeName = $scopeName;
@@ -50,7 +50,7 @@ class CollectionSpec
      * @return CollectionSpec
      * @since 4.1.3
      */
-    public static function build(string $name, string $scopeName, int $maxExpiry = null, bool $history = null): CollectionSpec
+    public static function build(string $name, string $scopeName, ?int $maxExpiry = null, ?bool $history = null): CollectionSpec
     {
         return new CollectionSpec($name, $scopeName, $maxExpiry, $history);
     }

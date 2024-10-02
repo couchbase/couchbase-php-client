@@ -37,7 +37,7 @@ use Couchbase\Protostellar\Generated\Admin\Search\V1\UpdateIndexRequest;
 
 class SearchIndexManagementRequestConverter
 {
-    public static function getGetIndexRequest(string $indexName, string $bucketName = null, string $scopeName = null): GetIndexRequest
+    public static function getGetIndexRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): GetIndexRequest
     {
         $request = [
             'name' => $indexName
@@ -51,7 +51,7 @@ class SearchIndexManagementRequestConverter
         return new GetIndexRequest($request);
     }
 
-    public static function getGetAllIndexesRequest(string $bucketName = null, string $scopeName = null): ListIndexesRequest
+    public static function getGetAllIndexesRequest(?string $bucketName = null, ?string $scopeName = null): ListIndexesRequest
     {
         $request = [];
         if (!is_null($bucketName)) {
@@ -63,7 +63,7 @@ class SearchIndexManagementRequestConverter
         return new ListIndexesRequest($request);
     }
 
-    public static function getCreateIndexRequest(array $index, string $bucketName = null, string $scopeName = null): CreateIndexRequest
+    public static function getCreateIndexRequest(array $index, ?string $bucketName = null, ?string $scopeName = null): CreateIndexRequest
     {
         $request = [
             "name" => $index["name"],
@@ -92,7 +92,7 @@ class SearchIndexManagementRequestConverter
         return new CreateIndexRequest($request);
     }
 
-    public static function getUpdateIndexRequest(array $index, string $bucketName = null, string $scopeName = null): UpdateIndexRequest
+    public static function getUpdateIndexRequest(array $index, ?string $bucketName = null, ?string $scopeName = null): UpdateIndexRequest
     {
         $request = [
             "index" => self::getIndex($index)
@@ -106,7 +106,7 @@ class SearchIndexManagementRequestConverter
         return new UpdateIndexRequest($request);
     }
 
-    public static function getDropIndexRequest(string $indexName, string $bucketName = null, string $scopeName = null): DeleteIndexRequest
+    public static function getDropIndexRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): DeleteIndexRequest
     {
         $request = [
             "name" => $indexName
@@ -120,7 +120,7 @@ class SearchIndexManagementRequestConverter
         return new DeleteIndexRequest($request);
     }
 
-    public static function getGetIndexedDocumentCountRequest(string $indexName, string $bucketName = null, string $scopeName = null): GetIndexedDocumentsCountRequest
+    public static function getGetIndexedDocumentCountRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): GetIndexedDocumentsCountRequest
     {
         $request = [
             "name" => $indexName
@@ -134,7 +134,7 @@ class SearchIndexManagementRequestConverter
         return new GetIndexedDocumentsCountRequest($request);
     }
 
-    public static function getPauseIngestRequest(string $indexName, string $bucketName = null, string $scopeName = null): PauseIndexIngestRequest
+    public static function getPauseIngestRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): PauseIndexIngestRequest
     {
         $request = [
             "name" => $indexName
@@ -148,7 +148,7 @@ class SearchIndexManagementRequestConverter
         return new PauseIndexIngestRequest($request);
     }
 
-    public static function getResumeIngestRequest(string $indexName, string $bucketName = null, string $scopeName = null): ResumeIndexIngestRequest
+    public static function getResumeIngestRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): ResumeIndexIngestRequest
     {
         $request = [
             "name" => $indexName
@@ -162,7 +162,7 @@ class SearchIndexManagementRequestConverter
         return new ResumeIndexIngestRequest($request);
     }
 
-    public static function getAllowQueryingRequest(string $indexName, string $bucketName = null, string $scopeName = null): AllowIndexQueryingRequest
+    public static function getAllowQueryingRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): AllowIndexQueryingRequest
     {
         $request = [
             "name" => $indexName
@@ -176,7 +176,7 @@ class SearchIndexManagementRequestConverter
         return new AllowIndexQueryingRequest($request);
     }
 
-    public static function getDisallowQueryingRequest(string $indexName, string $bucketName = null, string $scopeName = null): DisallowIndexQueryingRequest
+    public static function getDisallowQueryingRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): DisallowIndexQueryingRequest
     {
         $request = [
             "name" => $indexName
@@ -190,7 +190,7 @@ class SearchIndexManagementRequestConverter
         return new DisallowIndexQueryingRequest($request);
     }
 
-    public static function getFreezePlanRequest(string $indexName, string $bucketName = null, string $scopeName = null): FreezeIndexPlanRequest
+    public static function getFreezePlanRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): FreezeIndexPlanRequest
     {
         $request = [
             "name" => $indexName
@@ -204,7 +204,7 @@ class SearchIndexManagementRequestConverter
         return new FreezeIndexPlanRequest($request);
     }
 
-    public static function getUnfreezePlanRequest(string $indexName, string $bucketName = null, string $scopeName = null): UnfreezeIndexPlanRequest
+    public static function getUnfreezePlanRequest(string $indexName, ?string $bucketName = null, ?string $scopeName = null): UnfreezeIndexPlanRequest
     {
         $request = [
             "name" => $indexName
@@ -218,7 +218,7 @@ class SearchIndexManagementRequestConverter
         return new UnfreezeIndexPlanRequest($request);
     }
 
-    public static function getAnalyzeDocumentRequest(string $indexName, $document, string $bucketName = null, string $scopeName = null): AnalyzeDocumentRequest
+    public static function getAnalyzeDocumentRequest(string $indexName, $document, ?string $bucketName = null, ?string $scopeName = null): AnalyzeDocumentRequest
     {
         $request = [
             "name" => $indexName,

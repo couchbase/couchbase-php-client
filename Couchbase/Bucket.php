@@ -123,7 +123,7 @@ class Bucket implements BucketInterface
      * @return ViewResult
      * @since 4.0.0
      */
-    public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult
+    public function viewQuery(string $designDoc, string $viewName, ?ViewOptions $options = null): ViewResult
     {
         $opts = ViewOptions::export($options);
         $namespace = $opts["namespace"];
@@ -195,7 +195,7 @@ class Bucket implements BucketInterface
      * @deprecated - see cluster->diagnostics
      * @since 4.0.0
      */
-    public function diagnostics(string $reportId = null)
+    public function diagnostics(?string $reportId = null)
     {
         if ($reportId == null) {
             $reportId = uniqid();

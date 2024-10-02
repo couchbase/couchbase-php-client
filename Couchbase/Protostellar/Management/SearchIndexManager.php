@@ -53,7 +53,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
+    public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
         $exportedOptions = GetSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -71,7 +71,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
+    public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
         $exportedOptions = GetAllSearchIndexesOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -86,7 +86,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         return SearchIndexManagementResponseConverter::convertGetAllIndexesResult($response);
     }
 
-    public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
+    public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
         $exportedOptions = UpsertSearchIndexOptions::export($options);
         $exportedIndex = SearchIndex::export($indexDefinition);
@@ -113,7 +113,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         }
     }
 
-    public function dropIndex(string $name, DropSearchIndexOptions $options = null)
+    public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
         $exportedOptions = DropSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -127,7 +127,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
+    public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
         $exportedOptions = GetIndexedSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -141,7 +141,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
+    public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
         $exportedOptions = PauseIngestSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -155,7 +155,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
+    public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
         $exportedOptions = ResumeIngestSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -169,7 +169,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
+    public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
         $exportedOptions = AllowQueryingSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -183,7 +183,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
+    public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
         $exportedOptions = DisallowQueryingSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -197,7 +197,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
+    public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
         $exportedOptions = FreezePlanSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -211,7 +211,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
+    public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
         $exportedOptions = UnfreezePlanSearchIndexOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -225,7 +225,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
         );
     }
 
-    public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
+    public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
         $exportedOptions = AnalyzeDocumentOptions::export($options);
         $request = RequestFactory::makeRequest(

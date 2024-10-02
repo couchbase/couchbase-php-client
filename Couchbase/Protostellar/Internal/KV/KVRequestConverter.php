@@ -1,5 +1,23 @@
 <?php
 
+/**
+ * Copyright 2014-Present Couchbase, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+declare(strict_types=1);
+
 namespace Couchbase\Protostellar\Internal\KV;
 
 use Couchbase\Exception\InvalidArgumentException;
@@ -51,7 +69,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getUpsertRequest(string $key, $document, array $location, UpsertOptions $options = null): UpsertRequest
+    public static function getUpsertRequest(string $key, $document, array $location, ?UpsertOptions $options = null): UpsertRequest
     {
         [$encodedDocument, $contentType] = UpsertOptions::encodeDocument($options, $document);
         $exportedOptions = UpsertOptions::export($options);
@@ -79,7 +97,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getInsertRequest(string $key, $document, array $location, InsertOptions $options = null): InsertRequest
+    public static function getInsertRequest(string $key, $document, array $location, ?InsertOptions $options = null): InsertRequest
     {
         [$encodedDocument, $contentType] = InsertOptions::encodeDocument($options, $document);
         $exportedOptions = InsertOptions::export($options);
@@ -104,7 +122,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getReplaceRequest(string $key, $document, array $location, ReplaceOptions $options = null): ReplaceRequest
+    public static function getReplaceRequest(string $key, $document, array $location, ?ReplaceOptions $options = null): ReplaceRequest
     {
         [$encodedDocument, $contentType] = ReplaceOptions::encodeDocument($options, $document);
         $exportedOptions = ReplaceOptions::export($options);
@@ -220,7 +238,7 @@ class KVRequestConverter
         return new TouchRequest($request);
     }
 
-    public static function getLookupInRequest(string $key, array $specs, array $location, LookupInOptions $options = null): array
+    public static function getLookupInRequest(string $key, array $specs, array $location, ?LookupInOptions $options = null): array
     {
         $exportedOptions = LookupInOptions::export($options);
         $encoded = array_map(
@@ -247,7 +265,7 @@ class KVRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getMutateInRequest(string $key, array $specs, array $location, MutateInOptions $options = null): array
+    public static function getMutateInRequest(string $key, array $specs, array $location, ?MutateInOptions $options = null): array
     {
         $exportedOptions = MutateInOptions::export($options);
         $encoded = array_map(

@@ -28,33 +28,33 @@ interface CollectionInterface
 
     public function name(): string;
 
-    public function get(string $id, GetOptions $options = null): GetResult;
+    public function get(string $id, ?GetOptions $options = null): GetResult;
 
-    public function exists(string $id, ExistsOptions $options = null): ExistsResult;
+    public function exists(string $id, ?ExistsOptions $options = null): ExistsResult;
 
-    public function getAndLock(string $id, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult;
+    public function getAndLock(string $id, int $lockTimeSeconds, ?GetAndLockOptions $options = null): GetResult;
 
-    public function getAndTouch(string $id, $expiry, GetAndTouchOptions $options = null): GetResult;
+    public function getAndTouch(string $id, $expiry, ?GetAndTouchOptions $options = null): GetResult;
 
-    public function getAnyReplica(string $id, GetAnyReplicaOptions $options = null): GetReplicaResult;
+    public function getAnyReplica(string $id, ?GetAnyReplicaOptions $options = null): GetReplicaResult;
 
-    public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array;
+    public function getAllReplicas(string $id, ?GetAllReplicasOptions $options = null): array;
 
-    public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult;
+    public function upsert(string $id, $value, ?UpsertOptions $options = null): MutationResult;
 
-    public function insert(string $id, $value, InsertOptions $options = null): MutationResult;
+    public function insert(string $id, $value, ?InsertOptions $options = null): MutationResult;
 
-    public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult;
+    public function replace(string $id, $value, ?ReplaceOptions $options = null): MutationResult;
 
-    public function remove(string $id, RemoveOptions $options = null): MutationResult;
+    public function remove(string $id, ?RemoveOptions $options = null): MutationResult;
 
-    public function unlock(string $id, string $cas, UnlockOptions $options = null): Result;
+    public function unlock(string $id, string $cas, ?UnlockOptions $options = null): Result;
 
-    public function touch(string $id, $expiry, TouchOptions $options = null): MutationResult;
+    public function touch(string $id, $expiry, ?TouchOptions $options = null): MutationResult;
 
-    public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult;
+    public function lookupIn(string $id, array $specs, ?LookupInOptions $options = null): LookupInResult;
 
-    public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult;
+    public function mutateIn(string $id, array $specs, ?MutateInOptions $options = null): MutateInResult;
 
     public function binary(): BinaryCollectionInterface;
 }

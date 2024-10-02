@@ -113,7 +113,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function get(string $id, GetOptions $options = null): GetResult
+    public function get(string $id, ?GetOptions $options = null): GetResult
     {
         $response = Extension\documentGet(
             $this->core,
@@ -137,7 +137,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function exists(string $id, ExistsOptions $options = null): ExistsResult
+    public function exists(string $id, ?ExistsOptions $options = null): ExistsResult
     {
         $response = Extension\documentExists(
             $this->core,
@@ -164,7 +164,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function getAndLock(string $id, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
+    public function getAndLock(string $id, int $lockTimeSeconds, ?GetAndLockOptions $options = null): GetResult
     {
         $response = Extension\documentGetAndLock(
             $this->core,
@@ -191,7 +191,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function getAndTouch(string $id, $expiry, GetAndTouchOptions $options = null): GetResult
+    public function getAndTouch(string $id, $expiry, ?GetAndTouchOptions $options = null): GetResult
     {
         if ($expiry instanceof DateTimeInterface) {
             $expirySeconds = $expiry->getTimestamp();
@@ -223,7 +223,7 @@ class Collection implements CollectionInterface
      * @throws TimeoutException
      * @since 4.0.1
      */
-    public function getAnyReplica(string $id, GetAnyReplicaOptions $options = null): GetReplicaResult
+    public function getAnyReplica(string $id, ?GetAnyReplicaOptions $options = null): GetReplicaResult
     {
         $response = Extension\documentGetAnyReplica(
             $this->core,
@@ -248,7 +248,7 @@ class Collection implements CollectionInterface
      * @throws TimeoutException
      * @since 4.0.0
      */
-    public function getAllReplicas(string $id, GetAllReplicasOptions $options = null): array
+    public function getAllReplicas(string $id, ?GetAllReplicasOptions $options = null): array
     {
         $responses = Extension\documentGetAllReplicas(
             $this->core,
@@ -278,7 +278,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function upsert(string $id, $value, UpsertOptions $options = null): MutationResult
+    public function upsert(string $id, $value, ?UpsertOptions $options = null): MutationResult
     {
         $encoded = UpsertOptions::encodeDocument($options, $value);
         $response = Extension\documentUpsert(
@@ -307,7 +307,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function insert(string $id, $value, InsertOptions $options = null): MutationResult
+    public function insert(string $id, $value, ?InsertOptions $options = null): MutationResult
     {
         $encoded = InsertOptions::encodeDocument($options, $value);
         $response = Extension\documentInsert(
@@ -337,7 +337,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function replace(string $id, $value, ReplaceOptions $options = null): MutationResult
+    public function replace(string $id, $value, ?ReplaceOptions $options = null): MutationResult
     {
         $encoded = ReplaceOptions::encodeDocument($options, $value);
         $response = Extension\documentReplace(
@@ -366,7 +366,7 @@ class Collection implements CollectionInterface
      * @throws DocumentNotFoundException
      * @since 4.0.0
      */
-    public function remove(string $id, RemoveOptions $options = null): MutationResult
+    public function remove(string $id, ?RemoveOptions $options = null): MutationResult
     {
         $response = Extension\documentRemove(
             $this->core,
@@ -394,7 +394,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function unlock(string $id, string $cas, UnlockOptions $options = null): Result
+    public function unlock(string $id, string $cas, ?UnlockOptions $options = null): Result
     {
         $response = Extension\documentUnlock(
             $this->core,
@@ -421,7 +421,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function touch(string $id, $expiry, TouchOptions $options = null): MutationResult
+    public function touch(string $id, $expiry, ?TouchOptions $options = null): MutationResult
     {
         if ($expiry instanceof DateTimeInterface) {
             $expirySeconds = $expiry->getTimestamp();
@@ -453,7 +453,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function lookupIn(string $id, array $specs, LookupInOptions $options = null): LookupInResult
+    public function lookupIn(string $id, array $specs, ?LookupInOptions $options = null): LookupInResult
     {
         $encoded = array_map(
             function (LookupInSpec $item) {
@@ -489,7 +489,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.1.6
      */
-    public function lookupInAnyReplica(string $id, array $specs, LookupInAnyReplicaOptions $options = null): LookupInReplicaResult
+    public function lookupInAnyReplica(string $id, array $specs, ?LookupInAnyReplicaOptions $options = null): LookupInReplicaResult
     {
         $encoded = array_map(
             function (LookupInSpec $item) {
@@ -526,7 +526,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.1.6
      */
-    public function lookupInAllReplicas(string $id, array $specs, LookupInAllReplicasOptions $options = null): array
+    public function lookupInAllReplicas(string $id, array $specs, ?LookupInAllReplicasOptions $options = null): array
     {
         $encoded = array_map(
             function (LookupInSpec $item) {
@@ -568,7 +568,7 @@ class Collection implements CollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function mutateIn(string $id, array $specs, MutateInOptions $options = null): MutateInResult
+    public function mutateIn(string $id, array $specs, ?MutateInOptions $options = null): MutateInResult
     {
         $encoded = array_map(
             function (MutateInSpec $item) use ($options) {
@@ -598,7 +598,7 @@ class Collection implements CollectionInterface
      * @return array<GetResult> array of GetResult, one for each of the entries
      * @since 4.0.0
      */
-    public function getMulti(array $ids, GetOptions $options = null): array
+    public function getMulti(array $ids, ?GetOptions $options = null): array
     {
         $responses = Extension\documentGetMulti(
             $this->core,
@@ -630,7 +630,7 @@ class Collection implements CollectionInterface
      * @throws InvalidArgumentException
      * @since 4.1.6
      */
-    public function scan(ScanType $scanType, ScanOptions $options = null): ScanResults
+    public function scan(ScanType $scanType, ?ScanOptions $options = null): ScanResults
     {
         if ($scanType instanceof RangeScan) {
             $type = RangeScan::export($scanType);
@@ -664,7 +664,7 @@ class Collection implements CollectionInterface
      * @throws UnsupportedOperationException
      * @since 4.0.0
      */
-    public function removeMulti(array $entries, RemoveOptions $options = null): array
+    public function removeMulti(array $entries, ?RemoveOptions $options = null): array
     {
         $responses = Extension\documentRemoveMulti(
             $this->core,
@@ -693,7 +693,7 @@ class Collection implements CollectionInterface
      * @throws InvalidArgumentException
      * @since 4.0.0
      */
-    public function upsertMulti(array $entries, UpsertOptions $options = null): array
+    public function upsertMulti(array $entries, ?UpsertOptions $options = null): array
     {
         $encodedEntries = array_map(
             function (array $entry) use ($options) {

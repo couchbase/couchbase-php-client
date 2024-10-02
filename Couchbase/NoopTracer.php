@@ -28,7 +28,7 @@ namespace Couchbase;
  */
 class NoopTracer implements RequestTracer
 {
-    public function requestSpan(string $name, RequestSpan $parent = null)
+    public function requestSpan(string $name, ?RequestSpan $parent = null)
     {
     }
 }

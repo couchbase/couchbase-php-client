@@ -46,7 +46,7 @@ class NumericRangeSearchFacet implements JsonSerializable, SearchFacet
      * @return NumericRangeSearchFacet
      * @since 4.0.0
      */
-    public function addRange(string $name, float $min = null, float $max = null): NumericRangeSearchFacet
+    public function addRange(string $name, ?float $min = null, ?float $max = null): NumericRangeSearchFacet
     {
         $range = [
             'name' => $name,

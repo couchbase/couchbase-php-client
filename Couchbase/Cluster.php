@@ -184,7 +184,7 @@ class Cluster implements ClusterInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
         $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options));
 
@@ -202,7 +202,7 @@ class Cluster implements ClusterInterface
      * @return SearchResult
      * @since 4.0.0
      */
-    public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
+    public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult
     {
         $result = Extension\searchQuery($this->core, $indexName, json_encode($query), SearchOptions::export($options));
 
@@ -222,7 +222,7 @@ class Cluster implements ClusterInterface
      * @throws InvalidArgumentException
      * @since 4.1.7
      */
-    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult
+    public function search(string $indexName, SearchRequest $request, ?SearchOptions $options = null): SearchResult
     {
         $exportedRequest = SearchRequest::export($request);
         $exportedOptions = SearchOptions::export($options);
@@ -329,7 +329,7 @@ class Cluster implements ClusterInterface
      *
      * @since 4.0.0
      */
-    public function diagnostics(string $reportId = null)
+    public function diagnostics(?string $reportId = null)
     {
         if ($reportId == null) {
             $reportId = uniqid();

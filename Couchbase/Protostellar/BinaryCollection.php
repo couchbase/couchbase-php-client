@@ -65,7 +65,7 @@ class BinaryCollection implements BinaryCollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function append(string $key, string $value, AppendOptions $options = null): MutationResult
+    public function append(string $key, string $value, ?AppendOptions $options = null): MutationResult
     {
         $exportedOptions = AppendOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -83,7 +83,7 @@ class BinaryCollection implements BinaryCollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function prepend(string $key, string $value, PrependOptions $options = null): MutationResult
+    public function prepend(string $key, string $value, ?PrependOptions $options = null): MutationResult
     {
         $exportedOptions = PrependOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -101,7 +101,7 @@ class BinaryCollection implements BinaryCollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function increment(string $key, IncrementOptions $options = null): CounterResult
+    public function increment(string $key, ?IncrementOptions $options = null): CounterResult
     {
         $exportedOptions = IncrementOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -119,7 +119,7 @@ class BinaryCollection implements BinaryCollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function decrement(string $key, DecrementOptions $options = null): CounterResult
+    public function decrement(string $key, ?DecrementOptions $options = null): CounterResult
     {
         $exportedOptions = DecrementOptions::export($options);
         $request = RequestFactory::makeRequest(

@@ -31,11 +31,11 @@ interface ScopeInterface
 
     public function collection(string $name): CollectionInterface;
 
-    public function query(string $statement, QueryOptions $options = null): QueryResult;
+    public function query(string $statement, ?QueryOptions $options = null): QueryResult;
 
-    public function search(string $indexName, SearchRequest $request, SearchOptions $options = null): SearchResult;
+    public function search(string $indexName, SearchRequest $request, ?SearchOptions $options = null): SearchResult;
 
-    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult;
+    public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult;
 
     public function searchIndexes(): ScopeSearchIndexManagerInterface;
 }

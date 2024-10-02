@@ -62,7 +62,7 @@ class Scope implements ScopeInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function query(string $statement, QueryOptions $options = null): QueryResult
+    public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
         $exportedOptions = QueryOptions::export($options);
         $exportedOptions["bucketName"] = $this->bucketName;
@@ -80,7 +80,7 @@ class Scope implements ScopeInterface
         return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }
 
-    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
         $exportedOptions = AnalyticsOptions::export($options, $this->name, $this->bucketName);
         $request = RequestFactory::makeRequest(

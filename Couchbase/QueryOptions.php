@@ -414,7 +414,7 @@ class QueryOptions
         return $options->transcoder;
     }
 
-    public static function export(?QueryOptions $options, string $scopeName = null, string $bucketName = null): array
+    public static function export(?QueryOptions $options, ?string $scopeName = null, ?string $bucketName = null): array
     {
         $defaultQueryContext = null;
         if ($scopeName != null && $bucketName != null) {
