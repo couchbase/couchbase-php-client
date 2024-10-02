@@ -43,9 +43,10 @@ use Couchbase\BucketInterface;
 use Couchbase\Cluster;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
-
 use Couchbase\CollectionInterface;
 use Couchbase\WanDevelopmentProfile;
+use Couchbase\Exception\CouchbaseException;
+
 use Exception;
 use PHPUnit\Framework\TestCase;
 
@@ -109,6 +110,9 @@ class CouchbaseTestCase extends TestCase
 
     public function defaultCollection(string $bucketName = null): CollectionInterface
     {
+        if ($bucketName == null) {
+            $bucketName = self::env()->bucketName();
+        }
         return $this->openBucket($bucketName)->defaultCollection();
     }
 
@@ -211,6 +215,9 @@ class CouchbaseTestCase extends TestCase
         while (time() <= $deadline) {
             try {
                 return $fn();
+            } catch (CouchbaseException $ex) {
+                fprintf(STDERR, "%s(%s) returned exception, will retry: %s\n%s\n", $caller, $message, $ex->getMessage(), var_export($ex->getContext(), true));
+                $endException = $ex;
             } catch (Exception $ex) {
                 fprintf(STDERR, "%s(%s) returned exception, will retry: %s\n", $caller, $message, $ex->getMessage());
                 $endException = $ex;
@@ -290,7 +297,11 @@ class CouchbaseTestCase extends TestCase
 
     protected function assertErrorType($type, $ex)
     {
-        $this->assertInstanceOf($type, $ex);
+        $this->assertInstanceOf(
+            $type,
+            $ex,
+            sprintf("Exception: %s, Message: %s", get_class($ex), $ex->getMessage())
+        );
     }
 
     protected function assertErrorMessage($msg, $ex)

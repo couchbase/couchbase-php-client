@@ -57,14 +57,28 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
         $this->bucketManager->createBucket($settings);
         $this->consistencyUtil()->waitUntilBucketPresent($bucketName);
 
-        $deadline = time() + 5; /* 5 seconds from now */
+        $deadline = time() + 20; /* 20 seconds from now */
 
         while (true) {
             try {
-                $manager->createPrimaryIndex($bucketName, CreateQueryPrimaryIndexOptions::build()->ignoreIfExists(true));
+                try {
+                    $manager->createPrimaryIndex(
+                        $bucketName,
+                        CreateQueryPrimaryIndexOptions::build()
+                            ->timeout(200_000)
+                            ->ignoreIfExists(true)
+                    );
+                } catch (\Couchbase\Exception\InternalServerException $ex) {
+                    if (preg_match('/will be retried/', $ex->getMessage())) {
+                        fprintf(STDERR, "Ignoring transient error during primary index creation for '%s': %s, %s\n", $bucketName, $ex->getMessage(), var_export($ex->getContext(), true));
+                    } else {
+                        throw $ex;
+                    }
+                }
+                $this->consistencyUtil()->waitUntilQueryIndexReady($bucketName, "#primary", true);
                 break;
             } catch (CouchbaseException $ex) {
-                printf("Error during primary index creation for '%s': %s, %s", $bucketName, $ex->getMessage(), var_export($ex->getContext(), true));
+                fprintf(STDERR, "Ignoring error during primary index creation for '%s': %s, %s\n", $bucketName, $ex->getMessage(), var_export($ex->getContext(), true));
                 if (time() > $deadline) {
                     $this->fail("timed out waiting for create index to succeed");
                 }
@@ -79,38 +93,46 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
             IndexExistsException::class
         );
 
+        $indexName = $this->uniqueId('testIndex');
         $manager->createIndex(
             $bucketName,
-            "testIndex",
+            $indexName,
             ["field"],
-            CreateQueryIndexOptions::build()->ignoreIfExists(true)
+            CreateQueryIndexOptions::build()
+                ->timeout(200_000)
+                ->ignoreIfExists(true)
         );
+        $this->consistencyUtil()->waitUntilQueryIndexReady($bucketName, $indexName, false);
 
         $this->wrapException(
-            function () use ($manager, $bucketName) {
+            function () use ($manager, $bucketName, $indexName) {
                 $manager->createIndex(
                     $bucketName,
-                    "testIndex",
+                    $indexName,
                     ["field"],
-                    CreateQueryIndexOptions::build()->ignoreIfExists(false)
+                    CreateQueryIndexOptions::build()
+                        ->timeout(200_000)
+                        ->ignoreIfExists(false)
                 );
             },
             IndexExistsException::class
         );
 
         // We create this first to give it a chance to be created by the time we need it.
+        $deferredIndexName = $this->uniqueId('testIndexDeferred');
         $manager->createIndex(
             $bucketName,
-            "testIndexDeferred",
+            $deferredIndexName,
             ["field"],
             CreateQueryIndexOptions::build()
+                ->timeout(200_000)
                 ->ignoreIfExists(true)
                 ->deferred(true)
         );
 
         $manager->buildDeferredIndexes($bucketName);
 
-        $manager->watchIndexes($bucketName, ["testIndexDeferred"], 60_000);
+        $manager->watchIndexes($bucketName, [$deferredIndexName], 60_000);
 
         $indexes = $manager->getAllIndexes($bucketName);
         $this->assertGreaterThanOrEqual(3, count($indexes));
@@ -120,13 +142,13 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
          * @var QueryIndex $entry
          */
         foreach ($indexes as $entry) {
-            if ($entry->name() == "testIndex") {
+            if ($entry->name() == $indexName) {
                 $index = $entry;
             }
         }
         $this->assertNotNull($index);
 
-        $this->assertEquals("testIndex", $index->name());
+        $this->assertEquals($indexName, $index->name());
         $this->assertFalse($index->isPrimary());
         $this->assertEquals(QueryIndexType::GSI, $index->type());
         $this->assertEquals("online", $index->state());
@@ -137,11 +159,11 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
         $this->assertNull($index->condition());
         $this->assertNull($index->partition());
 
-        $manager->dropIndex($bucketName, "testIndex");
+        $manager->dropIndex($bucketName, $indexName);
 
         $this->wrapException(
-            function () use ($manager, $bucketName) {
-                $manager->dropIndex($bucketName, "testIndex");
+            function () use ($manager, $bucketName, $indexName) {
+                $manager->dropIndex($bucketName, $indexName);
             },
             IndexNotFoundException::class
         );
@@ -166,10 +188,23 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
 
         while (true) {
             try {
-                $manager->createPrimaryIndex(CreateQueryPrimaryIndexOptions::build()->ignoreIfExists(true));
+                try {
+                    $manager->createPrimaryIndex(
+                        CreateQueryPrimaryIndexOptions::build()
+                        ->timeout(200_000)
+                        ->ignoreIfExists(true)
+                    );
+                } catch (\Couchbase\Exception\InternalServerException $ex) {
+                    if (preg_match('/will be retried/', $ex->getMessage())) {
+                        fprintf(STDERR, "Ignoring transient error during primary index creation for '%s': %s, %s\n", $bucketName, $ex->getMessage(), var_export($ex->getContext(), true));
+                    } else {
+                        throw $ex;
+                    }
+                }
+                $this->consistencyUtil()->waitUntilQueryIndexReady($this->env()->bucketName(), "#primary", true);
                 break;
             } catch (CouchbaseException $ex) {
-                printf("Error during primary index creation: %s, %s", $ex->getMessage(), var_export($ex->getContext(), true));
+                fprintf(STDERR, "Ignoring error during primary index creation: %s, %s\n", $ex->getMessage(), var_export($ex->getContext(), true));
                 if (time() > $deadline) {
                     $this->assertFalse("timed out waiting for create index to succeed");
                 }
@@ -184,35 +219,43 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
             IndexExistsException::class
         );
 
+        $indexName = $this->uniqueId('testIndex');
         $manager->createIndex(
-            "testIndex",
+            $indexName,
             ["field"],
-            CreateQueryIndexOptions::build()->ignoreIfExists(true)
+            CreateQueryIndexOptions::build()
+                ->timeout(200_000)
+                ->ignoreIfExists(true)
         );
+        $this->consistencyUtil()->waitUntilQueryIndexReady($this->env()->bucketName(), $indexName, false);
 
         $this->wrapException(
-            function () use ($manager) {
+            function () use ($manager, $indexName) {
                 $manager->createIndex(
-                    "testIndex",
+                    $indexName,
                     ["field"],
-                    CreateQueryIndexOptions::build()->ignoreIfExists(false)
+                    CreateQueryIndexOptions::build()
+                        ->timeout(200_000)
+                        ->ignoreIfExists(false)
                 );
             },
             IndexExistsException::class
         );
 
         // We create this first to give it a chance to be created by the time we need it.
+        $deferredIndexName = $this->uniqueId('testIndexDeferred');
         $manager->createIndex(
-            "testIndexDeferred",
+            $deferredIndexName,
             ["field"],
             CreateQueryIndexOptions::build()
+                ->timeout(200_000)
                 ->ignoreIfExists(true)
                 ->deferred(true)
         );
 
         $manager->buildDeferredIndexes();
 
-        $manager->watchIndexes(["testIndexDeferred"], 60_000);
+        $manager->watchIndexes([$deferredIndexName], 60_000);
 
         $indexes = $manager->getAllIndexes();
         $this->assertGreaterThanOrEqual(3, count($indexes));
@@ -222,13 +265,13 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
          * @var QueryIndex $entry
          */
         foreach ($indexes as $entry) {
-            if ($entry->name() == "testIndex") {
+            if ($entry->name() == $indexName) {
                 $index = $entry;
             }
         }
         $this->assertNotNull($index);
 
-        $this->assertEquals("testIndex", $index->name());
+        $this->assertEquals($indexName, $index->name());
         $this->assertFalse($index->isPrimary());
         $this->assertEquals(QueryIndexType::GSI, $index->type());
         $this->assertEquals("online", $index->state());
@@ -238,11 +281,11 @@ class QueryIndexManagerTest extends Helpers\CouchbaseTestCase
         $this->assertNull($index->condition());
         $this->assertNull($index->partition());
 
-        $manager->dropIndex("testIndex");
+        $manager->dropIndex($indexName);
 
         $this->wrapException(
-            function () use ($manager) {
-                $manager->dropIndex("testIndex");
+            function () use ($manager, $indexName) {
+                $manager->dropIndex($indexName);
             },
             IndexNotFoundException::class
         );

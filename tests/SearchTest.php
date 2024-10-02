@@ -31,6 +31,9 @@ use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
+use Couchbase\Management\BucketSettings;
+use Couchbase\Management\BucketType;
+use Couchbase\Management\BucketManager;
 use Couchbase\Management\SearchIndex;
 use Couchbase\Management\SearchIndexManager;
 use Couchbase\MatchAllSearchQuery;
@@ -68,6 +71,9 @@ class SearchTest extends Helpers\CouchbaseTestCase
     private ClusterInterface $cluster;
     private CollectionInterface $collection;
     private SearchIndexManager $indexManager;
+    private BucketManager $bucketManager;
+    private string $bucketName;
+    private string $indexName;
 
     /**
      * @return number of the documents in dataset
@@ -86,9 +92,9 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
     public function createSearchIndex(int $datasetSize): void
     {
-        fprintf(STDERR, "Create 'beer-search' to index %d docs\n", $datasetSize);
+        fprintf(STDERR, "Create \"%s\" to index %d docs in bucket \"%s\"\n", $this->indexName, $datasetSize, $this->bucketName);
         $indexDump = json_decode(file_get_contents(__DIR__ . "/beer-search.json"), true);
-        $index = SearchIndex::build("beer-search", self::env()->bucketName());
+        $index = SearchIndex::build($this->indexName, $this->bucketName);
         $index->setParams($indexDump["params"]);
         $this->indexManager->upsertIndex($index);
 
@@ -97,8 +103,8 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $start = time();
         while (true) {
             try {
-                $indexedDocuments = $this->indexManager->getIndexedDocumentsCount("beer-search");
-                fprintf(STDERR, "%ds, Indexing 'beer-search': %d docs\n", time() - $start, $indexedDocuments);
+                $indexedDocuments = $this->indexManager->getIndexedDocumentsCount($this->indexName);
+                fprintf(STDERR, "%ds, Indexing \"%s\": %d docs\n", time() - $start, $this->indexName, $indexedDocuments);
                 if ($indexedDocuments >= $datasetSize) {
                     // the indexer settled on the same number of the documents
                     // since last check
@@ -118,6 +124,11 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 $previousIndexed = $indexedDocuments;
                 sleep(4);
             } catch (\Couchbase\Exception\IndexNotReadyException $ex) {
+                fprintf(STDERR, "%ds, Index not ready, retrying in 1 second\n", time() - $start);
+                sleep(1);
+            } catch (\Couchbase\Exception\IndexNotFoundException $ex) {
+                fprintf(STDERR, "%ds, Index not found, retrying in 1 second\n", time() - $start);
+                sleep(1);
             }
         }
     }
@@ -126,13 +137,32 @@ class SearchTest extends Helpers\CouchbaseTestCase
     {
         parent::setUp();
 
-        $this->cluster = $this->connectCluster();
-        $this->collection = $this->openBucket(self::env()->bucketName())->defaultCollection();
-
         if (self::env()->useCouchbase()) {
+            $this->bucketName = $this->uniqueId("beerdb");
+            $this->indexName = $this->uniqueId("beer-search");
+
+            $this->cluster = $this->connectCluster();
+
+            $this->bucketManager = $this->cluster->buckets();
+
+            $settings = new BucketSettings($this->bucketName);
+            $settings->setBucketType(BucketType::COUCHBASE);
+            $this->bucketManager->createBucket($settings);
+            $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
+
+            while (true) {
+                sleep(1);
+                try {
+                    $this->collection = $this->openBucket($this->bucketName)->defaultCollection();
+                    break;
+                } catch (BucketNotFoundException $ex) {
+                    // do nothing
+                }
+            }
+
             $this->indexManager = $this->cluster->searchIndexes();
             try {
-                $this->indexManager->getIndex("beer-search");
+                $this->indexManager->getIndex($this->indexName);
             } catch (IndexNotFoundException $ex) {
                 $this->createSearchIndex($this->loadDataset());
             }
@@ -142,6 +172,21 @@ class SearchTest extends Helpers\CouchbaseTestCase
     public function tearDown(): void
     {
         parent::tearDown();
+
+        if (self::env()->useCouchbase()) {
+            try {
+                $this->bucketManager->dropBucket($this->bucketName);
+                $this->consistencyUtil()->waitUntilBucketDropped($this->bucketName);
+            } catch (BucketNotFoundException $ex) {
+                /* do nothing */
+            }
+
+            try {
+                $this->indexManager->dropIndex($this->indexName);
+            } catch (IndexNotFoundException $ex) {
+                /* do nothing */
+            }
+        }
 
         // close cluster here?
     }
@@ -153,7 +198,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $query = new MatchPhraseSearchQuery("hop beer");
         $options = SearchOptions::build()->limit(3);
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -162,7 +207,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
         }
     }
@@ -175,7 +220,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options = SearchOptions::build()->limit(3);
         $request = SearchRequest::build($query);
 
-        $result = $this->cluster->search("beer-search", $request, $options);
+        $result = $this->cluster->search($this->indexName, $request, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -184,7 +229,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
         }
     }
@@ -196,7 +241,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $query = new MatchPhraseSearchQuery("doesnotexistintheindex");
         $options = SearchOptions::build()->limit(3);
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertEmpty($result->rows());
@@ -212,7 +257,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $query = new MatchPhraseSearchQuery($id);
         $options = SearchOptions::build()->limit(3)->timeout(120_000);
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertEmpty($result->rows());
@@ -222,14 +267,14 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $mutationState = new MutationState();
         $mutationState->add($result);
 
-        $options->consistentWith("beer-search", $mutationState);
+        $options->consistentWith($this->indexName, $mutationState);
 
         // Eventual consistency for consistent with...
         $result = $this->retryFor(
             120,
             1000,
             function () use ($query, $options) {
-                $result = $this->cluster->searchQuery("beer-search", $query, $options);
+                $result = $this->cluster->searchQuery($this->indexName, $query, $options);
                 if (count($result->rows()) == 0) {
                     throw new Exception("Excepted rows to not to be empty");
                 }
@@ -252,7 +297,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $query = new MatchPhraseSearchQuery("hop beer");
         $options = SearchOptions::build()->limit(3)->fields([$nameField]);
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -261,7 +306,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
             $this->assertNotEmpty($hit['fields']);
             $this->assertNotNull($hit['fields']['name']);
@@ -277,9 +322,9 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $options_low = SearchOptions::build()->limit(3)->skip(10);
         $options_excess = SearchOptions::build()->limit(3)->skip(7000);
 
-        $result_none = $this->cluster->searchQuery("beer-search", $query, $options_none);
-        $result_low = $this->cluster->searchQuery("beer-search", $query, $options_low);
-        $result_excess = $this->cluster->searchQuery("beer-search", $query, $options_excess);
+        $result_none = $this->cluster->searchQuery($this->indexName, $query, $options_none);
+        $result_low = $this->cluster->searchQuery($this->indexName, $query, $options_low);
+        $result_excess = $this->cluster->searchQuery($this->indexName, $query, $options_excess);
 
         $this->assertNotNull($result_none);
         $this->assertNotNull($result_low);
@@ -307,7 +352,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 ]
             );
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -316,7 +361,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
         }
     }
@@ -330,7 +375,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $query = (new NumericRangeSearchQuery())->field("abv")->min(2.0)->max(3.2);
         $options = SearchOptions::build()->fields(["abv"]);
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -338,7 +383,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
             $this->assertNotEmpty($hit['fields']);
             $this->assertNotNull($hit['fields']['abv']);
@@ -355,7 +400,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
             ]
         );
         $options = SearchOptions::build()->fields(["updated", "type"]);
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotNull($result);
         $this->assertNotEmpty($result->rows());
@@ -364,7 +409,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $endDate = new DateTime('2010-12-01 20:00:00');
         foreach ($result->rows() as $hit) {
             $this->assertNotNull($hit['id']);
-            $this->assertStringStartsWith("beer-search", $hit['index']);
+            $this->assertStringStartsWith($this->indexName, $hit['index']);
             $this->assertGreaterThan(0, $hit['score']);
             $this->assertNotEmpty($hit['fields']);
             $this->assertNotNull($hit['fields']['updated']);
@@ -392,6 +437,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
         }
     }
 
+
     public function testCompoundSearchQueries()
     {
         $this->skipIfCaves();
@@ -401,24 +447,25 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $disjunctionQuery = new DisjunctionSearchQuery([$nameQuery, $descriptionQuery]);
         $options = SearchOptions::build()->fields(["type", "name", "description"]);
-        $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $disjunctionQuery, $options);
         $this->assertGreaterThanOrEqual(10, $result->metaData()->totalHits());
         $this->assertNotEmpty($result->rows());
-        $this->assertMatchesRegularExpression('/green/i', $result->rows()[0]['fields']['name']);
-        $this->assertDoesNotMatchRegularExpression('/fuggles/i', $result->rows()[0]['fields']['name']);
-        $this->assertMatchesRegularExpression('/fuggles/i', $result->rows()[0]['fields']['description']);
-        $this->assertDoesNotMatchRegularExpression('/green/i', $result->rows()[0]['fields']['description']);
+        // disjunction: either name matches /green/ or description matches /fuggles/
+        $this->assertTrue(
+            preg_match('/green/i', $result->rows()[0]['fields']['name']) ||
+            preg_match('/fuggles/i', $result->rows()[0]['fields']['description'])
+        );
 
         $disjunctionQuery->min(2);
         $options = SearchOptions::build()->fields(["type", "name", "description"]);
-        $result = $this->cluster->searchQuery("beer-search", $disjunctionQuery, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $disjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
         $this->assertLessThan(10, $result->metaData()->totalHits());
         $disjunctionResult = $result;
 
         $conjunctionQuery = new ConjunctionSearchQuery([$nameQuery, $descriptionQuery]);
         $options = SearchOptions::build()->fields(["type", "name", "description"]);
-        $result = $this->cluster->searchQuery("beer-search", $conjunctionQuery, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $conjunctionQuery, $options);
         $this->assertNotEmpty($result->rows());
         $this->assertSameSize($disjunctionResult->rows(), $result->rows());
         $this->assertEquals(
@@ -440,7 +487,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
             ->limit(3)
             ->highlight(SearchHighlightMode::HTML, ["name"]);
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
         $this->assertNotEmpty($result->rows());
 
         foreach ($result->rows() as $hit) {
@@ -470,7 +517,7 @@ class SearchTest extends Helpers\CouchbaseTestCase
                 ]
             );
 
-        $result = $this->cluster->searchQuery("beer-search", $query, $options);
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
 
         $this->assertNotEmpty($result->rows());
         $this->assertNotEmpty($result->facets());

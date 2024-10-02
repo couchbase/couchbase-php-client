@@ -50,9 +50,7 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
         $res = $collection->upsert($id, ["answer" => 42], $opts);
         $cas = $res->cas();
         $this->assertNotNull($cas);
-        if (self::env()->useCaves()) {
-            sleep(1);
-        }
+        sleep(1);
         $results = $collection->getAllReplicas($id);
         $this->assertGreaterThanOrEqual(1, count($results));
         $seenActiveVersion = false;

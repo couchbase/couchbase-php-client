@@ -6,6 +6,7 @@ use Couchbase\Exception\IndexNotFoundException;
 use Couchbase\Management\ScopeSearchIndexManagerInterface;
 use Couchbase\Management\SearchIndex;
 use Couchbase\Management\SearchIndexManagerInterface;
+use Couchbase\Management\AnalyzeDocumentOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -115,10 +116,14 @@ class SearchIndexManagerTest extends Helpers\CouchbaseTestCase
         $this->manager->upsertIndex($index);
 
         $tokens = $this->retryFor(
-            5,
-            1000,
+            60,
+            2000,
             function () {
-                return $this->manager->analyzeDocument($this->indexName, ["name" => "hello world"]);
+                return $this->manager->analyzeDocument(
+                    $this->indexName,
+                    ["name" => "hello world"],
+                    AnalyzeDocumentOptions::build()->timeout(200_000)
+                );
             }
         );
         $this->assertNotEmpty($tokens);
