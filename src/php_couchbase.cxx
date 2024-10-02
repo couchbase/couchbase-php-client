@@ -3952,7 +3952,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createDocumentScanResult,
                                         0,
                                         0,
-                                        IS_RESOURCE,
+                                        IS_MIXED,
                                         1)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -4301,7 +4301,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactions,
                                         0,
                                         0,
-                                        IS_RESOURCE,
+                                        IS_MIXED,
                                         1)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, configuration, IS_ARRAY, 1)
@@ -4310,7 +4310,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactionContext,
                                         0,
                                         0,
-                                        IS_RESOURCE,
+                                        IS_MIXED,
                                         1)
 ZEND_ARG_INFO(0, transactions)
 ZEND_ARG_TYPE_INFO(0, configuration, IS_ARRAY, 1)
