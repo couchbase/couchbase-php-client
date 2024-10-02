@@ -30,7 +30,7 @@ class UpdateCollectionSettings
     /**
      * @throws InvalidArgumentException
      */
-    public function __construct(int $maxExpiry = null, bool $history = null)
+    public function __construct(?int $maxExpiry = null, ?bool $history = null)
     {
         if ($maxExpiry && $maxExpiry < -1) {
             throw new InvalidArgumentException("Collection max expiry must be greater than or equal to -1.");
@@ -42,7 +42,7 @@ class UpdateCollectionSettings
     /**
      * @throws InvalidArgumentException
      */
-    public static function build(int $maxExpiry = null, bool $history = null): UpdateCollectionSettings
+    public static function build(?int $maxExpiry = null, ?bool $history = null): UpdateCollectionSettings
     {
         return new UpdateCollectionSettings($maxExpiry, $history);
     }

@@ -34,7 +34,7 @@ class RangeScan implements ScanType
      *
      * @since 4.1.6
      */
-    public function __construct(ScanTerm $from = null, ScanTerm $to = null)
+    public function __construct(?ScanTerm $from = null, ?ScanTerm $to = null)
     {
         $this->from = $from;
         $this->to = $to;
@@ -49,7 +49,7 @@ class RangeScan implements ScanType
      * @return RangeScan
      * @since 4.1.6
      */
-    public static function build(ScanTerm $from = null, ScanTerm $to = null): RangeScan
+    public static function build(?ScanTerm $from = null, ?ScanTerm $to = null): RangeScan
     {
         return new RangeScan($from, $to);
     }

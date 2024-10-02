@@ -30,5 +30,5 @@ interface BucketInterface
 
     public function name(): string;
 
-    public function viewQuery(string $designDoc, string $viewName, ViewOptions $options = null): ViewResult;
+    public function viewQuery(string $designDoc, string $viewName, ?ViewOptions $options = null): ViewResult;
 }

@@ -37,7 +37,7 @@ class SamplingScan implements ScanType
      * @throws InvalidArgumentException
      * @since 4.1.6
      */
-    public function __construct(int $limit, int $seed = null)
+    public function __construct(int $limit, ?int $seed = null)
     {
         if ($limit < 1) {
             throw new InvalidArgumentException("The limit must be positive");
@@ -56,7 +56,7 @@ class SamplingScan implements ScanType
      * @throws InvalidArgumentException
      * @since 4.1.6
      */
-    public static function build(int $limit, int $seed = null): SamplingScan
+    public static function build(int $limit, ?int $seed = null): SamplingScan
     {
         return new SamplingScan($limit, $seed);
     }

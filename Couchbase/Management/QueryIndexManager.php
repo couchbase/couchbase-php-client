@@ -50,7 +50,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      * @return array
      * @since 4.0.0
      */
-    public function getAllIndexes(string $bucketName, GetAllQueryIndexesOptions $options = null): array
+    public function getAllIndexes(string $bucketName, ?GetAllQueryIndexesOptions $options = null): array
     {
         $responses = Extension\queryIndexGetAll($this->core, $bucketName, GetAllQueryIndexesOptions::export($options));
         return array_map(
@@ -71,7 +71,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @since 4.0.0
      */
-    public function createIndex(string $bucketName, string $indexName, array $keys, CreateQueryIndexOptions $options = null)
+    public function createIndex(string $bucketName, string $indexName, array $keys, ?CreateQueryIndexOptions $options = null)
     {
         Extension\queryIndexCreate($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options));
     }
@@ -84,7 +84,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @since 4.0.0
      */
-    public function createPrimaryIndex(string $bucketName, CreateQueryPrimaryIndexOptions $options = null)
+    public function createPrimaryIndex(string $bucketName, ?CreateQueryPrimaryIndexOptions $options = null)
     {
         Extension\queryIndexCreatePrimary($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options));
     }
@@ -98,7 +98,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @since 4.0.0
      */
-    public function dropIndex(string $bucketName, string $indexName, DropQueryIndexOptions $options = null)
+    public function dropIndex(string $bucketName, string $indexName, ?DropQueryIndexOptions $options = null)
     {
         Extension\queryIndexDrop($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options));
     }
@@ -111,7 +111,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @since 4.0.0
      */
-    public function dropPrimaryIndex(string $bucketName, DropQueryPrimaryIndexOptions $options = null)
+    public function dropPrimaryIndex(string $bucketName, ?DropQueryPrimaryIndexOptions $options = null)
     {
         Extension\queryIndexDropPrimary($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options));
     }
@@ -124,7 +124,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      *
      * @since 4.0.0
      */
-    public function buildDeferredIndexes(string $bucketName, BuildQueryIndexesOptions $options = null)
+    public function buildDeferredIndexes(string $bucketName, ?BuildQueryIndexesOptions $options = null)
     {
         Extension\queryIndexBuildDeferred($this->core, $bucketName, BuildQueryIndexesOptions::export($options));
     }
@@ -140,7 +140,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
      * @throws UnambiguousTimeoutException
      * @since 4.0.0
      */
-    public function watchIndexes(string $bucketName, array $indexNames, int $timeoutMilliseconds, WatchQueryIndexesOptions $options = null)
+    public function watchIndexes(string $bucketName, array $indexNames, int $timeoutMilliseconds, ?WatchQueryIndexesOptions $options = null)
     {
         $exported = WatchQueryIndexesOptions::export($options);
         if (array_key_exists("watchPrimary", $exported) && $exported["watchPrimary"]) {

@@ -31,5 +31,5 @@ interface RequestTracer
      * @param string $name The name of the span.
      * @param string|null $parent The parent of the span, if one exists.
      */
-    public function requestSpan(string $name, RequestSpan $parent = null);
+    public function requestSpan(string $name, ?RequestSpan $parent = null);
 }

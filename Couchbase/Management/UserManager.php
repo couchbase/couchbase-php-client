@@ -47,7 +47,7 @@ class UserManager implements UserManagerInterface
      * @return UserAndMetadata
      * @since 4.0.0
      */
-    public function getUser(string $name, GetUserOptions $options = null): UserAndMetadata
+    public function getUser(string $name, ?GetUserOptions $options = null): UserAndMetadata
     {
         $result = Extension\userGet($this->core, $name, GetUserOptions::export($options));
         return UserAndMetadata::import($result);
@@ -60,7 +60,7 @@ class UserManager implements UserManagerInterface
      * @return array
      * @since 4.0.0
      */
-    public function getAllUsers(GetAllUsersOptions $options = null): array
+    public function getAllUsers(?GetAllUsersOptions $options = null): array
     {
         $result = Extension\userGetAll($this->core, GetAllUsersOptions::export($options));
         $users = [];
@@ -78,7 +78,7 @@ class UserManager implements UserManagerInterface
      * @param UpsertUserOptions|null $options the options to use when upserting the user.
      * @since 4.0.0
      */
-    public function upsertUser(User $user, UpsertUserOptions $options = null)
+    public function upsertUser(User $user, ?UpsertUserOptions $options = null)
     {
         Extension\userUpsert($this->core, User::export($user), UpsertUserOptions::export($options));
     }
@@ -90,7 +90,7 @@ class UserManager implements UserManagerInterface
      * @param DropUserOptions|null $options the options to use when dropping the user.
      * @since 4.0.0
      */
-    public function dropUser(string $name, DropUserOptions $options = null)
+    public function dropUser(string $name, ?DropUserOptions $options = null)
     {
         Extension\userDrop($this->core, $name, DropUserOptions::export($options));
     }
@@ -103,7 +103,7 @@ class UserManager implements UserManagerInterface
      * @see \Couchbase\Management\RoleAndDescription
      * @since 4.0.0
      */
-    public function getRoles(GetRolesOptions $options = null): array
+    public function getRoles(?GetRolesOptions $options = null): array
     {
         $result = Extension\roleGetAll($this->core, GetRolesOptions::export($options));
         foreach ($result as $role) {
@@ -121,7 +121,7 @@ class UserManager implements UserManagerInterface
      * @return Group
      * @since 4.0.0
      */
-    public function getGroup(string $name, GetGroupOptions $options = null): Group
+    public function getGroup(string $name, ?GetGroupOptions $options = null): Group
     {
         $result = Extension\groupGet($this->core, $name, GetGroupOptions::export($options));
         return Group::import($result);
@@ -135,7 +135,7 @@ class UserManager implements UserManagerInterface
      * @see \Couchbase\Management\Group
      * @since 4.0.0
      */
-    public function getAllGroups(GetAllGroupsOptions $options = null): array
+    public function getAllGroups(?GetAllGroupsOptions $options = null): array
     {
         $result = Extension\groupGetAll($this->core, GetAllGroupsOptions::export($options));
         $groups = [];
@@ -153,7 +153,7 @@ class UserManager implements UserManagerInterface
      * @param UpsertGroupOptions|null $options the options to use when upserting the group.
      * @since 4.0.0
      */
-    public function upsertGroup(Group $group, UpsertGroupOptions $options = null)
+    public function upsertGroup(Group $group, ?UpsertGroupOptions $options = null)
     {
         Extension\groupUpsert($this->core, Group::export($group), UpsertGroupOptions::export($options));
     }
@@ -165,7 +165,7 @@ class UserManager implements UserManagerInterface
      * @param DropGroupOptions|null $options the options to use when dropping the group.
      * @since 4.0.0
      */
-    public function dropGroup(string $name, DropGroupOptions $options = null)
+    public function dropGroup(string $name, ?DropGroupOptions $options = null)
     {
         Extension\groupDrop($this->core, $name, DropGroupOptions::export($options));
     }
@@ -176,7 +176,7 @@ class UserManager implements UserManagerInterface
      * @param ChangePasswordOptions|null $options the options to use when changing the password of the user
      * @since 4.1.1
      */
-    public function changePassword(string $newPassword, ChangePasswordOptions $options = null)
+    public function changePassword(string $newPassword, ?ChangePasswordOptions $options = null)
     {
         Extension\passwordChange($this->core, $newPassword, ChangePasswordOptions::export($options));
     }

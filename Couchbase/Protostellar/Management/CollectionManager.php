@@ -50,7 +50,7 @@ class CollectionManager implements CollectionManagerInterface
         $this->client = $client;
     }
 
-    public function getAllScopes(GetAllScopesOptions $options = null): array
+    public function getAllScopes(?GetAllScopesOptions $options = null): array
     {
         $exportedOptions = GetAllScopesOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -65,7 +65,7 @@ class CollectionManager implements CollectionManagerInterface
         return CollectionManagementResponseConverter::convertGetAllScopesResult($res);
     }
 
-    public function createScope(string $name, CreateScopeOptions $options = null)
+    public function createScope(string $name, ?CreateScopeOptions $options = null)
     {
         $exportedOptions = CreateScopeOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -79,7 +79,7 @@ class CollectionManager implements CollectionManagerInterface
         );
     }
 
-    public function dropScope(string $name, DropScopeOptions $options = null)
+    public function dropScope(string $name, ?DropScopeOptions $options = null)
     {
         $exportedOptions = DropScopeOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -151,7 +151,7 @@ class CollectionManager implements CollectionManagerInterface
     /**
      * @throws UnsupportedOperationException
      */
-    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, UpdateCollectionOptions $options = null)
+    public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, ?UpdateCollectionOptions $options = null)
     {
         throw new UnsupportedOperationException("Update collection is not yet supported in CNG");
     }

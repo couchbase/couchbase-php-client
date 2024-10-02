@@ -34,7 +34,7 @@ class ThresholdLoggingTracer implements RequestTracer
     /**
      * @throws UnsupportedOperationException
      */
-    public function requestSpan(string $name, RequestSpan $parent = null)
+    public function requestSpan(string $name, ?RequestSpan $parent = null)
     {
         throw new UnsupportedOperationException();
     }

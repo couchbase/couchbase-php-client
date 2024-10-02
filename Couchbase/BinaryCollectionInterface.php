@@ -24,11 +24,11 @@ interface BinaryCollectionInterface
 {
     public function name(): string;
 
-    public function append(string $id, string $value, AppendOptions $options = null): MutationResult;
+    public function append(string $id, string $value, ?AppendOptions $options = null): MutationResult;
 
-    public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult;
+    public function prepend(string $id, string $value, ?PrependOptions $options = null): MutationResult;
 
-    public function increment(string $id, IncrementOptions $options = null): CounterResult;
+    public function increment(string $id, ?IncrementOptions $options = null): CounterResult;
 
-    public function decrement(string $id, DecrementOptions $options = null): CounterResult;
+    public function decrement(string $id, ?DecrementOptions $options = null): CounterResult;
 }

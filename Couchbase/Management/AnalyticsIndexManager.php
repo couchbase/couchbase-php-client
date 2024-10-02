@@ -47,7 +47,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function createDataverse(string $dataverseName, CreateAnalyticsDataverseOptions $options = null): void
+    public function createDataverse(string $dataverseName, ?CreateAnalyticsDataverseOptions $options = null): void
     {
         Extension\analyticsDataverseCreate($this->core, $dataverseName, CreateAnalyticsDataverseOptions::export($options));
     }
@@ -60,7 +60,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function dropDataverse(string $dataverseName, DropAnalyticsDataverseOptions $options = null): void
+    public function dropDataverse(string $dataverseName, ?DropAnalyticsDataverseOptions $options = null): void
     {
         Extension\analyticsDataverseDrop($this->core, $dataverseName, DropAnalyticsDataverseOptions::export($options));
     }
@@ -74,7 +74,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function createDataset(string $datasetName, string $bucketName, CreateAnalyticsDatasetOptions $options = null): void
+    public function createDataset(string $datasetName, string $bucketName, ?CreateAnalyticsDatasetOptions $options = null): void
     {
         Extension\analyticsDatasetCreate($this->core, $datasetName, $bucketName, CreateAnalyticsDatasetOptions::export($options));
     }
@@ -87,7 +87,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function dropDataset(string $datasetName, DropAnalyticsDatasetOptions $options = null): void
+    public function dropDataset(string $datasetName, ?DropAnalyticsDatasetOptions $options = null): void
     {
         Extension\analyticsDatasetDrop($this->core, $datasetName, DropAnalyticsDatasetOptions::export($options));
     }
@@ -100,7 +100,7 @@ class AnalyticsIndexManager
      * @return array an array of {@link AnalyticsDataset}
      * @since 4.2.4
      */
-    public function getAllDatasets(GetAllAnalyticsDatasetsOptions $options = null): array
+    public function getAllDatasets(?GetAllAnalyticsDatasetsOptions $options = null): array
     {
         $result = Extension\analyticsDatasetGetAll($this->core, GetAllAnalyticsDatasetsOptions::export($options));
         $datasets = [];
@@ -120,7 +120,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function createIndex(string $datasetName, string $indexName, array $fields, CreateAnalyticsIndexOptions $options = null): void
+    public function createIndex(string $datasetName, string $indexName, array $fields, ?CreateAnalyticsIndexOptions $options = null): void
     {
         Extension\analyticsIndexCreate($this->core, $datasetName, $indexName, $fields, CreateAnalyticsIndexOptions::export($options));
     }
@@ -134,7 +134,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function dropIndex(string $datasetName, string $indexName, DropAnalyticsIndexOptions $options = null): void
+    public function dropIndex(string $datasetName, string $indexName, ?DropAnalyticsIndexOptions $options = null): void
     {
         Extension\analyticsIndexDrop($this->core, $datasetName, $indexName, DropAnalyticsIndexOptions::export($options));
     }
@@ -147,7 +147,7 @@ class AnalyticsIndexManager
      * @return array array of {@link AnalyticsIndex}
      * @since 4.2.4
      */
-    public function getAllIndexes(GetAllAnalyticsIndexesOptions $options = null): array
+    public function getAllIndexes(?GetAllAnalyticsIndexesOptions $options = null): array
     {
         $result = Extension\analyticsIndexGetAll($this->core, GetAllAnalyticsIndexesOptions::export($options));
         $indexes = [];
@@ -164,7 +164,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function connectLink(ConnectAnalyticsLinkOptions $options = null): void
+    public function connectLink(?ConnectAnalyticsLinkOptions $options = null): void
     {
         Extension\analyticsLinkConnect($this->core, ConnectAnalyticsLinkOptions::export($options));
     }
@@ -176,7 +176,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function disconnectLink(DisconnectAnalyticsLinkOptions $options = null): void
+    public function disconnectLink(?DisconnectAnalyticsLinkOptions $options = null): void
     {
         Extension\analyticsLinkDisconnect($this->core, DisconnectAnalyticsLinkOptions::export($options));
     }
@@ -190,7 +190,7 @@ class AnalyticsIndexManager
      * and values are an associative array of datasets to number of pending mutations.
      * @since 4.2.4
      */
-    public function getPendingMutations(GetAnalyticsPendingMutationsOptions $options = null): array
+    public function getPendingMutations(?GetAnalyticsPendingMutationsOptions $options = null): array
     {
         $results = Extension\analyticsPendingMutationsGet($this->core, GetAnalyticsPendingMutationsOptions::export($options));
 
@@ -209,7 +209,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function createLink(AnalyticsLink $link, CreateAnalyticsLinkOptions $options = null): void
+    public function createLink(AnalyticsLink $link, ?CreateAnalyticsLinkOptions $options = null): void
     {
         Extension\analyticsLinkCreate($this->core, $link->export(), CreateAnalyticsLinkOptions::export($options));
     }
@@ -226,7 +226,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function replaceLink(AnalyticsLink $link, ReplaceAnalyticsLinkOptions $options = null): void
+    public function replaceLink(AnalyticsLink $link, ?ReplaceAnalyticsLinkOptions $options = null): void
     {
         Extension\analyticsLinkReplace($this->core, $link->export(), ReplaceAnalyticsLinkOptions::export($options));
     }
@@ -240,7 +240,7 @@ class AnalyticsIndexManager
      *
      * @since 4.2.4
      */
-    public function dropLink(string $linkName, string $dataverseName, DropAnalyticsLinkOptions $options = null): void
+    public function dropLink(string $linkName, string $dataverseName, ?DropAnalyticsLinkOptions $options = null): void
     {
         Extension\analyticsLinkDrop($this->core, $linkName, $dataverseName, DropAnalyticsLinkOptions::export($options));
     }
@@ -256,7 +256,7 @@ class AnalyticsIndexManager
      * @return array array of {@link CouchbaseRemoteAnalyticsLink}, {@link S3ExternalAnalyticsLink}, or {@link AzureBlobExternalAnalyticsLink}
      * @since 4.2.4
      */
-    public function getLinks(GetAnalyticsLinksOptions $options = null): array
+    public function getLinks(?GetAnalyticsLinksOptions $options = null): array
     {
         $result = Extension\analyticsLinkGetAll($this->core, GetAnalyticsLinksOptions::export($options));
         $links = [];

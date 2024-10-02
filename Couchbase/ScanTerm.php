@@ -31,7 +31,7 @@ class ScanTerm
      *
      * @since 4.1.6
      */
-    public function __construct(string $term, bool $exclusive = null)
+    public function __construct(string $term, ?bool $exclusive = null)
     {
         $this->term = $term;
         $this->exclusive = $exclusive;
@@ -46,7 +46,7 @@ class ScanTerm
      * @return ScanTerm
      * @since 4.1.6
      */
-    public static function build(string $term, bool $exclusive = null): ScanTerm
+    public static function build(string $term, ?bool $exclusive = null): ScanTerm
     {
         return new ScanTerm($term, $exclusive);
     }

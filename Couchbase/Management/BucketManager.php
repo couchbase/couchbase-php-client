@@ -46,7 +46,7 @@ class BucketManager implements BucketManagerInterface
      * @param CreateBucketOptions|null $options the options to use when creating the bucket.
      * @since 4.0.0
      */
-    public function createBucket(BucketSettings $settings, CreateBucketOptions $options = null)
+    public function createBucket(BucketSettings $settings, ?CreateBucketOptions $options = null)
     {
         Extension\bucketCreate($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options));
     }
@@ -58,7 +58,7 @@ class BucketManager implements BucketManagerInterface
      * @param UpdateBucketOptions|null $options the options to use when updating the bucket.
      * @since 4.0.0
      */
-    public function updateBucket(BucketSettings $settings, UpdateBucketOptions $options = null)
+    public function updateBucket(BucketSettings $settings, ?UpdateBucketOptions $options = null)
     {
         Extension\bucketUpdate($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options));
     }
@@ -82,7 +82,7 @@ class BucketManager implements BucketManagerInterface
      * @param DropBucketOptions|null $options the options to use when dropping the bucket.
      * @since 4.0.0
      */
-    public function dropBucket(string $name, DropBucketOptions $options = null)
+    public function dropBucket(string $name, ?DropBucketOptions $options = null)
     {
         Extension\bucketDrop($this->core, $name, DropBucketOptions::export($options));
     }
@@ -94,7 +94,7 @@ class BucketManager implements BucketManagerInterface
      * @param GetBucketOptions|null $options the options to use when getting the bucket.
      * @since 4.0.0
      */
-    public function getBucket(string $name, GetBucketOptions $options = null): BucketSettings
+    public function getBucket(string $name, ?GetBucketOptions $options = null): BucketSettings
     {
         $result = Extension\bucketGet($this->core, $name, GetBucketOptions::export($options));
         return BucketSettings::import($result);
@@ -107,7 +107,7 @@ class BucketManager implements BucketManagerInterface
      *
      * @since 4.0.0
      */
-    public function getAllBuckets(GetAllBucketsOptions $options = null): array
+    public function getAllBuckets(?GetAllBucketsOptions $options = null): array
     {
         $result = Extension\bucketGetAll($this->core, GetAllBucketsOptions::export($options));
         $buckets = [];
@@ -124,7 +124,7 @@ class BucketManager implements BucketManagerInterface
      * @param FlushBucketOptions|null $options the options to use when flushing the bucket.
      * @since 4.0.0
      */
-    public function flush(string $name, FlushBucketOptions $options = null)
+    public function flush(string $name, ?FlushBucketOptions $options = null)
     {
         Extension\bucketFlush($this->core, $name, FlushBucketOptions::export($options));
     }

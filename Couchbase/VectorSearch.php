@@ -38,7 +38,7 @@ class VectorSearch implements JsonSerializable
      *
      * @UNCOMMITTED: This API may change in the future.
      */
-    public function __construct(array $vectorQueries, VectorSearchOptions $options = null)
+    public function __construct(array $vectorQueries, ?VectorSearchOptions $options = null)
     {
         if (empty($vectorQueries)) {
             throw new InvalidArgumentException("At least one vector query must be specified");
@@ -58,7 +58,7 @@ class VectorSearch implements JsonSerializable
      *
      * @UNCOMMITTED: This API may change in the future.
      */
-    public static function build(array $vectorQueries, VectorSearchOptions $options = null): VectorSearch
+    public static function build(array $vectorQueries, ?VectorSearchOptions $options = null): VectorSearch
     {
         return new VectorSearch($vectorQueries, $options);
     }

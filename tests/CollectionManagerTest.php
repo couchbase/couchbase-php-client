@@ -409,7 +409,7 @@ class CollectionManagerTest extends Helpers\CouchbaseTestCase
     /**
      * @throws ScopeNotFoundException
      */
-    private function getScope(string $scopeName, CollectionManager $manager = null): ScopeSpec
+    private function getScope(string $scopeName, ?CollectionManager $manager = null): ScopeSpec
     {
         if (is_null($manager)) {
             $manager = $this->manager;

@@ -51,7 +51,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function getIndex(string $indexName, GetSearchIndexOptions $options = null): SearchIndex
+    public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
         $result = Extension\searchIndexGet($this->core, $indexName, GetSearchIndexOptions::export($options));
 
@@ -66,7 +66,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function getAllIndexes(GetAllSearchIndexesOptions $options = null): array
+    public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
         $result = Extension\searchIndexGetAll($this->core, GetAllSearchIndexesOptions::export($options));
         $indexes = [];
@@ -84,7 +84,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function upsertIndex(SearchIndex $indexDefinition, UpsertSearchIndexOptions $options = null)
+    public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
         Extension\searchIndexUpsert($this->core, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
     }
@@ -97,7 +97,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function dropIndex(string $name, DropSearchIndexOptions $options = null)
+    public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
         Extension\searchIndexDrop($this->core, $name, DropSearchIndexOptions::export($options));
     }
@@ -111,7 +111,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function getIndexedDocumentsCount(string $indexName, GetIndexedSearchIndexOptions $options = null): int
+    public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
         $result = Extension\searchIndexGetDocumentsCount($this->core, $indexName, GetIndexedSearchIndexOptions::export($options));
         return $result['count'];
@@ -125,7 +125,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function pauseIngest(string $indexName, PauseIngestSearchIndexOptions $options = null)
+    public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
         Extension\searchIndexIngestPause($this->core, $indexName, PauseIngestSearchIndexOptions::export($options));
     }
@@ -138,7 +138,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function resumeIngest(string $indexName, ResumeIngestSearchIndexOptions $options = null)
+    public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
         Extension\searchIndexIngestResume($this->core, $indexName, ResumeIngestSearchIndexOptions::export($options));
     }
@@ -151,7 +151,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function allowQuerying(string $indexName, AllowQueryingSearchIndexOptions $options = null)
+    public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
         Extension\searchIndexQueryingAllow($this->core, $indexName, AllowQueryingSearchIndexOptions::export($options));
     }
@@ -164,7 +164,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function disallowQuerying(string $indexName, DisallowQueryingSearchIndexOptions $options = null)
+    public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
         Extension\searchIndexQueryingDisallow($this->core, $indexName, DisallowQueryingSearchIndexOptions::export($options));
     }
@@ -177,7 +177,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function freezePlan(string $indexName, FreezePlanSearchIndexOptions $options = null)
+    public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
         Extension\searchIndexPlanFreeze($this->core, $indexName, FreezePlanSearchIndexOptions::export($options));
     }
@@ -189,7 +189,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function unfreezePlan(string $indexName, UnfreezePlanSearchIndexOptions $options = null)
+    public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
         Extension\searchIndexPlanUnfreeze($this->core, $indexName, UnfreezePlanSearchIndexOptions::export($options));
     }
@@ -204,7 +204,7 @@ class SearchIndexManager implements SearchIndexManagerInterface
      *
      * @since 4.1.5
      */
-    public function analyzeDocument(string $indexName, $document, AnalyzeDocumentOptions $options = null): array
+    public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
         $result = Extension\searchIndexDocumentAnalyze($this->core, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
         return json_decode($result["analysis"], true);

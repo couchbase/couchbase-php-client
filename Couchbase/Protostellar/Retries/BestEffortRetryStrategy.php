@@ -26,7 +26,7 @@ class BestEffortRetryStrategy implements RetryStrategy
 {
     private BackoffCalculator $calculator;
 
-    public function __construct(BackoffCalculator $calculator = null)
+    public function __construct(?BackoffCalculator $calculator = null)
     {
         if (is_null($calculator)) {
             $this->calculator = new ExponentialBackoff();

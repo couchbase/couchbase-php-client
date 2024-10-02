@@ -78,7 +78,7 @@ class BinaryCollection implements BinaryCollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function append(string $id, string $value, AppendOptions $options = null): MutationResult
+    public function append(string $id, string $value, ?AppendOptions $options = null): MutationResult
     {
         $response = Extension\documentAppend(
             $this->core,
@@ -105,7 +105,7 @@ class BinaryCollection implements BinaryCollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function prepend(string $id, string $value, PrependOptions $options = null): MutationResult
+    public function prepend(string $id, string $value, ?PrependOptions $options = null): MutationResult
     {
         $response = Extension\documentPrepend(
             $this->core,
@@ -131,7 +131,7 @@ class BinaryCollection implements BinaryCollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function increment(string $id, IncrementOptions $options = null): CounterResult
+    public function increment(string $id, ?IncrementOptions $options = null): CounterResult
     {
         $response = Extension\documentIncrement(
             $this->core,
@@ -156,7 +156,7 @@ class BinaryCollection implements BinaryCollectionInterface
      * @throws CouchbaseException
      * @since 4.0.0
      */
-    public function decrement(string $id, DecrementOptions $options = null): CounterResult
+    public function decrement(string $id, ?DecrementOptions $options = null): CounterResult
     {
         $response = Extension\documentDecrement(
             $this->core,

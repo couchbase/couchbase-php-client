@@ -33,7 +33,7 @@ class CollectionManagementRequestConverter
     /**
      * @throws InvalidArgumentException
      */
-    public static function getCreateCollectionRequest(string $bucketName, string $scopeName, string $collectionName, CreateCollectionSettings $settings = null): CreateCollectionRequest
+    public static function getCreateCollectionRequest(string $bucketName, string $scopeName, string $collectionName, ?CreateCollectionSettings $settings = null): CreateCollectionRequest
     {
         $exportedSettings = CreateCollectionSettings::export($settings);
         $request = [

@@ -80,7 +80,7 @@ class Collection implements CollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function upsert(string $key, $document, UpsertOptions $options = null): MutationResult
+    public function upsert(string $key, $document, ?UpsertOptions $options = null): MutationResult
     {
         $exportedOptions = UpsertOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -98,7 +98,7 @@ class Collection implements CollectionInterface
     /**
      * @throws InvalidArgumentException|DecodingFailureException
      */
-    public function insert(string $key, $document, InsertOptions $options = null): MutationResult
+    public function insert(string $key, $document, ?InsertOptions $options = null): MutationResult
     {
         $exportedOptions = InsertOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -116,7 +116,7 @@ class Collection implements CollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function replace(string $key, $document, ReplaceOptions $options = null): MutationResult
+    public function replace(string $key, $document, ?ReplaceOptions $options = null): MutationResult
     {
         $exportedOptions = ReplaceOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -134,7 +134,7 @@ class Collection implements CollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function remove(string $key, RemoveOptions $options = null): MutationResult
+    public function remove(string $key, ?RemoveOptions $options = null): MutationResult
     {
         $exportedOptions = RemoveOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -149,7 +149,7 @@ class Collection implements CollectionInterface
         return KVResponseConverter::convertMutationResult($key, $res);
     }
 
-    public function get(string $key, GetOptions $options = null): GetResult
+    public function get(string $key, ?GetOptions $options = null): GetResult
     {
         $exportedOptions = GetOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -164,7 +164,7 @@ class Collection implements CollectionInterface
         return KVResponseConverter::convertGetResult($key, $res, $options);
     }
 
-    public function exists(string $key, ExistsOptions $options = null): ExistsResult
+    public function exists(string $key, ?ExistsOptions $options = null): ExistsResult
     {
         $exportedOptions = ExistsOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -183,7 +183,7 @@ class Collection implements CollectionInterface
      * @throws ProtocolException
      * @throws InvalidArgumentException
      */
-    public function getAndTouch(string $key, $expiry, GetAndTouchOptions $options = null): GetResult
+    public function getAndTouch(string $key, $expiry, ?GetAndTouchOptions $options = null): GetResult
     {
         $exportedOptions = GetAndTouchOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -202,7 +202,7 @@ class Collection implements CollectionInterface
      * @throws ProtocolException
      * @throws InvalidArgumentException
      */
-    public function getAndLock(string $key, int $lockTimeSeconds, GetAndLockOptions $options = null): GetResult
+    public function getAndLock(string $key, int $lockTimeSeconds, ?GetAndLockOptions $options = null): GetResult
     {
         $exportedOptions = GetAndLockOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -220,7 +220,7 @@ class Collection implements CollectionInterface
     /**
      * @throws ProtocolException
      */
-    public function unlock(string $key, string $cas, UnlockOptions $options = null): Result
+    public function unlock(string $key, string $cas, ?UnlockOptions $options = null): Result
     {
         $exportedOptions = UnlockOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -235,7 +235,7 @@ class Collection implements CollectionInterface
         return KVResponseConverter::convertUnlockResult($key, $cas);
     }
 
-    public function touch(string $key, $expiry, TouchOptions $options = null): MutationResult
+    public function touch(string $key, $expiry, ?TouchOptions $options = null): MutationResult
     {
         $exportedOptions = TouchOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -250,7 +250,7 @@ class Collection implements CollectionInterface
         return KVResponseConverter::convertTouchResult($key, $res);
     }
 
-    public function lookupIn(string $key, array $specs, LookupInOptions $options = null): LookupInResult
+    public function lookupIn(string $key, array $specs, ?LookupInOptions $options = null): LookupInResult
     {
         $exportedOptions = LookupInOptions::export($options);
         [$request, $order] = RequestFactory::makeRequest(
@@ -268,7 +268,7 @@ class Collection implements CollectionInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function mutateIn(string $key, array $specs, MutateInOptions $options = null): MutateInResult
+    public function mutateIn(string $key, array $specs, ?MutateInOptions $options = null): MutateInResult
     {
         $exportedOptions = MutateInOptions::export($options);
         [$request, $order] = RequestFactory::makeRequest(
@@ -286,7 +286,7 @@ class Collection implements CollectionInterface
     /**
      * @throws DocumentIrretrievableException
      */
-    public function getAnyReplica(string $key, GetAnyReplicaOptions $options = null): GetReplicaResult
+    public function getAnyReplica(string $key, ?GetAnyReplicaOptions $options = null): GetReplicaResult
     {
         $exportedOptions = GetAnyReplicaOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -304,7 +304,7 @@ class Collection implements CollectionInterface
     /**
      * @throws DocumentNotFoundException
      */
-    public function getAllReplicas(string $key, GetAllReplicasOptions $options = null): array
+    public function getAllReplicas(string $key, ?GetAllReplicasOptions $options = null): array
     {
         $exportedOptions = GetAllReplicasOptions::export($options);
         $request = RequestFactory::makeRequest(

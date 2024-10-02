@@ -52,7 +52,7 @@ class BucketManager implements BucketManagerInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function createBucket(BucketSettings $settings, CreateBucketOptions $options = null)
+    public function createBucket(BucketSettings $settings, ?CreateBucketOptions $options = null)
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = CreateBucketOptions::export($options);
@@ -70,7 +70,7 @@ class BucketManager implements BucketManagerInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function updateBucket(BucketSettings $settings, UpdateBucketOptions $options = null)
+    public function updateBucket(BucketSettings $settings, ?UpdateBucketOptions $options = null)
     {
         $exportedSettings = BucketSettings::export($settings);
         $exportedOptions = UpdateBucketOptions::export($options);
@@ -85,7 +85,7 @@ class BucketManager implements BucketManagerInterface
         );
     }
 
-    public function dropBucket(string $name, DropBucketOptions $options = null)
+    public function dropBucket(string $name, ?DropBucketOptions $options = null)
     {
         $exportedOptions = DropBucketOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -102,7 +102,7 @@ class BucketManager implements BucketManagerInterface
     /**
      * @throws BucketNotFoundException
      */
-    public function getBucket(string $name, GetBucketOptions $options = null): BucketSettings
+    public function getBucket(string $name, ?GetBucketOptions $options = null): BucketSettings
     {
         $exportedOptions = GetBucketOptions::export($options);
         $getAllBucketOptions = isset($exportedOptions['timeoutMilliseconds'])
@@ -119,7 +119,7 @@ class BucketManager implements BucketManagerInterface
     /**
      * @throws DecodingFailureException|InvalidArgumentException
      */
-    public function getAllBuckets(GetAllBucketsOptions $options = null): array
+    public function getAllBuckets(?GetAllBucketsOptions $options = null): array
     {
         $exportedOptions = GetAllBucketsOptions::export($options);
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::MANAGEMENT, $exportedOptions);
@@ -141,7 +141,7 @@ class BucketManager implements BucketManagerInterface
     /**
      * @throws UnsupportedOperationException
      */
-    public function flush(string $name, FlushBucketOptions $options = null)
+    public function flush(string $name, ?FlushBucketOptions $options = null)
     {
         throw new UnsupportedOperationException("Flush is not available in CNG");
     }

@@ -59,7 +59,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function getAllIndexes(GetAllQueryIndexesOptions $options = null): array
+    public function getAllIndexes(?GetAllQueryIndexesOptions $options = null): array
     {
         $exported = GetAllQueryIndexesOptions::export($options);
         $this->checkOptions($exported);
@@ -82,7 +82,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function createIndex(string $indexName, array $keys, CreateQueryIndexOptions $options = null)
+    public function createIndex(string $indexName, array $keys, ?CreateQueryIndexOptions $options = null)
     {
         $exported = CreateQueryIndexOptions::export($options);
         $this->checkOptions($exported);
@@ -97,7 +97,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function createPrimaryIndex(CreateQueryPrimaryIndexOptions $options = null)
+    public function createPrimaryIndex(?CreateQueryPrimaryIndexOptions $options = null)
     {
         $exported = CreateQueryPrimaryIndexOptions::export($options);
         $this->checkOptions($exported);
@@ -113,7 +113,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function dropIndex(string $indexName, DropQueryIndexOptions $options = null)
+    public function dropIndex(string $indexName, ?DropQueryIndexOptions $options = null)
     {
         $exported = DropQueryIndexOptions::export($options);
         $this->checkOptions($exported);
@@ -128,7 +128,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function dropPrimaryIndex(DropQueryPrimaryIndexOptions $options = null)
+    public function dropPrimaryIndex(?DropQueryPrimaryIndexOptions $options = null)
     {
         $exported = DropQueryPrimaryIndexOptions::export($options);
         $this->checkOptions($exported);
@@ -143,7 +143,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws InvalidArgumentException
      * @since 4.1.2
      */
-    public function buildDeferredIndexes(BuildQueryIndexesOptions $options = null)
+    public function buildDeferredIndexes(?BuildQueryIndexesOptions $options = null)
     {
         $exported = BuildQueryIndexesOptions::export($options);
         $this->checkOptions($exported);
@@ -160,7 +160,7 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      * @throws UnambiguousTimeoutException|InvalidArgumentException
      * @since 4.1.2
      */
-    public function watchIndexes(array $indexNames, int $timeoutMilliseconds, WatchQueryIndexesOptions $options = null)
+    public function watchIndexes(array $indexNames, int $timeoutMilliseconds, ?WatchQueryIndexesOptions $options = null)
     {
         $exported = WatchQueryIndexesOptions::export($options);
         $this->checkOptions($exported);

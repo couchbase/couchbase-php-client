@@ -65,7 +65,7 @@ class Cluster implements ClusterInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function query(string $statement, QueryOptions $options = null): QueryResult
+    public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
         $exportedOptions = QueryOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -81,7 +81,7 @@ class Cluster implements ClusterInterface
         return new QueryResult($finalArray, QueryOptions::getTranscoder($options));
     }
 
-    public function analyticsQuery(string $statement, AnalyticsOptions $options = null): AnalyticsResult
+    public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
         $exportedOptions = AnalyticsOptions::export($options);
         $request = RequestFactory::makeRequest(
@@ -100,7 +100,7 @@ class Cluster implements ClusterInterface
     /**
      * @throws InvalidArgumentException
      */
-    public function searchQuery(string $indexName, SearchQuery $query, SearchOptions $options = null): SearchResult
+    public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult
     {
         $exportedOptions = SearchOptions::export($options);
         $request = RequestFactory::makeRequest(
