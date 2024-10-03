@@ -25,7 +25,7 @@ namespace Couchbase;
  *
  * Represents full text search query
  *
- * @see https://developer.couchbase.com/documentation/server/4.6/sdk/php/full-text-searching-with-sdk.html
+ * @see https://docs.couchbase.com/php-sdk/current/howtos/full-text-searching-with-sdk.html
  *   Searching from the SDK
  */
 interface SearchQuery
