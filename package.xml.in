@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2024-07-24</date>
+    <date>2024-10-22</date>
     <version>
-        <release>4.2.3</release>
+        <release>4.2.4</release>
         <api>4.2.1</api>
     </version>
     <stability>
@@ -27,8 +27,19 @@
         Enhancements
         ============
 
-        * Core updated to 1.0.1. Release notes:
-          https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-1-22-august-2024
+        * PCBC-832: Management API - Analytics Management (#177).
+
+        * Core updated to 1.0.3. Release notes:
+          https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-3-22-october-2024
+
+        Fixes
+        =====
+
+        * PCBC-1009: do not use IS_RESOURCE in function signatures.
+
+        * PCBC-1010: use explicit nullable types where applicable to avoid deprecation warning in PHP 8.4.
+
+        * Fix SearchQuery API docs link in API reference.
     </notes>
     <contents>
     </contents>
@@ -45,6 +56,23 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <date>2024-07-24</date>
+        <version>
+            <release>4.2.3</release>
+            <api>4.2.1</api>
+        </version>
+        <stability>
+            <release>stable</release>
+            <api>stable</api>
+        </stability>
+        <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+        <notes>
+            Enhancements
+            ============
+
+            * Core updated to 1.0.1. Release notes:
+              https://docs.couchbase.com/cxx-sdk/current/project-docs/sdk-release-notes.html#version-1-0-1-22-august-2024
+        </notes>
         <release>
             <date>2024-07-24</date>
             <version>
