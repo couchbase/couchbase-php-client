@@ -90,6 +90,7 @@ endif()
 target_include_directories(couchbase SYSTEM PRIVATE
     ${PHP_INCLUDE_DIRS}
     ${PROJECT_BINARY_DIR}/generated
+    ${PROJECT_BINARY_DIR}/deps/couchbase-cxx-client/generated
     ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client
     ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/cxx_function
     ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/expected/include)

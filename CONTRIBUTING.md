@@ -12,7 +12,7 @@ For more interactive discussions we have `#sdks` channel on our [Discord](https:
 
 The simplest way to help is to report bugs or request new features.
 
-We use Jira for issue tracking: [https://issues.couchbase.com/projects/PCBC/](https://issues.couchbase.com/projects/PCBC/)
+We use Jira for issue tracking: [https://jira.issues.couchbase.com/projects/PCBC/](https://jira.issues.couchbase.com/projects/PCBC/)
 
 To create an issue, or comment on an existing issue, you'll need to sign up
 for an account. It's quick and painless (or if it's not, click on the
