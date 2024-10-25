@@ -48,7 +48,8 @@ class BucketManager implements BucketManagerInterface
      */
     public function createBucket(BucketSettings $settings, ?CreateBucketOptions $options = null)
     {
-        Extension\bucketCreate($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketCreate';
+        $function($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options));
     }
 
     /**
@@ -60,7 +61,8 @@ class BucketManager implements BucketManagerInterface
      */
     public function updateBucket(BucketSettings $settings, ?UpdateBucketOptions $options = null)
     {
-        Extension\bucketUpdate($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketUpdate';
+        $function($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options));
     }
 
     /**
@@ -84,7 +86,8 @@ class BucketManager implements BucketManagerInterface
      */
     public function dropBucket(string $name, ?DropBucketOptions $options = null)
     {
-        Extension\bucketDrop($this->core, $name, DropBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketDrop';
+        $function($this->core, $name, DropBucketOptions::export($options));
     }
 
     /**
@@ -96,7 +99,8 @@ class BucketManager implements BucketManagerInterface
      */
     public function getBucket(string $name, ?GetBucketOptions $options = null): BucketSettings
     {
-        $result = Extension\bucketGet($this->core, $name, GetBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGet';
+        $result = $function($this->core, $name, GetBucketOptions::export($options));
         return BucketSettings::import($result);
     }
 
@@ -109,7 +113,8 @@ class BucketManager implements BucketManagerInterface
      */
     public function getAllBuckets(?GetAllBucketsOptions $options = null): array
     {
-        $result = Extension\bucketGetAll($this->core, GetAllBucketsOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGetAll';
+        $result = $function($this->core, GetAllBucketsOptions::export($options));
         $buckets = [];
         foreach ($result as $bucket) {
             $buckets[] = BucketSettings::import($bucket);
@@ -126,6 +131,7 @@ class BucketManager implements BucketManagerInterface
      */
     public function flush(string $name, ?FlushBucketOptions $options = null)
     {
-        Extension\bucketFlush($this->core, $name, FlushBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketFlush';
+        $function($this->core, $name, FlushBucketOptions::export($options));
     }
 }

@@ -46,10 +46,22 @@ COUCHBASE_API
 ZEND_EXTERN_MODULE_GLOBALS(couchbase)
 #define COUCHBASE_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(couchbase, v)
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+#ifdef COUCHBASE_ABI_VERSION
+    #define COUCHBASE_NAMESPACE_ABI_SUFFIX "_" TOSTRING(COUCHBASE_ABI_VERSION)
+#else
+    #define COUCHBASE_NAMESPACE_ABI_SUFFIX ""
+#endif
+
 namespace couchbase::php
 {
 COUCHBASE_API void
 initialize_exceptions(const zend_function_entry* exception_functions);
+
+COUCHBASE_API void
+initialize_exception_aliases();
 
 COUCHBASE_API zend_class_entry*
 couchbase_exception();

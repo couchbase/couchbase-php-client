@@ -49,7 +49,8 @@ class AnalyticsIndexManager
      */
     public function createDataverse(string $dataverseName, ?CreateAnalyticsDataverseOptions $options = null): void
     {
-        Extension\analyticsDataverseCreate($this->core, $dataverseName, CreateAnalyticsDataverseOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseCreate';
+        $function($this->core, $dataverseName, CreateAnalyticsDataverseOptions::export($options));
     }
 
     /**
@@ -62,7 +63,8 @@ class AnalyticsIndexManager
      */
     public function dropDataverse(string $dataverseName, ?DropAnalyticsDataverseOptions $options = null): void
     {
-        Extension\analyticsDataverseDrop($this->core, $dataverseName, DropAnalyticsDataverseOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseDrop';
+        $function($this->core, $dataverseName, DropAnalyticsDataverseOptions::export($options));
     }
 
     /**
@@ -76,7 +78,8 @@ class AnalyticsIndexManager
      */
     public function createDataset(string $datasetName, string $bucketName, ?CreateAnalyticsDatasetOptions $options = null): void
     {
-        Extension\analyticsDatasetCreate($this->core, $datasetName, $bucketName, CreateAnalyticsDatasetOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetCreate';
+        $function($this->core, $datasetName, $bucketName, CreateAnalyticsDatasetOptions::export($options));
     }
 
     /**
@@ -89,7 +92,8 @@ class AnalyticsIndexManager
      */
     public function dropDataset(string $datasetName, ?DropAnalyticsDatasetOptions $options = null): void
     {
-        Extension\analyticsDatasetDrop($this->core, $datasetName, DropAnalyticsDatasetOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetDrop';
+        $function($this->core, $datasetName, DropAnalyticsDatasetOptions::export($options));
     }
 
     /**
@@ -102,7 +106,8 @@ class AnalyticsIndexManager
      */
     public function getAllDatasets(?GetAllAnalyticsDatasetsOptions $options = null): array
     {
-        $result = Extension\analyticsDatasetGetAll($this->core, GetAllAnalyticsDatasetsOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetGetAll';
+        $result = $function($this->core, GetAllAnalyticsDatasetsOptions::export($options));
         $datasets = [];
         foreach ($result as $dataset) {
             $datasets[] = AnalyticsDataset::import($dataset);
@@ -122,7 +127,8 @@ class AnalyticsIndexManager
      */
     public function createIndex(string $datasetName, string $indexName, array $fields, ?CreateAnalyticsIndexOptions $options = null): void
     {
-        Extension\analyticsIndexCreate($this->core, $datasetName, $indexName, $fields, CreateAnalyticsIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexCreate';
+        $function($this->core, $datasetName, $indexName, $fields, CreateAnalyticsIndexOptions::export($options));
     }
 
     /**
@@ -136,7 +142,8 @@ class AnalyticsIndexManager
      */
     public function dropIndex(string $datasetName, string $indexName, ?DropAnalyticsIndexOptions $options = null): void
     {
-        Extension\analyticsIndexDrop($this->core, $datasetName, $indexName, DropAnalyticsIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexDrop';
+        $function($this->core, $datasetName, $indexName, DropAnalyticsIndexOptions::export($options));
     }
 
     /**
@@ -149,7 +156,8 @@ class AnalyticsIndexManager
      */
     public function getAllIndexes(?GetAllAnalyticsIndexesOptions $options = null): array
     {
-        $result = Extension\analyticsIndexGetAll($this->core, GetAllAnalyticsIndexesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexGetAll';
+        $result = $function($this->core, GetAllAnalyticsIndexesOptions::export($options));
         $indexes = [];
         foreach ($result as $index) {
             $indexes[] = AnalyticsIndex::import($index);
@@ -166,7 +174,8 @@ class AnalyticsIndexManager
      */
     public function connectLink(?ConnectAnalyticsLinkOptions $options = null): void
     {
-        Extension\analyticsLinkConnect($this->core, ConnectAnalyticsLinkOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkConnect';
+        $function($this->core, ConnectAnalyticsLinkOptions::export($options));
     }
 
     /**
@@ -178,7 +187,8 @@ class AnalyticsIndexManager
      */
     public function disconnectLink(?DisconnectAnalyticsLinkOptions $options = null): void
     {
-        Extension\analyticsLinkDisconnect($this->core, DisconnectAnalyticsLinkOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDisconnect';
+        $function($this->core, DisconnectAnalyticsLinkOptions::export($options));
     }
 
     /**
@@ -192,7 +202,8 @@ class AnalyticsIndexManager
      */
     public function getPendingMutations(?GetAnalyticsPendingMutationsOptions $options = null): array
     {
-        $results = Extension\analyticsPendingMutationsGet($this->core, GetAnalyticsPendingMutationsOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsPendingMutationsGet';
+        $results = $function($this->core, GetAnalyticsPendingMutationsOptions::export($options));
 
         return GetAnalyticsPendingMutationsOptions::import($results);
     }
@@ -211,7 +222,8 @@ class AnalyticsIndexManager
      */
     public function createLink(AnalyticsLink $link, ?CreateAnalyticsLinkOptions $options = null): void
     {
-        Extension\analyticsLinkCreate($this->core, $link->export(), CreateAnalyticsLinkOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkCreate';
+        $function($this->core, $link->export(), CreateAnalyticsLinkOptions::export($options));
     }
 
     /**
@@ -228,7 +240,8 @@ class AnalyticsIndexManager
      */
     public function replaceLink(AnalyticsLink $link, ?ReplaceAnalyticsLinkOptions $options = null): void
     {
-        Extension\analyticsLinkReplace($this->core, $link->export(), ReplaceAnalyticsLinkOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkReplace';
+        $function($this->core, $link->export(), ReplaceAnalyticsLinkOptions::export($options));
     }
 
     /**
@@ -242,7 +255,8 @@ class AnalyticsIndexManager
      */
     public function dropLink(string $linkName, string $dataverseName, ?DropAnalyticsLinkOptions $options = null): void
     {
-        Extension\analyticsLinkDrop($this->core, $linkName, $dataverseName, DropAnalyticsLinkOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDrop';
+        $function($this->core, $linkName, $dataverseName, DropAnalyticsLinkOptions::export($options));
     }
 
     /**
@@ -258,7 +272,8 @@ class AnalyticsIndexManager
      */
     public function getLinks(?GetAnalyticsLinksOptions $options = null): array
     {
-        $result = Extension\analyticsLinkGetAll($this->core, GetAnalyticsLinksOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkGetAll';
+        $result = $function($this->core, GetAnalyticsLinksOptions::export($options));
         $links = [];
         foreach ($result as $link) {
             $links[] = AnalyticsLink::import($link);

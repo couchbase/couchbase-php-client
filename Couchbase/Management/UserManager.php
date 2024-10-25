@@ -49,7 +49,8 @@ class UserManager implements UserManagerInterface
      */
     public function getUser(string $name, ?GetUserOptions $options = null): UserAndMetadata
     {
-        $result = Extension\userGet($this->core, $name, GetUserOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGet';
+        $result = $function($this->core, $name, GetUserOptions::export($options));
         return UserAndMetadata::import($result);
     }
 
@@ -62,7 +63,8 @@ class UserManager implements UserManagerInterface
      */
     public function getAllUsers(?GetAllUsersOptions $options = null): array
     {
-        $result = Extension\userGetAll($this->core, GetAllUsersOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGetAll';
+        $result = $function($this->core, GetAllUsersOptions::export($options));
         $users = [];
         foreach ($result as $user) {
             $users[] = UserAndMetadata::import($user);
@@ -80,7 +82,8 @@ class UserManager implements UserManagerInterface
      */
     public function upsertUser(User $user, ?UpsertUserOptions $options = null)
     {
-        Extension\userUpsert($this->core, User::export($user), UpsertUserOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userUpsert';
+        $function($this->core, User::export($user), UpsertUserOptions::export($options));
     }
 
     /**
@@ -92,7 +95,8 @@ class UserManager implements UserManagerInterface
      */
     public function dropUser(string $name, ?DropUserOptions $options = null)
     {
-        Extension\userDrop($this->core, $name, DropUserOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userDrop';
+        $function($this->core, $name, DropUserOptions::export($options));
     }
 
     /**
@@ -105,7 +109,8 @@ class UserManager implements UserManagerInterface
      */
     public function getRoles(?GetRolesOptions $options = null): array
     {
-        $result = Extension\roleGetAll($this->core, GetRolesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\roleGetAll';
+        $result = $function($this->core, GetRolesOptions::export($options));
         foreach ($result as $role) {
             $roles[] = RoleAndDescription::import($role);
         }
@@ -123,7 +128,8 @@ class UserManager implements UserManagerInterface
      */
     public function getGroup(string $name, ?GetGroupOptions $options = null): Group
     {
-        $result = Extension\groupGet($this->core, $name, GetGroupOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGet';
+        $result = $function($this->core, $name, GetGroupOptions::export($options));
         return Group::import($result);
     }
 
@@ -137,7 +143,8 @@ class UserManager implements UserManagerInterface
      */
     public function getAllGroups(?GetAllGroupsOptions $options = null): array
     {
-        $result = Extension\groupGetAll($this->core, GetAllGroupsOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGetAll';
+        $result = $function($this->core, GetAllGroupsOptions::export($options));
         $groups = [];
         foreach ($result as $group) {
             $groups[] = Group::import($group);
@@ -155,7 +162,8 @@ class UserManager implements UserManagerInterface
      */
     public function upsertGroup(Group $group, ?UpsertGroupOptions $options = null)
     {
-        Extension\groupUpsert($this->core, Group::export($group), UpsertGroupOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupUpsert';
+        $function($this->core, Group::export($group), UpsertGroupOptions::export($options));
     }
 
     /**
@@ -167,7 +175,8 @@ class UserManager implements UserManagerInterface
      */
     public function dropGroup(string $name, ?DropGroupOptions $options = null)
     {
-        Extension\groupDrop($this->core, $name, DropGroupOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupDrop';
+        $function($this->core, $name, DropGroupOptions::export($options));
     }
 
     /**
@@ -178,6 +187,7 @@ class UserManager implements UserManagerInterface
      */
     public function changePassword(string $newPassword, ?ChangePasswordOptions $options = null)
     {
-        Extension\passwordChange($this->core, $newPassword, ChangePasswordOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\passwordChange';
+        $function($this->core, $newPassword, ChangePasswordOptions::export($options));
     }
 }

@@ -52,7 +52,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function getAllIndexes(string $bucketName, ?GetAllQueryIndexesOptions $options = null): array
     {
-        $responses = Extension\queryIndexGetAll($this->core, $bucketName, GetAllQueryIndexesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexGetAll';
+        $responses = $function($this->core, $bucketName, GetAllQueryIndexesOptions::export($options));
         return array_map(
             function (array $response) {
                 return new QueryIndex($response);
@@ -73,7 +74,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function createIndex(string $bucketName, string $indexName, array $keys, ?CreateQueryIndexOptions $options = null)
     {
-        Extension\queryIndexCreate($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreate';
+        $function($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options));
     }
 
     /**
@@ -86,7 +88,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function createPrimaryIndex(string $bucketName, ?CreateQueryPrimaryIndexOptions $options = null)
     {
-        Extension\queryIndexCreatePrimary($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreatePrimary';
+        $function($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options));
     }
 
     /**
@@ -100,7 +103,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function dropIndex(string $bucketName, string $indexName, ?DropQueryIndexOptions $options = null)
     {
-        Extension\queryIndexDrop($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDrop';
+        $function($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options));
     }
 
     /**
@@ -113,7 +117,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function dropPrimaryIndex(string $bucketName, ?DropQueryPrimaryIndexOptions $options = null)
     {
-        Extension\queryIndexDropPrimary($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDropPrimary';
+        $function($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options));
     }
 
     /**
@@ -126,7 +131,8 @@ class QueryIndexManager implements QueryIndexManagerInterface
      */
     public function buildDeferredIndexes(string $bucketName, ?BuildQueryIndexesOptions $options = null)
     {
-        Extension\queryIndexBuildDeferred($this->core, $bucketName, BuildQueryIndexesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexBuildDeferred';
+        $function($this->core, $bucketName, BuildQueryIndexesOptions::export($options));
     }
 
     /**

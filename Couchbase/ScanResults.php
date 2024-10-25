@@ -49,7 +49,8 @@ class ScanResults implements IteratorAggregate
      */
     public function __construct($core, string $bucketName, string $scopeName, string $collectionName, array $type, array $options, Transcoder $transcoder)
     {
-        $this->coreScanResult = Extension\createDocumentScanResult(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createDocumentScanResult';
+        $this->coreScanResult = $function(
             $core,
             $bucketName,
             $scopeName,
@@ -70,10 +71,11 @@ class ScanResults implements IteratorAggregate
     public function getIterator(): Traversable
     {
         return (function () {
-            $res = Extension\documentScanNextItem($this->coreScanResult);
+            $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentScanNextItem';
+            $res = $function($this->coreScanResult);
             while (!is_null($res)) {
                 yield new ScanResult($res, $this->transcoder);
-                $res = Extension\documentScanNextItem($this->coreScanResult);
+                $res = $function($this->coreScanResult);
             }
         })();
     }

@@ -115,8 +115,8 @@ class Collection implements CollectionInterface
      */
     public function get(string $id, ?GetOptions $options = null): GetResult
     {
-        $response = Extension\documentGet(
-            $this->core,
+        $function = COUCHBASE_EXTENSION_NAMESPACE . "\\documentGet";
+        $response = $function($this->core,
             $this->bucketName,
             $this->scopeName,
             $this->name,
@@ -139,7 +139,8 @@ class Collection implements CollectionInterface
      */
     public function exists(string $id, ?ExistsOptions $options = null): ExistsResult
     {
-        $response = Extension\documentExists(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentExists';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -166,7 +167,8 @@ class Collection implements CollectionInterface
      */
     public function getAndLock(string $id, int $lockTimeSeconds, ?GetAndLockOptions $options = null): GetResult
     {
-        $response = Extension\documentGetAndLock(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndLock';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -198,7 +200,8 @@ class Collection implements CollectionInterface
         } else {
             $expirySeconds = (int)$expiry;
         }
-        $response = Extension\documentGetAndTouch(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndTouch';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -225,7 +228,8 @@ class Collection implements CollectionInterface
      */
     public function getAnyReplica(string $id, ?GetAnyReplicaOptions $options = null): GetReplicaResult
     {
-        $response = Extension\documentGetAnyReplica(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAnyReplica';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -250,7 +254,8 @@ class Collection implements CollectionInterface
      */
     public function getAllReplicas(string $id, ?GetAllReplicasOptions $options = null): array
     {
-        $responses = Extension\documentGetAllReplicas(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAllReplicas';
+        $responses = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -281,7 +286,8 @@ class Collection implements CollectionInterface
     public function upsert(string $id, $value, ?UpsertOptions $options = null): MutationResult
     {
         $encoded = UpsertOptions::encodeDocument($options, $value);
-        $response = Extension\documentUpsert(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsert';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -310,7 +316,8 @@ class Collection implements CollectionInterface
     public function insert(string $id, $value, ?InsertOptions $options = null): MutationResult
     {
         $encoded = InsertOptions::encodeDocument($options, $value);
-        $response = Extension\documentInsert(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentInsert';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -340,7 +347,8 @@ class Collection implements CollectionInterface
     public function replace(string $id, $value, ?ReplaceOptions $options = null): MutationResult
     {
         $encoded = ReplaceOptions::encodeDocument($options, $value);
-        $response = Extension\documentReplace(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentReplace';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -368,7 +376,8 @@ class Collection implements CollectionInterface
      */
     public function remove(string $id, ?RemoveOptions $options = null): MutationResult
     {
-        $response = Extension\documentRemove(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemove';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -396,7 +405,8 @@ class Collection implements CollectionInterface
      */
     public function unlock(string $id, string $cas, ?UnlockOptions $options = null): Result
     {
-        $response = Extension\documentUnlock(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUnlock';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -428,7 +438,8 @@ class Collection implements CollectionInterface
         } else {
             $expirySeconds = (int)$expiry;
         }
-        $response = Extension\documentTouch(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentTouch';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -464,7 +475,8 @@ class Collection implements CollectionInterface
         if ($options != null && $options->needToFetchExpiry()) {
             $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
         }
-        $response = Extension\documentLookupIn(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupIn';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -500,7 +512,8 @@ class Collection implements CollectionInterface
         if ($options != null && $options->needToFetchExpiry()) {
             $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
         }
-        $response = Extension\documentLookupInAnyReplica(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAnyReplica';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -537,7 +550,8 @@ class Collection implements CollectionInterface
         if ($options != null && $options->needToFetchExpiry()) {
             $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
         }
-        $responses = Extension\documentLookupInAllReplicas(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAllReplicas';
+        $responses = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -576,7 +590,8 @@ class Collection implements CollectionInterface
             },
             $specs
         );
-        $response = Extension\documentMutateIn(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentMutateIn';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -600,7 +615,8 @@ class Collection implements CollectionInterface
      */
     public function getMulti(array $ids, ?GetOptions $options = null): array
     {
-        $responses = Extension\documentGetMulti(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetMulti';
+        $responses = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -666,7 +682,8 @@ class Collection implements CollectionInterface
      */
     public function removeMulti(array $entries, ?RemoveOptions $options = null): array
     {
-        $responses = Extension\documentRemoveMulti(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemoveMulti';
+        $responses = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -712,7 +729,8 @@ class Collection implements CollectionInterface
             },
             $entries
         );
-        $responses = Extension\documentUpsertMulti(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsertMulti';
+        $responses = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,

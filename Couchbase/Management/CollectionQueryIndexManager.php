@@ -63,7 +63,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = GetAllQueryIndexesOptions::export($options);
         $this->checkOptions($exported);
-        $responses = Extension\collectionQueryIndexGetAll($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexGetAll';
+        $responses = $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
         return array_map(
             function (array $response) {
                 return new QueryIndex($response);
@@ -86,7 +87,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = CreateQueryIndexOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexCreate($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreate';
+        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported);
     }
 
     /**
@@ -101,7 +103,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = CreateQueryPrimaryIndexOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexCreatePrimary($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreatePrimary';
+        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
     }
 
     /**
@@ -117,7 +120,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = DropQueryIndexOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexDrop($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDrop';
+        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $exported);
     }
 
     /**
@@ -132,7 +136,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = DropQueryPrimaryIndexOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexDropPrimary($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDropPrimary';
+        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
     }
 
     /**
@@ -147,7 +152,8 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
     {
         $exported = BuildQueryIndexesOptions::export($options);
         $this->checkOptions($exported);
-        Extension\collectionQueryIndexBuildDeferred($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexBuildDeferred';
+        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
     }
 
     /**
