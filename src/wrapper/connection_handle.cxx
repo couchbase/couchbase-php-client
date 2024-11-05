@@ -2096,6 +2096,9 @@ connection_handle::document_upsert_multi(zval* return_value,
   if (auto e = cb_set_durability(opts, options); e.ec) {
     return e;
   }
+  if (auto e = cb_set_expiry(opts, options); e.ec) {
+    return e;
+  }
   if (auto e = cb_set_preserve_expiry(opts, options); e.ec) {
     return e;
   }
