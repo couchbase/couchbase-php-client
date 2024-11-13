@@ -51,7 +51,8 @@ class TransactionAttemptContext
      */
     public function get(Collection $collection, string $id): TransactionGetResult
     {
-        $response = Extension\transactionGet(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGet';
+        $response = $function(
             $this->transaction,
             $collection->bucketName(),
             $collection->scopeName(),
@@ -75,7 +76,8 @@ class TransactionAttemptContext
     public function insert(Collection $collection, string $id, $value): TransactionGetResult
     {
         $encoded = InsertOptions::encodeDocument(null, $value);
-        $response = Extension\transactionInsert(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionInsert';
+        $response = $function(
             $this->transaction,
             $collection->bucketName(),
             $collection->scopeName(),
@@ -99,7 +101,8 @@ class TransactionAttemptContext
     public function replace(TransactionGetResult $document, $value): TransactionGetResult
     {
         $encoded = ReplaceOptions::encodeDocument(null, $value);
-        $response = Extension\transactionReplace(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionReplace';
+        $response = $function(
             $this->transaction,
             $document->export(),
             $encoded[0] /* ignore flags */
@@ -118,7 +121,8 @@ class TransactionAttemptContext
      */
     public function remove(TransactionGetResult $document)
     {
-        Extension\transactionRemove(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionRemove';
+        $function(
             $this->transaction,
             $document->export(),
         );
@@ -135,7 +139,8 @@ class TransactionAttemptContext
      */
     public function query(string $statement, ?TransactionQueryOptions $options = null)
     {
-        $result = Extension\transactionQuery($this->transaction, $statement, TransactionQueryOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionQuery';
+        $result = $function($this->transaction, $statement, TransactionQueryOptions::export($options));
 
         return new QueryResult($result, TransactionQueryOptions::getTranscoder($options));
     }

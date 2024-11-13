@@ -46,7 +46,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
-        $result = Extension\scopeSearchIndexGet($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGet';
+        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options));
 
         return SearchIndex::import($result);
     }
@@ -61,7 +62,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
-        $result = Extension\scopeSearchIndexGetAll($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetAll';
+        $result = $function($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options));
         $indexes = [];
         foreach ($result as $index) {
             $indexes[] = SearchIndex::import($index);
@@ -79,7 +81,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexUpsert($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexUpsert';
+        $function($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
     }
 
     /**
@@ -92,7 +95,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexDrop($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDrop';
+        $function($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options));
     }
 
     /**
@@ -106,7 +110,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
-        $result = Extension\scopeSearchIndexGetDocumentsCount($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetDocumentsCount';
+        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options));
         return $result['count'];
     }
 
@@ -120,7 +125,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexIngestPause($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestPause';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options));
     }
 
     /**
@@ -133,7 +139,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexIngestResume($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestResume';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options));
     }
 
     /**
@@ -146,7 +153,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexQueryingAllow($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingAllow';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options));
     }
 
     /**
@@ -159,7 +167,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexQueryingDisallow($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingDisallow';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options));
     }
 
     /**
@@ -172,7 +181,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexPlanFreeze($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanFreeze';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options));
     }
 
     /**
@@ -185,7 +195,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
-        Extension\scopeSearchIndexPlanUnfreeze($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanUnfreeze';
+        $function($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options));
     }
 
     /**
@@ -200,7 +211,8 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
-        $result = Extension\scopeSearchIndexDocumentAnalyze($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDocumentAnalyze';
+        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
         return json_decode($result["analysis"], true);
     }
 }

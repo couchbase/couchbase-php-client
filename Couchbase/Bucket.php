@@ -50,7 +50,8 @@ class Bucket implements BucketInterface
     {
         $this->name = $name;
         $this->core = $core;
-        Extension\openBucket($this->core, $this->name);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\openBucket';
+        $function($this->core, $this->name);
     }
 
     /**
@@ -128,7 +129,9 @@ class Bucket implements BucketInterface
         $opts = ViewOptions::export($options);
         $namespace = $opts["namespace"];
 
-        $result = Extension\viewQuery($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewQuery';
+
+        $result = $function($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
 
         return new ViewResult($result);
     }
@@ -183,7 +186,9 @@ class Bucket implements BucketInterface
         if ($reportId != null) {
             $options['reportId'] = $reportId;
         }
-        return Extension\ping($this->core, $options);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\ping';
+
+        return $function($this->core, $options);
     }
 
     /**
@@ -200,6 +205,7 @@ class Bucket implements BucketInterface
         if ($reportId == null) {
             $reportId = uniqid();
         }
-        return Extension\diagnostics($this->core, $reportId);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\diagnostics';
+        return $function($this->core, $reportId);
     }
 }

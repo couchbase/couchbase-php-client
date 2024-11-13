@@ -39,6 +39,7 @@ if (PHP_COUCHBASE != "no") {
     var COUCHBASE_PHP_LIB =
         (MODE_PHPIZE ?  PHP_DIR + "\\lib" : get_define("BUILD_DIR")) +
         "\\" + get_define("PHPLIB");
+    var COUCHBASE_ABI_VERSION = WshShell.Environment("Process").Item("CB_ABI_VERSION") || "";
 
     STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
     STDOUT.WriteLine('NASM="' + NASM + '" # version: ' + probe_binary(NASM, "version"));
@@ -47,6 +48,7 @@ if (PHP_COUCHBASE != "no") {
     STDOUT.WriteLine('COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"');
     STDOUT.WriteLine('COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"');
     STDOUT.WriteLine('COUCHBASE_PHP_LIB="' + COUCHBASE_PHP_LIB + '"');
+    STDOUT.WriteLine('COUCHBASE_ABI_VERSION="' + COUCHBASE_ABI_VERSION + '"');
 
     // Override build rules. CMake is in charge of the build process.
     MFO.WriteLine("$(BUILD_DIR)\\php_couchbase.lib: $(BUILD_DIR)\\php_couchbase.dll");
@@ -79,7 +81,8 @@ if (PHP_COUCHBASE != "no") {
         ' -D COUCHBASE_CXX_CLIENT_BUILD_EXAMPLES=OFF ' +
         ' -D COUCHBASE_CXX_CLIENT_BUILD_TOOLS=OFF ' +
         ' -D COUCHBASE_CXX_CLIENT_BUILD_DOCS=OFF ' +
-        ' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF" 2>&1';
+        ' -D COUCHBASE_ABI_VERSION="' + COUCHBASE_ABI_VERSION + '"' +
+        ' -D COUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF" 2>&1 ';
     STDOUT.WriteLine(cmake_command);
     cmake_output = execute(cmake_command);
     STDOUT.WriteLine(cmake_output);

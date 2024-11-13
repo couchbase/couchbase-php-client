@@ -59,8 +59,10 @@ class Cluster implements ClusterInterface
         ) {
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
-        $this->connectionHash = hash("sha256", sprintf("--%s--%s--", $connectionString, $options->authenticatorHash()));
-        $this->core = Extension\createConnection($this->connectionHash, $connectionString, $options->export());
+        ExtensionNamespaceResolver::defineExtensionNamespace();
+        $this->connectionHash = hash("sha256", sprintf("--%s--%s--%s--", $connectionString, $options->authenticatorHash(), COUCHBASE_EXTENSION_NAMESPACE));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
+        $this->core = $function($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
     }
 
@@ -136,7 +138,8 @@ class Cluster implements ClusterInterface
      */
     public static function notifyFork(string $event)
     {
-        return Extension\notifyFork($event);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\notifyFork';
+        return $function($event);
     }
 
     /**
@@ -167,7 +170,8 @@ class Cluster implements ClusterInterface
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        $result = Extension\query($this->core, $statement, QueryOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
+        $result = $function($this->core, $statement, QueryOptions::export($options));
 
         return new QueryResult($result, QueryOptions::getTranscoder($options));
     }
@@ -186,7 +190,8 @@ class Cluster implements ClusterInterface
      */
     public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
-        $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
+        $result = $function($this->core, $statement, AnalyticsOptions::export($options));
 
         return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
     }
@@ -204,7 +209,8 @@ class Cluster implements ClusterInterface
      */
     public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult
     {
-        $result = Extension\searchQuery($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+        $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options));
 
         return new SearchResult($result);
     }
@@ -230,12 +236,14 @@ class Cluster implements ClusterInterface
         $query = $exportedRequest['searchQuery'];
 
         if (!$exportedRequest['vectorSearch']) {
-            $result = Extension\searchQuery($this->core, $indexName, json_encode($query), $exportedOptions);
+            $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+            $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
             return new SearchResult($result);
         }
 
         $vectorSearch = $exportedRequest['vectorSearch'];
-        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
+        $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
         return new SearchResult($result);
     }
 
@@ -318,7 +326,8 @@ class Cluster implements ClusterInterface
         if ($reportId != null) {
             $options['reportId'] = $reportId;
         }
-        return Extension\ping($this->core, $options);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\ping';
+        return $function($this->core, $options);
     }
 
     /**
@@ -334,7 +343,8 @@ class Cluster implements ClusterInterface
         if ($reportId == null) {
             $reportId = uniqid();
         }
-        return Extension\diagnostics($this->core, $reportId);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\diagnostics';
+        return $function($this->core, $reportId);
     }
 
     /**
@@ -359,7 +369,8 @@ class Cluster implements ClusterInterface
      */
     public function version(string $bucketName): ?string
     {
-        return Extension\clusterVersion($this->core, $bucketName);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . "\\clusterVersion";
+        return $function($this->core, $bucketName);
     }
 
     /**
@@ -371,7 +382,8 @@ class Cluster implements ClusterInterface
      */
     public function replicasConfiguredFor(string $bucketName): bool
     {
-        return Extension\replicasConfiguredForBucket($this->core, $bucketName);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\replicasConfiguredForBucket';
+        return $function($this->core, $bucketName);
     }
 
     /**

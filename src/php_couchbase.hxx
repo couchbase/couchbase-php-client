@@ -19,8 +19,16 @@
 
 #include <zend_modules.h>
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+#ifdef COUCHBASE_ABI_VERSION
+    #define PHP_COUCHBASE_EXTENSION_NAME "couchbase" "_" TOSTRING(COUCHBASE_ABI_VERSION)
+#else
+    #define PHP_COUCHBASE_EXTENSION_NAME "couchbase"
+#endif
+
 #define PHP_COUCHBASE_VERSION "4.2.4"
-#define PHP_COUCHBASE_EXTENSION_NAME "couchbase"
 
 #ifdef __cplusplus
 extern "C" {

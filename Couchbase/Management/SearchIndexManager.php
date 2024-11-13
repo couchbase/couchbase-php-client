@@ -53,7 +53,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
-        $result = Extension\searchIndexGet($this->core, $indexName, GetSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGet';
+        $result = $function($this->core, $indexName, GetSearchIndexOptions::export($options));
 
         return SearchIndex::import($result);
     }
@@ -68,7 +69,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
-        $result = Extension\searchIndexGetAll($this->core, GetAllSearchIndexesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGetAll';
+        $result = $function($this->core, GetAllSearchIndexesOptions::export($options));
         $indexes = [];
         foreach ($result as $index) {
             $indexes[] = SearchIndex::import($index);
@@ -86,7 +88,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
-        Extension\searchIndexUpsert($this->core, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexUpsert';
+        $function($this->core, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
     }
 
     /**
@@ -99,7 +102,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
-        Extension\searchIndexDrop($this->core, $name, DropSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexDrop';
+        $function($this->core, $name, DropSearchIndexOptions::export($options));
     }
 
     /**
@@ -113,7 +117,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
-        $result = Extension\searchIndexGetDocumentsCount($this->core, $indexName, GetIndexedSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGetDocumentsCount';
+        $result = $function($this->core, $indexName, GetIndexedSearchIndexOptions::export($options));
         return $result['count'];
     }
 
@@ -127,7 +132,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
-        Extension\searchIndexIngestPause($this->core, $indexName, PauseIngestSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexIngestPause';
+        $function($this->core, $indexName, PauseIngestSearchIndexOptions::export($options));
     }
 
     /**
@@ -140,7 +146,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
-        Extension\searchIndexIngestResume($this->core, $indexName, ResumeIngestSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexIngestResume';
+        $function($this->core, $indexName, ResumeIngestSearchIndexOptions::export($options));
     }
 
     /**
@@ -153,7 +160,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
-        Extension\searchIndexQueryingAllow($this->core, $indexName, AllowQueryingSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexQueryingAllow';
+        $function($this->core, $indexName, AllowQueryingSearchIndexOptions::export($options));
     }
 
     /**
@@ -166,7 +174,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
-        Extension\searchIndexQueryingDisallow($this->core, $indexName, DisallowQueryingSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexQueryingDisallow';
+        $function($this->core, $indexName, DisallowQueryingSearchIndexOptions::export($options));
     }
 
     /**
@@ -179,7 +188,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
-        Extension\searchIndexPlanFreeze($this->core, $indexName, FreezePlanSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexPlanFreeze';
+        $function($this->core, $indexName, FreezePlanSearchIndexOptions::export($options));
     }
 
     /**
@@ -191,7 +201,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
-        Extension\searchIndexPlanUnfreeze($this->core, $indexName, UnfreezePlanSearchIndexOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexPlanUnfreeze';
+        $function($this->core, $indexName, UnfreezePlanSearchIndexOptions::export($options));
     }
 
     /**
@@ -206,7 +217,8 @@ class SearchIndexManager implements SearchIndexManagerInterface
      */
     public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
-        $result = Extension\searchIndexDocumentAnalyze($this->core, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexDocumentAnalyze';
+        $result = $function($this->core, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
         return json_decode($result["analysis"], true);
     }
 }
