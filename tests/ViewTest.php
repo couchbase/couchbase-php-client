@@ -75,7 +75,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
             ],
         ];
 
-        Extension\viewIndexUpsert($this->cluster->core(), $this->bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewIndexUpsert';
+        $function($this->cluster->core(), $this->bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
         $this->consistencyUtil()->waitUntilViewPresent($this->bucketName, $ddocName, 'test');
         sleep(1); // give design document a second to settle
 
@@ -118,7 +119,8 @@ class ViewTest extends Helpers\CouchbaseTestCase
             ],
         ];
 
-        Extension\viewIndexUpsert($this->cluster->core(), $this->bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewIndexUpsert';
+        $function($this->cluster->core(), $this->bucketName, $ddoc, DesignDocumentNamespace::PRODUCTION, []);
         $this->consistencyUtil()->waitUntilViewPresent($this->bucketName, $ddocName, 'test');
         sleep(1); // give design document a second to settle
 

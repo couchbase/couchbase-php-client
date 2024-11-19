@@ -91,7 +91,8 @@ class Scope implements ScopeInterface
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        $result = Extension\query($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
+        $result = $function($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
 
         return new QueryResult($result, QueryOptions::getTranscoder($options));
     }
@@ -109,7 +110,8 @@ class Scope implements ScopeInterface
      */
     public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
-        $result = Extension\analyticsQuery($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
+        $result = $function($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
 
         return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
     }
@@ -139,12 +141,14 @@ class Scope implements ScopeInterface
         $query = $exportedRequest['searchQuery'];
 
         if (!$exportedRequest['vectorSearch']) {
-            $result = Extension\searchQuery($this->core, $indexName, json_encode($query), $exportedOptions);
+            $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+            $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
             return new SearchResult($result);
         }
 
         $vectorSearch = $exportedRequest['vectorSearch'];
-        $result = Extension\vectorSearch($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
+        $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
         return new SearchResult($result);
     }
 

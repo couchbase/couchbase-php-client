@@ -80,7 +80,8 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function append(string $id, string $value, ?AppendOptions $options = null): MutationResult
     {
-        $response = Extension\documentAppend(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentAppend';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -107,7 +108,8 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function prepend(string $id, string $value, ?PrependOptions $options = null): MutationResult
     {
-        $response = Extension\documentPrepend(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentPrepend';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -133,7 +135,8 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function increment(string $id, ?IncrementOptions $options = null): CounterResult
     {
-        $response = Extension\documentIncrement(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentIncrement';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,
@@ -158,7 +161,8 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function decrement(string $id, ?DecrementOptions $options = null): CounterResult
     {
-        $response = Extension\documentDecrement(
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentDecrement';
+        $response = $function(
             $this->core,
             $this->bucketName,
             $this->scopeName,

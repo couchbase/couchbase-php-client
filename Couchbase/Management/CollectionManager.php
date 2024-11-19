@@ -46,7 +46,9 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function getAllScopes(?GetAllScopesOptions $options = null): array
     {
-        $result = Extension\scopeGetAll($this->core, $this->bucketName, GetAllScopesOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeGetAll';
+
+        $result = $function($this->core, $this->bucketName, GetAllScopesOptions::export($options));
         $scopes = [];
         foreach ($result['scopes'] as $scope) {
             $scopes[] = ScopeSpec::import($scope);
@@ -63,7 +65,8 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function createScope(string $name, ?CreateScopeOptions $options = null)
     {
-        Extension\scopeCreate($this->core, $this->bucketName, $name, CreateScopeOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeCreate';
+        $function($this->core, $this->bucketName, $name, CreateScopeOptions::export($options));
     }
 
     /**
@@ -75,7 +78,8 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function dropScope(string $name, ?DropScopeOptions $options = null)
     {
-        Extension\scopeDrop($this->core, $this->bucketName, $name, DropScopeOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeDrop';
+        $function($this->core, $this->bucketName, $name, DropScopeOptions::export($options));
     }
 
     /**
@@ -104,7 +108,8 @@ class CollectionManager implements CollectionManagerInterface
             $scopeName = $scopeName->scopeName();
         }
 
-        Extension\collectionCreate($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionCreate';
+        $function($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options));
     }
 
     /**
@@ -130,7 +135,8 @@ class CollectionManager implements CollectionManagerInterface
             $collectionName = $scopeName->name();
             $scopeName = $scopeName->scopeName();
         }
-        Extension\collectionDrop($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionDrop';
+        $function($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options));
     }
 
     /**
@@ -144,6 +150,7 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, ?UpdateCollectionOptions $options = null)
     {
-        Extension\collectionUpdate($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateBucketOptions::export($options));
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionUpdate';
+        $function($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateBucketOptions::export($options));
     }
 }
