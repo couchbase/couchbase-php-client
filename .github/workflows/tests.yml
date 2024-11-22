@@ -6,11 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   source:
     runs-on: ubuntu-22.04
     outputs:
       extension_version: ${{ steps.build_extension.outputs.extension_version }}
+      abi_version: ${{ steps.build_extension.outputs.abi_version }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,6 +33,8 @@ jobs:
           export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
           EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
           echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
+          ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_")' src/php_couchbase.hxx)
+          echo "abi_version=${ABI_VERSION}" >> "$GITHUB_OUTPUT"
           export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
           ruby ./bin/package.rb
       - name: PHPDoc
@@ -71,6 +78,9 @@ jobs:
           - '81'
           - '82'
           - '83'
+        abi:
+          - default
+          - locked
     steps:
       - name: Install build environment
         run: |
@@ -110,6 +120,10 @@ jobs:
       - name: Build
         run: |
           pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+          fi
           (
             cd couchbase
             phpize${{ matrix.php }}
@@ -120,15 +134,19 @@ jobs:
           PHP_VERSION_SHORT=${{ matrix.php }}
           PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
           echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64
+          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           mkdir ${DIST_NAME}
           cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
           find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
           strip --strip-all ${DIST_NAME}/couchbase.so
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+          fi
           tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
             couchbase-*-linux-musl-x86_64.tgz
 
@@ -210,9 +228,13 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
+        abi:
+          - default
+          - locked
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -234,6 +256,10 @@ jobs:
       - name: Build
         run: |
           pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+          fi
           (
             cd couchbase
             phpize
@@ -241,17 +267,21 @@ jobs:
             mkdir target
             make INSTALL_ROOT="$(realpath target)" install
           )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
+          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           mkdir ${DIST_NAME}
           cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
           find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
           strip --strip-all ${DIST_NAME}/couchbase.so
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+          fi
           tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
-            couchbase-*-linux-x86_64.tgz
+            couchbase-*-linux-x86_64*.tgz
 
   mock_linux_x86_64:
     needs:
@@ -265,6 +295,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
@@ -421,9 +452,13 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
+        abi:
+          - default
+          - locked
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -446,6 +481,10 @@ jobs:
       - name: Build
         run: |
           pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+          fi
           (
             cd couchbase
             phpize
@@ -453,17 +492,21 @@ jobs:
             mkdir target
             make INSTALL_ROOT="$(realpath target)" install
           )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64
+          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           mkdir ${DIST_NAME}
           cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
           find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
           strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+          fi
           tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
-            couchbase-*-macos-x86_64.tgz
+            couchbase-*-macos-x86_64*.tgz
 
   mock_macos_x86_64:
     needs:
@@ -477,6 +520,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
@@ -525,6 +569,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
@@ -549,6 +594,10 @@ jobs:
           key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
       - name: Build
         run: |
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+          fi
           pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
           (
             cd couchbase
@@ -557,15 +606,19 @@ jobs:
             mkdir target
             make INSTALL_ROOT="$(realpath target)" install
           )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64
+          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
           mkdir ${DIST_NAME}
           cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
           find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
           strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+          fi
           tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
       - uses: actions/upload-artifact@v4
         with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
             couchbase-*-macos-arm64.tgz
 
@@ -581,6 +634,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts
@@ -626,15 +680,19 @@ jobs:
       fail-fast: false
       matrix:
         php:
-          - '8.3.4'
-          - '8.2.17'
-          - '8.1.27'
+          - '8.4.1'
+          - '8.3.14'
+          - '8.2.26'
+          - '8.1.31'
         ts:
           - nts
           - zts
         arch:
           - x64
           - x86
+        abi:
+          - default
+          - locked
     steps:
       - name: Install dependencies
         shell: cmd
@@ -659,10 +717,21 @@ jobs:
         run: |
           7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
           cd c:\php\php-src
-          echo call buildconf.bat --add-modules-dir=c:\php > task.bat
+          if "${{ matrix.abi }}"=="locked" (
+            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
+          )
+          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
           echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
           echo nmake >> task.bat
           call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
+          if "${{ matrix.abi }}"=="locked" (
+            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
+            for %%f in (php_couchbase*) do (
+                set filename=%%~nxf
+                set newname=%%~dpnf_${{ needs.source.outputs.abi_version }}%%~xf
+                move "%%f" "!newname!"
+            )
+          )
           exit /b %ERRORLEVEL%
       - name: Package
         id: package
@@ -671,14 +740,14 @@ jobs:
           $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
           Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
           $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
-          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}"
+          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
           New-Item -ItemType Directory -Path $DistName | Out-Null
           $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
           Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
           Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
           Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
           Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
-          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase.*"
+          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
           foreach ($File in $FilesToCopy) {
               Write-Host "Copying file: $($File.FullName)"
               Copy-Item -Path $File.FullName -Destination $DistName -Force

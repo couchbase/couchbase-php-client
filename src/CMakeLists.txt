@@ -12,7 +12,11 @@ set(CMAKE_C_STANDARD 99)
 include(${PROJECT_SOURCE_DIR}/cmake/pecl_package.cmake OPTIONAL)
 
 file(READ "${PROJECT_SOURCE_DIR}/php_couchbase.hxx" FILE_CONTENT)
-string(REGEX MATCH "PHP_COUCHBASE_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\"" EXT_VERSION ${FILE_CONTENT})
+string(
+  REGEX MATCH
+        "PHP_COUCHBASE_VERSION +\"([0-9]+\\.[0-9]+\\.[0-9]+)\""
+        EXT_VERSION
+        ${FILE_CONTENT})
 
 set(COUCHBASE_CXX_CLIENT_WRAPPER_UNIFIED_ID
     "php/${CMAKE_MATCH_1}"
@@ -38,7 +42,9 @@ set(COUCHBASE_CXX_CLIENT_BUILD_SHARED
 set(COUCHBASE_CXX_CLIENT_STATIC_BORINGSSL
     ON
     CACHE BOOL "" FORCE)
-set(COUCHBASE_CXX_CLIENT_INSTALL OFF CACHE BOOL "" FORCE)
+set(COUCHBASE_CXX_CLIENT_INSTALL
+    OFF
+    CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(deps/couchbase-cxx-client)
@@ -93,13 +99,14 @@ endif()
 if(MSVC)
   set_target_properties(couchbase PROPERTIES PREFIX "php_" IMPORT_PREFIX "php_")
 endif()
-target_include_directories(couchbase SYSTEM PRIVATE
-    ${PHP_INCLUDE_DIRS}
-    ${PROJECT_BINARY_DIR}/generated
-    ${PROJECT_BINARY_DIR}/deps/couchbase-cxx-client/generated
-    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client
-    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/cxx_function
-    ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/expected/include)
+target_include_directories(
+  couchbase SYSTEM
+  PRIVATE ${PHP_INCLUDE_DIRS}
+          ${PROJECT_BINARY_DIR}/generated
+          ${PROJECT_BINARY_DIR}/deps/couchbase-cxx-client/generated
+          ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client
+          ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/cxx_function
+          ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/expected/include)
 target_compile_definitions(couchbase PRIVATE ZEND_COMPILE_DL_EXT=1)
 set_target_properties(couchbase_cxx_client_static PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
 target_link_libraries(
@@ -113,8 +120,8 @@ target_link_libraries(
           asio
           Microsoft.GSL::GSL)
 
-message ("COUCHBASE_ABI_VERSION=${COUCHBASE_ABI_VERSION}")
-if( COUCHBASE_ABI_VERSION )
+message("COUCHBASE_ABI_VERSION=${COUCHBASE_ABI_VERSION}")
+if(COUCHBASE_ABI_VERSION)
   target_compile_definitions(couchbase PRIVATE COUCHBASE_ABI_VERSION=${COUCHBASE_ABI_VERSION})
 endif()
 

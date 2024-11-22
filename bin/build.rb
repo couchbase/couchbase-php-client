@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 #    Copyright 2020-Present Couchbase, Inc.
 #
@@ -19,7 +20,7 @@ require "rbconfig"
 
 def echo_env(*var_names)
   var_names.each do |name|
-    value = ENV[name]
+    value = ENV.fetch(name, nil)
     puts "#{name}=#{value}" if value && !value.empty?
   end
 end
@@ -36,10 +37,10 @@ end
 def run(*args)
   args = args.compact.map(&:to_s)
   puts args.join(" ")
-  system(*args) || abort("command returned non-zero status: #{args.join(" ")}")
+  system(*args) || abort("command returned non-zero status: #{args.join(' ')}")
 end
 
-PROJECT_ROOT = File.realpath(File.join(__dir__, '..'))
+PROJECT_ROOT = File.realpath(File.join(__dir__, ".."))
 
 DEFAULT_PHP_PREFIX =
   case RbConfig::CONFIG["target_os"]
@@ -49,8 +50,8 @@ DEFAULT_PHP_PREFIX =
     "/usr"
   end
 
-default_cc="cc"
-default_cxx="c++"
+default_cc = "cc"
+default_cxx = "c++"
 case RbConfig::CONFIG["target_os"]
 when /darwin/
   default_cc = "/usr/bin/gcc"
@@ -72,11 +73,9 @@ run("#{CB_PHP_PREFIX}/bin/php --version || true")
 run("#{CB_PHP_PREFIX}/bin/php --ini || true")
 run("#{CB_PHP_PREFIX}/bin/php-config || true")
 
-LOCAL_OPENSSL="/usr/local/openssl"
+LOCAL_OPENSSL = "/usr/local/openssl"
 CB_OPENSSL_ROOT = ENV.fetch("CB_OPENSSL_ROOT", File.directory?(LOCAL_OPENSSL) ? LOCAL_OPENSSL : nil)
-if CB_OPENSSL_ROOT
-  ENV["COUCHBASE_CMAKE_EXTRA"] = "-DOPENSSL_ROOT_DIR=#{CB_OPENSSL_ROOT}"
-end
+ENV["COUCHBASE_CMAKE_EXTRA"] = "-DOPENSSL_ROOT_DIR=#{CB_OPENSSL_ROOT}" if CB_OPENSSL_ROOT
 
 Dir.chdir(PROJECT_ROOT) do
   run("#{CB_PHP_PREFIX}/bin/phpize")
@@ -88,32 +87,29 @@ Dir.chdir(PROJECT_ROOT) do
   run("make V=1")
 end
 
-COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG["SOEXT"]}"
+COUCHBASE_EXT = "#{PROJECT_ROOT}/modules/couchbase.#{RbConfig::CONFIG['SOEXT']}".freeze
 unless File.exist?(COUCHBASE_EXT)
   alt_filename = "#{PROJECT_ROOT}/modules/couchbase.so"
-  if File.exist?(alt_filename)
-    COUCHBASE_EXT = alt_filename
-  end
+  COUCHBASE_EXT = alt_filename if File.exist?(alt_filename)
 end
 
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -m | grep couchbase")
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -i | grep couchbase")
 
-File.write("#{PROJECT_ROOT}/build/try_to_load.php", <<EOF)
+File.write("#{PROJECT_ROOT}/build/try_to_load.php", <<~EOF)
+  <?php
 
-<?php
+  $versionABI = getenv("CB_ABI_VERSION");
+  if (!$versionABI) {
+      $function = "\\\\Couchbase\\\\Extension\\\\version";
+  } else {
+      $function = "Couchbase\\\\Extension_" . $versionABI . "\\\\version";
+  }
 
-$versionABI = getenv("CB_ABI_VERSION");
-if (!$versionABI) {
-    $function = "\\\\Couchbase\\\\Extension\\\\version";
-} else {
-    $function = "Couchbase\\\\Extension_" . $versionABI . "\\\\version";
-}
+  print_r($function());
 
-print_r($function());
-
-require_once 'Couchbase/autoload.php';
-var_dump((new ReflectionClass('\\\\Couchbase\\\\Cluster'))->getFileName());
+  require_once 'Couchbase/autoload.php';
+  var_dump((new ReflectionClass('\\\\Couchbase\\\\Cluster'))->getFileName());
 EOF
 
 run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} #{PROJECT_ROOT}/build/try_to_load.php")
