@@ -419,7 +419,7 @@ jobs:
           Expand-Archive -Path couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64.zip
           $env:TEST_ABI='both'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
           $env:TEST_ABI='versioned'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
-          
+
           ruby -e '
             file_paths = [
              "couchbase-unversioned-windows-x64/couchbase-unversioned-windows-x64/Couchbase/ExtensionNamespaceResolver.php",

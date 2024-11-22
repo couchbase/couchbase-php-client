@@ -116,7 +116,8 @@ class Collection implements CollectionInterface
     public function get(string $id, ?GetOptions $options = null): GetResult
     {
         $function = COUCHBASE_EXTENSION_NAMESPACE . "\\documentGet";
-        $response = $function($this->core,
+        $response = $function(
+            $this->core,
             $this->bucketName,
             $this->scopeName,
             $this->name,

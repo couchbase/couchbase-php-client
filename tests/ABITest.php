@@ -30,7 +30,8 @@ class ABITest extends Helpers\CouchbaseTestCase
         parent::setUp();
     }
 
-    public function testExtensionsLoadedPermutation() {
+    public function testExtensionsLoadedPermutation()
+    {
         $abi = getenv('TEST_ABI');
         $unversionedFunc = 'Couchbase\\Extension\\version';
         $versionedFunc = 'Couchbase\\Extension_' . ExtensionNamespaceResolver::COUCHBASE_EXTENSION_VERSION . '\\version';
@@ -38,10 +39,10 @@ class ABITest extends Helpers\CouchbaseTestCase
             print_r($unversionedFunc());
             print_r($versionedFunc());
             $this->assertTrue(true);
-        } else if ($abi == "versioned") {
+        } elseif ($abi == "versioned") {
             print_r($versionedFunc());
             $this->assertTrue(true);
-        } else if ($abi == "unversioned") {
+        } elseif ($abi == "unversioned") {
             print_r($unversionedFunc());
             $this->assertTrue(true);
         }
@@ -54,7 +55,7 @@ class ABITest extends Helpers\CouchbaseTestCase
 
         if ($abi == "both" || $abi == "unversioned") {
             $this->assertEquals("Couchbase\\Extension", COUCHBASE_EXTENSION_NAMESPACE);
-        } else if ($abi == "versioned") {
+        } elseif ($abi == "versioned") {
             $this->assertEquals("Couchbase\\Extension_" . ExtensionNamespaceResolver::COUCHBASE_EXTENSION_VERSION, COUCHBASE_EXTENSION_NAMESPACE);
         }
     }

@@ -26,7 +26,8 @@ class ExtensionNamespaceResolver
 {
     const COUCHBASE_EXTENSION_VERSION = "4_2_4";
 
-    public static function defineExtensionNamespace() {
+    public static function defineExtensionNamespace()
+    {
         if (defined('COUCHBASE_EXTENSION_NAMESPACE')) {
             return;
         }
@@ -34,7 +35,8 @@ class ExtensionNamespaceResolver
         define('COUCHBASE_EXTENSION_NAMESPACE', $namespace);
     }
 
-    private static function aliasExtensionNamespace() {
+    private static function aliasExtensionNamespace()
+    {
         if (extension_loaded('couchbase')) {
             return "Couchbase\\Extension";
         } elseif (extension_loaded('couchbase_' . self::COUCHBASE_EXTENSION_VERSION)) {
@@ -42,7 +44,9 @@ class ExtensionNamespaceResolver
             $func();
             return "Couchbase\\Extension_" . self::COUCHBASE_EXTENSION_VERSION;
         } else {
-            throw new CouchbaseException("Neither Couchbase extension nor valid versioned Couchbase extension is loaded.");
+            throw new CouchbaseException(
+                sprintf("Could not load Couchbase extension (tried \"couchbase\" and \"couchbase_%d\")", self::COUCHBASE_EXTENSION_VERSION)
+            );
         }
     }
 }
