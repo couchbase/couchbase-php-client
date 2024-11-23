@@ -39,7 +39,8 @@ if (PHP_COUCHBASE != "no") {
     var COUCHBASE_PHP_LIB =
         (MODE_PHPIZE ?  PHP_DIR + "\\lib" : get_define("BUILD_DIR")) +
         "\\" + get_define("PHPLIB");
-    var COUCHBASE_ABI_VERSION = WshShell.Environment("Process").Item("CB_ABI_VERSION") || "";
+    var COUCHBASE_ABI_VERSION = (WshShell.Environment("Process").Item("CB_ABI_VERSION") || "")
+        .replace(new RegExp('^\\s+|\\s+$', 'g'), "");
 
     STDOUT.WriteLine('CMAKE="' + CMAKE + '" # version: ' + probe_binary(CMAKE, "longversion"));
     STDOUT.WriteLine('NASM="' + NASM + '" # version: ' + probe_binary(NASM, "version"));

@@ -148,7 +148,7 @@ jobs:
         with:
           name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
-            couchbase-*-linux-musl-x86_64.tgz
+            couchbase-*-linux-musl-x86_64*.tgz
 
   mock_alpine:
     needs:
@@ -209,14 +209,6 @@ jobs:
         run: |
           tar xf couchbase-*-linux-musl-x86_64.tgz
           ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: ⛰️ caves, php-${{ matrix.php }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
 
   build_linux_x86_64:
     needs: source
@@ -324,14 +316,6 @@ jobs:
         run: |
           tar xf couchbase-*-linux-x86_64.tgz
           ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: 🐧caves, php-${{ matrix.php }}-${{ matrix.ts }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
 
   server_linux_x86_64:
     needs:
@@ -421,14 +405,6 @@ jobs:
         run: |
           tar xf couchbase-*-linux-x86_64.tgz
           ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: 🐧server, php-${{ matrix.php }}-${{ matrix.ts }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
       - name: Collect server logs
         timeout-minutes: 15
         if: failure()
@@ -550,14 +526,6 @@ jobs:
         run: |
           tar xf couchbase-*-macos-x86_64.tgz
           CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: 🍏caves, php-${{ matrix.php }}-${{ matrix.ts }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
 
   build_macos_arm64:
     needs: source
@@ -573,6 +541,9 @@ jobs:
         ts:
           - nts
           - zts
+        abi:
+          - default
+          - locked
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -620,7 +591,7 @@ jobs:
         with:
           name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
-            couchbase-*-macos-arm64.tgz
+            couchbase-*-macos-arm64*.tgz
 
   mock_macos_arm64:
     needs:
@@ -664,14 +635,6 @@ jobs:
         run: |
           tar xf couchbase-*-macos-arm64.tgz
           CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: 🍎caves, php-${{ matrix.php }}-${{ matrix.ts }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
 
   build_windows:
     needs: source
@@ -726,11 +689,9 @@ jobs:
           call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
           if "${{ matrix.abi }}"=="locked" (
             cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
-            for %%f in (php_couchbase*) do (
-                set filename=%%~nxf
-                set newname=%%~dpnf_${{ needs.source.outputs.abi_version }}%%~xf
-                move "%%f" "!newname!"
-            )
+            dir
+            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
+            dir
           )
           exit /b %ERRORLEVEL%
       - name: Package
@@ -757,9 +718,9 @@ jobs:
           Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
       - uses: actions/upload-artifact@v4
         with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
           path: |
-            c:\php\couchbase-*-windows-${{ matrix.arch }}.zip
+            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
 
   mock_windows:
     needs:
@@ -802,11 +763,3 @@ jobs:
         run: |
           Expand-Archive -Path couchbase-*-windows-x64.zip
           ruby ./bin/test.rb
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4.1.0
-        if: always()
-        with:
-          check_name: 🪟caves, php-${{ matrix.php }}-${{ matrix.ts }}
-          report_paths: results.xml
-          require_tests: true
-          annotate_only: true
