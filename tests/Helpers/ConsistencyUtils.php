@@ -254,7 +254,7 @@ class ConsistencyUtils
         );
     }
 
-    public function waitUntilBucketUpdated(string $bucketName, callable $predicate, string $errorMsg = null): void
+    public function waitUntilBucketUpdated(string $bucketName, callable $predicate, ?string $errorMsg = null): void
     {
         fprintf(STDERR, "waiting until bucket %s has been updated\n", $bucketName);
 
@@ -267,7 +267,7 @@ class ConsistencyUtils
         );
     }
 
-    public function waitUntilCollectionUpdated(string $bucketName, string $scopeName, string $collectionName, callable $predicate, string $errorMsg = null): void
+    public function waitUntilCollectionUpdated(string $bucketName, string $scopeName, string $collectionName, callable $predicate, ?string $errorMsg = null): void
     {
         fprintf(STDERR, "waiting until collection %s on scope %s on bucket %s has updated\n", $collectionName, $scopeName, $bucketName);
 

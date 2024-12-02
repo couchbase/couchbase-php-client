@@ -100,7 +100,7 @@ class CouchbaseTestCase extends TestCase
         return Cluster::connect($connstr, $options);
     }
 
-    public function openBucket(string $name = null): BucketInterface
+    public function openBucket(?string $name = null): BucketInterface
     {
         if ($name == null) {
             $name = self::env()->bucketName();
@@ -108,7 +108,7 @@ class CouchbaseTestCase extends TestCase
         return $this->connectCluster()->bucket($name);
     }
 
-    public function defaultCollection(string $bucketName = null): CollectionInterface
+    public function defaultCollection(?string $bucketName = null): CollectionInterface
     {
         if ($bucketName == null) {
             $bucketName = self::env()->bucketName();
@@ -121,7 +121,7 @@ class CouchbaseTestCase extends TestCase
         return self::env()->consistencyUtil();
     }
 
-    public function uniqueId(string $prefix = null): string
+    public function uniqueId(?string $prefix = null): string
     {
         if ($prefix != null) {
             return sprintf("%s_%s", $prefix, self::env()::randomId());

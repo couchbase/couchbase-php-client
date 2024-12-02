@@ -19,7 +19,7 @@ require "English"
 require "fileutils"
 require "rbconfig"
 require "shellwords"
-require 'optparse'
+require "optparse"
 
 DEFAULT_PHP_NAME = "php"
 CB_PHP_NAME = ENV.fetch("CB_PHP_NAME", DEFAULT_PHP_NAME)
@@ -130,7 +130,7 @@ end
 
 php_unit_phar = File.join(build_root, "phpunit.phar")
 unless File.file?(php_unit_phar)
-  php_unit_version = "9.5"
+  php_unit_version = "10.5.38"
   php_unit_url = "https://phar.phpunit.de/phpunit-#{php_unit_version}.phar"
   FileUtils.mkdir_p(File.dirname(php_unit_phar))
   run("curl -L -o #{php_unit_phar.shellescape} #{php_unit_url}")
@@ -159,9 +159,7 @@ abi_versions.each do |v|
   end
 end
 
-if extra_php_args.empty?
-  abort "Unable to find the module. Candidates: #{module_location_candidates.inspect}"
-end
+abort "Unable to find the module. Candidates: #{module_location_candidates.inspect}" if extra_php_args.empty?
 
 tests = ARGV.to_a
 tests << File.join(project_root, "tests") if tests.empty?
