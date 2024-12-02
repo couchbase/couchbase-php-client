@@ -5820,9 +5820,13 @@ namespace options
 {
 template<typename Setter>
 void
-assign_duration(const char* name, const zend_string* key, const zval* value, Setter setter)
+assign_duration(const char* name,
+                std::size_t name_len,
+                const zend_string* key,
+                const zval* value,
+                Setter setter)
 {
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), name, name_len) == 0) {
     if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
       return;
     }
@@ -5845,9 +5849,13 @@ assign_duration(const char* name, const zend_string* key, const zval* value, Set
 
 template<typename Setter>
 void
-assign_boolean(const char* name, const zend_string* key, const zval* value, Setter setter)
+assign_boolean(const char* name,
+               std::size_t name_len,
+               const zend_string* key,
+               const zval* value,
+               Setter setter)
 {
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), name, name_len) == 0) {
     if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
       return;
     }
@@ -5870,9 +5878,13 @@ assign_boolean(const char* name, const zend_string* key, const zval* value, Sett
 
 template<typename Setter>
 void
-assign_number(const char* name, const zend_string* key, const zval* value, Setter setter)
+assign_number(const char* name,
+              std::size_t name_len,
+              const zend_string* key,
+              const zval* value,
+              Setter setter)
 {
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), name, name_len) == 0) {
     if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
       return;
     }
@@ -5889,9 +5901,13 @@ assign_number(const char* name, const zend_string* key, const zval* value, Sette
 
 template<typename Setter>
 void
-assign_string(const char* name, const zend_string* key, const zval* value, Setter setter)
+assign_string(const char* name,
+              std::size_t name_len,
+              const zend_string* key,
+              const zval* value,
+              Setter setter)
 {
-  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {
+  if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), name, name_len) == 0) {
     if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {
       return;
     }
@@ -5948,98 +5964,98 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
   ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
   {
     try {
-      options::assign_duration("analyticsTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("analyticsTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().analytics_timeout(v);
       });
-      options::assign_duration("bootstrapTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("bootstrapTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().bootstrap_timeout(v);
       });
-      options::assign_duration("connectTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("connectTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().connect_timeout(v);
       });
-      options::assign_duration("keyValueDurableTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("keyValueDurableTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().key_value_durable_timeout(v);
       });
-      options::assign_duration("keyValueTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("keyValueTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().key_value_timeout(v);
       });
-      options::assign_duration("managementTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("managementTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().management_timeout(v);
       });
-      options::assign_duration("queryTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("queryTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().query_timeout(v);
       });
-      options::assign_duration("resolveTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("resolveTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().resolve_timeout(v);
       });
-      options::assign_duration("searchTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("searchTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().search_timeout(v);
       });
-      options::assign_duration("viewTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("viewTimeout"), key, value, [&](auto v) {
         cluster_options.timeouts().view_timeout(v);
       });
-      options::assign_duration("configPollInterval", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("configPollInterval"), key, value, [&](auto v) {
         cluster_options.network().config_poll_interval(v);
       });
-      options::assign_duration("idleHttpConnectionTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("idleHttpConnectionTimeout"), key, value, [&](auto v) {
         cluster_options.network().idle_http_connection_timeout(v);
       });
-      options::assign_duration("tcpKeepAliveInterval", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("tcpKeepAliveInterval"), key, value, [&](auto v) {
         cluster_options.network().tcp_keep_alive_interval(v);
       });
 
-      options::assign_boolean("enableClustermapNotification", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableClustermapNotification"), key, value, [&](auto v) {
         cluster_options.behavior().enable_clustermap_notification(v);
       });
-      options::assign_boolean("enableCompression", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableCompression"), key, value, [&](auto v) {
         cluster_options.compression().enabled(v);
       });
-      options::assign_boolean("enableMutationTokens", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableMutationTokens"), key, value, [&](auto v) {
         cluster_options.behavior().enable_mutation_tokens(v);
       });
-      options::assign_boolean("enableTcpKeepAlive", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableTcpKeepAlive"), key, value, [&](auto v) {
         cluster_options.network().enable_tcp_keep_alive(v);
       });
-      options::assign_boolean("enableUnorderedExecution", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableUnorderedExecution"), key, value, [&](auto v) {
         cluster_options.behavior().enable_unordered_execution(v);
       });
-      options::assign_boolean("showQueries", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("showQueries"), key, value, [&](auto v) {
         cluster_options.behavior().show_queries(v);
       });
-      options::assign_boolean("enableMetrics", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableMetrics"), key, value, [&](auto v) {
         cluster_options.metrics().enable(v);
       });
-      options::assign_boolean("enableTracing", key, value, [&](auto v) {
+      options::assign_boolean(ZEND_STRL("enableTracing"), key, value, [&](auto v) {
         cluster_options.tracing().enable(v);
       });
 
-      options::assign_number("maxHttpConnections", key, value, [&](auto v) {
+      options::assign_number(ZEND_STRL("maxHttpConnections"), key, value, [&](auto v) {
         cluster_options.network().max_http_connections(v);
       });
 
-      options::assign_string("network", key, value, [&](auto v) {
-        cluster_options.network().preferred_network(v);
+      options::assign_string(ZEND_STRL("network"), key, value, [&](auto v) {
+        cluster_options.network().preferred_network(std::move(v));
       });
 
-      options::assign_string("trustCertificate", key, value, [&](auto v) {
-        cluster_options.security().trust_certificate(v);
+      options::assign_string(ZEND_STRL("trustCertificate"), key, value, [&](auto v) {
+        cluster_options.security().trust_certificate(std::move(v));
       });
 
-      options::assign_string("trustCertificateValue", key, value, [&](auto v) {
-        cluster_options.security().trust_certificate_value(v);
+      options::assign_string(ZEND_STRL("trustCertificateValue"), key, value, [&](auto v) {
+        cluster_options.security().trust_certificate_value(std::move(v));
       });
 
-      options::assign_number("dnsSrvPort", key, value, [&](auto v) {
+      options::assign_number(ZEND_STRL("dnsSrvPort"), key, value, [&](auto v) {
         dns.port = v;
       });
-      options::assign_string("dnsSrvNameserver", key, value, [&](auto v) {
+      options::assign_string(ZEND_STRL("dnsSrvNameserver"), key, value, [&](auto v) {
         dns.nameserver = v;
       });
-      options::assign_duration("dnsSrvTimeout", key, value, [&](auto v) {
+      options::assign_duration(ZEND_STRL("dnsSrvTimeout"), key, value, [&](auto v) {
         dns.timeout = v;
       });
 
-      options::assign_string("useIpProtocol", key, value, [&](auto v) {
+      options::assign_string(ZEND_STRL("useIpProtocol"), key, value, [&](const auto& v) {
         if (v == "any") {
           cluster_options.network().force_ip_protocol(couchbase::ip_protocol::any);
         } else if (v == "forceIpv4") {
@@ -6057,7 +6073,7 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
         }
       });
 
-      options::assign_string("tlsVerify", key, value, [&](auto v) {
+      options::assign_string(ZEND_STRL("tlsVerify"), key, value, [&](const auto& v) {
         if (v == "peer") {
           cluster_options.security().tls_verify(couchbase::tls_verify_mode::peer);
         } else if (v == "none") {
@@ -6090,47 +6106,47 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
 
         ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
         {
-          options::assign_number("orphanedSampleSize", k, v, [&](auto v) {
+          options::assign_number(ZEND_STRL("orphanedSampleSize"), k, v, [&](auto v) {
             cluster_options.tracing().orphaned_sample_size(v);
           });
 
-          options::assign_duration("orphanedEmitInterval", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("orphanedEmitInterval"), k, v, [&](auto v) {
             cluster_options.tracing().orphaned_emit_interval(v);
           });
 
-          options::assign_number("thresholdSampleSize", k, v, [&](auto v) {
+          options::assign_number(ZEND_STRL("thresholdSampleSize"), k, v, [&](auto v) {
             cluster_options.tracing().threshold_sample_size(v);
           });
 
-          options::assign_duration("thresholdEmitInterval", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("thresholdEmitInterval"), k, v, [&](auto v) {
             cluster_options.tracing().threshold_emit_interval(v);
           });
 
-          options::assign_duration("analyticsThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("analyticsThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().analytics_threshold(v);
           });
 
-          options::assign_duration("eventingThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("eventingThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().eventing_threshold(v);
           });
 
-          options::assign_duration("keyValueThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("keyValueThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().key_value_threshold(v);
           });
 
-          options::assign_duration("managementThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("managementThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().management_threshold(v);
           });
 
-          options::assign_duration("queryThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("queryThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().query_threshold(v);
           });
 
-          options::assign_duration("searchThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("searchThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().search_threshold(v);
           });
 
-          options::assign_duration("viewThreshold", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("viewThreshold"), k, v, [&](auto v) {
             cluster_options.tracing().view_threshold(v);
           });
         }
@@ -6146,7 +6162,7 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
         const zval* v = nullptr;
         ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
         {
-          options::assign_duration("emitInterval", k, v, [&](auto v) {
+          options::assign_duration(ZEND_STRL("emitInterval"), k, v, [&](auto v) {
             cluster_options.metrics().emit_interval(v);
           });
         }
