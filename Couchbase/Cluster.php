@@ -138,6 +138,7 @@ class Cluster implements ClusterInterface
      */
     public static function notifyFork(string $event)
     {
+        ExtensionNamespaceResolver::defineExtensionNamespace();
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\notifyFork';
         return $function($event);
     }
