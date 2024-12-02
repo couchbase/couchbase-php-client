@@ -57,8 +57,10 @@
 namespace couchbase::php
 {
 
-static std::string
-retry_reason_to_string(retry_reason reason)
+namespace
+{
+auto
+retry_reason_to_string(retry_reason reason) -> std::string
 {
   switch (reason) {
     case retry_reason::do_not_retry:
@@ -107,8 +109,8 @@ retry_reason_to_string(retry_reason reason)
   return "unexpected";
 }
 
-static const char*
-subdoc_opcode_to_string(core::protocol::subdoc_opcode opcode)
+auto
+subdoc_opcode_to_string(core::protocol::subdoc_opcode opcode) -> const char*
 {
   switch (opcode) {
     case core::protocol::subdoc_opcode::get_doc:
@@ -147,8 +149,9 @@ subdoc_opcode_to_string(core::protocol::subdoc_opcode opcode)
   return "unexpected";
 }
 
-static std::pair<core::protocol::subdoc_opcode, core_error_info>
+auto
 decode_lookup_subdoc_opcode(const zval* spec)
+  -> std::pair<core::protocol::subdoc_opcode, core_error_info>
 {
   if (spec == nullptr || Z_TYPE_P(spec) != IS_ARRAY) {
     return { {},
@@ -181,8 +184,9 @@ decode_lookup_subdoc_opcode(const zval* spec)
                          std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 
-static std::pair<core::protocol::subdoc_opcode, core_error_info>
+auto
 decode_mutation_subdoc_opcode(const zval* spec)
+  -> std::pair<core::protocol::subdoc_opcode, core_error_info>
 {
   if (spec == nullptr || Z_TYPE_P(spec) != IS_ARRAY) {
     return { {},
@@ -241,7 +245,7 @@ decode_mutation_subdoc_opcode(const zval* spec)
                          std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 
-static void
+void
 build_error_context(const couchbase::core::key_value_error_context& ctx,
                     key_value_error_context& out)
 {
@@ -272,16 +276,16 @@ build_error_context(const couchbase::core::key_value_error_context& ctx,
   }
 }
 
-static key_value_error_context
-build_error_context(const couchbase::core::key_value_error_context& ctx)
+auto
+build_error_context(const couchbase::core::key_value_error_context& ctx) -> key_value_error_context
 {
   key_value_error_context out;
   build_error_context(ctx, out);
   return out;
 }
 
-static generic_error_context
-build_error_context(const couchbase::error& error)
+auto
+build_error_context(const couchbase::error& error) -> generic_error_context
 {
   generic_error_context out;
   out.message = error.message();
@@ -292,8 +296,8 @@ build_error_context(const couchbase::error& error)
   return out;
 }
 
-static query_error_context
-build_error_context(const core::error_context::query& ctx)
+auto
+build_error_context(const core::error_context::query& ctx) -> query_error_context
 {
   query_error_context out;
   out.client_context_id = ctx.client_context_id;
@@ -314,8 +318,8 @@ build_error_context(const core::error_context::query& ctx)
   return out;
 }
 
-static analytics_error_context
-build_error_context(const core::error_context::analytics& ctx)
+auto
+build_error_context(const core::error_context::analytics& ctx) -> analytics_error_context
 {
   analytics_error_context out;
   out.client_context_id = ctx.client_context_id;
@@ -336,8 +340,8 @@ build_error_context(const core::error_context::analytics& ctx)
   return out;
 }
 
-static view_query_error_context
-build_error_context(const core::error_context::view& ctx)
+auto
+build_error_context(const core::error_context::view& ctx) -> view_query_error_context
 {
   view_query_error_context out;
   out.client_context_id = ctx.client_context_id;
@@ -357,8 +361,8 @@ build_error_context(const core::error_context::view& ctx)
   return out;
 }
 
-static search_error_context
-build_error_context(const core::error_context::search& ctx)
+auto
+build_error_context(const core::error_context::search& ctx) -> search_error_context
 {
   search_error_context out;
   out.client_context_id = ctx.client_context_id;
@@ -378,8 +382,8 @@ build_error_context(const core::error_context::search& ctx)
   return out;
 }
 
-static http_error_context
-build_error_context(const core::error_context::http& ctx)
+auto
+build_error_context(const core::error_context::http& ctx) -> http_error_context
 {
   http_error_context out;
   out.client_context_id = ctx.client_context_id;
@@ -398,6 +402,7 @@ build_error_context(const core::error_context::http& ctx)
 
   return out;
 }
+} // namespace
 
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
@@ -412,9 +417,9 @@ public:
 
   impl(const impl& other) = delete;
 
-  const impl& operator=(impl&& other) = delete;
+  auto operator=(impl&& other) -> const impl& = delete;
 
-  const impl& operator=(const impl& other) = delete;
+  auto operator=(const impl& other) -> const impl& = delete;
 
   ~impl()
   {
@@ -433,7 +438,7 @@ public:
     }
   }
 
-  std::string cluster_version(const std::string& bucket_name = "")
+  auto cluster_version(const std::string& bucket_name = "") -> std::string
   {
     auto barrier = std::make_shared<
       std::promise<couchbase::core::operations::management::cluster_describe_response>>();
@@ -456,7 +461,7 @@ public:
     return resp.info.nodes.front().version;
   }
 
-  bool replicas_configured_for_bucket(const std::string& bucket_name)
+  auto replicas_configured_for_bucket(const std::string& bucket_name) -> bool
   {
     if (auto e = bucket_open(bucket_name); e.ec) {
       return false;
@@ -495,7 +500,7 @@ public:
     return {};
   }
 
-  core_error_info bucket_open(const std::string& name)
+  auto bucket_open(const std::string& name) -> core_error_info
   {
     auto barrier = std::make_shared<std::promise<std::error_code>>();
     auto f = barrier->get_future();
@@ -508,7 +513,7 @@ public:
     return {};
   }
 
-  core_error_info bucket_close(const std::string& name)
+  auto bucket_close(const std::string& name) -> core_error_info
   {
     auto barrier = std::make_shared<std::promise<std::error_code>>();
     auto f = barrier->get_future();
@@ -522,7 +527,8 @@ public:
   }
 
   template<typename Request, typename Response = typename Request::response_type>
-  std::pair<Response, core_error_info> key_value_execute(const char* operation, Request request)
+  auto key_value_execute(const char* operation, Request request)
+    -> std::pair<Response, core_error_info>
   {
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
@@ -541,7 +547,7 @@ public:
   }
 
   template<typename Request, typename Response = typename Request::response_type>
-  std::pair<Response, core_error_info> http_execute(const char* operation, Request request)
+  auto http_execute(const char* operation, Request request) -> std::pair<Response, core_error_info>
   {
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
@@ -560,7 +566,7 @@ public:
   }
 
   template<typename Request, typename Response = typename Request::response_type>
-  std::vector<Response> key_value_execute_multi(std::vector<Request> requests)
+  auto key_value_execute_multi(std::vector<Request> requests) -> std::vector<Response>
   {
     std::vector<std::shared_ptr<std::promise<Response>>> barriers;
     barriers.reserve(requests.size());
@@ -579,9 +585,10 @@ public:
     return responses;
   }
 
-  std::pair<core_error_info, core::diag::ping_result> ping(std::optional<std::string> report_id,
-                                                           std::optional<std::string> bucket_name,
-                                                           std::set<core::service_type> services)
+  auto ping(std::optional<std::string> report_id,
+            std::optional<std::string> bucket_name,
+            std::set<core::service_type> services)
+    -> std::pair<core_error_info, core::diag::ping_result>
   {
     std::optional<std::chrono::milliseconds> timeout{}; // not exposing timeout atm
 
@@ -597,7 +604,8 @@ public:
     return { {}, f.get() };
   }
 
-  std::pair<core_error_info, core::diag::diagnostics_result> diagnostics(std::string report_id)
+  auto diagnostics(std::string report_id)
+    -> std::pair<core_error_info, core::diag::diagnostics_result>
   {
     auto barrier = std::make_shared<std::promise<core::diag::diagnostics_result>>();
     auto f = barrier->get_future();
@@ -607,9 +615,8 @@ public:
     return { {}, f.get() };
   }
 
-  couchbase::collection collection(std::string_view bucket,
-                                   std::string_view scope,
-                                   std::string_view collection)
+  auto collection(std::string_view bucket, std::string_view scope, std::string_view collection)
+    -> couchbase::collection
   {
     return public_api().bucket(bucket).scope(scope).collection(collection);
   }
@@ -672,22 +679,22 @@ connection_handle::~connection_handle()
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::open()
+auto
+connection_handle::open() -> core_error_info
 {
   return impl_->open();
 }
 
 COUCHBASE_API
-std::string
-connection_handle::cluster_version(const zend_string* bucket_name)
+auto
+connection_handle::cluster_version(const zend_string* bucket_name) -> std::string
 {
   return impl_->cluster_version(cb_string_new(bucket_name));
 }
 
 COUCHBASE_API
-bool
-connection_handle::replicas_configured_for_bucket(const zend_string* bucket_name)
+auto
+connection_handle::replicas_configured_for_bucket(const zend_string* bucket_name) -> bool
 {
   return impl_->replicas_configured_for_bucket(cb_string_new(bucket_name));
 }
@@ -699,29 +706,31 @@ connection_handle::notify_fork(fork_event event) const
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::bucket_open(const std::string& name)
+auto
+connection_handle::bucket_open(const std::string& name) -> core_error_info
 {
   return impl_->bucket_open(name);
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::bucket_open(const zend_string* name)
+auto
+connection_handle::bucket_open(const zend_string* name) -> core_error_info
 {
   return impl_->bucket_open(cb_string_new(name));
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::bucket_close(const zend_string* name)
+auto
+connection_handle::bucket_close(const zend_string* name) -> core_error_info
 {
   return impl_->bucket_close(cb_string_new(name));
 }
 
+namespace
+{
 template<typename Request>
-static core_error_info
-cb_assign_user_domain(Request& req, const zval* options)
+auto
+cb_assign_user_domain(Request& req, const zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -759,7 +768,7 @@ cb_assign_user_domain(Request& req, const zval* options)
   return {};
 }
 
-static inline void
+inline void
 mutation_token_to_zval(const mutation_token& token, zval* return_value)
 {
   array_init(return_value);
@@ -772,14 +781,15 @@ mutation_token_to_zval(const mutation_token& token, zval* return_value)
   add_assoc_stringl(return_value, "sequenceNumber", val.data(), val.size());
 }
 
-static inline bool
-is_mutation_token_valid(const mutation_token& token)
+inline auto
+is_mutation_token_valid(const mutation_token& token) -> bool
 {
   return !token.bucket_name().empty() && token.partition_uuid() > 0;
 }
+} // namespace
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_upsert(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
@@ -787,7 +797,7 @@ connection_handle::document_upsert(zval* return_value,
                                    const zend_string* id,
                                    const zend_string* value,
                                    zend_long flags,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::upsert_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -826,7 +836,7 @@ connection_handle::document_upsert(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_insert(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
@@ -834,7 +844,7 @@ connection_handle::document_insert(zval* return_value,
                                    const zend_string* id,
                                    const zend_string* value,
                                    zend_long flags,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::insert_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -870,7 +880,7 @@ connection_handle::document_insert(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_replace(zval* return_value,
                                     const zend_string* bucket,
                                     const zend_string* scope,
@@ -878,7 +888,7 @@ connection_handle::document_replace(zval* return_value,
                                     const zend_string* id,
                                     const zend_string* value,
                                     zend_long flags,
-                                    const zval* options)
+                                    const zval* options) -> core_error_info
 {
   couchbase::replace_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -920,14 +930,14 @@ connection_handle::document_replace(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_append(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
                                    const zend_string* id,
                                    const zend_string* value,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::append_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -958,14 +968,14 @@ connection_handle::document_append(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_prepend(zval* return_value,
                                     const zend_string* bucket,
                                     const zend_string* scope,
                                     const zend_string* collection,
                                     const zend_string* id,
                                     const zend_string* value,
-                                    const zval* options)
+                                    const zval* options) -> core_error_info
 {
   couchbase::prepend_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -996,13 +1006,13 @@ connection_handle::document_prepend(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_increment(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
                                       const zend_string* id,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   couchbase::increment_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1032,7 +1042,7 @@ connection_handle::document_increment(zval* return_value,
 
   array_init(return_value);
   add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
-  add_assoc_long(return_value, "value", resp.content());
+  add_assoc_long(return_value, "value", static_cast<zend_long>(resp.content()));
   auto value_str = fmt::format("{}", resp.content());
   add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
   auto cas = fmt::format("{:x}", resp.cas().value());
@@ -1046,13 +1056,13 @@ connection_handle::document_increment(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_decrement(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
                                       const zend_string* id,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   couchbase::decrement_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1082,7 +1092,7 @@ connection_handle::document_decrement(zval* return_value,
 
   array_init(return_value);
   add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
-  add_assoc_long(return_value, "value", resp.content());
+  add_assoc_long(return_value, "value", static_cast<zend_long>(resp.content()));
   auto value_str = fmt::format("{}", resp.content());
   add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
   auto cas = fmt::format("{:x}", resp.cas().value());
@@ -1096,13 +1106,13 @@ connection_handle::document_decrement(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get(zval* return_value,
                                 const zend_string* bucket,
                                 const zend_string* scope,
                                 const zend_string* collection,
                                 const zend_string* id,
-                                const zval* options)
+                                const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1162,13 +1172,13 @@ connection_handle::document_get(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get_any_replica(zval* return_value,
                                             const zend_string* bucket,
                                             const zend_string* scope,
                                             const zend_string* collection,
                                             const zend_string* id,
-                                            const zval* options)
+                                            const zval* options) -> core_error_info
 {
   couchbase::get_any_replica_options o;
   if (auto e = cb_set_timeout(o, options); e.ec) {
@@ -1196,13 +1206,13 @@ connection_handle::document_get_any_replica(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get_all_replicas(zval* return_value,
                                              const zend_string* bucket,
                                              const zend_string* scope,
                                              const zend_string* collection,
                                              const zend_string* id,
-                                             const zval* options)
+                                             const zval* options) -> core_error_info
 {
   couchbase::get_all_replicas_options o;
   if (auto e = cb_set_timeout(o, options); e.ec) {
@@ -1235,14 +1245,14 @@ connection_handle::document_get_all_replicas(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get_and_lock(zval* return_value,
                                          const zend_string* bucket,
                                          const zend_string* scope,
                                          const zend_string* collection,
                                          const zend_string* id,
                                          zend_long lock_time,
-                                         const zval* options)
+                                         const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1272,14 +1282,14 @@ connection_handle::document_get_and_lock(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get_and_touch(zval* return_value,
                                           const zend_string* bucket,
                                           const zend_string* scope,
                                           const zend_string* collection,
                                           const zend_string* id,
                                           zend_long expiry,
-                                          const zval* options)
+                                          const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1309,14 +1319,14 @@ connection_handle::document_get_and_touch(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_touch(zval* return_value,
                                   const zend_string* bucket,
                                   const zend_string* scope,
                                   const zend_string* collection,
                                   const zend_string* id,
                                   zend_long expiry,
-                                  const zval* options)
+                                  const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1343,14 +1353,14 @@ connection_handle::document_touch(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_unlock(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
                                    const zend_string* id,
                                    const zend_string* locked_cas,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1381,13 +1391,13 @@ connection_handle::document_unlock(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_remove(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
                                    const zend_string* id,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::remove_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1420,13 +1430,13 @@ connection_handle::document_remove(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_exists(zval* return_value,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
                                    const zend_string* id,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -1458,14 +1468,14 @@ connection_handle::document_exists(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_mutate_in(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
                                       const zend_string* id,
                                       const zval* specs,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   couchbase::mutate_in_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1635,14 +1645,14 @@ connection_handle::document_mutate_in(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_lookup_in(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
                                       const zend_string* id,
                                       const zval* specs,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   couchbase::lookup_in_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1722,14 +1732,14 @@ connection_handle::document_lookup_in(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_lookup_in_any_replica(zval* return_value,
                                                   const zend_string* bucket,
                                                   const zend_string* scope,
                                                   const zend_string* collection,
                                                   const zend_string* id,
                                                   const zval* specs,
-                                                  const zval* options)
+                                                  const zval* options) -> core_error_info
 {
   couchbase::lookup_in_any_replica_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1809,14 +1819,14 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_lookup_in_all_replicas(zval* return_value,
                                                    const zend_string* bucket,
                                                    const zend_string* scope,
                                                    const zend_string* collection,
                                                    const zend_string* id,
                                                    const zval* specs,
-                                                   const zval* options)
+                                                   const zval* options) -> core_error_info
 {
   couchbase::lookup_in_all_replicas_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
@@ -1901,13 +1911,13 @@ connection_handle::document_lookup_in_all_replicas(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_get_multi(zval* return_value,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
                                       const zval* ids,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   if (Z_TYPE_P(ids) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected ids to be an array" };
@@ -1969,13 +1979,13 @@ connection_handle::document_get_multi(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_remove_multi(zval* return_value,
                                          const zend_string* bucket,
                                          const zend_string* scope,
                                          const zend_string* collection,
                                          const zval* entries,
-                                         const zval* options)
+                                         const zval* options) -> core_error_info
 {
   if (Z_TYPE_P(entries) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
@@ -2078,13 +2088,13 @@ connection_handle::document_remove_multi(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::document_upsert_multi(zval* return_value,
                                          const zend_string* bucket,
                                          const zend_string* scope,
                                          const zend_string* collection,
                                          const zval* entries,
-                                         const zval* options)
+                                         const zval* options) -> core_error_info
 {
   if (Z_TYPE_P(entries) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected entries to be an array" };
@@ -2185,8 +2195,9 @@ connection_handle::document_upsert_multi(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query(zval* return_value, const zend_string* statement, const zval* options)
+  -> core_error_info
 {
   auto [request, e] = zval_to_query_request(statement, options);
   if (e.ec) {
@@ -2201,8 +2212,11 @@ connection_handle::query(zval* return_value, const zend_string* statement, const
   return {};
 }
 
-static const char*
-cb_analytics_status_str(core::operations::analytics_response::analytics_status status)
+namespace
+{
+auto
+cb_analytics_status_str(core::operations::analytics_response::analytics_status status) -> const
+  char*
 {
   switch (status) {
     case couchbase::core::operations::analytics_response::running:
@@ -2230,12 +2244,13 @@ cb_analytics_status_str(core::operations::analytics_response::analytics_status s
   }
   return "unknown";
 }
+} // namespace
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::analytics_query(zval* return_value,
                                    const zend_string* statement,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::core::operations::analytics_request request{ cb_string_new(statement) };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
@@ -2340,11 +2355,14 @@ connection_handle::analytics_query(zval* return_value,
     {
       zval metrics;
       array_init(&metrics);
-      add_assoc_long(&metrics, "errorCount", resp.meta.metrics.error_count);
-      add_assoc_long(&metrics, "processedObjects", resp.meta.metrics.processed_objects);
-      add_assoc_long(&metrics, "resultCount", resp.meta.metrics.result_count);
-      add_assoc_long(&metrics, "resultSize", resp.meta.metrics.result_size);
-      add_assoc_long(&metrics, "warningCount", resp.meta.metrics.warning_count);
+      add_assoc_long(&metrics, "errorCount", static_cast<zend_long>(resp.meta.metrics.error_count));
+      add_assoc_long(
+        &metrics, "processedObjects", static_cast<zend_long>(resp.meta.metrics.processed_objects));
+      add_assoc_long(
+        &metrics, "resultCount", static_cast<zend_long>(resp.meta.metrics.result_count));
+      add_assoc_long(&metrics, "resultSize", static_cast<zend_long>(resp.meta.metrics.result_size));
+      add_assoc_long(
+        &metrics, "warningCount", static_cast<zend_long>(resp.meta.metrics.warning_count));
       add_assoc_long(
         &metrics,
         "elapsedTime",
@@ -2366,7 +2384,7 @@ connection_handle::analytics_query(zval* return_value,
         zval warning;
         array_init(&warning);
 
-        add_assoc_long(&warning, "code", w.code);
+        add_assoc_long(&warning, "code", static_cast<zend_long>(w.code));
         add_assoc_string(&warning, "code", w.message.c_str());
 
         add_next_index_zval(&warnings, &warning);
@@ -2381,13 +2399,13 @@ connection_handle::analytics_query(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search(zval* return_value,
                           const zend_string* index_name,
                           const zend_string* query,
                           const zval* options,
                           const zend_string* vector_search,
-                          const zval* vector_options)
+                          const zval* vector_options) -> core_error_info
 {
   auto [request, e] = zval_to_common_search_request(index_name, query, options);
   if (e.ec) {
@@ -2423,11 +2441,11 @@ connection_handle::search(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_query(zval* return_value,
                                 const zend_string* index_name,
                                 const zend_string* query,
-                                const zval* options)
+                                const zval* options) -> core_error_info
 {
   auto [request, e] = zval_to_common_search_request(index_name, query, options);
 
@@ -2440,13 +2458,13 @@ connection_handle::search_query(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::view_query(zval* return_value,
                               const zend_string* bucket_name,
                               const zend_string* design_document_name,
                               const zend_string* view_name,
                               const zend_long name_space,
-                              const zval* options)
+                              const zval* options) -> core_error_info
 {
   core::design_document_namespace cxx_name_space{};
   switch (auto name_space_val = static_cast<std::uint32_t>(name_space); name_space_val) {
@@ -2602,7 +2620,7 @@ connection_handle::view_query(zval* return_value,
       add_assoc_string(&meta, "debugInfo", resp.meta.debug_info.value().c_str());
     }
     if (resp.meta.total_rows.has_value()) {
-      add_assoc_long(&meta, "totalRows", resp.meta.total_rows.value());
+      add_assoc_long(&meta, "totalRows", static_cast<zend_long>(resp.meta.total_rows.value()));
     }
 
     add_assoc_zval(return_value, "meta", &meta);
@@ -2612,8 +2630,8 @@ connection_handle::view_query(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::ping(zval* return_value, const zval* options)
+auto
+connection_handle::ping(zval* return_value, const zval* options) -> core_error_info
 {
   std::optional<std::string> report_id;
   if (auto e = cb_assign_string(report_id, options, "reportId"); e.ec) {
@@ -2729,10 +2747,10 @@ connection_handle::ping(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::diagnostics(zval* return_value,
                                const zend_string* report_id,
-                               const zval* /* options */)
+                               const zval* /* options */) -> core_error_info
 {
   auto [err, resp] = impl_->diagnostics(cb_string_new(report_id));
   if (err.ec) {
@@ -2812,8 +2830,9 @@ connection_handle::diagnostics(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 cb_search_index_to_zval(zval* return_value, const couchbase::core::management::search::index& index)
+  -> core_error_info
 {
   array_init(return_value);
 
@@ -2831,9 +2850,9 @@ cb_search_index_to_zval(zval* return_value, const couchbase::core::management::s
 }
 
 COUCHBASE_API
-core_error_info
+auto
 zval_to_search_index(couchbase::core::operations::management::search_index_upsert_request& request,
-                     const zval* index)
+                     const zval* index) -> core_error_info
 {
   couchbase::core::management::search::index idx{};
   if (auto e = cb_assign_string(idx.name, index, "name"); e.ec) {
@@ -2869,10 +2888,10 @@ zval_to_search_index(couchbase::core::operations::management::search_index_upser
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_get(zval* return_value,
                                     const zend_string* index_name,
-                                    const zval* options)
+                                    const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_request request{ cb_string_new(
     index_name) };
@@ -2894,8 +2913,8 @@ connection_handle::search_index_get(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::search_index_get_all(zval* return_value, const zval* options)
+auto
+connection_handle::search_index_get_all(zval* return_value, const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_all_request request{};
 
@@ -2921,8 +2940,9 @@ connection_handle::search_index_get_all(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::search_index_upsert_request request{};
 
@@ -2947,10 +2967,10 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_drop(zval* return_value,
                                      const zend_string* index_name,
-                                     const zval* options)
+                                     const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_drop_request request{ cb_string_new(
     index_name) };
@@ -2969,10 +2989,10 @@ connection_handle::search_index_drop(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_get_documents_count(zval* return_value,
                                                     const zend_string* index_name,
-                                                    const zval* options)
+                                                    const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_documents_count_request request{
     cb_string_new(index_name)
@@ -2988,17 +3008,17 @@ connection_handle::search_index_get_documents_count(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_long(return_value, "count", resp.count);
+  add_assoc_long(return_value, "count", static_cast<zend_long>(resp.count));
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_control_ingest(zval* return_value,
                                                const zend_string* index_name,
                                                bool pause,
-                                               const zval* options)
+                                               const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_ingest_request request{};
   request.index_name = cb_string_new(index_name);
@@ -3018,11 +3038,11 @@ connection_handle::search_index_control_ingest(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_control_query(zval* return_value,
                                               const zend_string* index_name,
                                               bool allow,
-                                              const zval* options)
+                                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_query_request request{};
   request.index_name = cb_string_new(index_name);
@@ -3042,11 +3062,11 @@ connection_handle::search_index_control_query(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_control_plan_freeze(zval* return_value,
                                                     const zend_string* index_name,
                                                     bool freeze,
-                                                    const zval* options)
+                                                    const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_plan_freeze_request request{};
   request.index_name = cb_string_new(index_name);
@@ -3066,11 +3086,11 @@ connection_handle::search_index_control_plan_freeze(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::search_index_analyze_document(zval* return_value,
                                                  const zend_string* index_name,
                                                  const zend_string* document,
-                                                 const zval* options)
+                                                 const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_analyze_document_request request{};
   request.index_name = cb_string_new(index_name);
@@ -3092,12 +3112,12 @@ connection_handle::search_index_analyze_document(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_get(zval* return_value,
                                           const zend_string* bucket_name,
                                           const zend_string* scope_name,
                                           const zend_string* index_name,
-                                          const zval* options)
+                                          const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_request request{ cb_string_new(
     index_name) };
@@ -3122,11 +3142,11 @@ connection_handle::scope_search_index_get(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_get_all(zval* return_value,
                                               const zend_string* bucket_name,
                                               const zend_string* scope_name,
-                                              const zval* options)
+                                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_all_request request{};
 
@@ -3155,12 +3175,12 @@ connection_handle::scope_search_index_get_all(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_upsert(zval* return_value,
                                              const zend_string* bucket_name,
                                              const zend_string* scope_name,
                                              const zval* index,
-                                             const zval* options)
+                                             const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_upsert_request request{};
 
@@ -3188,12 +3208,12 @@ connection_handle::scope_search_index_upsert(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_drop(zval* return_value,
                                            const zend_string* bucket_name,
                                            const zend_string* scope_name,
                                            const zend_string* index_name,
-                                           const zval* options)
+                                           const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_drop_request request{ cb_string_new(
     index_name) };
@@ -3215,12 +3235,12 @@ connection_handle::scope_search_index_drop(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_get_documents_count(zval* return_value,
                                                           const zend_string* bucket_name,
                                                           const zend_string* scope_name,
                                                           const zend_string* index_name,
-                                                          const zval* options)
+                                                          const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_documents_count_request request{
     cb_string_new(index_name)
@@ -3239,19 +3259,19 @@ connection_handle::scope_search_index_get_documents_count(zval* return_value,
   }
 
   array_init(return_value);
-  add_assoc_long(return_value, "count", resp.count);
+  add_assoc_long(return_value, "count", static_cast<zend_long>(resp.count));
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_control_ingest(zval* return_value,
                                                      const zend_string* bucket_name,
                                                      const zend_string* scope_name,
                                                      const zend_string* index_name,
                                                      bool pause,
-                                                     const zval* options)
+                                                     const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_ingest_request request{};
 
@@ -3275,13 +3295,13 @@ connection_handle::scope_search_index_control_ingest(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_control_query(zval* return_value,
                                                     const zend_string* bucket_name,
                                                     const zend_string* scope_name,
                                                     const zend_string* index_name,
                                                     bool allow,
-                                                    const zval* options)
+                                                    const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_query_request request{};
 
@@ -3305,13 +3325,13 @@ connection_handle::scope_search_index_control_query(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
                                                           const zend_string* bucket_name,
                                                           const zend_string* scope_name,
                                                           const zend_string* index_name,
                                                           bool freeze,
-                                                          const zval* options)
+                                                          const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_control_plan_freeze_request request{};
 
@@ -3335,13 +3355,13 @@ connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_search_index_analyze_document(zval* return_value,
                                                        const zend_string* bucket_name,
                                                        const zend_string* scope_name,
                                                        const zend_string* index_name,
                                                        const zend_string* document,
-                                                       const zval* options)
+                                                       const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_analyze_document_request request{};
 
@@ -3367,12 +3387,12 @@ connection_handle::scope_search_index_analyze_document(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::view_index_upsert(zval* return_value,
                                      const zend_string* bucket_name,
                                      const zval* design_document,
                                      zend_long name_space,
-                                     const zval* options)
+                                     const zval* options) -> core_error_info
 {
   couchbase::core::management::views::design_document idx{};
   if (auto e = cb_assign_string(idx.name, design_document, "name"); e.ec) {
@@ -3440,8 +3460,11 @@ connection_handle::view_index_upsert(zval* return_value,
   return {};
 }
 
-static std::pair<core_error_info, couchbase::core::management::cluster::bucket_settings>
+namespace
+{
+auto
 zval_to_bucket_settings(const zval* bucket_settings)
+  -> std::pair<core_error_info, couchbase::core::management::cluster::bucket_settings>
 {
   couchbase::core::management::cluster::bucket_settings bucket{};
   if (auto e = cb_assign_string(bucket.name, bucket_settings, "name"); e.ec) {
@@ -3592,12 +3615,13 @@ zval_to_bucket_settings(const zval* bucket_settings)
 
   return { {}, bucket };
 }
+} // namespace
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::bucket_create(zval* return_value,
                                  const zval* bucket_settings,
-                                 const zval* options)
+                                 const zval* options) -> core_error_info
 {
   auto [e, bucket] = zval_to_bucket_settings(bucket_settings);
   if (e.ec) {
@@ -3620,10 +3644,10 @@ connection_handle::bucket_create(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::bucket_update(zval* return_value,
                                  const zval* bucket_settings,
-                                 const zval* options)
+                                 const zval* options) -> core_error_info
 {
   auto [e, bucket] = zval_to_bucket_settings(bucket_settings);
   if (e.ec) {
@@ -3646,10 +3670,10 @@ connection_handle::bucket_update(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 cb_bucket_settings_to_zval(
   zval* return_value,
-  const couchbase::core::management::cluster::bucket_settings& bucket_settings)
+  const couchbase::core::management::cluster::bucket_settings& bucket_settings) -> core_error_info
 {
   array_init(return_value);
 
@@ -3671,7 +3695,7 @@ cb_bucket_settings_to_zval(
       break;
   }
   add_assoc_string(return_value, "bucketType", bucket_type.c_str());
-  add_assoc_long(return_value, "ramQuotaMB", bucket_settings.ram_quota_mb);
+  add_assoc_long(return_value, "ramQuotaMB", static_cast<zend_long>(bucket_settings.ram_quota_mb));
   if (bucket_settings.max_expiry.has_value()) {
     add_assoc_long(return_value, "maxExpiry", bucket_settings.max_expiry.value());
   }
@@ -3784,8 +3808,9 @@ cb_bucket_settings_to_zval(
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::bucket_get(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::bucket_get_request request{ cb_string_new(name) };
 
@@ -3806,8 +3831,8 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::bucket_get_all(zval* return_value, const zval* options)
+auto
+connection_handle::bucket_get_all(zval* return_value, const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::bucket_get_all_request request{};
 
@@ -3834,8 +3859,9 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::bucket_drop(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::bucket_drop_request request{ cb_string_new(name) };
 
@@ -3853,8 +3879,9 @@ connection_handle::bucket_drop(zval* return_value, const zend_string* name, cons
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::bucket_flush(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::bucket_flush_request request{ cb_string_new(name) };
 
@@ -3872,10 +3899,10 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_get_all(zval* return_value,
                                  const zend_string* bucket_name,
-                                 const zval* options)
+                                 const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::scope_get_all_request request{};
 
@@ -3918,11 +3945,11 @@ connection_handle::scope_get_all(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_create(zval* return_value,
                                 const zend_string* bucket_name,
                                 const zend_string* scope_name,
-                                const zval* options)
+                                const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::scope_create_request request{};
 
@@ -3942,11 +3969,11 @@ connection_handle::scope_create(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::scope_drop(zval* return_value,
                               const zend_string* bucket_name,
                               const zend_string* scope_name,
-                              const zval* options)
+                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::scope_drop_request request{};
 
@@ -3966,13 +3993,13 @@ connection_handle::scope_drop(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_create(zval* return_value,
                                      const zend_string* bucket_name,
                                      const zend_string* scope_name,
                                      const zend_string* collection_name,
                                      const zval* settings,
-                                     const zval* options)
+                                     const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::collection_create_request request{};
 
@@ -4002,12 +4029,12 @@ connection_handle::collection_create(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_drop(zval* return_value,
                                    const zend_string* bucket_name,
                                    const zend_string* scope_name,
                                    const zend_string* collection_name,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::collection_drop_request request{};
 
@@ -4029,13 +4056,13 @@ connection_handle::collection_drop(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_update(zval* return_value,
                                      const zend_string* bucket_name,
                                      const zend_string* scope_name,
                                      const zend_string* collection_name,
                                      const zval* settings,
-                                     const zval* options)
+                                     const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::collection_update_request request{};
 
@@ -4080,9 +4107,10 @@ cb_role_to_zval(zval* return_value, const couchbase::core::management::rbac::rol
 }
 
 COUCHBASE_API
-core_error_info
+auto
 cb_user_and_metadata_to_zval(zval* return_value,
                              const couchbase::core::management::rbac::user_and_metadata& user)
+  -> core_error_info
 {
   array_init(return_value);
 
@@ -4170,7 +4198,9 @@ cb_user_and_metadata_to_zval(zval* return_value,
   return {};
 }
 
-static void
+namespace
+{
+void
 cb_group_to_zval(zval* return_value, const couchbase::core::management::rbac::group& group)
 {
   array_init(return_value);
@@ -4193,10 +4223,12 @@ cb_group_to_zval(zval* return_value, const couchbase::core::management::rbac::gr
   }
   add_assoc_zval(return_value, "roles", &roles);
 }
+} // namespace
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
+  -> core_error_info
 {
   couchbase::core::management::rbac::user cuser{};
   if (auto e = cb_assign_string(cuser.username, user, "username"); e.ec) {
@@ -4268,8 +4300,8 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::user_get_all(zval* return_value, const zval* options)
+auto
+connection_handle::user_get_all(zval* return_value, const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::user_get_all_request request{};
 
@@ -4299,8 +4331,9 @@ connection_handle::user_get_all(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::user_get(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::user_get_request request{ cb_string_new(name) };
 
@@ -4324,8 +4357,9 @@ connection_handle::user_get(zval* return_value, const zend_string* name, const z
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::user_drop(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::user_drop_request request{ cb_string_new(name) };
 
@@ -4346,10 +4380,10 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::change_password(zval* return_value,
                                    const zend_string* new_password,
-                                   const zval* options)
+                                   const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::change_password_request request{ cb_string_new(
     new_password) };
@@ -4368,8 +4402,9 @@ connection_handle::change_password(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
+  -> core_error_info
 {
   couchbase::core::management::rbac::group cgroup{};
   if (auto e = cb_assign_string(cgroup.name, group, "name"); e.ec) {
@@ -4424,8 +4459,8 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::group_get_all(zval* return_value, const zval* options)
+auto
+connection_handle::group_get_all(zval* return_value, const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::group_get_all_request request{};
 
@@ -4450,8 +4485,9 @@ connection_handle::group_get_all(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::group_get(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::group_get_request request{ cb_string_new(name) };
 
@@ -4470,8 +4506,9 @@ connection_handle::group_get(zval* return_value, const zend_string* name, const 
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::group_drop(zval* return_value, const zend_string* name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::group_drop_request request{ cb_string_new(name) };
 
@@ -4489,8 +4526,8 @@ connection_handle::group_drop(zval* return_value, const zend_string* name, const
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::role_get_all(zval* return_value, const zval* options)
+auto
+connection_handle::role_get_all(zval* return_value, const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::role_get_all_request request{};
 
@@ -4518,10 +4555,10 @@ connection_handle::role_get_all(zval* return_value, const zval* options)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query_index_get_all(zval* return_value,
                                        const zend_string* bucket_name,
-                                       const zval* options)
+                                       const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_get_all_request request{};
 
@@ -4575,11 +4612,11 @@ connection_handle::query_index_get_all(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query_index_create(const zend_string* bucket_name,
                                       const zend_string* index_name,
                                       const zval* fields,
-                                      const zval* options)
+                                      const zval* options) -> core_error_info
 {
   if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for index fields" };
@@ -4633,8 +4670,9 @@ connection_handle::query_index_create(const zend_string* bucket_name,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query_index_create_primary(const zend_string* bucket_name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::query_index_create_request request{};
 
@@ -4672,10 +4710,10 @@ connection_handle::query_index_create_primary(const zend_string* bucket_name, co
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query_index_drop(const zend_string* bucket_name,
                                     const zend_string* index_name,
-                                    const zval* options)
+                                    const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4706,8 +4744,9 @@ connection_handle::query_index_drop(const zend_string* bucket_name,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::query_index_drop_primary(const zend_string* bucket_name, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4740,10 +4779,10 @@ connection_handle::query_index_drop_primary(const zend_string* bucket_name, cons
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::query_index_build_deferred(zval* return_value,
+auto
+connection_handle::query_index_build_deferred(zval* /*return_value*/,
                                               const zend_string* bucket_name,
-                                              const zval* options)
+                                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_build_deferred_request request{};
 
@@ -4768,12 +4807,12 @@ connection_handle::query_index_build_deferred(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_query_index_get_all(zval* return_value,
                                                   const zend_string* bucket_name,
                                                   const zend_string* scope_name,
                                                   const zend_string* collection_name,
-                                                  const zval* options)
+                                                  const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_get_all_request request{};
 
@@ -4823,13 +4862,13 @@ connection_handle::collection_query_index_get_all(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_query_index_create(const zend_string* bucket_name,
                                                  const zend_string* scope_name,
                                                  const zend_string* collection_name,
                                                  const zend_string* index_name,
                                                  const zval* fields,
-                                                 const zval* options)
+                                                 const zval* options) -> core_error_info
 {
   if (fields == nullptr || Z_TYPE_P(fields) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for index fields" };
@@ -4879,11 +4918,11 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_query_index_create_primary(const zend_string* bucket_name,
                                                          const zend_string* scope_name,
                                                          const zend_string* collection_name,
-                                                         const zval* options)
+                                                         const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_create_request request{};
 
@@ -4917,12 +4956,12 @@ connection_handle::collection_query_index_create_primary(const zend_string* buck
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_query_index_drop(const zend_string* bucket_name,
                                                const zend_string* scope_name,
                                                const zend_string* collection_name,
                                                const zend_string* index_name,
-                                               const zval* options)
+                                               const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4949,11 +4988,11 @@ connection_handle::collection_query_index_drop(const zend_string* bucket_name,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::collection_query_index_drop_primary(const zend_string* bucket_name,
                                                        const zend_string* scope_name,
                                                        const zend_string* collection_name,
-                                                       const zval* options)
+                                                       const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4982,12 +5021,12 @@ connection_handle::collection_query_index_drop_primary(const zend_string* bucket
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::collection_query_index_build_deferred(zval* return_value,
+auto
+connection_handle::collection_query_index_build_deferred(zval* /*return_value*/,
                                                          const zend_string* bucket_name,
                                                          const zend_string* scope_name,
                                                          const zend_string* collection_name,
-                                                         const zval* options)
+                                                         const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_build_deferred_request request{};
 
@@ -5007,10 +5046,10 @@ connection_handle::collection_query_index_build_deferred(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_create_dataverse(zval* return_value,
+auto
+connection_handle::analytics_create_dataverse(zval* /*return_value*/,
                                               const zend_string* dataverse_name,
-                                              const zval* options)
+                                              const zval* options) -> core_error_info
 {
 
   couchbase::core::operations::management::analytics_dataverse_create_request request{};
@@ -5030,23 +5069,22 @@ connection_handle::analytics_create_dataverse(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to create dataverse" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format(
-                 "Unable to create dataverse ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "Unable to create dataverse ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_drop_dataverse(zval* return_value,
+auto
+connection_handle::analytics_drop_dataverse(zval* /*return_value*/,
                                             const zend_string* dataverse_name,
-                                            const zval* options)
+                                            const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_dataverse_drop_request request{};
 
@@ -5066,24 +5104,23 @@ connection_handle::analytics_drop_dataverse(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to drop dataverse" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format(
-                 "Unable to drop dataverse ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "Unable to drop dataverse ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_create_dataset(zval* return_value,
+auto
+connection_handle::analytics_create_dataset(zval* /*return_value*/,
                                             const zend_string* dataset_name,
                                             const zend_string* bucket_name,
-                                            const zval* options)
+                                            const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_dataset_create_request request{};
 
@@ -5111,23 +5148,22 @@ connection_handle::analytics_create_dataset(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to create dataset" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format(
-                 "Unable to create dataset ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "Unable to create dataset ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_drop_dataset(zval* return_value,
+auto
+connection_handle::analytics_drop_dataset(zval* /*return_value*/,
                                           const zend_string* dataset_name,
-                                          const zval* options)
+                                          const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_dataset_drop_request request{};
 
@@ -5151,21 +5187,21 @@ connection_handle::analytics_drop_dataset(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to drop dataset" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format(
-                 "Unable to drop dataset ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "Unable to drop dataset ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::analytics_get_all_datasets(zval* return_value, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_dataset_get_all_request request{};
 
@@ -5178,13 +5214,12 @@ connection_handle::analytics_get_all_datasets(zval* return_value, const zval* op
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to fetch all datasets" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format(
-                 "Unable to fetch all datasets ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "Unable to fetch all datasets ({}: {})", first_error.code, first_error.message) };
   }
 
   array_init(return_value);
@@ -5202,12 +5237,12 @@ connection_handle::analytics_get_all_datasets(zval* return_value, const zval* op
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_create_index(zval* return_value,
+auto
+connection_handle::analytics_create_index(zval* /*return_value*/,
                                           const zend_string* dataset_name,
                                           const zend_string* index_name,
                                           const zval* fields,
-                                          const zval* options)
+                                          const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_index_create_request request{};
 
@@ -5245,25 +5280,24 @@ connection_handle::analytics_create_index(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to create analytics index" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to create analytics index ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to create analytics index ({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_drop_index(zval* return_value,
+auto
+connection_handle::analytics_drop_index(zval* /*return_value*/,
                                         const zend_string* dataset_name,
                                         const zend_string* index_name,
-                                        const zval* options)
+                                        const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_index_drop_request request{};
 
@@ -5288,22 +5322,21 @@ connection_handle::analytics_drop_index(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to drop analytics index" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to drop analytics index ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format(
+               "unable to drop analytics index ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::analytics_get_all_indexes(zval* return_value, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_index_get_all_request request{};
 
@@ -5316,14 +5349,13 @@ connection_handle::analytics_get_all_indexes(zval* return_value, const zval* opt
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to fetch all analytics indexes" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("Unable to fetch all analytics indexes ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("Unable to fetch all analytics indexes ({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   array_init(return_value);
@@ -5341,8 +5373,9 @@ connection_handle::analytics_get_all_indexes(zval* return_value, const zval* opt
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_connect_link(zval* return_value, const zval* options)
+auto
+connection_handle::analytics_connect_link(zval* /*return_value*/, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_connect_request request{};
 
@@ -5367,22 +5400,22 @@ connection_handle::analytics_connect_link(zval* return_value, const zval* option
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to connect analytics link" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to connect analytics link ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to connect analytics link ({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_disconnect_link(zval* return_value, const zval* options)
+auto
+connection_handle::analytics_disconnect_link(zval* /*return_value*/, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_disconnect_request request{};
 
@@ -5403,22 +5436,22 @@ connection_handle::analytics_disconnect_link(zval* return_value, const zval* opt
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to disconnect analytics link" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to disconnect analytics link({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to disconnect analytics link({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::analytics_get_pending_mutations(zval* return_value, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_get_pending_mutations_request request{};
 
@@ -5433,14 +5466,13 @@ connection_handle::analytics_get_pending_mutations(zval* return_value, const zva
       return { resp.ctx.ec,
                ERROR_LOCATION,
                "unable to get pending mutations for the analytics service" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to get pending mutations for the analytics service ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to get pending mutations for the analytics service ({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   array_init(return_value);
@@ -5456,10 +5488,10 @@ connection_handle::analytics_get_pending_mutations(zval* return_value, const zva
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_create_link(zval* return_value,
+auto
+connection_handle::analytics_create_link(zval* /*return_value*/,
                                          const zval* analytics_link,
-                                         const zval* options)
+                                         const zval* options) -> core_error_info
 {
   auto [err, type] = cb_get_string(analytics_link, "type");
 
@@ -5490,14 +5522,13 @@ connection_handle::analytics_create_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to create couchbase_remote link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to create couchbase_remote link ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to create couchbase_remote link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else if (type.value() == "azureblob") {
     couchbase::core::operations::management::analytics_link_create_request<
@@ -5517,14 +5548,13 @@ connection_handle::analytics_create_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to create azure_blob_external link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to create azure_blob_external link ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to create azure_blob_external link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else if (type.value() == "s3") {
     couchbase::core::operations::management::analytics_link_create_request<
@@ -5544,14 +5574,13 @@ connection_handle::analytics_create_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to create s3_external link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to create s3_external link ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to create s3_external link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else {
     return { errc::common::invalid_argument,
@@ -5563,10 +5592,10 @@ connection_handle::analytics_create_link(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_replace_link(zval* return_value,
+auto
+connection_handle::analytics_replace_link(zval* /*return_value*/,
                                           const zval* analytics_link,
-                                          const zval* options)
+                                          const zval* options) -> core_error_info
 {
   auto [err, type] = cb_get_string(analytics_link, "type");
 
@@ -5597,14 +5626,13 @@ connection_handle::analytics_replace_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to replace couchbase_remote link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to replace couchbase_remote link ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to replace couchbase_remote link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else if (type.value() == "azureblob") {
     couchbase::core::operations::management::analytics_link_replace_request<
@@ -5624,14 +5652,13 @@ connection_handle::analytics_replace_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to replace azure_blob_external link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to replace azure_blob_external link  ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to replace azure_blob_external link  ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else if (type.value() == "s3") {
     couchbase::core::operations::management::analytics_link_replace_request<
@@ -5651,14 +5678,13 @@ connection_handle::analytics_replace_link(zval* return_value,
     if (err.ec) {
       if (resp.errors.empty()) {
         return { resp.ctx.ec, ERROR_LOCATION, "unable to replace s3_external link" };
-      } else {
-        const auto& first_error = resp.errors.front();
-        return { resp.ctx.ec,
-                 ERROR_LOCATION,
-                 fmt::format("unable to replace s3_external link ({}: {})",
-                             first_error.code,
-                             first_error.message) };
       }
+      const auto& first_error = resp.errors.front();
+      return { resp.ctx.ec,
+               ERROR_LOCATION,
+               fmt::format("unable to replace s3_external link ({}: {})",
+                           first_error.code,
+                           first_error.message) };
     }
   } else {
     return { errc::common::invalid_argument,
@@ -5670,11 +5696,11 @@ connection_handle::analytics_replace_link(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-connection_handle::analytics_drop_link(zval* return_value,
+auto
+connection_handle::analytics_drop_link(zval* /*return_value*/,
                                        const zend_string* link_name,
                                        const zend_string* dataverse_name,
-                                       const zval* options)
+                                       const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_drop_request request{};
 
@@ -5690,20 +5716,20 @@ connection_handle::analytics_drop_link(zval* return_value,
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to drop link" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to drop link ({}: {})", first_error.code, first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to drop link ({}: {})", first_error.code, first_error.message) };
   }
 
   return {};
 }
 
 COUCHBASE_API
-core_error_info
+auto
 connection_handle::analytics_get_all_links(zval* return_value, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_get_all_request request{};
 
@@ -5728,14 +5754,13 @@ connection_handle::analytics_get_all_links(zval* return_value, const zval* optio
   if (err.ec) {
     if (resp.errors.empty()) {
       return { resp.ctx.ec, ERROR_LOCATION, "unable to retrieve analytics links" };
-    } else {
-      const auto& first_error = resp.errors.front();
-      return { resp.ctx.ec,
-               ERROR_LOCATION,
-               fmt::format("unable to retrieve analytics links ({}: {})",
-                           first_error.code,
-                           first_error.message) };
     }
+    const auto& first_error = resp.errors.front();
+    return { resp.ctx.ec,
+             ERROR_LOCATION,
+             fmt::format("unable to retrieve analytics links ({}: {})",
+                         first_error.code,
+                         first_error.message) };
   }
 
   array_init(return_value);
@@ -5804,14 +5829,14 @@ connection_handle::analytics_get_all_links(zval* return_value, const zval* optio
   return {};
 }
 
-bool
-connection_handle::is_expired(std::chrono::system_clock::time_point now) const
+auto
+connection_handle::is_expired(std::chrono::system_clock::time_point now) const -> bool
 {
   return idle_expiry_ < now;
 }
 
-couchbase::core::cluster
-connection_handle::cluster() const
+auto
+connection_handle::cluster() const -> couchbase::core::cluster
 {
   return impl_->core_api();
 }
@@ -5929,16 +5954,14 @@ assign_string(const char* name,
   }
 }
 
-} // namespace options
-
 struct dns_options {
   std::optional<std::chrono::milliseconds> timeout{};
   std::optional<std::string> nameserver{};
   std::optional<std::uint16_t> port{};
 };
 
-static core_error_info
-apply_options(couchbase::cluster_options& cluster_options, zval* options)
+auto
+apply_options(couchbase::cluster_options& cluster_options, zval* options) -> core_error_info
 {
   cluster_options.behavior().append_to_user_agent(
     fmt::format("php_sdk/{}/{};php/{}",
@@ -6188,8 +6211,6 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options)
   return {};
 }
 
-namespace
-{
 auto
 construct_cluster_options(zval* options)
   -> std::pair<core_error_info, std::optional<couchbase::cluster_options>>
@@ -6285,14 +6306,15 @@ construct_cluster_options(zval* options)
     {},
   };
 }
-} // namespace
+} // namespace options
 
 COUCHBASE_API
-std::pair<connection_handle*, core_error_info>
+auto
 create_connection_handle(const zend_string* connection_string,
                          const zend_string* connection_hash,
                          zval* options,
                          std::chrono::system_clock::time_point idle_expiry)
+  -> std::pair<connection_handle*, core_error_info>
 {
   std::string connection_str(ZSTR_VAL(connection_string), ZSTR_LEN(connection_string));
 
@@ -6300,11 +6322,11 @@ create_connection_handle(const zend_string* connection_string,
     return { nullptr,
              { couchbase::errc::common::parsing_failure, ERROR_LOCATION, connstr.error.value() } };
   }
-  auto [e1, cluster_options] = construct_cluster_options(options);
+  auto [e1, cluster_options] = options::construct_cluster_options(options);
   if (e1.ec) {
     return { nullptr, e1 };
   }
-  if (auto e2 = apply_options(cluster_options.value(), options); e2.ec) {
+  if (auto e2 = options::apply_options(cluster_options.value(), options); e2.ec) {
     return { nullptr, e2 };
   }
   return { new connection_handle(std::move(connection_str),

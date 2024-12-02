@@ -47,7 +47,7 @@ struct generic_error_context {
 struct common_error_context {
   std::optional<std::string> last_dispatched_to{};
   std::optional<std::string> last_dispatched_from{};
-  int retry_attempts{ 0 };
+  std::size_t retry_attempts{ 0 };
   std::set<std::string, std::less<>> retry_reasons{};
 };
 
