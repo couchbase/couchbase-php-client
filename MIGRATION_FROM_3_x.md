@@ -621,18 +621,19 @@ background threads that can perform service tasks (like tracking configuration
 changes).
 
 So if `couchbase.max_persistent` is set to a positive (or zero) value, the
-extension will run the cleanup tasks if the number of existing instances exceeds the max, and will
-destroy all instances that have expired.
+extension will run the cleanup tasks if the number of existing instances
+exceeds the max, and will destroy all instances that have expired.
 
 The expiration time for the instance is recorded when the instance is created
 or pulled from the cache, and is set to the current time plus
 `couchbase.persistent_timeout`.
 
 Note that by setting both `couchbase.persistent_timeout` and
-`couchbase.max_persistent` to zero, this will force the extension to destroy all existing
-connections and always create a new one. If using this configuration, the application must be very
-careful not to reuse destroyed connections, perhaps by using the equivalent of a global
-singleton instance of the `\Couchbase\Cluster` object.
+`couchbase.max_persistent` to zero, this will force the extension to destroy
+all existing connections and always create a new one. If using this
+configuration, the application must be very careful not to reuse destroyed
+connections, perhaps by using the equivalent of a global singleton instance of
+the `\Couchbase\Cluster` object.
 </td>
         </tr>
         <tr>
