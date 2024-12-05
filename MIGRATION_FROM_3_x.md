@@ -559,7 +559,7 @@ The table below shows correspondence of timeout values between `Bucket` object s
                 <ul>
                     <li>fatal</li>
                     <li>error</li>
-                    <li>wrning</li>
+                    <li>warning</li>
                     <li>info</li>
                     <li>debug</li>
                     <li>trace</li>
@@ -587,8 +587,53 @@ The table below shows correspondence of timeout values between `Bucket` object s
             <td>Removed</td>
         </tr>
         <tr>
-            <td>couchbase.pool.max_idle_time_sec</td>
-            <td>couchbase.persistent_timeout</td>
+<td>
+
+`couchbase.pool.max_idle_time_sec`
+
+Sets the interval that allowed for the persistent instance to be idle. The
+default is 60 seconds. The SDK associates reference counter with the instance
+uniquely identified by connection string and credentials. When reference
+counter reaches zero, the SDK records current time into idle timestamp of the
+instance. In the end of each request, the SDK will run cleanup process that
+will sweep all idle instances at that point in time.
+
+Persistent instances are useful for the cases that the PHP worker process is
+not being destroyed after serving the request, so that next request will not
+need to wait for instance to bootstrap if it uses the same connection string,
+bucket and credentials.
+</td>
+<td>
+
+`couchbase.persistent_timeout`
+
+SDKv4 is based on C++SDK. It has similar behavior when it comes to persistent
+instances. But instead running cleanup in the end of each request, it does
+cleanup only when the library need to create new connection and the number of
+existing connection have reached `couchbase.max_persistent`.
+
+By default both `couchbase.persistent_timeout` and `couchbase.max_persistent`
+equal to `-1`, which means that the instances will be destroyed naturally
+when the PHP process will exit.
+
+This behavior was not possible in SDKv3 because libcouchbase does not have any
+background threads, that can perform service tasks (like tracking configuration
+changes).
+
+So if `couchbase.max_persistent` is set to positive (or zero) value, the
+extension will run the cleanup tasks if number of existing instances, and will
+destroy all instances, that have expired.
+
+The expiration time for the instance is recorded when the instance is created
+or pulled from the cache, and equals to current time plus
+`couchbase.persistent_timeout`.
+
+For example, setting both `couchbase.persistent_timeout` and
+`couchbase.max_persistent` to zero will force extension to destroy all existing
+connections and always create new one. So the application have to be extra
+careful not to reuse destroyed connections by using equivalent of global
+singleton instance of the `\Couchbase\Cluster` object.
+</td>
         </tr>
         <tr>
             <td>couchbase.allow_fallback_to_bucket_connection</td>
