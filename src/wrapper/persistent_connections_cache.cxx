@@ -29,7 +29,10 @@
 namespace couchbase::php
 {
 
-static int persistent_connection_destructor_id_{ 0 };
+namespace
+{
+int persistent_connection_destructor_id_{ 0 };
+} // namespace
 
 COUCHBASE_API
 void
@@ -39,41 +42,60 @@ set_persistent_connection_destructor_id(int id)
 }
 
 COUCHBASE_API
-int
-get_persistent_connection_destructor_id()
+auto
+get_persistent_connection_destructor_id() -> int
 {
   return persistent_connection_destructor_id_;
 }
 
 COUCHBASE_API
-int
-check_persistent_connection(zval* zv)
+auto
+check_persistent_connection(zval* zv) -> int
 {
   zend_resource* res = Z_RES_P(zv);
+
   auto now = std::chrono::system_clock::now();
 
   if (res->type == persistent_connection_destructor_id_) {
-    const auto* connection = static_cast<connection_handle*>(res->ptr);
-    if (COUCHBASE_G(persistent_timeout) != -1 && connection->is_expired(now)) {
-      /* connection has timed out */
-      return ZEND_HASH_APPLY_REMOVE;
+    const auto* handle = static_cast<connection_handle*>(res->ptr);
+    if (handle->is_expired(now)) {
+      if (GC_REFCOUNT(res) == 0) {
+        /* connection has timed out */
+        return ZEND_HASH_APPLY_REMOVE;
+      }
+
+      const std::string connection_string = handle->connection_string();
+      const std::string connection_hash = handle->connection_hash();
+      const auto expires_at = handle->expires_at();
+      CB_LOG_DEBUG("persistent connection expired, but the application still uses it: handle={}, "
+                   "connection_hash={}, connection_string=\"{}\", expires_at=\"{}\" ({}), "
+                   "destructor_id={}, refcount={}, num_persistent={}",
+                   static_cast<const void*>(handle),
+                   connection_hash,
+                   connection_string,
+                   expires_at,
+                   (expires_at - now),
+                   res->type,
+                   GC_REFCOUNT(res),
+                   COUCHBASE_G(num_persistent));
     }
   }
   return ZEND_HASH_APPLY_KEEP;
 }
 
 COUCHBASE_API
-std::pair<zend_resource*, core_error_info>
+auto
 create_persistent_connection(zend_string* connection_hash,
                              zend_string* connection_string,
-                             zval* options)
+                             zval* options) -> std::pair<zend_resource*, core_error_info>
 {
   connection_handle* handle = nullptr;
+  zend_resource* res = nullptr;
   bool found = false;
 
   if (zval* entry = zend_hash_find(&EG(persistent_list), connection_hash); entry != nullptr) {
-    zend_resource* res = Z_RES_P(entry);
     found = true;
+    res = Z_RES_P(entry);
     if (res->type == persistent_connection_destructor_id_) {
       handle = static_cast<connection_handle*>(res->ptr);
     }
@@ -86,35 +108,38 @@ create_persistent_connection(zend_string* connection_hash,
     handle->expires_at(expires_at);
     CB_LOG_DEBUG(
       "persistent connection hit: handle={}, connection_hash={}, connection_string=\"{}\", "
-      "expires_at=\"{}\" ({}), destructor_id={}",
+      "expires_at=\"{}\" ({}), destructor_id={}, refcount={}",
       static_cast<const void*>(handle),
       ZSTR_VAL(connection_hash),
       ZSTR_VAL(connection_string),
       expires_at,
       (expires_at - now),
-      persistent_connection_destructor_id_);
-    return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
+      res->type,
+      GC_REFCOUNT(res));
+    return { res, {} };
   }
   if (found) {
     /* found something, which is not our resource */
     CB_LOG_DEBUG("persistent connection hit, but handle=nullptr: connection_hash={}, "
-                 "connection_string=\"{}\", destructor_id={}",
+                 "connection_string=\"{}\", destructor_id={} (!= {})",
                  ZSTR_VAL(connection_hash),
                  ZSTR_VAL(connection_string),
+                 res->type,
                  persistent_connection_destructor_id_);
     zend_hash_del(&EG(persistent_list), connection_hash);
   }
 
-  if (COUCHBASE_G(max_persistent) != -1 &&
+  if (COUCHBASE_G(persistent_timeout) >= 0 && COUCHBASE_G(max_persistent) >= 0 &&
       COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
     /* try to find an idle connection and kill it */
     CB_LOG_DEBUG(
       "cleanup idle connections. max_persistent({}) != -1, num_persistent({}) >= max_persistent",
       COUCHBASE_G(max_persistent),
       COUCHBASE_G(num_persistent));
-    zend_hash_apply(&EG(persistent_list), check_persistent_connection);
   } else {
-    CB_LOG_DEBUG("don't cleanup idle connections. max_persistent={}, num_persistent={}",
+    CB_LOG_DEBUG("don't cleanup idle connections. couchbase.persistent_timeout={}, "
+                 "couchbase.max_persistent={}, num_persistent={}",
+                 COUCHBASE_G(persistent_timeout),
                  COUCHBASE_G(max_persistent),
                  COUCHBASE_G(num_persistent));
   }
@@ -146,20 +171,21 @@ create_persistent_connection(zend_string* connection_hash,
     delete handle;
     return { nullptr, rc };
   }
-  zend_register_persistent_resource_ex(
-    zend_string_dup(connection_hash, 1), handle, persistent_connection_destructor_id_);
+  res = zend_register_persistent_resource_ex(
+    zend_string_dup(connection_hash, true), handle, persistent_connection_destructor_id_);
   auto current_persistent = ++COUCHBASE_G(num_persistent);
   CB_LOG_DEBUG("persistent connection miss, created new connection: handle={}, connection_hash={}, "
-               "connection_string=\"{}\", "
-               "expires_at=\"{}\" ({}), destructor_id={}, num_persistent={}",
+               "connection_string=\"{}\", expires_at=\"{}\" ({}), destructor_id={}, refcount={}, "
+               "num_persistent={}",
                static_cast<const void*>(handle),
                ZSTR_VAL(connection_hash),
                ZSTR_VAL(connection_string),
                expires_at,
                (expires_at - now),
-               persistent_connection_destructor_id_,
+               res->type,
+               GC_REFCOUNT(res),
                current_persistent);
-  return { zend_register_resource(handle, persistent_connection_destructor_id_), {} };
+  return { res, {} };
 }
 
 COUCHBASE_API
@@ -177,21 +203,22 @@ destroy_persistent_connection(zend_resource* res)
     auto current_persistent = --COUCHBASE_G(num_persistent);
     CB_LOG_DEBUG(
       "persistent connection destroyed: handle={}, connection_hash={}, connection_string=\"{}\", "
-      "expires_at=\"{}\" ({}), destructor_id={}, num_persistent={}",
+      "expires_at=\"{}\" ({}), destructor_id={}, refcount={}, num_persistent={}",
       static_cast<const void*>(handle),
       connection_hash,
       connection_string,
       expires_at,
       (expires_at - now),
-      persistent_connection_destructor_id_,
+      res->type,
+      GC_REFCOUNT(res),
       current_persistent);
   }
 }
 
 namespace
 {
-int
-notify_transaction(zval* zv, void* event_ptr)
+auto
+notify_transaction(zval* zv, void* event_ptr) -> int
 {
   if (event_ptr == nullptr) {
     return ZEND_HASH_APPLY_KEEP;
@@ -207,8 +234,8 @@ notify_transaction(zval* zv, void* event_ptr)
   return ZEND_HASH_APPLY_KEEP;
 }
 
-int
-notify_connection(zval* zv, void* event_ptr)
+auto
+notify_connection(zval* zv, void* event_ptr) -> int
 {
   if (event_ptr == nullptr) {
     return ZEND_HASH_APPLY_KEEP;
@@ -224,8 +251,9 @@ notify_connection(zval* zv, void* event_ptr)
   return ZEND_HASH_APPLY_KEEP;
 }
 
-std::pair<core_error_info, std::optional<couchbase::fork_event>>
+auto
 get_fork_event(const zend_string* fork_event_str)
+  -> std::pair<core_error_info, std::optional<couchbase::fork_event>>
 {
   if (fork_event_str == nullptr || ZSTR_VAL(fork_event_str) == nullptr ||
       ZSTR_LEN(fork_event_str) == 0) {
@@ -256,8 +284,8 @@ get_fork_event(const zend_string* fork_event_str)
 } // namespace
 
 COUCHBASE_API
-core_error_info
-notify_fork(const zend_string* fork_event)
+auto
+notify_fork(const zend_string* fork_event) -> core_error_info
 {
   auto [e, event] = get_fork_event(fork_event);
   if (e.ec) {
