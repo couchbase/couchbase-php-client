@@ -633,7 +633,9 @@ Note that by setting both `couchbase.persistent_timeout` and
 all existing connections and always create a new one. If using this
 configuration, the application must be very careful not to reuse destroyed
 connections, perhaps by using the equivalent of a global singleton instance of
-the `\Couchbase\Cluster` object.
+the `\Couchbase\Cluster` object. This issue was reported as
+[PCBC-1018](https://jira.issues.couchbase.com/browse/PCBC-1018) and fixed in
+4.2.6 release.
 </td>
         </tr>
         <tr>
