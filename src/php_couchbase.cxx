@@ -53,8 +53,12 @@ ZEND_RSRC_DTOR_FUNC(couchbase_destroy_core_scan_result)
 
 PHP_RSHUTDOWN_FUNCTION(couchbase)
 {
-  /* Check persistent connections and do the necessary actions if needed. */
-  zend_hash_apply(&EG(persistent_list), couchbase::php::check_persistent_connection);
+  if (COUCHBASE_G(persistent_timeout) >= 0 ||
+      (COUCHBASE_G(max_persistent) >= 0 &&
+       COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent))) {
+    /* Check persistent connections and do the necessary actions if needed. */
+    zend_hash_apply(&EG(persistent_list), couchbase::php::check_persistent_connection);
+  }
 
   couchbase::php::flush_logger();
   return SUCCESS;
@@ -193,7 +197,8 @@ couchbase_throw_exception(const couchbase::php::core_error_info& error_info)
   zend_throw_exception_object(&ex);
 }
 
-namespace {
+namespace
+{
 PHP_MSHUTDOWN_FUNCTION(couchbase)
 {
   couchbase::php::shutdown_logger();
@@ -257,8 +262,8 @@ PHP_FUNCTION(createConnection)
   RETURN_RES(resource);
 }
 
-static inline couchbase::php::connection_handle*
-fetch_couchbase_connection_from_resource(zval* resource)
+inline auto
+fetch_couchbase_connection_from_resource(zval* resource) -> couchbase::php::connection_handle*
 {
   return static_cast<couchbase::php::connection_handle*>(
     zend_fetch_resource(Z_RES_P(resource),
@@ -3731,7 +3736,7 @@ static PHP_MINFO_FUNCTION(couchbase)
   php_info_print_table_end();
   DISPLAY_INI_ENTRIES();
 }
-}
+} // namespace
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_version, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -4314,11 +4319,7 @@ ZEND_ARG_TYPE_INFO(0, settings, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactions,
-                                        0,
-                                        0,
-                                        IS_MIXED,
-                                        1)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ai_CouchbaseExtension_createTransactions, 0, 0, IS_MIXED, 1)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, configuration, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
