@@ -609,7 +609,7 @@ bucket and credentials.
 
 SDKv4 is based on C++SDK. It has similar behavior when it comes to persistent
 instances. But instead of running cleanup at the end of each request, it does
-cleanup only when the library need to create new connection and the number of
+cleanup only when the library needs to create a new connection and the number of
 existing connection have reached `couchbase.max_persistent`.
 
 By default both `couchbase.persistent_timeout` and `couchbase.max_persistent`
