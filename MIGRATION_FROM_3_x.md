@@ -600,7 +600,7 @@ will sweep all idle instances at that point in time.
 
 Persistent instances are useful for cases when the PHP worker process is
 not destroyed after serving the request, so that next request will not
-need to wait for instance to bootstrap if it uses the same connection string,
+need to wait for the instance to bootstrap if it uses the same connection string,
 bucket and credentials.
 </td>
 <td>
