@@ -17,6 +17,7 @@
 #pragma once
 
 #include "common.hxx"
+#include "couchbase/read_preference.hxx"
 #include "couchbase/store_semantics.hxx"
 
 #include <core/operations/document_query.hxx>
@@ -459,6 +460,36 @@ cb_set_store_semantics(Options& opts, const zval* options)
       return { errc::common::invalid_argument,
                ERROR_LOCATION,
                fmt::format("unexpected value for storeSemantics option: {}", value.value()) };
+    }
+  }
+  return {};
+}
+
+template<typename Options>
+core_error_info
+cb_set_read_preference(Options& opts, const zval* options)
+{
+  if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+    return {};
+  }
+
+  if (Z_TYPE_P(options) != IS_ARRAY) {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             "expected array for options argument" };
+  }
+
+  if (auto [e, value] = cb_get_string(options, "readPreference"); e.ec) {
+    return e;
+  } else if (value) {
+    if (value.value() == "noPreference") {
+      opts.read_preference(read_preference::no_preference);
+    } else if (value.value() == "selectedServerGroup") {
+      opts.read_preference(read_preference::selected_server_group);
+    } else if (!value.value().empty()) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               fmt::format("unexpected value for readPreference option: {}", value.value()) };
     }
   }
   return {};

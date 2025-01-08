@@ -2639,6 +2639,36 @@ PHP_FUNCTION(transactionGet)
   }
 }
 
+PHP_FUNCTION(transactionGetReplicaFromPreferredServerGroup)
+{
+  zval* transaction = nullptr;
+  zend_string* bucket = nullptr;
+  zend_string* scope = nullptr;
+  zend_string* collection = nullptr;
+  zend_string* id = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(5, 5)
+  Z_PARAM_RESOURCE(transaction)
+  Z_PARAM_STR(bucket)
+  Z_PARAM_STR(scope)
+  Z_PARAM_STR(collection)
+  Z_PARAM_STR(id)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+  if (context == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = context->get_replica_from_preferred_server_group(
+        return_value, bucket, scope, collection, id);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
 PHP_FUNCTION(transactionInsert)
 {
   zval* transaction = nullptr;
@@ -4353,6 +4383,14 @@ ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionGetReplicaFromPreferredServerGroup, 0, 0, 5)
+ZEND_ARG_INFO(0, transactions)
+ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionInsert, 0, 0, 6)
 ZEND_ARG_INFO(0, transactions)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -4664,6 +4702,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionCommit, ai_CouchbaseExtension_transactionCommit)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionRollback, ai_CouchbaseExtension_transactionRollback)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionGet, ai_CouchbaseExtension_transactionGet)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionGetReplicaFromPreferredServerGroup, ai_CouchbaseExtension_transactionGetReplicaFromPreferredServerGroup)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionInsert, ai_CouchbaseExtension_transactionInsert)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionReplace, ai_CouchbaseExtension_transactionReplace)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionRemove, ai_CouchbaseExtension_transactionRemove)

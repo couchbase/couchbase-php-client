@@ -310,6 +310,47 @@ public:
 
   [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
                           core_error_info>
+  get_replica_from_preferred_server_group(const core::document_id& id)
+  {
+    try {
+      auto barrier =
+        std::make_shared<std::promise<std::optional<core::transactions::transaction_get_result>>>();
+      auto f = barrier->get_future();
+      transaction_context_->get_replica_from_preferred_server_group(
+        id,
+        [barrier](std::exception_ptr e,
+                  std::optional<core::transactions::transaction_get_result> res) mutable {
+          if (e) {
+            return barrier->set_exception(std::move(e));
+          }
+          return barrier->set_value(std::move(res));
+        });
+      return { f.get(), {} };
+    } catch (const core::transactions::transaction_operation_failed& e) {
+      return { {},
+               { transactions_errc::operation_failed,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get document: {}, cause: {}, id=\"{}\"",
+                             e.what(),
+                             external_exception_to_string(e.cause()),
+                             id),
+                 build_error_context(e) } };
+    } catch (const std::exception& e) {
+      return { {},
+               { transactions_errc::std_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get document: {}, id=\"{}\"", e.what(), id) } };
+    } catch (...) {
+      return { {},
+               { transactions_errc::unexpected_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get document: unexpected C++ exception, id=\"{}\"", id) } };
+    }
+    return {};
+  }
+
+  [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
+                          core_error_info>
   insert(const core::document_id& id, const std::vector<std::byte>& content)
   {
     try {
@@ -789,6 +830,34 @@ transaction_context_resource::get(zval* return_value,
   }
   if (!resp) {
     return { errc::key_value::document_not_found,
+             ERROR_LOCATION,
+             fmt::format("unable to find document {} retrieve", doc_id) };
+  }
+  transaction_get_result_to_zval(return_value, resp.value());
+  return {};
+}
+
+COUCHBASE_API
+core_error_info
+transaction_context_resource::get_replica_from_preferred_server_group(zval* return_value,
+                                                                      const zend_string* bucket,
+                                                                      const zend_string* scope,
+                                                                      const zend_string* collection,
+                                                                      const zend_string* id)
+{
+  couchbase::core::document_id doc_id{
+    cb_string_new(bucket),
+    cb_string_new(scope),
+    cb_string_new(collection),
+    cb_string_new(id),
+  };
+
+  auto [resp, err] = impl_->get_replica_from_preferred_server_group(doc_id);
+  if (err.ec) {
+    return err;
+  }
+  if (!resp) {
+    return { errc::key_value::document_irretrievable,
              ERROR_LOCATION,
              fmt::format("unable to find document {} retrieve", doc_id) };
   }

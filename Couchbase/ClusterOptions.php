@@ -60,6 +60,7 @@ class ClusterOptions
     private ?string $userAgentExtra = null;
 
     private ?string $tlsVerifyMode = null;
+    private ?string $preferredServerGroup = null;
     private ?string $useIpProtocol = null;
 
     private ?ThresholdLoggingOptions $thresholdLoggingTracerOptions = null;
@@ -490,9 +491,32 @@ class ClusterOptions
     }
 
     /**
+     * Select the server group to use for replica APIs.
+     *
+     * For some use-cases it might be necessary to restrict list of the nodes,
+     * that are used in replica read APIs to single server group to optimize
+     * network costs.
+     *
+     * @see https://docs.couchbase.com/server/current/manage/manage-groups/manage-groups.html
+     *
+     * @param string $serverGroupName
+     *
+     * @return ClusterOptions
+     * @since 4.2.6
+     */
+    public function preferredServerGroup(string $serverGroupName): ClusterOptions
+    {
+        $this->preferredServerGroup = $serverGroupName;
+        return $this;
+    }
+
+    /**
      * Applies configuration profile to ClusterOptions associating string to range of options
+     *
      * @param string $profile name of config profile to apply (e.g. wan_development)
+     *
      * @throws InvalidArgumentException
+     *
      * @since 4.0.1
      */
     public function applyProfile(string $profile): void
@@ -579,6 +603,8 @@ class ClusterOptions
             'userAgentExtra' => $this->userAgentExtra,
 
             'tlsVerify' => $this->tlsVerifyMode,
+
+            'preferredServerGroup' => $this->preferredServerGroup,
 
             'thresholdLoggingTracerOptions' =>
                 $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),

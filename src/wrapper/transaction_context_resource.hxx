@@ -56,6 +56,13 @@ public:
                       const zend_string* id);
 
   COUCHBASE_API
+  core_error_info get_replica_from_preferred_server_group(zval* return_value,
+                                                          const zend_string* bucket,
+                                                          const zend_string* scope,
+                                                          const zend_string* collection,
+                                                          const zend_string* id);
+
+  COUCHBASE_API
   core_error_info insert(zval* return_value,
                          const zend_string* bucket,
                          const zend_string* scope,

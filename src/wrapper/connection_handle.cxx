@@ -1184,6 +1184,9 @@ connection_handle::document_get_any_replica(zval* return_value,
   if (auto e = cb_set_timeout(o, options); e.ec) {
     return e;
   }
+  if (auto e = cb_set_read_preference(o, options); e.ec) {
+    return e;
+  }
   auto c =
     impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection));
   auto [ctx, resp] = c.get_any_replica(cb_string_new(id), o).get();
@@ -1216,6 +1219,9 @@ connection_handle::document_get_all_replicas(zval* return_value,
 {
   couchbase::get_all_replicas_options o;
   if (auto e = cb_set_timeout(o, options); e.ec) {
+    return e;
+  }
+  if (auto e = cb_set_read_preference(o, options); e.ec) {
     return e;
   }
   auto c =
@@ -1745,6 +1751,9 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
   if (auto e = cb_set_timeout(opts, options); e.ec) {
     return e;
   }
+  if (auto e = cb_set_read_preference(opts, options); e.ec) {
+    return e;
+  }
 
   if (Z_TYPE_P(specs) != IS_ARRAY) {
     return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
@@ -1830,6 +1839,9 @@ connection_handle::document_lookup_in_all_replicas(zval* return_value,
 {
   couchbase::lookup_in_all_replicas_options opts;
   if (auto e = cb_set_timeout(opts, options); e.ec) {
+    return e;
+  }
+  if (auto e = cb_set_read_preference(opts, options); e.ec) {
     return e;
   }
 
@@ -6076,6 +6088,9 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
       });
       options::assign_duration(ZEND_STRL("dnsSrvTimeout"), key, value, [&](auto v) {
         dns.timeout = v;
+      });
+      options::assign_string(ZEND_STRL("preferredServerGroup"), key, value, [&](auto v) {
+        cluster_options.network().preferred_server_group(std::move(v));
       });
 
       options::assign_string(ZEND_STRL("useIpProtocol"), key, value, [&](const auto& v) {

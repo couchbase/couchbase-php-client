@@ -88,6 +88,34 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         );
     }
 
+    public function testServerGroupReplicaReadTransaction()
+    {
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $id = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($id, ["foo" => "bar"]);
+
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($id, $collection) {
+
+                $res = $attempt->get($collection, $id);
+                $this->assertEquals(["foo" => "bar"], $res->content());
+
+                // The cluster here does not have the selected server group configured
+                $this->wrapException(
+                    function () use ($id, $collection, $attempt) {
+                        $attempt->getReplicaFromPreferredServerGroup($collection, $id);
+                    },
+                    Couchbase\Exception\DocumentIrretrievableException::class
+                );
+            }
+        );
+    }
+
     public function testWorksWithQuery()
     {
         $this->skipIfCaves();
