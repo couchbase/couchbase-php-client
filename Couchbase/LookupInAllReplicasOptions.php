@@ -23,6 +23,7 @@ namespace Couchbase;
 class LookupInAllReplicasOptions
 {
     private Transcoder $transcoder;
+    private string $readPreference;
     private ?int $timeoutMilliseconds = null;
     private ?bool $withExpiry = null;
 
@@ -32,6 +33,7 @@ class LookupInAllReplicasOptions
     public function __construct()
     {
         $this->transcoder = JsonTranscoder::getInstance();
+        $this->readPreference = ReadPreference::NO_PREFERENCE;
     }
 
     /**
@@ -56,6 +58,24 @@ class LookupInAllReplicasOptions
     public function timeout(int $milliseconds): LookupInAllReplicasOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Choose how the replica nodes will be selected. By default, it has no
+     * preference and will select any available replica, but it is possible to
+     * prioritize or restrict to only nodes in local server group
+     *
+     * @see ReadPreference
+     *
+     * @param string $readPreference
+     *
+     * @return LookupInAllReplicasOptions
+     * @since 4.2.6
+     */
+    public function readPreference(string $readPreference): LookupInAllReplicasOptions
+    {
+        $this->readPreference = $readPreference;
         return $this;
     }
 
@@ -136,6 +156,7 @@ class LookupInAllReplicasOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'readPreference' => $options->readPreference,
         ];
     }
 }

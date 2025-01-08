@@ -20,6 +20,9 @@ declare(strict_types=1);
 
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\GetAllReplicasOptions;
+use Couchbase\GetAnyReplicaOptions;
+use Couchbase\ReadPreference;
 use Couchbase\UpsertOptions;
 use Couchbase\DurabilityLevel;
 
@@ -81,5 +84,33 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
         $collection = $this->defaultCollection();
         $this->expectException(DocumentIrretrievableException::class);
         $collection->getAnyReplica($id);
+    }
+
+    public function testGetAnyReplicaWithPreferredServerGroup()
+    {
+        $this->skipIfReplicasAreNotConfigured();
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $collection->upsert($id, ["answer" => 42]);
+        // The cluster here does not have the selected server group configured
+        $this->expectException(DocumentIrretrievableException::class);
+        $opts = GetAnyReplicaOptions::build()->readPreference(ReadPreference::SELECTED_SERVER_GROUP);
+        $collection->getAnyReplica($id, $opts);
+    }
+
+    public function testGetAllReplicasWithPreferredServerGroup()
+    {
+        $this->skipIfReplicasAreNotConfigured();
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $collection->upsert($id, ["answer" => 42]);
+        // The cluster here does not have the selected server group configured
+        $this->expectException(DocumentIrretrievableException::class);
+        $opts = GetAllReplicasOptions::build()->readPreference(ReadPreference::SELECTED_SERVER_GROUP);
+        $collection->getAllReplicas($id, $opts);
     }
 }

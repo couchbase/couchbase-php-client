@@ -294,6 +294,12 @@ class ServerVersion
         return ($this->major == 7 && $this->minor >= 6) || $this->major > 7;
     }
 
+    public function supportsServerGroupReplicaReads(): bool
+    {
+        // 7.6.2 or above
+        return $this->major > 7 || ($this->major == 7 && ($this->minor > 6 || ($this->minor == 6 && $this->micro >= 2)));
+    }
+
     /**
      * @return int
      */

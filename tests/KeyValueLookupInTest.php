@@ -23,7 +23,9 @@ use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\LookupGetFullSpec;
 use Couchbase\LookupGetSpec;
+use Couchbase\LookupInAllReplicasOptions;
 use Couchbase\LookupInOptions;
+use Couchbase\ReadPreference;
 use Couchbase\UpsertOptions;
 use Couchbase\DurabilityLevel;
 use Couchbase\LookupInAnyReplicaOptions;
@@ -101,6 +103,28 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
         );
     }
 
+    public function testLookupInAllReplicasWithSelectedServerGroup()
+    {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["answer" => 42]);
+
+        $opts = LookupInAllReplicasOptions::build()->readPreference(ReadPreference::SELECTED_SERVER_GROUP);
+
+        $this->expectException(DocumentIrretrievableException::class);
+        $collection->lookupInAllReplicas(
+            $id,
+            [
+                LookupGetSpec::build("answer")
+            ],
+            $opts
+        );
+    }
+
     public function testLookupInAnyReplicaThrowsIrretrievableExceptionForMissingId()
     {
         $this->skipIfUnsupported($this->version()->supportsSubdocReadReplica());
@@ -114,6 +138,28 @@ class KeyValueLookupInTest extends Helpers\CouchbaseTestCase
             [
             LookupGetSpec::build("not.exist")
             ]
+        );
+    }
+
+    public function testLookupInAnyReplicaWithSelectedServerGroup()
+    {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["answer" => 42]);
+
+        $opts = LookupInAnyReplicaOptions::build()->readPreference(ReadPreference::SELECTED_SERVER_GROUP);
+
+        $this->expectException(DocumentIrretrievableException::class);
+        $collection->lookupInAnyReplica(
+            $id,
+            [
+                LookupGetSpec::build("answer")
+            ],
+            $opts
         );
     }
 

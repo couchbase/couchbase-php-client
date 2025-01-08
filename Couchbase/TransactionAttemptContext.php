@@ -63,6 +63,20 @@ class TransactionAttemptContext
         return new TransactionGetResult($response, GetOptions::getTranscoder(null));
     }
 
+    public function getReplicaFromPreferredServerGroup(Collection $collection, string $id, TransactionGetReplicaOptions $options = null): TransactionGetResult
+    {
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetReplicaFromPreferredServerGroup';
+        $response = $function(
+            $this->transaction,
+            $collection->bucketName(),
+            $collection->scopeName(),
+            $collection->name(),
+            $id
+        );
+
+        return new TransactionGetResult($response, TransactionGetReplicaOptions::getTranscoder($options));
+    }
+
     /**
      * Inserts a new document to the collection, failing if the document already exists.
      *
