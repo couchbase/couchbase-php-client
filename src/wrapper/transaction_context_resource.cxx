@@ -29,9 +29,9 @@
 #include <core/transactions/internal/transaction_context.hxx>
 #include <core/transactions/internal/utils.hxx>
 
-#include <core/document_id_fmt.hxx>
+#include <spdlog/fmt/bundled/core.h>
 
-#include <fmt/core.h>
+#include <core/document_id_fmt.hxx>
 
 #include <array>
 #include <thread>

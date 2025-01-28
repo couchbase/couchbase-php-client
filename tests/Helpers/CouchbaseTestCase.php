@@ -67,7 +67,7 @@ class CouchbaseTestCase extends TestCase
         self::env()->start();
     }
 
-    public static function tearDownBeforeClass(): void
+    public static function tearDownAfterClass(): void
     {
         self::env()->stop();
     }

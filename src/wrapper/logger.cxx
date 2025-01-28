@@ -28,7 +28,7 @@
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/spdlog.h>
 
-#include <fmt/chrono.h>
+#include <spdlog/fmt/bundled/chrono.h>
 
 #include <php.h>
 

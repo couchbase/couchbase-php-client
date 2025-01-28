@@ -34,9 +34,9 @@
 
 #include <Zend/zend_API.h>
 
-#include <chrono>
+#include <spdlog/fmt/bundled/format.h>
 
-#include <fmt/format.h>
+#include <chrono>
 #include <type_traits>
 
 namespace couchbase::transactions

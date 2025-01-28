@@ -65,9 +65,9 @@ jobs:
           path: |
             build/couchbase-php-client-*/**/*
 
-  build_alpine:
+  build_alpine_3_19:
     needs: source
-    name: alpine
+    name: alpine_3_19
     runs-on: ubuntu-22.04
     container:
       image: alpine:3.19
@@ -150,10 +150,10 @@ jobs:
           path: |
             couchbase-*-linux-musl-x86_64*.tgz
 
-  mock_alpine:
+  mock_alpine_3_19:
     needs:
       - source
-      - build_alpine
+      - build_alpine_3_19
     runs-on: ubuntu-22.04
     container:
       image: alpine:3.19
@@ -164,6 +164,148 @@ jobs:
           - '81'
           - '82'
           - '83'
+    steps:
+      - name: Install test environment
+        run: |
+          apk update
+          apk add --no-cache \
+            bash \
+            curl \
+            git \
+            php${{ matrix.php }}-dev \
+            php${{ matrix.php }}-pear \
+            php${{ matrix.php }}-dom \
+            php${{ matrix.php }}-intl \
+            php${{ matrix.php }}-mbstring \
+            php${{ matrix.php }}-pecl-pcov \
+            php${{ matrix.php }}-pecl-xdebug \
+            php${{ matrix.php }}-phar \
+            php${{ matrix.php }}-sockets \
+            php${{ matrix.php }}-tokenizer \
+            php${{ matrix.php }}-xml \
+            php${{ matrix.php }}-xmlwriter \
+            php${{ matrix.php }}-ctype \
+            openssl \
+            ruby \
+            tar \
+            xz \
+            yaml-dev \
+            zlib-dev
+      - uses: actions/download-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: scripts-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: tests
+          name: tests-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
+      - name: Test
+        env:
+          CB_PHP_NAME: php${{ matrix.php }}
+        run: |
+          tar xf couchbase-*-linux-musl-x86_64.tgz
+          ruby ./bin/test.rb
+
+  build_alpine:
+    needs: source
+    name: alpine
+    runs-on: ubuntu-22.04
+    container:
+      image: alpine:3.21
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '84'
+        abi:
+          - default
+          - locked
+    steps:
+      - name: Install build environment
+        run: |
+          apk update
+          apk add --no-cache \
+            bash \
+            build-base \
+            ccache \
+            cmake \
+            curl \
+            g++ \
+            gcc \
+            git \
+            linux-headers \
+            make \
+            ninja-build \
+            php${{ matrix.php }}-dev \
+            php${{ matrix.php }}-pear \
+            openssl \
+            openssl-dev \
+            readline-dev \
+            ruby \
+            tar \
+            xz \
+            yaml-dev \
+            zlib-dev
+      - uses: actions/download-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: scripts-${{ needs.source.outputs.extension_version }}
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: 2G
+          key: ${{ github.job }}-${{ matrix.php }}
+      - name: Build
+        run: |
+          pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+          fi
+          (
+            cd couchbase
+            phpize${{ matrix.php }}
+            ./configure --enable-couchbase --with-php-config=$(which php-config${{ matrix.php }})
+            mkdir target
+            make INSTALL_ROOT="$(realpath target)" install
+          )
+          PHP_VERSION_SHORT=${{ matrix.php }}
+          PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
+          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
+          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+          mkdir ${DIST_NAME}
+          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+          strip --strip-all ${DIST_NAME}/couchbase.so
+          if [ "${{ matrix.abi }}" = "locked" ]
+          then
+            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+          fi
+          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+          path: |
+            couchbase-*-linux-musl-x86_64*.tgz
+
+  mock_alpine:
+    needs:
+      - source
+      - build_alpine
+    runs-on: ubuntu-22.04
+    container:
+      image: alpine:3.21
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '84'
     steps:
       - name: Install test environment
         run: |

@@ -50,7 +50,7 @@
 #include <couchbase/retry_reason.hxx>
 #include <couchbase/tls_verify_mode.hxx>
 
-#include <fmt/core.h>
+#include <spdlog/fmt/bundled/core.h>
 
 #include <array>
 
