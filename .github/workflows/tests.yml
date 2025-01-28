@@ -184,6 +184,7 @@ jobs:
             php${{ matrix.php }}-tokenizer \
             php${{ matrix.php }}-xml \
             php${{ matrix.php }}-xmlwriter \
+            php${{ matrix.php }}-ctype \
             openssl \
             ruby \
             tar \
