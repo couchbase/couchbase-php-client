@@ -26,7 +26,7 @@
 #include <core/range_scan_orchestrator.hxx>
 #include <core/range_scan_orchestrator_options.hxx>
 
-#include <fmt/core.h>
+#include <spdlog/fmt/bundled/core.h>
 
 #include <array>
 #include <thread>

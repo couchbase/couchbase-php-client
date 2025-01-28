@@ -24,7 +24,7 @@
 #include <couchbase/error_codes.hxx>
 #include <couchbase/fork_event.hxx>
 
-#include <fmt/chrono.h>
+#include <spdlog/fmt/bundled/chrono.h>
 
 namespace couchbase::php
 {
@@ -106,24 +106,28 @@ create_persistent_connection(zend_string* connection_hash,
                       : now;
   if (handle != nullptr) {
     handle->expires_at(expires_at);
+    auto old_refcount = GC_REFCOUNT(res);
+    GC_ADDREF(res);
     CB_LOG_DEBUG(
       "persistent connection hit: handle={}, connection_hash={}, connection_string=\"{}\", "
-      "expires_at=\"{}\" ({}), destructor_id={}, refcount={}",
+      "expires_at=\"{}\" ({}), destructor_id={}, refcount={}->{}",
       static_cast<const void*>(handle),
       ZSTR_VAL(connection_hash),
       ZSTR_VAL(connection_string),
       expires_at,
       (expires_at - now),
       res->type,
+      old_refcount,
       GC_REFCOUNT(res));
     return { res, {} };
   }
   if (found) {
     /* found something, which is not our resource */
     CB_LOG_DEBUG("persistent connection hit, but handle=nullptr: connection_hash={}, "
-                 "connection_string=\"{}\", destructor_id={} (!= {})",
+                 "connection_string=\"{}\", refcount={}, destructor_id={} (!= {})",
                  ZSTR_VAL(connection_hash),
                  ZSTR_VAL(connection_string),
+                 GC_REFCOUNT(res),
                  res->type,
                  persistent_connection_destructor_id_);
     zend_hash_del(&EG(persistent_list), connection_hash);

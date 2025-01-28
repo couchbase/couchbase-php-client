@@ -21,7 +21,7 @@
 
 #include <core/transactions.hxx>
 
-#include <fmt/core.h>
+#include <spdlog/fmt/bundled/core.h>
 
 #include <thread>
 

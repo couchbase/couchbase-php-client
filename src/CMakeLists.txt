@@ -116,7 +116,6 @@ target_link_libraries(
           couchbase_cxx_client_static
           spdlog::spdlog
           taocpp::json
-          fmt::fmt
           asio
           Microsoft.GSL::GSL)
 
