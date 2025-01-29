@@ -24,7 +24,7 @@ use Couchbase\Exception\CouchbaseException;
 
 class ExtensionNamespaceResolver
 {
-    const COUCHBASE_EXTENSION_VERSION = "4_2_5";
+    const COUCHBASE_EXTENSION_VERSION = "4_2_6";
 
     public static function defineExtensionNamespace()
     {

@@ -28,7 +28,7 @@
     #define PHP_COUCHBASE_EXTENSION_NAME "couchbase"
 #endif
 
-#define PHP_COUCHBASE_VERSION "4.2.5"
+#define PHP_COUCHBASE_VERSION "4.2.6"
 
 #ifdef __cplusplus
 extern "C" {
