@@ -1,4 +1,5 @@
 name: versions
+permissions: {}
 
 on:
   push:
