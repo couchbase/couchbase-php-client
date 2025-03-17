@@ -204,25 +204,24 @@ create_scan_result_resource(connection_handle* connection,
   }
 
   // Get vBucket map
-  auto barrier =
-    std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
+  auto barrier = std::make_shared<
+    std::promise<std::pair<std::error_code, std::shared_ptr<core::topology::configuration>>>>();
   auto f = barrier->get_future();
-  clust.with_bucket_configuration(
-    bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
-      barrier->set_value({ ec, config });
-    });
+  clust.with_bucket_configuration(bucket_name, [barrier](std::error_code ec, auto config) {
+    barrier->set_value({ ec, std::move(config) });
+  });
   auto [ec, config] = f.get();
   if (ec) {
     return { nullptr,
              { ec, ERROR_LOCATION, "Cannot perform scan operation. Unable to get bucket config" } };
   }
-  if (!config.capabilities.supports_range_scan()) {
+  if (!config->capabilities.supports_range_scan()) {
     return { nullptr,
              { errc::common::feature_not_available,
                ERROR_LOCATION,
                "Server version does not support key-value scan operations" } };
   }
-  auto vbucket_map = config.vbmap;
+  auto vbucket_map = config->vbmap;
   if (!vbucket_map || vbucket_map->empty()) {
     return { nullptr,
              { std::error_code{},
