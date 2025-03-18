@@ -13,9 +13,9 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2025-01-29</date>
+    <date>2025-03-18</date>
     <version>
-        <release>4.2.6</release>
+        <release>4.2.7</release>
         <api>4.2.1</api>
     </version>
     <stability>
@@ -24,23 +24,10 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        Enhancements
-        ============
-
-        * PCBC-992: Add zone aware replica reads (#201).
-
         Fixes
         =====
 
-        * PCBC-1018: Do not destroy expired connection if it still being used (#200).
-
-        * PCBC-1016: Fix `trustCertificate` option that was ignored previously (#195).
-
-        * Update core to 1.0.5 (#203).
-
-        * Fix PHP 8.4 deprecation warnings (#198).
-
-        * Fix Undefined constant error (#196).
+        * Update core to 1.0.6 (#206).
     </notes>
     <contents>
     </contents>
@@ -57,6 +44,37 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2025-01-29</date>
+            <version>
+                <release>4.2.6</release>
+                <api>4.2.1</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                Enhancements
+                ============
+
+                * PCBC-992: Add zone aware replica reads (#201).
+
+                Fixes
+                =====
+
+                * PCBC-1018: Do not destroy expired connection if it still being used (#200).
+
+                * PCBC-1016: Fix `trustCertificate` option that was ignored previously (#195).
+
+                * Update core to 1.0.5 (#203).
+
+                * Fix PHP 8.4 deprecation warnings (#198).
+
+                * Fix Undefined constant error (#196).
+            </notes>
+        </release>
         <release>
             <date>2024-11-22</date>
             <version>
