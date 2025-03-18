@@ -466,16 +466,15 @@ public:
     if (auto e = bucket_open(bucket_name); e.ec) {
       return false;
     }
-    auto barrier =
-      std::make_shared<std::promise<std::pair<std::error_code, core::topology::configuration>>>();
+    auto barrier = std::make_shared<
+      std::promise<std::pair<std::error_code, std::shared_ptr<core::topology::configuration>>>>();
     auto f = barrier->get_future();
-    core_api().with_bucket_configuration(
-      bucket_name, [barrier](std::error_code ec, const core::topology::configuration& config) {
-        barrier->set_value({ ec, config });
-      });
+    core_api().with_bucket_configuration(bucket_name, [barrier](std::error_code ec, auto config) {
+      barrier->set_value({ ec, std::move(config) });
+    });
     auto [ec, config] = f.get();
-    return !ec && config.num_replicas && config.num_replicas > 0 &&
-           config.nodes.size() > config.num_replicas;
+    return !ec && config->num_replicas && config->num_replicas > 0 &&
+           config->nodes.size() > config->num_replicas;
   }
 
   auto open() -> core_error_info
