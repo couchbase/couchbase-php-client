@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 use Couchbase\AppendOptions;
 use Couchbase\DurabilityLevel;
+use Couchbase\Exception\CasMismatchException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\GetOptions;
 use Couchbase\PrependOptions;
@@ -48,6 +49,18 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $this->assertEquals("foobar", $res->content());
     }
 
+    public function testAppendCasMismatch()
+    {
+        $collection = $this->defaultCollection();
+        $id = $this->uniqueId();
+
+        $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $cas = (string)((int)$res->cas() + 1);
+
+        $this->expectException(CasMismatchException::class);
+        $collection->binary()->append($id, "bar", AppendOptions::build()->cas($cas));
+    }
+
     public function testPrependAddsBytesToTheBeginningOfTheDocument()
     {
         $collection = $this->defaultCollection();
@@ -64,6 +77,18 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $res = $collection->get($id, GetOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
         $this->assertEquals($prependedCas, $res->cas());
         $this->assertEquals("barfoo", $res->content());
+    }
+
+    public function testPrependCasMismatch()
+    {
+        $collection = $this->defaultCollection();
+        $id = $this->uniqueId();
+
+        $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+        $cas = (string)((int)$res->cas() + 1);
+
+        $this->expectException(CasMismatchException::class);
+        $collection->binary()->prepend($id, "bar", PrependOptions::build()->cas($cas));
     }
 
     public function testAppendThrowsExceptionIfDocumentDoesNotExist()
