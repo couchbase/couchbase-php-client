@@ -26,6 +26,7 @@ class AppendOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
+    private ?string $cas = null;
 
     /**
      * Static helper to keep code more readable
@@ -73,6 +74,20 @@ class AppendOptions
     }
 
     /**
+     * Sets the cas value to use when performing this operation.
+     *
+     * @param string $cas the CAS value to use
+     *
+     * @return AppendOptions
+     * @since 4.0.0
+     */
+    public function cas(string $cas): AppendOptions
+    {
+        $this->cas = $cas;
+        return $this;
+    }
+
+    /**
      * @internal
      *
      * @param AppendOptions|null $options
@@ -88,6 +103,7 @@ class AppendOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
+            'cas' => $options->cas,
         ];
     }
 }

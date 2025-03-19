@@ -26,6 +26,7 @@ class PrependOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
+    private ?string $cas = null;
 
     /**
      * Static helper to keep code more readable
@@ -73,6 +74,20 @@ class PrependOptions
     }
 
     /**
+     * Sets the cas value to use when performing this operation.
+     *
+     * @param string $cas the CAS value to use
+     *
+     * @return PrependOptions
+     * @since 4.3.0
+     */
+    public function cas(string $cas): PrependOptions
+    {
+        $this->cas = $cas;
+        return $this;
+    }
+
+    /**
      * @internal
      *
      * @param PrependOptions|null $options
@@ -88,6 +103,7 @@ class PrependOptions
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
             'durabilityLevel' => $options->durabilityLevel,
+            'cas' => $options->cas,
         ];
     }
 }

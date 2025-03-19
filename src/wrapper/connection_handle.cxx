@@ -945,6 +945,9 @@ connection_handle::document_append(zval* return_value,
   if (auto e = cb_set_durability(opts, options); e.ec) {
     return e;
   }
+  if (auto e = cb_set_cas(opts, options); e.ec) {
+    return e;
+  }
 
   auto [ctx, resp] =
     impl_->collection(cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection))
@@ -981,6 +984,9 @@ connection_handle::document_prepend(zval* return_value,
     return e;
   }
   if (auto e = cb_set_durability(opts, options); e.ec) {
+    return e;
+  }
+  if (auto e = cb_set_cas(opts, options); e.ec) {
     return e;
   }
 
