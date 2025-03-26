@@ -351,7 +351,7 @@ public:
 
   [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
                           core_error_info>
-  insert(const core::document_id& id, const std::vector<std::byte>& content)
+  insert(const core::document_id& id, const codec::encoded_value& content)
   {
     try {
       auto barrier =
@@ -359,7 +359,7 @@ public:
       auto f = barrier->get_future();
       transaction_context_->insert(
         id,
-        { content, codec::codec_flags::json_common_flags },
+        content,
         [barrier](std::exception_ptr e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
@@ -395,7 +395,7 @@ public:
   [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
                           core_error_info>
   replace(const core::transactions::transaction_get_result& document,
-          const std::vector<std::byte>& content)
+          const codec::encoded_value& content)
   {
     try {
       auto barrier =
@@ -403,7 +403,7 @@ public:
       auto f = barrier->get_future();
       transaction_context_->replace(
         document,
-        { content, codec::codec_flags::json_common_flags },
+        content,
         [barrier](std::exception_ptr e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
@@ -872,7 +872,8 @@ transaction_context_resource::insert(zval* return_value,
                                      const zend_string* scope,
                                      const zend_string* collection,
                                      const zend_string* id,
-                                     const zend_string* value)
+                                     const zend_string* value,
+                                     zend_long flags)
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -881,7 +882,7 @@ transaction_context_resource::insert(zval* return_value,
     cb_string_new(id),
   };
 
-  auto [resp, err] = impl_->insert(doc_id, cb_binary_new(value));
+  auto [resp, err] = impl_->insert(doc_id, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
   if (err.ec) {
     return err;
   }
@@ -898,13 +899,14 @@ COUCHBASE_API
 core_error_info
 transaction_context_resource::replace(zval* return_value,
                                       const zval* document,
-                                      const zend_string* value)
+                                      const zend_string* value,
+                                      zend_long flags)
 {
   auto [doc, e] = zval_to_transaction_get_result(document);
   if (e.ec) {
     return e;
   }
-  auto [resp, err] = impl_->replace(doc, cb_binary_new(value));
+  auto [resp, err] = impl_->replace(doc, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
   if (err.ec) {
     return err;
   }

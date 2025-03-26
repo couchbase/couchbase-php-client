@@ -68,10 +68,11 @@ public:
                          const zend_string* scope,
                          const zend_string* collection,
                          const zend_string* id,
-                         const zend_string* value);
+                         const zend_string* value,
+                         zend_long flags);
 
   COUCHBASE_API
-  core_error_info replace(zval* return_value, const zval* document, const zend_string* value);
+  core_error_info replace(zval* return_value, const zval* document, const zend_string* value, zend_long flags);
   COUCHBASE_API
   core_error_info remove(const zval* document);
 

@@ -21,7 +21,10 @@ declare(strict_types=1);
 use Couchbase\Exception\TransactionException;
 use Couchbase\Exception\TransactionFailedException;
 use Couchbase\QueryOptions;
+use Couchbase\RawBinaryTranscoder;
 use Couchbase\TransactionAttemptContext;
+use Couchbase\TransactionGetOptions;
+use Couchbase\TransactionInsertOptions;
 use Couchbase\TransactionQueryOptions;
 
 include_once __DIR__ . '/Helpers/CouchbaseTestCase.php';
@@ -286,6 +289,75 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
             },
             Couchbase\Exception\DocumentNotFoundException::class
         );
+    }
+
+    public function testBinaryTransactions()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsBinaryTransactions());
+
+        $testKey = $this->uniqueId();
+
+        $hexString = '00092bc691fb824300a6871ceddf7090d7092bc691fb824300a6871ceddf7090d7';
+        $testVal = hex2bin($hexString);
+
+        $newHexString = '666f6f62617262617a';
+        $newTestVal = hex2bin($newHexString);
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($testKey, $testVal, $newTestVal, $collection) {
+                $attempt->insert($collection, $testKey, $testVal, TransactionInsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+                $getRes = $attempt->get($collection, $testKey, TransactionGetOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+                $this->assertEquals($getRes->content(), $testVal);
+                $repRes = $attempt->replace($getRes, $newTestVal);
+                $this->assertTrue($getRes->cas() != $repRes->cas());
+            }
+        );
+    }
+
+    public function testBinaryTransactionsFeatureNotAvailable()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported(!$this->version()->supportsBinaryTransactions());
+
+        $testKey = $this->uniqueId();
+
+        $hexString = '00092bc691fb824300a6871ceddf7090d7092bc691fb824300a6871ceddf7090d7';
+        $testVal = hex2bin($hexString);
+
+        $cluster = $this->connectCluster();
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+
+        $numberOfAttempts = 0;
+        /** @var TransactionException $ex */
+        $this->wrapException(
+            function () use ($testKey, $testVal, &$numberOfAttempts, $cluster, $collection) {
+                $cluster->transactions()->run(
+                    function (TransactionAttemptContext $attempt) use (
+                        &$numberOfAttempts,
+                        $testKey,
+                        $testVal,
+                        $collection
+                    ) {
+                        $numberOfAttempts++;
+                        $this->wrapException(
+                            function () use ($attempt, $collection, $testKey, $testVal) {
+                                $attempt->insert($collection, $testKey, $testVal, TransactionInsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
+                            },
+                            Couchbase\Exception\FeatureNotAvailableException::class
+                        );
+                    }
+                );
+            },
+            TransactionFailedException::class,
+            null,
+            "/FeatureNotAvailable/"
+        );
+
+        $this->assertEquals(1, $numberOfAttempts);
     }
 
     public function testRollbackAfterQuery()
