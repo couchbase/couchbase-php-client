@@ -2677,14 +2677,16 @@ PHP_FUNCTION(transactionInsert)
   zend_string* collection = nullptr;
   zend_string* id = nullptr;
   zend_string* value = nullptr;
+  zend_long flags = 0;
 
-  ZEND_PARSE_PARAMETERS_START(6, 6)
+  ZEND_PARSE_PARAMETERS_START(7, 7)
   Z_PARAM_RESOURCE(transaction)
   Z_PARAM_STR(bucket)
   Z_PARAM_STR(scope)
   Z_PARAM_STR(collection)
   Z_PARAM_STR(id)
   Z_PARAM_STR(value)
+  Z_PARAM_LONG(flags)
   ZEND_PARSE_PARAMETERS_END();
 
   logger_flusher guard;
@@ -2693,7 +2695,7 @@ PHP_FUNCTION(transactionInsert)
   if (context == nullptr) {
     RETURN_THROWS();
   }
-  if (auto e = context->insert(return_value, bucket, scope, collection, id, value); e.ec) {
+  if (auto e = context->insert(return_value, bucket, scope, collection, id, value, flags); e.ec) {
     couchbase_throw_exception(e);
     RETURN_THROWS();
   }
@@ -2704,11 +2706,14 @@ PHP_FUNCTION(transactionReplace)
   zval* transaction = nullptr;
   zval* document = nullptr;
   zend_string* value = nullptr;
+  zend_long flags = 0;
 
-  ZEND_PARSE_PARAMETERS_START(3, 3)
+
+  ZEND_PARSE_PARAMETERS_START(4, 4)
   Z_PARAM_RESOURCE(transaction)
   Z_PARAM_ARRAY(document)
   Z_PARAM_STR(value)
+  Z_PARAM_LONG(flags)
   ZEND_PARSE_PARAMETERS_END();
 
   logger_flusher guard;
@@ -2717,7 +2722,7 @@ PHP_FUNCTION(transactionReplace)
   if (context == nullptr) {
     RETURN_THROWS();
   }
-  if (auto e = context->replace(return_value, document, value); e.ec) {
+  if (auto e = context->replace(return_value, document, value, flags); e.ec) {
     couchbase_throw_exception(e);
     RETURN_THROWS();
   }
@@ -4391,19 +4396,21 @@ ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionInsert, 0, 0, 6)
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionInsert, 0, 0, 7)
 ZEND_ARG_INFO(0, transactions)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, scopeName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionReplace, 0, 0, 3)
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionReplace, 0, 0, 4)
 ZEND_ARG_INFO(0, transactions)
 ZEND_ARG_TYPE_INFO(0, document, IS_ARRAY, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, flags, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionRemove, 0, 0, 2)
