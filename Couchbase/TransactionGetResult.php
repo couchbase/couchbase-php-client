@@ -28,6 +28,7 @@ class TransactionGetResult extends Result
     private string $scopeName;
     private string $collectionName;
     private string $value;
+    private int $flags;
     private string $cas;
     private ?array $links = null;
     private ?array $metadata = null;
@@ -45,6 +46,7 @@ class TransactionGetResult extends Result
         $this->collectionName = $response["collectionName"];
         $this->id = $response["id"];
         $this->value = $response["value"];
+        $this->flags = $response["flags"];
         $this->cas = $response["cas"];
         if (array_key_exists("links", $response)) {
             $this->links = $response["links"];
@@ -62,7 +64,7 @@ class TransactionGetResult extends Result
      */
     public function content()
     {
-        return $this->transcoder->decode($this->value, 0);
+        return $this->transcoder->decode($this->value, $this->flags);
     }
 
     /**

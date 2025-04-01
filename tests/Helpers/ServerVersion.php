@@ -259,6 +259,12 @@ class ServerVersion
         return $this->isCheshireCat() || $this->isNeo();
     }
 
+    public function supportsBinaryTransactions(): bool
+    {
+        // 7.6.2 or above
+        return $this->major > 7 || ($this->major == 7 && ($this->minor > 6 || ($this->minor == 6 && $this->micro >= 2)));
+    }
+
     public function supportsRangeScan(): bool
     {
         return $this->is75() || $this->is76();

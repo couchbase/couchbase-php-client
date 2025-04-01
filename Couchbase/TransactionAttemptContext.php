@@ -45,11 +45,12 @@ class TransactionAttemptContext
      *
      * @param Collection $collection The collection the document lives in.
      * @param string $id The document key to retrieve.
+     * @param TransactionGetOptions|null $options The options to use for the operation
      *
      * @return TransactionGetResult
      * @since 4.0.0
      */
-    public function get(Collection $collection, string $id): TransactionGetResult
+    public function get(Collection $collection, string $id, TransactionGetOptions $options = null): TransactionGetResult
     {
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGet';
         $response = $function(
@@ -60,9 +61,24 @@ class TransactionAttemptContext
             $id
         );
 
-        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
+        return new TransactionGetResult($response, TransactionGetOptions::getTranscoder($options));
     }
 
+    /**
+     * Get a document copy from the selected server group.
+     *
+     * Fetch the document contents, in the form of a @ref transaction_get_result.
+     * It might be either replica or active copy of the document. One of the use
+     * cases for this method is to save on network costs by deploying SDK in the
+     * same availability zone as corresponding server group of the nodes.
+     *
+     * @param Collection $collection The collection the document lives in.
+     * @param string $id The document key to retrieve
+     * @param TransactionGetReplicaOptions|null $options The options to use for the operation
+     *
+     * @return TransactionGetResult
+     * @since 4.2.6
+     */
     public function getReplicaFromPreferredServerGroup(Collection $collection, string $id, TransactionGetReplicaOptions $options = null): TransactionGetResult
     {
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetReplicaFromPreferredServerGroup';
@@ -83,13 +99,15 @@ class TransactionAttemptContext
      * @param Collection $collection The collection the document lives in.
      * @param string $id The document key to insert.
      * @param mixed $value the document content to insert
+     * @param TransactionInsertOptions|null $options The options to use for the operation
+
      *
      * @return TransactionGetResult
      * @since 4.0.0
      */
-    public function insert(Collection $collection, string $id, $value): TransactionGetResult
+    public function insert(Collection $collection, string $id, $value, TransactionInsertOptions $options = null): TransactionGetResult
     {
-        $encoded = InsertOptions::encodeDocument(null, $value);
+        $encoded = TransactionInsertOptions::encodeDocument($options, $value);
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionInsert';
         $response = $function(
             $this->transaction,
@@ -97,10 +115,11 @@ class TransactionAttemptContext
             $collection->scopeName(),
             $collection->name(),
             $id,
-            $encoded[0] /* ignore flags */
+            $encoded[0],
+            $encoded[1],
         );
 
-        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
+        return new TransactionGetResult($response, TransactionInsertOptions::getTranscoder($options));
     }
 
     /**
@@ -108,21 +127,23 @@ class TransactionAttemptContext
      *
      * @param TransactionGetResult $document the document to replace
      * @param mixed $value the document content to replace
+     * @param TransactionReplaceOptions|null $options The options to use for the operation
      *
      * @return TransactionGetResult
      * @since 4.0.0
      */
-    public function replace(TransactionGetResult $document, $value): TransactionGetResult
+    public function replace(TransactionGetResult $document, $value, TransactionReplaceOptions $options = null): TransactionGetResult
     {
-        $encoded = ReplaceOptions::encodeDocument(null, $value);
+        $encoded = TransactionReplaceOptions::encodeDocument($options, $value);
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionReplace';
         $response = $function(
             $this->transaction,
             $document->export(),
-            $encoded[0] /* ignore flags */
+            $encoded[0],
+            $encoded[1],
         );
 
-        return new TransactionGetResult($response, GetOptions::getTranscoder(null));
+        return new TransactionGetResult($response, TransactionReplaceOptions::getTranscoder($options));
     }
 
     /**
