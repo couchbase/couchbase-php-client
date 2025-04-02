@@ -306,6 +306,11 @@ class ServerVersion
         return $this->major > 7 || ($this->major == 7 && ($this->minor > 6 || ($this->minor == 6 && $this->micro >= 2)));
     }
 
+    public function supportsMagma128(): bool
+    {
+        return $this->major >= 8;
+    }
+
     /**
      * @return int
      */

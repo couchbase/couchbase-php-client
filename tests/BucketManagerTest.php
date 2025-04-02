@@ -3,6 +3,7 @@
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\BucketNotFlushableException;
 use Couchbase\Exception\BucketNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Management\BucketManagerInterface;
 use Couchbase\Management\BucketSettings;
 use Couchbase\Management\BucketType;
@@ -468,5 +469,37 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
         $this->assertTrue($result->historyRetentionCollectionDefault());
         $this->assertEquals(2147483648, $result->historyRetentionBytes());
         $this->assertEquals(100, $result->historyRetentionDuration());
+    }
+
+    public function testNumVBuckets()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsMagma128());
+
+        $settings = new BucketSettings("numVBucketsTest");
+        $settings->setNumVBuckets(128);
+
+        $this->manager->createBucket($settings);
+        $this->consistencyUtil()->waitUntilBucketPresent("numVBucketsTest");
+
+        $result = $this->manager->getBucket("numVBucketsTest");
+        $this->assertEquals(128, $result->numVBuckets());
+
+        $this->manager->dropBucket("numVBucketsTest");
+        $this->consistencyUtil()->waitUntilBucketDropped("numVBucketsTest");
+    }
+
+    public function testInvalidNumVBuckets()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsMagma128());
+
+        $settings = new BucketSettings("numVBucketsTest");
+        $settings->setNumVBuckets(100);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->manager->createBucket($settings);
     }
 }
