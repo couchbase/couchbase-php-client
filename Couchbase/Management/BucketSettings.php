@@ -37,6 +37,7 @@ class BucketSettings
     private ?bool $historyRetentionCollectionDefault = null;
     private ?int $historyRetentionBytes = null;
     private ?int $historyRetentionDuration = null;
+    private ?int $numVBuckets = null;
 
     /**
      * @param string $name the name of the bucket
@@ -258,6 +259,17 @@ class BucketSettings
     public function historyRetentionDuration(): ?int
     {
         return $this->historyRetentionDuration;
+    }
+
+    /**
+     * Gets the number of vBuckets in this bucket
+     *
+     * @return int|null
+     * @since 4.3.0
+     */
+    public function numVBuckets(): ?int
+    {
+        return $this->numVBuckets;
     }
 
     /**
@@ -541,7 +553,7 @@ class BucketSettings
     }
 
     /**
-     * Sets teh maximum number of seconds to be covered by the change history that is written to disk for all collections
+     * Sets the maximum number of seconds to be covered by the change history that is written to disk for all collections
      * in this bucket
      *
      * @param int $historyRetentionDuration duration in seconds
@@ -553,6 +565,21 @@ class BucketSettings
     public function setHistoryRetentionDuration(int $historyRetentionDuration): BucketSettings
     {
         $this->historyRetentionDuration = $historyRetentionDuration;
+        return $this;
+    }
+
+    /**
+     * Sets the number of vBuckets this bucket
+     *
+     * @param int $numVBuckets number of vBuckets
+     *
+     * @return BucketSettings
+     *
+     * @since 4.3.0
+     */
+    public function setNumVBuckets(int $numVBuckets): BucketSettings
+    {
+        $this->numVBuckets = $numVBuckets;
         return $this;
     }
 
@@ -578,6 +605,7 @@ class BucketSettings
             'historyRetentionCollectionDefault' => $bucket->historyRetentionCollectionDefault,
             'historyRetentionBytes' => $bucket->historyRetentionBytes,
             'historyRetentionDuration' => $bucket->historyRetentionDuration,
+            'numVBuckets' => $bucket->numVBuckets,
         ];
     }
 
@@ -629,6 +657,9 @@ class BucketSettings
         }
         if (array_key_exists('historyRetentionDuration', $bucket)) {
             $settings->setHistoryRetentionDuration($bucket['historyRetentionDuration']);
+        }
+        if (array_key_exists('numVBuckets', $bucket)) {
+            $settings->setNumVBuckets($bucket['numVBuckets']);
         }
 
         return $settings;

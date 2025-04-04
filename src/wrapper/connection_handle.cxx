@@ -3630,6 +3630,12 @@ zval_to_bucket_settings(const zval* bucket_settings)
     return { e, {} };
   }
 
+  if (auto e = cb_assign_integer(
+        bucket.num_vbuckets, bucket_settings, "numVBuckets");
+      e.ec) {
+    return { e, {} };
+  }
+
   return { {}, bucket };
 }
 } // namespace
@@ -3819,6 +3825,11 @@ cb_bucket_settings_to_zval(
   if (bucket_settings.history_retention_duration.has_value()) {
     add_assoc_long(
       return_value, "historyRetentionDuration", bucket_settings.history_retention_duration.value());
+  }
+
+  if (bucket_settings.num_vbuckets.has_value()) {
+    add_assoc_long(
+      return_value, "numVBuckets", bucket_settings.num_vbuckets.value());
   }
 
   return {};
