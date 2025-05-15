@@ -24,6 +24,7 @@
 #include "transactions_resource.hxx"
 #include "zend_API.h"
 
+#include <core/document_id_fmt.hxx>
 #include <core/transactions.hxx>
 #include <core/transactions/internal/exceptions_internal.hxx>
 #include <core/transactions/internal/transaction_context.hxx>
@@ -31,14 +32,17 @@
 
 #include <spdlog/fmt/bundled/core.h>
 
-#include <core/document_id_fmt.hxx>
-
 #include <array>
-#include <thread>
+#include <chrono>
+#include <memory>
+#include <string>
 
 namespace couchbase::php
 {
-static int transaction_context_destructor_id_{ 0 };
+namespace
+{
+int transaction_context_destructor_id_{ 0 };
+} // namespace
 
 void
 set_transaction_context_destructor_id(int id)
@@ -46,14 +50,16 @@ set_transaction_context_destructor_id(int id)
   transaction_context_destructor_id_ = id;
 }
 
-int
-get_transaction_context_destructor_id()
+auto
+get_transaction_context_destructor_id() -> int
 {
   return transaction_context_destructor_id_;
 }
 
-static std::string
-external_exception_to_string(core::transactions::external_exception cause)
+namespace
+{
+auto
+external_exception_to_string(core::transactions::external_exception cause) -> std::string
 {
   switch (cause) {
     case core::transactions::UNKNOWN:
@@ -100,12 +106,15 @@ external_exception_to_string(core::transactions::external_exception cause)
       return "transactionAlreadyAborted";
     case core::transactions::TRANSACTION_ALREADY_COMMITTED:
       return "transactionAlreadyCommitted";
+    case core::transactions::DOCUMENT_UNRETRIEVABLE_EXCEPTION:
+      return "documentUnretrievableException";
   }
   return "unexpectedCause";
 }
 
-static transactions_error_context
+auto
 build_error_context(const core::transactions::transaction_operation_failed& ctx)
+  -> transactions_error_context
 {
   transactions_error_context out;
   out.should_not_retry = !ctx.should_retry();
@@ -114,8 +123,8 @@ build_error_context(const core::transactions::transaction_operation_failed& ctx)
   return out;
 }
 
-static std::string
-failure_type_to_string(core::transactions::failure_type failure)
+auto
+failure_type_to_string(core::transactions::failure_type failure) -> std::string
 {
   switch (failure) {
     case core::transactions::failure_type::FAIL:
@@ -128,8 +137,9 @@ failure_type_to_string(core::transactions::failure_type failure)
   return "unknown";
 }
 
-static transactions_error_context
+auto
 build_error_context(const core::transactions::transaction_exception& e)
+  -> transactions_error_context
 {
   transactions_error_context out;
   out.type = failure_type_to_string(e.type());
@@ -142,8 +152,8 @@ build_error_context(const core::transactions::transaction_exception& e)
   return out;
 }
 
-static std::error_code
-failure_type_to_error_code(core::transactions::failure_type failure)
+auto
+failure_type_to_error_code(core::transactions::failure_type failure) -> std::error_code
 {
   switch (failure) {
     case core::transactions::failure_type::FAIL:
@@ -155,6 +165,7 @@ failure_type_to_error_code(core::transactions::failure_type failure)
   }
   return transactions_errc::unexpected_exception;
 }
+} // namespace
 
 class transaction_context_resource::impl
   : public std::enable_shared_from_this<transaction_context_resource::impl>
@@ -168,15 +179,17 @@ public:
   {
   }
 
+  ~impl() = default;
+
   impl(impl&& other) = delete;
 
   impl(const impl& other) = delete;
 
-  const impl& operator=(impl&& other) = delete;
+  auto operator=(impl&& other) -> const impl& = delete;
 
-  const impl& operator=(const impl& other) = delete;
+  auto operator=(const impl& other) -> const impl& = delete;
 
-  [[nodiscard]] core_error_info new_attempt()
+  [[nodiscard]] auto new_attempt() -> core_error_info
   {
     try {
       transaction_context_->new_attempt_context();
@@ -199,14 +212,14 @@ public:
     return {};
   }
 
-  [[nodiscard]] core_error_info rollback()
+  [[nodiscard]] auto rollback() -> core_error_info
   {
     try {
       auto barrier = std::make_shared<std::promise<void>>();
       auto f = barrier->get_future();
-      transaction_context_->rollback([barrier](std::exception_ptr e) {
+      transaction_context_->rollback([barrier](const std::exception_ptr& e) {
         if (e) {
-          return barrier->set_exception(std::move(e));
+          return barrier->set_exception(e);
         }
         return barrier->set_value();
       });
@@ -230,7 +243,8 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<transactions::transaction_result>, core_error_info> commit()
+  [[nodiscard]] auto commit()
+    -> std::pair<std::optional<transactions::transaction_result>, core_error_info>
   {
     try {
       auto barrier =
@@ -267,9 +281,8 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
-                          core_error_info>
-  get_optional(const core::document_id& id)
+  [[nodiscard]] auto get_optional(const core::document_id& id)
+    -> std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info>
   {
     try {
       auto barrier =
@@ -277,10 +290,10 @@ public:
       auto f = barrier->get_future();
       transaction_context_->get_optional(
         id,
-        [barrier](std::exception_ptr e,
+        [barrier](const std::exception_ptr& e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
-            return barrier->set_exception(std::move(e));
+            return barrier->set_exception(e);
           }
           return barrier->set_value(std::move(res));
         });
@@ -308,9 +321,8 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
-                          core_error_info>
-  get_replica_from_preferred_server_group(const core::document_id& id)
+  [[nodiscard]] auto get_replica_from_preferred_server_group(const core::document_id& id)
+    -> std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info>
   {
     try {
       auto barrier =
@@ -318,10 +330,10 @@ public:
       auto f = barrier->get_future();
       transaction_context_->get_replica_from_preferred_server_group(
         id,
-        [barrier](std::exception_ptr e,
+        [barrier](const std::exception_ptr& e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
-            return barrier->set_exception(std::move(e));
+            return barrier->set_exception(e);
           }
           return barrier->set_value(std::move(res));
         });
@@ -349,9 +361,8 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
-                          core_error_info>
-  insert(const core::document_id& id, const codec::encoded_value& content)
+  [[nodiscard]] auto insert(const core::document_id& id, const codec::encoded_value& content)
+    -> std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info>
   {
     try {
       auto barrier =
@@ -360,10 +371,10 @@ public:
       transaction_context_->insert(
         id,
         content,
-        [barrier](std::exception_ptr e,
+        [barrier](const std::exception_ptr& e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
-            return barrier->set_exception(std::move(e));
+            return barrier->set_exception(e);
           }
           return barrier->set_value(std::move(res));
         });
@@ -392,10 +403,9 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<core::transactions::transaction_get_result>,
-                          core_error_info>
-  replace(const core::transactions::transaction_get_result& document,
-          const codec::encoded_value& content)
+  [[nodiscard]] auto replace(const core::transactions::transaction_get_result& document,
+                             const codec::encoded_value& content)
+    -> std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info>
   {
     try {
       auto barrier =
@@ -404,10 +414,10 @@ public:
       transaction_context_->replace(
         document,
         content,
-        [barrier](std::exception_ptr e,
+        [barrier](const std::exception_ptr& e,
                   std::optional<core::transactions::transaction_get_result> res) mutable {
           if (e) {
-            return barrier->set_exception(std::move(e));
+            return barrier->set_exception(e);
           }
           return barrier->set_value(std::move(res));
         });
@@ -437,14 +447,15 @@ public:
     return {};
   }
 
-  [[nodiscard]] core_error_info remove(const core::transactions::transaction_get_result& document)
+  [[nodiscard]] auto remove(const core::transactions::transaction_get_result& document)
+    -> core_error_info
   {
     try {
       auto barrier = std::make_shared<std::promise<void>>();
       auto f = barrier->get_future();
-      transaction_context_->remove(document, [barrier](std::exception_ptr e) {
+      transaction_context_->remove(document, [barrier](const std::exception_ptr& e) {
         if (e) {
-          return barrier->set_exception(std::move(e));
+          return barrier->set_exception(e);
         }
         return barrier->set_value();
       });
@@ -470,23 +481,23 @@ public:
     return {};
   }
 
-  [[nodiscard]] std::pair<std::optional<core::operations::query_response>, core_error_info> query(
-    const std::string& statement,
-    const transactions::transaction_query_options& options)
+  [[nodiscard]] auto query(const std::string& statement,
+                           const transactions::transaction_query_options& options)
+    -> std::pair<std::optional<core::operations::query_response>, core_error_info>
   {
     try {
       auto barrier =
         std::make_shared<std::promise<std::optional<core::operations::query_response>>>();
       auto f = barrier->get_future();
-      transaction_context_->query(
-        statement,
-        options,
-        [barrier](std::exception_ptr e, std::optional<core::operations::query_response> res) {
-          if (e) {
-            return barrier->set_exception(std::move(e));
-          }
-          return barrier->set_value(std::move(res));
-        });
+      transaction_context_->query(statement,
+                                  options,
+                                  [barrier](const std::exception_ptr& e,
+                                            std::optional<core::operations::query_response> res) {
+                                    if (e) {
+                                      return barrier->set_exception(e);
+                                    }
+                                    return barrier->set_value(std::move(res));
+                                  });
       return { f.get(), {} };
     } catch (const core::transactions::transaction_operation_failed& e) {
       return { {},
@@ -524,15 +535,15 @@ transaction_context_resource::transaction_context_resource(
 }
 
 COUCHBASE_API
-core_error_info
-transaction_context_resource::new_attempt()
+auto
+transaction_context_resource::new_attempt() -> core_error_info
 {
   return impl_->new_attempt();
 }
 
 COUCHBASE_API
-core_error_info
-transaction_context_resource::commit(zval* return_value)
+auto
+transaction_context_resource::commit(zval* return_value) -> core_error_info
 {
   ZVAL_NULL(return_value);
 
@@ -550,13 +561,15 @@ transaction_context_resource::commit(zval* return_value)
 }
 
 COUCHBASE_API
-core_error_info
-transaction_context_resource::rollback()
+auto
+transaction_context_resource::rollback() -> core_error_info
 {
   return impl_->rollback();
 }
 
-static void
+namespace
+{
+void
 transaction_get_result_to_zval(zval* return_value,
                                const core::transactions::transaction_get_result& res)
 {
@@ -663,8 +676,8 @@ transaction_get_result_to_zval(zval* return_value,
   }
 }
 
-static couchbase::core::document_id
-zval_to_document_id(const zval* document)
+auto
+zval_to_document_id(const zval* document) -> couchbase::core::document_id
 {
   std::string bucket;
   std::string scope;
@@ -677,8 +690,9 @@ zval_to_document_id(const zval* document)
   return { bucket, scope, collection, id };
 }
 
-static std::pair<core::transactions::transaction_links, core_error_info>
+auto
 zval_to_links(const zval* document)
+  -> std::pair<core::transactions::transaction_links, core_error_info>
 {
   const zval* links = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("links"));
   if (links == nullptr) {
@@ -750,8 +764,9 @@ zval_to_links(const zval* document)
            {} };
 }
 
-static std::pair<std::optional<core::transactions::document_metadata>, core_error_info>
+auto
 zval_to_metadata(const zval* document)
+  -> std::pair<std::optional<core::transactions::document_metadata>, core_error_info>
 {
   const zval* links = zend_symtable_str_find(Z_ARRVAL_P(document), ZEND_STRL("links"));
   if (links == nullptr || Z_TYPE_P(links) == IS_NULL) {
@@ -776,8 +791,9 @@ zval_to_metadata(const zval* document)
   return { core::transactions::document_metadata{ cas, revid, exptime, crc32 }, {} };
 }
 
-static std::pair<core::transactions::transaction_get_result, core_error_info>
+auto
 zval_to_transaction_get_result(const zval* document)
+  -> std::pair<core::transactions::transaction_get_result, core_error_info>
 {
   if (document == nullptr || Z_TYPE_P(document) != IS_ARRAY) {
     return {
@@ -808,14 +824,15 @@ zval_to_transaction_get_result(const zval* document)
              metadata),
            {} };
 }
+} // namespace
 
 COUCHBASE_API
-core_error_info
+auto
 transaction_context_resource::get(zval* return_value,
                                   const zend_string* bucket,
                                   const zend_string* scope,
                                   const zend_string* collection,
-                                  const zend_string* id)
+                                  const zend_string* id) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -838,12 +855,13 @@ transaction_context_resource::get(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 transaction_context_resource::get_replica_from_preferred_server_group(zval* return_value,
                                                                       const zend_string* bucket,
                                                                       const zend_string* scope,
                                                                       const zend_string* collection,
                                                                       const zend_string* id)
+  -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -866,14 +884,14 @@ transaction_context_resource::get_replica_from_preferred_server_group(zval* retu
 }
 
 COUCHBASE_API
-core_error_info
+auto
 transaction_context_resource::insert(zval* return_value,
                                      const zend_string* bucket,
                                      const zend_string* scope,
                                      const zend_string* collection,
                                      const zend_string* id,
                                      const zend_string* value,
-                                     zend_long flags)
+                                     zend_long flags) -> core_error_info
 {
   couchbase::core::document_id doc_id{
     cb_string_new(bucket),
@@ -882,7 +900,8 @@ transaction_context_resource::insert(zval* return_value,
     cb_string_new(id),
   };
 
-  auto [resp, err] = impl_->insert(doc_id, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
+  auto [resp, err] =
+    impl_->insert(doc_id, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
   if (err.ec) {
     return err;
   }
@@ -896,17 +915,18 @@ transaction_context_resource::insert(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
+auto
 transaction_context_resource::replace(zval* return_value,
                                       const zval* document,
                                       const zend_string* value,
-                                      zend_long flags)
+                                      zend_long flags) -> core_error_info
 {
   auto [doc, e] = zval_to_transaction_get_result(document);
   if (e.ec) {
     return e;
   }
-  auto [resp, err] = impl_->replace(doc, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
+  auto [resp, err] =
+    impl_->replace(doc, { cb_binary_new(value), static_cast<std::uint32_t>(flags) });
   if (err.ec) {
     return err;
   }
@@ -920,8 +940,8 @@ transaction_context_resource::replace(zval* return_value,
 }
 
 COUCHBASE_API
-core_error_info
-transaction_context_resource::remove(const zval* document)
+auto
+transaction_context_resource::remove(const zval* document) -> core_error_info
 {
   auto [doc, e] = zval_to_transaction_get_result(document);
   if (e.ec) {
@@ -934,10 +954,10 @@ transaction_context_resource::remove(const zval* document)
 }
 
 COUCHBASE_API
-core_error_info
+auto
 transaction_context_resource::query(zval* return_value,
                                     const zend_string* statement,
-                                    const zval* options)
+                                    const zval* options) -> core_error_info
 {
   auto [query_options, e] = zval_to_transactions_query_options(options);
   if (e.ec) {
@@ -953,6 +973,8 @@ transaction_context_resource::query(zval* return_value,
   return {};
 }
 
+namespace
+{
 #define ASSIGN_DURATION_OPTION(name, setter, key, value)                                           \
   if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
     if ((value) == nullptr || Z_TYPE_P(value) == IS_NULL) {                                        \
@@ -974,8 +996,8 @@ transaction_context_resource::query(zval* return_value,
     (setter)(std::chrono::milliseconds(ms));                                                       \
   }
 
-static core_error_info
-apply_options(transactions::transaction_options& config, zval* options)
+auto
+apply_options(transactions::transaction_options& config, zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
     return { errc::common::invalid_argument,
@@ -983,8 +1005,8 @@ apply_options(transactions::transaction_options& config, zval* options)
              "expected array for per transaction configuration" };
   }
 
-  const zend_string* key;
-  const zval* value;
+  const zend_string* key = nullptr;
+  const zval* value = nullptr;
 
   ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
   {
@@ -1022,10 +1044,12 @@ apply_options(transactions::transaction_options& config, zval* options)
 
   return {};
 }
+} // namespace
 
 COUCHBASE_API
-std::pair<zend_resource*, core_error_info>
+auto
 create_transaction_context_resource(transactions_resource* connection, zval* options)
+  -> std::pair<zend_resource*, core_error_info>
 {
   transactions::transaction_options configuration{};
   if (auto e = apply_options(configuration, options); e.ec) {
