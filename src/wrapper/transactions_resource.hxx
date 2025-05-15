@@ -22,10 +22,7 @@
 
 #include <Zend/zend_API.h>
 
-#include <chrono>
 #include <memory>
-#include <string>
-#include <system_error>
 
 namespace couchbase
 {

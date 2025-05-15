@@ -356,7 +356,7 @@ jobs:
 
   build_linux_x86_64:
     needs: source
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -475,8 +475,8 @@ jobs:
           - nts
           - zts
         server:
-          - 7.6.3
-          - 7.2.5
+          - 7.6.6
+          - 7.2.7
           - 7.1.6
           - 7.0.5
     steps:

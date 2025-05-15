@@ -23,6 +23,8 @@ use Couchbase\Exception\TransactionFailedException;
 use Couchbase\QueryOptions;
 use Couchbase\RawBinaryTranscoder;
 use Couchbase\TransactionAttemptContext;
+use Couchbase\TransactionGetMultiReplicasFromPreferredServerGroupSpec;
+use Couchbase\TransactionGetMultiSpec;
 use Couchbase\TransactionGetOptions;
 use Couchbase\TransactionInsertOptions;
 use Couchbase\TransactionQueryOptions;
@@ -91,9 +93,105 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
         );
     }
 
-    public function testServerGroupReplicaReadTransaction()
+    public function testGetMulti()
     {
         $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $id1 = $this->uniqueId();
+        $id2 = $this->uniqueId();
+        $id3 = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($id1, ["val" => "one"]);
+        $collection->insert($id2, ["val" => "two"]);
+        $collection->insert($id3, ["val" => "tri"]);
+
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($id1, $id2, $id3, $collection) {
+                $result = $attempt->getMulti(
+                    [
+                    new TransactionGetMultiSpec($collection, $id1),
+                    new TransactionGetMultiSpec($collection, $id2),
+                    new TransactionGetMultiSpec($collection, "missing"),
+                    new TransactionGetMultiSpec($collection, $id3),
+                    ]
+                );
+
+                $this->assertTrue($result->exists(0));
+                $this->assertTrue($result->exists(1));
+                $this->assertFalse($result->exists(2));
+                $this->assertTrue($result->exists(3));
+
+                $this->assertEquals(["val" => "one"], $result->content(0));
+                $this->assertEquals(["val" => "two"], $result->content(1));
+                $this->assertEquals(["val" => "tri"], $result->content(3));
+
+                $this->wrapException(
+                    function () use ($result) {
+                        $result->content(2);
+                    },
+                    Couchbase\Exception\DocumentNotFoundException::class
+                );
+            }
+        );
+    }
+
+    public function testGetMultiReplicasFromPreferredZone()
+    {
+        $this->skipIfUnsupported(
+            $this->version()->supportsTransactions() &&
+            $this->version()->supportsSubdocReadReplica()
+        );
+
+        $id1 = $this->uniqueId();
+        $id2 = $this->uniqueId();
+        $id3 = $this->uniqueId();
+
+        $cluster = $this->connectCluster();
+
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $collection->insert($id1, ["val" => "one"]);
+        $collection->insert($id2, ["val" => "two"]);
+        $collection->insert($id3, ["val" => "tri"]);
+
+        $cluster->transactions()->run(
+            function (TransactionAttemptContext $attempt) use ($id1, $id2, $id3, $collection) {
+                $result = $attempt->getMultiReplicasFromPreferredServerGroup(
+                    [
+                    new TransactionGetMultiReplicasFromPreferredServerGroupSpec($collection, $id1),
+                    new TransactionGetMultiReplicasFromPreferredServerGroupSpec($collection, $id2),
+                    new TransactionGetMultiReplicasFromPreferredServerGroupSpec($collection, "missing"),
+                    new TransactionGetMultiReplicasFromPreferredServerGroupSpec($collection, $id3),
+                    ]
+                );
+
+                $this->assertTrue($result->exists(0));
+                $this->assertTrue($result->exists(1));
+                $this->assertFalse($result->exists(2));
+                $this->assertTrue($result->exists(3));
+
+                $this->assertEquals(["val" => "one"], $result->content(0));
+                $this->assertEquals(["val" => "two"], $result->content(1));
+                $this->assertEquals(["val" => "tri"], $result->content(3));
+
+                $this->wrapException(
+                    function () use ($result) {
+                        $result->content(2);
+                    },
+                    Couchbase\Exception\DocumentNotFoundException::class
+                );
+            }
+        );
+    }
+
+    public function testServerGroupReplicaReadTransaction()
+    {
+        $this->skipIfUnsupported(
+            $this->version()->supportsTransactions() &&
+            $this->version()->supportsSubdocReadReplica()
+        );
 
         $id = $this->uniqueId();
 
@@ -104,17 +202,9 @@ class TransactionsTest extends Helpers\CouchbaseTestCase
 
         $cluster->transactions()->run(
             function (TransactionAttemptContext $attempt) use ($id, $collection) {
-
                 $res = $attempt->get($collection, $id);
                 $this->assertEquals(["foo" => "bar"], $res->content());
-
-                // The cluster here does not have the selected server group configured
-                $this->wrapException(
-                    function () use ($id, $collection, $attempt) {
-                        $attempt->getReplicaFromPreferredServerGroup($collection, $id);
-                    },
-                    Couchbase\Exception\DocumentIrretrievableException::class
-                );
+                $attempt->getReplicaFromPreferredServerGroup($collection, $id);
             }
         );
     }

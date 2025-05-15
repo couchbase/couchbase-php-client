@@ -199,6 +199,7 @@ Dir.chdir(project_root) do
       *log_args,
       php_unit_phar,
       "--color",
+      "--display-warnings",
       "--testdox",
       *tests,
       "--log-junit", results_xml)

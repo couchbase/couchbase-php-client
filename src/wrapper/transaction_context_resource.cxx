@@ -24,6 +24,7 @@
 #include "transactions_resource.hxx"
 #include "zend_API.h"
 
+#include <core/document_id.hxx>
 #include <core/document_id_fmt.hxx>
 #include <core/transactions.hxx>
 #include <core/transactions/internal/exceptions_internal.hxx>
@@ -361,6 +362,99 @@ public:
     return {};
   }
 
+  [[nodiscard]] auto get_multi(const std::vector<core::document_id>& ids,
+                               core::transactions::transaction_get_multi_mode mode)
+    -> std::pair<std::optional<core::transactions::transaction_get_multi_result>, core_error_info>
+  {
+    try {
+      auto barrier = std::make_shared<
+        std::promise<std::optional<core::transactions::transaction_get_multi_result>>>();
+      auto f = barrier->get_future();
+      transaction_context_->get_multi(
+        ids,
+        mode,
+        [barrier](const std::exception_ptr& e,
+                  std::optional<core::transactions::transaction_get_multi_result> res) mutable {
+          if (e) {
+            return barrier->set_exception(e);
+          }
+          return barrier->set_value(std::move(res));
+        });
+      return { f.get(), {} };
+    } catch (const core::transactions::transaction_operation_failed& e) {
+      return { {},
+               { transactions_errc::operation_failed,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: {}, cause: {}",
+                             ids.size(),
+                             e.what(),
+                             external_exception_to_string(e.cause())),
+                 build_error_context(e) } };
+    } catch (const std::exception& e) {
+      return { {},
+               { transactions_errc::std_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: {}", ids.size(), e.what()) } };
+    } catch (...) {
+      return { {},
+               { transactions_errc::unexpected_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: unexpected C++ exception",
+                             ids.size()) } };
+    }
+    return {};
+  }
+
+  [[nodiscard]] auto get_multi_replicas_from_preferred_server_group(
+    const std::vector<core::document_id>& ids,
+    core::transactions::transaction_get_multi_replicas_from_preferred_server_group_mode mode)
+    -> std::pair<
+      std::optional<
+        core::transactions::transaction_get_multi_replicas_from_preferred_server_group_result>,
+      core_error_info>
+  {
+    try {
+      auto barrier = std::make_shared<std::promise<std::optional<
+        core::transactions::transaction_get_multi_replicas_from_preferred_server_group_result>>>();
+      auto f = barrier->get_future();
+      transaction_context_->get_multi_replicas_from_preferred_server_group(
+        ids,
+        mode,
+        [barrier](
+          const std::exception_ptr& e,
+          std::optional<
+            core::transactions::transaction_get_multi_replicas_from_preferred_server_group_result>
+            res) mutable {
+          if (e) {
+            return barrier->set_exception(e);
+          }
+          return barrier->set_value(std::move(res));
+        });
+      return { f.get(), {} };
+    } catch (const core::transactions::transaction_operation_failed& e) {
+      return { {},
+               { transactions_errc::operation_failed,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: {}, cause: {}",
+                             ids.size(),
+                             e.what(),
+                             external_exception_to_string(e.cause())),
+                 build_error_context(e) } };
+    } catch (const std::exception& e) {
+      return { {},
+               { transactions_errc::std_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: {}", ids.size(), e.what()) } };
+    } catch (...) {
+      return { {},
+               { transactions_errc::unexpected_exception,
+                 ERROR_LOCATION,
+                 fmt::format("unable to get multi ({}) documents: unexpected C++ exception",
+                             ids.size()) } };
+    }
+    return {};
+  }
+
   [[nodiscard]] auto insert(const core::document_id& id, const codec::encoded_value& content)
     -> std::pair<std::optional<core::transactions::transaction_get_result>, core_error_info>
   {
@@ -569,6 +663,43 @@ transaction_context_resource::rollback() -> core_error_info
 
 namespace
 {
+template<typename GetMultiResult>
+void
+transaction_get_multi_result_to_zval(zval* return_value,
+                                     const std::vector<core::document_id>& requests,
+                                     const GetMultiResult& res)
+{
+  array_init(return_value);
+
+  const auto& values = res.content();
+
+  for (std::size_t idx = 0; idx < requests.size(); ++idx) {
+    const auto& id = requests[idx];
+
+    if (const auto& value = values[idx]; value) {
+      zval result_entry{};
+      array_init(&result_entry);
+
+      add_assoc_stringl(&result_entry, "id", id.key().data(), id.key().size());
+      add_assoc_stringl(
+        &result_entry, "collectionName", id.collection().data(), id.collection().size());
+      add_assoc_stringl(&result_entry, "scopeName", id.scope().data(), id.scope().size());
+      add_assoc_stringl(&result_entry, "bucketName", id.bucket().data(), id.bucket().size());
+
+      {
+        add_assoc_long(&result_entry, "flags", value->flags);
+        add_assoc_stringl(&result_entry,
+                          "value",
+                          reinterpret_cast<const char*>(value->data.data()),
+                          value->data.size());
+      }
+      add_next_index_zval(return_value, &result_entry);
+    } else {
+      add_next_index_null(return_value);
+    }
+  }
+}
+
 void
 transaction_get_result_to_zval(zval* return_value,
                                const core::transactions::transaction_get_result& res)
@@ -883,6 +1014,200 @@ transaction_context_resource::get_replica_from_preferred_server_group(zval* retu
   return {};
 }
 
+namespace
+{
+template<typename ModeEnum>
+auto
+cb_set_get_multi_mode(const zval* options, ModeEnum& mode) -> core_error_info
+{
+  if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+    return {};
+  }
+  if (Z_TYPE_P(options) != IS_ARRAY) {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             "expected array for options argument" };
+  }
+
+  const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("mode"));
+  if (value == nullptr) {
+    return {};
+  }
+  switch (Z_TYPE_P(value)) {
+    case IS_NULL:
+      return {};
+    case IS_STRING:
+      break;
+    default:
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected mode to be a string in the options" };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("prioritiseLatency")) ==
+      0) {
+    mode = ModeEnum::prioritise_latency;
+    return {};
+  }
+  if (zend_binary_strcmp(
+        Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("prioritiseReadSkewDetection")) == 0) {
+    mode = ModeEnum::prioritise_read_skew_detection;
+    return {};
+  }
+  if (zend_binary_strcmp(
+        Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("disableReadSkewDetection")) == 0) {
+    mode = ModeEnum::disable_read_skew_detection;
+    return {};
+  }
+  return { errc::common::invalid_argument, ERROR_LOCATION, "unknown value for the get_multi mode" };
+}
+} // namespace
+
+COUCHBASE_API
+auto
+transaction_context_resource::get_multi(zval* return_value, const zval* ids, const zval* options)
+  -> core_error_info
+{
+  if (Z_TYPE_P(ids) != IS_ARRAY) {
+    return { errc::common::invalid_argument, ERROR_LOCATION, "expected ids to be an array" };
+  }
+  core::transactions::transaction_get_multi_mode mode{};
+  if (auto e = cb_set_get_multi_mode(options, mode); e.ec) {
+    return e;
+  }
+
+  std::vector<core::document_id> requests{};
+  requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
+
+  {
+    const zval* id = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
+    {
+      if (Z_TYPE_P(id) != IS_ARRAY || zend_array_count(Z_ARRVAL_P(id)) != 4) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti entries will be BUCKET-SCOPE-COLLECTION-KEY tuples" };
+      }
+      const zval* bucket = zend_hash_index_find(Z_ARRVAL_P(id), 0);
+      if (bucket == nullptr || Z_TYPE_P(bucket) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (BUCKET) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* scope = zend_hash_index_find(Z_ARRVAL_P(id), 1);
+      if (scope == nullptr || Z_TYPE_P(scope) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (SCOPE) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* collection = zend_hash_index_find(Z_ARRVAL_P(id), 2);
+      if (collection == nullptr || Z_TYPE_P(collection) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (COLLECTION) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* key = zend_hash_index_find(Z_ARRVAL_P(id), 3);
+      if (key == nullptr || Z_TYPE_P(key) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (KEY) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      requests.emplace_back(
+        cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection), cb_string_new(key));
+    }
+    ZEND_HASH_FOREACH_END();
+  }
+
+  auto [resp, err] = impl_->get_multi(requests, mode);
+  if (err.ec) {
+    return err;
+  }
+  if (!resp) {
+    return { errc::key_value::document_irretrievable,
+             ERROR_LOCATION,
+             fmt::format("unable to get multi") };
+  }
+  transaction_get_multi_result_to_zval(return_value, requests, resp.value());
+  return {};
+}
+
+COUCHBASE_API
+auto
+transaction_context_resource::get_multi_replicas_from_preferred_server_group(zval* return_value,
+                                                                             const zval* ids,
+                                                                             const zval* options)
+  -> core_error_info
+{
+  if (Z_TYPE_P(ids) != IS_ARRAY) {
+    return { errc::common::invalid_argument, ERROR_LOCATION, "expected ids to be an array" };
+  }
+  core::transactions::transaction_get_multi_replicas_from_preferred_server_group_mode mode{};
+  if (auto e = cb_set_get_multi_mode(options, mode); e.ec) {
+    return e;
+  }
+
+  std::vector<core::document_id> requests{};
+  requests.reserve(zend_array_count(Z_ARRVAL_P(ids)));
+
+  {
+    const zval* id = nullptr;
+    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(ids), id)
+    {
+      if (Z_TYPE_P(id) != IS_ARRAY || zend_array_count(Z_ARRVAL_P(id)) != 4) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti entries will be BUCKET-SCOPE-COLLECTION-KEY tuples" };
+      }
+      const zval* bucket = zend_hash_index_find(Z_ARRVAL_P(id), 0);
+      if (bucket == nullptr || Z_TYPE_P(bucket) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (BUCKET) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* scope = zend_hash_index_find(Z_ARRVAL_P(id), 1);
+      if (scope == nullptr || Z_TYPE_P(scope) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (SCOPE) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* collection = zend_hash_index_find(Z_ARRVAL_P(id), 2);
+      if (collection == nullptr || Z_TYPE_P(collection) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core getMulti first member (COLLECTION) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      const zval* key = zend_hash_index_find(Z_ARRVAL_P(id), 3);
+      if (key == nullptr || Z_TYPE_P(key) != IS_STRING) {
+        return { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected that core upsertMulti first member (KEY) of "
+                 "BUCKET-SCOPE-COLLECTION-KEY tuple be a string" };
+      }
+      requests.emplace_back(
+        cb_string_new(bucket), cb_string_new(scope), cb_string_new(collection), cb_string_new(key));
+    }
+    ZEND_HASH_FOREACH_END();
+  }
+
+  auto [resp, err] = impl_->get_multi_replicas_from_preferred_server_group(requests, mode);
+  if (err.ec) {
+    return err;
+  }
+  if (!resp) {
+    return { errc::key_value::document_irretrievable,
+             ERROR_LOCATION,
+             fmt::format("unable to get multi") };
+  }
+  transaction_get_multi_result_to_zval(return_value, requests, resp.value());
+  return {};
+}
+
 COUCHBASE_API
 auto
 transaction_context_resource::insert(zval* return_value,
@@ -1069,5 +1394,4 @@ destroy_transaction_context_resource(zend_resource* res)
     delete handle;
   }
 }
-
 } // namespace couchbase::php

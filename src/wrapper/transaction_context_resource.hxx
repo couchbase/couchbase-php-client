@@ -27,7 +27,7 @@
 namespace couchbase::transactions
 {
 class transaction_options;
-}
+} // namespace couchbase::transactions
 
 namespace couchbase::php
 {
@@ -58,6 +58,14 @@ public:
                                                const zend_string* scope,
                                                const zend_string* collection,
                                                const zend_string* id) -> core_error_info;
+
+  COUCHBASE_API
+  auto get_multi(zval* return_value, const zval* ids, const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto get_multi_replicas_from_preferred_server_group(zval* return_value,
+                                                      const zval* ids,
+                                                      const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto insert(zval* return_value,

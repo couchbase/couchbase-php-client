@@ -2669,6 +2669,56 @@ PHP_FUNCTION(transactionGetReplicaFromPreferredServerGroup)
   }
 }
 
+PHP_FUNCTION(transactionGetMulti)
+{
+  zval* transaction = nullptr;
+  zval* entries = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(transaction)
+  Z_PARAM_ARRAY(entries)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+  if (context == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = context->get_multi(return_value, entries, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
+PHP_FUNCTION(transactionGetMultiReplicasFromPreferredServerGroup)
+{
+  zval* transaction = nullptr;
+  zval* entries = nullptr;
+  zval* options = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(transaction)
+  Z_PARAM_ARRAY(entries)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* context = fetch_couchbase_transaction_context_from_resource(transaction);
+  if (context == nullptr) {
+    RETURN_THROWS();
+  }
+  if (auto e = context->get_multi_replicas_from_preferred_server_group(return_value, entries, options); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
 PHP_FUNCTION(transactionInsert)
 {
   zval* transaction = nullptr;
@@ -4396,6 +4446,21 @@ ZEND_ARG_TYPE_INFO(0, collectionName, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionGetMulti, 0, 0, 2)
+ZEND_ARG_INFO(0, transactions)
+ZEND_ARG_TYPE_INFO(0, entries, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionGetMultiReplicasFromPreferredServerGroup,
+                       0,
+                       0,
+                       2)
+ZEND_ARG_INFO(0, transactions)
+ZEND_ARG_TYPE_INFO(0, entries, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_transactionInsert, 0, 0, 7)
 ZEND_ARG_INFO(0, transactions)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -4714,6 +4779,8 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionReplace, ai_CouchbaseExtension_transactionReplace)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionRemove, ai_CouchbaseExtension_transactionRemove)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionQuery, ai_CouchbaseExtension_transactionQuery)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionGetMulti, ai_CouchbaseExtension_transactionGetMulti)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, transactionGetMultiReplicasFromPreferredServerGroup, ai_CouchbaseExtension_transactionGetMultiReplicasFromPreferredServerGroup)
 
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, searchIndexGet, ai_CouchbaseExtension_searchIndexGet)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, searchIndexGetAll, ai_CouchbaseExtension_searchIndexGetAll)
