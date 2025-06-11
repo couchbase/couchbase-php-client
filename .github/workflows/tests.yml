@@ -475,7 +475,7 @@ jobs:
           - nts
           - zts
         server:
-          - 7.6.6
+          - 7.6.3
           - 7.2.7
           - 7.1.6
           - 7.0.5
@@ -780,17 +780,16 @@ jobs:
           tar xf couchbase-*-macos-arm64.tgz
           CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
 
-  build_windows:
+  build_windows_vs16:
     needs: source
     runs-on: windows-2019
     strategy:
       fail-fast: false
       matrix:
         php:
-          - '8.4.1'
-          - '8.3.14'
-          - '8.2.26'
-          - '8.1.31'
+          - '8.3.22'
+          - '8.2.28'
+          - '8.1.32'
         ts:
           - nts
           - zts
@@ -831,8 +830,9 @@ jobs:
           echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
           echo nmake >> task.bat
           call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
+
           if "${{ matrix.abi }}"=="locked" (
-            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
+            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
             dir
             powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
             dir
@@ -852,7 +852,91 @@ jobs:
           Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
           Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
           Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
-          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
+          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
+          foreach ($File in $FilesToCopy) {
+              Write-Host "Copying file: $($File.FullName)"
+              Copy-Item -Path $File.FullName -Destination $DistName -Force
+          }
+          $ZipArchive = $DistName + ".zip"
+          Write-Host "Compressing $DistName directory into $ZipArchive"
+          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
+      - uses: actions/upload-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
+          path: |
+            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
+
+  build_windows_vs17:
+    needs: source
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        php:
+          - '8.4.8'
+        ts:
+          - nts
+          - zts
+        arch:
+          - x64
+          - x86
+        abi:
+          - default
+          - locked
+    steps:
+      - name: Install dependencies
+        shell: cmd
+        run: |
+          # winget install Git.Git
+          # winget install Kitware.CMake
+          # winget install NASM.NASM
+          choco install nasm
+          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
+          git clone --no-progress --depth 1 --branch php-${{ matrix.php }} https://github.com/php/php-src.git c:\php\php-src
+      - uses: actions/download-artifact@v4
+        with:
+          path: c:\php
+          name: couchbase-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: c:\php
+          name: scripts-${{ needs.source.outputs.extension_version }}
+      - name: Build
+        working-directory: c:\php
+        shell: cmd
+        run: |
+          7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
+          cd c:\php\php-src
+          if "${{ matrix.abi }}"=="locked" (
+            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
+          )
+          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
+          echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
+          echo nmake >> task.bat
+          call c:\php\php-sdk\phpsdk-vs17-${{ matrix.arch }}.bat -t task.bat
+
+          if "${{ matrix.abi }}"=="locked" (
+            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
+            dir
+            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
+            dir
+          )
+          exit /b %ERRORLEVEL%
+      - name: Package
+        id: package
+        working-directory: c:\php
+        run: |
+          $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
+          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
+          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
+          New-Item -ItemType Directory -Path $DistName | Out-Null
+          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
+          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
+          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
+          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
+          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
+          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
           foreach ($File in $FilesToCopy) {
               Write-Host "Copying file: $($File.FullName)"
               Copy-Item -Path $File.FullName -Destination $DistName -Force
@@ -869,8 +953,9 @@ jobs:
   mock_windows:
     needs:
       - source
-      - build_windows
-    runs-on: windows-2019
+      - build_windows_vs16
+      - build_windows_vs17
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -878,6 +963,7 @@ jobs:
           - '8.1'
           - '8.2'
           - '8.3'
+          - '8.4'
         ts:
           - nts
           - zts

@@ -85,7 +85,7 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId();
 
         $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
-        $cas = (string)((int)$res->cas() + 1);
+        $cas = (string)((int)((int)$res->cas() + 1));
 
         $this->expectException(CasMismatchException::class);
         $collection->binary()->prepend($id, "bar", PrependOptions::build()->cas($cas));
