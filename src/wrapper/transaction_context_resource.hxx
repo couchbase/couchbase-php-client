@@ -22,15 +22,12 @@
 
 #include <Zend/zend_API.h>
 
-#include <chrono>
 #include <memory>
-#include <string>
-#include <system_error>
 
 namespace couchbase::transactions
 {
 class transaction_options;
-}
+} // namespace couchbase::transactions
 
 namespace couchbase::php
 {
@@ -42,42 +39,52 @@ public:
                                const couchbase::transactions::transaction_options& configuration);
 
   COUCHBASE_API
-  core_error_info new_attempt();
+  auto new_attempt() -> core_error_info;
   COUCHBASE_API
-  core_error_info commit(zval* return_value);
+  auto commit(zval* return_value) -> core_error_info;
   COUCHBASE_API
-  core_error_info rollback();
+  auto rollback() -> core_error_info;
 
   COUCHBASE_API
-  core_error_info get(zval* return_value,
-                      const zend_string* bucket,
-                      const zend_string* scope,
-                      const zend_string* collection,
-                      const zend_string* id);
+  auto get(zval* return_value,
+           const zend_string* bucket,
+           const zend_string* scope,
+           const zend_string* collection,
+           const zend_string* id) -> core_error_info;
 
   COUCHBASE_API
-  core_error_info get_replica_from_preferred_server_group(zval* return_value,
-                                                          const zend_string* bucket,
-                                                          const zend_string* scope,
-                                                          const zend_string* collection,
-                                                          const zend_string* id);
+  auto get_replica_from_preferred_server_group(zval* return_value,
+                                               const zend_string* bucket,
+                                               const zend_string* scope,
+                                               const zend_string* collection,
+                                               const zend_string* id) -> core_error_info;
 
   COUCHBASE_API
-  core_error_info insert(zval* return_value,
-                         const zend_string* bucket,
-                         const zend_string* scope,
-                         const zend_string* collection,
-                         const zend_string* id,
-                         const zend_string* value,
-                         zend_long flags);
+  auto get_multi(zval* return_value, const zval* ids, const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  core_error_info replace(zval* return_value, const zval* document, const zend_string* value, zend_long flags);
-  COUCHBASE_API
-  core_error_info remove(const zval* document);
+  auto get_multi_replicas_from_preferred_server_group(zval* return_value,
+                                                      const zval* ids,
+                                                      const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  core_error_info query(zval* return_value, const zend_string* statement, const zval* options);
+  auto insert(zval* return_value,
+              const zend_string* bucket,
+              const zend_string* scope,
+              const zend_string* collection,
+              const zend_string* id,
+              const zend_string* value,
+              zend_long flags) -> core_error_info;
+
+  COUCHBASE_API
+  auto replace(zval* return_value, const zval* document, const zend_string* value, zend_long flags)
+    -> core_error_info;
+  COUCHBASE_API
+  auto remove(const zval* document) -> core_error_info;
+
+  COUCHBASE_API
+  auto query(zval* return_value, const zend_string* statement, const zval* options)
+    -> core_error_info;
 
 private:
   class impl;
@@ -85,8 +92,9 @@ private:
   std::shared_ptr<impl> impl_;
 };
 
-COUCHBASE_API std::pair<zend_resource*, core_error_info>
-create_transaction_context_resource(transactions_resource* transactions, zval* options);
+COUCHBASE_API auto
+create_transaction_context_resource(transactions_resource* transactions, zval* options)
+  -> std::pair<zend_resource*, core_error_info>;
 
 COUCHBASE_API void
 destroy_transaction_context_resource(zend_resource* res);
@@ -94,7 +102,7 @@ destroy_transaction_context_resource(zend_resource* res);
 COUCHBASE_API void
 set_transaction_context_destructor_id(int id);
 
-COUCHBASE_API int
-get_transaction_context_destructor_id();
+COUCHBASE_API auto
+get_transaction_context_destructor_id() -> int;
 
 } // namespace couchbase::php

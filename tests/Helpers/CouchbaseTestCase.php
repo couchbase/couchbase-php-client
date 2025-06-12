@@ -283,6 +283,7 @@ class CouchbaseTestCase extends TestCase
         } catch (Exception $ex) {
             $exOut = $ex;
         }
+        $this->assertNotNull($exOut, "expected exception to be not null and of type $type");
 
         if ($type !== null) {
             $this->assertErrorType($type, $exOut);

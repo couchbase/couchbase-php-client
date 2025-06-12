@@ -27,7 +27,10 @@
 
 namespace couchbase::php
 {
-static int transactions_destructor_id_{ 0 };
+namespace
+{
+int transactions_destructor_id_{ 0 };
+} // namespace
 
 COUCHBASE_API
 void
@@ -37,8 +40,8 @@ set_transactions_destructor_id(int id)
 }
 
 COUCHBASE_API
-int
-get_transactions_destructor_id()
+auto
+get_transactions_destructor_id() -> int
 {
   return transactions_destructor_id_;
 }
@@ -52,15 +55,17 @@ public:
   {
   }
 
+  ~impl() = default;
+
   impl(impl&& other) = delete;
 
   impl(const impl& other) = delete;
 
-  const impl& operator=(impl&& other) = delete;
+  auto operator=(impl&& other) -> const impl& = delete;
 
-  const impl& operator=(const impl& other) = delete;
+  auto operator=(const impl& other) -> const impl& = delete;
 
-  [[nodiscard]] couchbase::core::transactions::transactions& transactions()
+  [[nodiscard]] auto transactions() -> couchbase::core::transactions::transactions&
   {
     return transactions_;
   }
@@ -84,8 +89,8 @@ transactions_resource::transactions_resource(
 }
 
 COUCHBASE_API
-core::transactions::transactions&
-transactions_resource::transactions()
+auto
+transactions_resource::transactions() -> core::transactions::transactions&
 {
   return impl_->transactions();
 }
@@ -95,6 +100,9 @@ transactions_resource::notify_fork(fork_event event) const
 {
   return impl_->notify_fork(event);
 }
+
+namespace
+{
 
 #define ASSIGN_DURATION_OPTION(name, setter, key, value)                                           \
   if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL(name)) == 0) {                    \
@@ -156,8 +164,9 @@ transactions_resource::notify_fork(fork_event event) const
     (field).assign(Z_STRVAL_P(value), Z_STRLEN_P(value));                                          \
   }
 
-static core_error_info
+auto
 apply_options(couchbase::transactions::transactions_config& config, zval* options)
+  -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
     return { errc::common::invalid_argument,
@@ -165,8 +174,8 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
              "expected array for transactions configuration" };
   }
 
-  const zend_string* key;
-  const zval* value;
+  const zend_string* key = nullptr;
+  const zval* value = nullptr;
 
   ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(options), key, value)
   {
@@ -211,8 +220,8 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
                              std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
       }
 
-      const zend_string* k;
-      const zval* v;
+      const zend_string* k = nullptr;
+      const zval* v = nullptr;
       ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
       {
         if (zend_binary_strcmp(ZSTR_VAL(k), ZSTR_LEN(k), ZEND_STRL("scanConsistency")) == 0) {
@@ -251,8 +260,8 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
                              std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
       }
 
-      const zend_string* k;
-      const zval* v;
+      const zend_string* k = nullptr;
+      const zval* v = nullptr;
       ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
       {
         ASSIGN_DURATION_OPTION("cleanupWindow", config.cleanup_config().cleanup_window, k, v);
@@ -275,8 +284,8 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
                              std::string(ZSTR_VAL(key), ZSTR_LEN(key))) };
       }
 
-      const zend_string* k;
-      const zval* v;
+      const zend_string* k = nullptr;
+      const zval* v = nullptr;
       std::string bucket;
       std::string scope;
       std::string collection;
@@ -294,10 +303,12 @@ apply_options(couchbase::transactions::transactions_config& config, zval* option
 
   return {};
 }
+} // namespace
 
 COUCHBASE_API
-std::pair<zend_resource*, core_error_info>
+auto
 create_transactions_resource(connection_handle* connection, zval* options)
+  -> std::pair<zend_resource*, core_error_info>
 {
   couchbase::transactions::transactions_config config{};
   if (auto e = apply_options(config, options); e.ec) {

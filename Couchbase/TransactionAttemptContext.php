@@ -94,6 +94,92 @@ class TransactionAttemptContext
     }
 
     /**
+     * Retrieves a group of documents.
+     *
+     * @param array<TransactionGetMultiSpec> $specs The specs describing each entry to fetch
+     * @param TransactionGetMultiOptions|null $options The options to use for the operation
+     *
+     * @return TransactionGetMultiResult result that contains set of the documents.
+     * @since 4.3.0
+     */
+    public function getMulti(array $specs, TransactionGetMultiOptions $options = null): TransactionGetMultiResult
+    {
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetMulti';
+        $response = $function(
+            $this->transaction,
+            array_map(
+                function ($spec) {
+                    return TransactionGetMultiSpec::export($spec);
+                },
+                $specs
+            ),
+            TransactionGetMultiOptions::export($options),
+        );
+
+        return new TransactionGetMultiResult(
+            $response,
+            array_map(
+                function ($index, $entry) use ($specs, $options) {
+                    // use transcoder from the spec but fallback to one from the options
+                    if ($entry != null) {
+                        return TransactionGetMultiSpec::getTranscoder(
+                            $specs,
+                            $index,
+                            TransactionGetMultiOptions::getTranscoder($options)
+                        );
+                    }
+                    return null;
+                },
+                array_keys($response),
+                array_values($response),
+            )
+        );
+    }
+
+    /**
+     * Retrieves a group of documents, but give priority to copies from preferred server group.
+     *
+     * @param array<TransactionGetMultiReplicasFromPreferredServerGroupSpec> $specs The specs describing each entry to fetch
+     * @param TransactionGetMultiReplicasFromPreferredServerGroupOptions|null $options The options to use for the operation
+     *
+     * @return TransactionGetMultiReplicasFromPreferredServerGroupResult result that contains set of the documents.
+     * @since 4.3.0
+     */
+    public function getMultiReplicasFromPreferredServerGroup(array $specs, TransactionGetMultiReplicasFromPreferredServerGroupOptions $options = null): TransactionGetMultiReplicasFromPreferredServerGroupResult
+    {
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetMultiReplicasFromPreferredServerGroup';
+        $response = $function(
+            $this->transaction,
+            array_map(
+                function ($spec) {
+                    return TransactionGetMultiReplicasFromPreferredServerGroupSpec::export($spec);
+                },
+                $specs
+            ),
+            TransactionGetMultiReplicasFromPreferredServerGroupOptions::export($options),
+        );
+
+        return new TransactionGetMultiReplicasFromPreferredServerGroupResult(
+            $response,
+            array_map(
+                function ($index, $entry) use ($specs, $options) {
+                    // use transcoder from the spec but fallback to one from the options
+                    if ($entry != null) {
+                        return TransactionGetMultiReplicasFromPreferredServerGroupSpec::getTranscoder(
+                            $specs,
+                            $index,
+                            TransactionGetMultiReplicasFromPreferredServerGroupOptions::getTranscoder($options)
+                        );
+                    }
+                    return null;
+                },
+                array_keys($response),
+                array_values($response),
+            )
+        );
+    }
+
+    /**
      * Inserts a new document to the collection, failing if the document already exists.
      *
      * @param Collection $collection The collection the document lives in.

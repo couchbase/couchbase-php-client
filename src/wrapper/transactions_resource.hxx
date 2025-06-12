@@ -22,10 +22,7 @@
 
 #include <Zend/zend_API.h>
 
-#include <chrono>
 #include <memory>
-#include <string>
-#include <system_error>
 
 namespace couchbase
 {
@@ -49,7 +46,7 @@ public:
                         const couchbase::transactions::transactions_config& configuration);
 
   COUCHBASE_API
-  core::transactions::transactions& transactions();
+  auto transactions() -> core::transactions::transactions&;
 
   void notify_fork(fork_event event) const;
 
@@ -59,8 +56,9 @@ private:
   std::shared_ptr<impl> impl_;
 };
 
-COUCHBASE_API std::pair<zend_resource*, core_error_info>
-create_transactions_resource(connection_handle* connection, zval* options);
+COUCHBASE_API auto
+create_transactions_resource(connection_handle* connection, zval* options)
+  -> std::pair<zend_resource*, core_error_info>;
 
 COUCHBASE_API void
 destroy_transactions_resource(zend_resource* res);
@@ -68,6 +66,6 @@ destroy_transactions_resource(zend_resource* res);
 COUCHBASE_API void
 set_transactions_destructor_id(int id);
 
-COUCHBASE_API int
-get_transactions_destructor_id();
+COUCHBASE_API auto
+get_transactions_destructor_id() -> int;
 } // namespace couchbase::php

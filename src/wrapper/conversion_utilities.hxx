@@ -37,6 +37,7 @@
 #include <spdlog/fmt/bundled/format.h>
 
 #include <chrono>
+#include <optional>
 #include <type_traits>
 
 namespace couchbase::transactions
@@ -46,37 +47,43 @@ class transaction_query_options;
 
 namespace couchbase::php
 {
-std::vector<std::byte>
-cb_binary_new(const zend_string* value);
+auto
+cb_binary_new(const zend_string* value) -> std::vector<std::byte>;
 
-std::vector<std::byte>
-cb_binary_new(const zval* value);
+auto
+cb_binary_new(const zval* value) -> std::vector<std::byte>;
 
-std::string
-cb_string_new(const zend_string* value);
+auto
+cb_string_new(const zend_string* value) -> std::string;
 
-std::string
-cb_string_new(const zval* value);
+auto
+cb_string_new(const zval* value) -> std::string;
 
-std::pair<core::operations::query_request, core_error_info>
-zval_to_query_request(const zend_string* statement, const zval* options);
+auto
+zval_to_query_request(const zend_string* statement, const zval* options)
+  -> std::pair<core::operations::query_request, core_error_info>;
 
-std::pair<transactions::transaction_query_options, core_error_info>
-zval_to_transactions_query_options(const zval* options);
+auto
+zval_to_transactions_query_options(const zval* options)
+  -> std::pair<transactions::transaction_query_options, core_error_info>;
 
-std::pair<core::operations::search_request, core_error_info>
+auto
 zval_to_common_search_request(const zend_string* index_name,
                               const zend_string* query,
-                              const zval* options);
+                              const zval* options)
+  -> std::pair<core::operations::search_request, core_error_info>;
 
-core_error_info
-cb_fill_analytics_link(core::management::analytics::couchbase_remote_link& dst, const zval* src);
+auto
+cb_fill_analytics_link(core::management::analytics::couchbase_remote_link& dst, const zval* src)
+  -> core_error_info;
 
-core_error_info
-cb_fill_analytics_link(core::management::analytics::azure_blob_external_link& dst, const zval* src);
+auto
+cb_fill_analytics_link(core::management::analytics::azure_blob_external_link& dst, const zval* src)
+  -> core_error_info;
 
-core_error_info
-cb_fill_analytics_link(core::management::analytics::s3_external_link& dst, const zval* src);
+auto
+cb_fill_analytics_link(core::management::analytics::s3_external_link& dst, const zval* src)
+  -> core_error_info;
 
 void
 query_response_to_zval(zval* return_value, const core::operations::query_response& resp);
@@ -85,8 +92,8 @@ void
 search_query_response_to_zval(zval* return_value, const core::operations::search_response& resp);
 
 template<typename Integer>
-static Integer
-parse_integer(const std::string& str, std::size_t* pos = 0, int base = 10)
+static auto
+parse_integer(const std::string& str, std::size_t* pos = nullptr, int base = 10) -> Integer
 {
   if constexpr (std::is_signed_v<Integer>) {
     return std::stoll(str, pos, base);
@@ -96,8 +103,9 @@ parse_integer(const std::string& str, std::size_t* pos = 0, int base = 10)
 }
 
 template<typename Integer>
-static std::pair<core_error_info, std::optional<Integer>>
+static auto
 cb_get_integer_from_hex(const zend_string* value, std::string_view name)
+  -> std::pair<core_error_info, std::optional<Integer>>
 {
   auto hex_string = cb_string_new(value);
 
@@ -109,7 +117,7 @@ cb_get_integer_from_hex(const zend_string* value, std::string_view name)
   }
 
   try {
-    std::size_t pos;
+    std::size_t pos = 0;
     auto result = parse_integer<Integer>(hex_string, &pos, 16);
     if (result < std::numeric_limits<Integer>::min() ||
         result > std::numeric_limits<Integer>::max()) {
@@ -139,8 +147,9 @@ cb_get_integer_from_hex(const zend_string* value, std::string_view name)
 }
 
 template<typename Integer>
-static std::pair<core_error_info, std::optional<Integer>>
+static auto
 cb_get_integer(const zval* options, std::string_view name)
+  -> std::pair<core_error_info, std::optional<Integer>>
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -173,8 +182,8 @@ cb_get_integer(const zval* options, std::string_view name)
 }
 
 template<typename Integer>
-core_error_info
-cb_assign_integer(Integer& field, const zval* options, std::string_view name)
+auto
+cb_assign_integer(Integer& field, const zval* options, std::string_view name) -> core_error_info
 {
   auto [e, value] = cb_get_integer<Integer>(options, name);
   if (e.ec) {
@@ -186,12 +195,13 @@ cb_assign_integer(Integer& field, const zval* options, std::string_view name)
   return {};
 }
 
-std::pair<core_error_info, std::optional<std::string>>
-cb_get_string(const zval* options, std::string_view name);
+auto
+cb_get_string(const zval* options, std::string_view name)
+  -> std::pair<core_error_info, std::optional<std::string>>;
 
 template<typename String>
-core_error_info
-cb_assign_string(String& field, const zval* options, std::string_view name)
+auto
+cb_assign_string(String& field, const zval* options, std::string_view name) -> core_error_info
 {
   auto [e, value] = cb_get_string(options, name);
   if (e.ec) {
@@ -203,12 +213,13 @@ cb_assign_string(String& field, const zval* options, std::string_view name)
   return {};
 }
 
-std::pair<core_error_info, std::optional<std::vector<std::byte>>>
-cb_get_binary(const zval* options, std::string_view name);
+auto
+cb_get_binary(const zval* options, std::string_view name)
+  -> std::pair<core_error_info, std::optional<std::vector<std::byte>>>;
 
 template<typename Binary>
-core_error_info
-cb_assign_binary(Binary& field, const zval* options, std::string_view name)
+auto
+cb_assign_binary(Binary& field, const zval* options, std::string_view name) -> core_error_info
 {
   auto [e, value] = cb_get_binary(options, name);
   if (e.ec) {
@@ -220,12 +231,13 @@ cb_assign_binary(Binary& field, const zval* options, std::string_view name)
   return {};
 }
 
-std::pair<core_error_info, std::optional<std::chrono::milliseconds>>
-cb_get_timeout(const zval* options);
+auto
+cb_get_timeout(const zval* options)
+  -> std::pair<core_error_info, std::optional<std::chrono::milliseconds>>;
 
 template<typename Request>
-core_error_info
-cb_assign_timeout(Request& req, const zval* options)
+auto
+cb_assign_timeout(Request& req, const zval* options) -> core_error_info
 {
   auto [err, timeout] = cb_get_timeout(options);
   if (!err.ec && timeout) {
@@ -236,8 +248,8 @@ cb_assign_timeout(Request& req, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_expiry(Options& opts, const zval* options)
+auto
+cb_set_expiry(Options& opts, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "expirySeconds"); e.ec) {
     return e;
@@ -263,8 +275,8 @@ cb_set_expiry(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_initial_value(Options& opts, const zval* options)
+auto
+cb_set_initial_value(Options& opts, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "initialValue"); e.ec) {
     return e;
@@ -275,8 +287,8 @@ cb_set_initial_value(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_delta(Options& opts, const zval* options)
+auto
+cb_set_delta(Options& opts, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "delta"); e.ec) {
     return e;
@@ -287,8 +299,8 @@ cb_set_delta(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_timeout(Options& opts, const zval* options)
+auto
+cb_set_timeout(Options& opts, const zval* options) -> core_error_info
 {
   auto [err, timeout] = cb_get_timeout(options);
   if (err.ec) {
@@ -300,12 +312,13 @@ cb_set_timeout(Options& opts, const zval* options)
   return {};
 }
 
-std::pair<core_error_info, std::optional<bool>>
-cb_get_boolean(const zval* options, std::string_view name);
+auto
+cb_get_boolean(const zval* options, std::string_view name)
+  -> std::pair<core_error_info, std::optional<bool>>;
 
 template<typename Options>
-core_error_info
-cb_set_access_deleted(Options& opts, const zval* options)
+auto
+cb_set_access_deleted(Options& opts, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "accessDeleted");
   if (err.ec) {
@@ -318,8 +331,8 @@ cb_set_access_deleted(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_preserve_expiry(Options& opts, const zval* options)
+auto
+cb_set_preserve_expiry(Options& opts, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "preserveExpiry");
   if (err.ec) {
@@ -332,8 +345,8 @@ cb_set_preserve_expiry(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_create_as_deleted(Options& opts, const zval* options)
+auto
+cb_set_create_as_deleted(Options& opts, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "createAsDeleted");
   if (err.ec) {
@@ -345,12 +358,12 @@ cb_set_create_as_deleted(Options& opts, const zval* options)
   return {};
 }
 
-std::pair<core_error_info, std::optional<couchbase::cas>>
-cb_get_cas(const zval* options);
+auto
+cb_get_cas(const zval* options) -> std::pair<core_error_info, std::optional<couchbase::cas>>;
 
 template<typename Options>
-core_error_info
-cb_set_cas(Options& opts, const zval* options)
+auto
+cb_set_cas(Options& opts, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_cas(options);
   if (err.ec) {
@@ -363,8 +376,8 @@ cb_set_cas(Options& opts, const zval* options)
 }
 
 template<typename Boolean>
-core_error_info
-cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
+auto
+cb_assign_boolean(Boolean& field, const zval* options, std::string_view name) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -396,26 +409,29 @@ cb_assign_boolean(Boolean& field, const zval* options, std::string_view name)
   return {};
 }
 
-core_error_info
-cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas);
+auto
+cb_string_to_cas(const std::string& cas_string, couchbase::cas& cas) -> core_error_info;
 
-core_error_info
-cb_assign_cas(couchbase::cas& cas, const zval* document);
+auto
+cb_assign_cas(couchbase::cas& cas, const zval* document) -> core_error_info;
 
-core_error_info
+auto
 cb_assign_vector_of_strings(std::vector<std::string>& field,
                             const zval* options,
-                            std::string_view name);
+                            std::string_view name) -> core_error_info;
 
-std::pair<core_error_info, std::optional<couchbase::durability_level>>
-cb_get_durability_level(const zval* options);
+auto
+cb_get_durability_level(const zval* options)
+  -> std::pair<core_error_info, std::optional<couchbase::durability_level>>;
 
-std::pair<core_error_info, std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>
-cb_get_legacy_durability_constraints(const zval* options);
+auto
+cb_get_legacy_durability_constraints(const zval* options)
+  -> std::pair<core_error_info,
+               std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>;
 
 template<typename Options>
-core_error_info
-cb_set_durability(Options& opts, const zval* options)
+auto
+cb_set_durability(Options& opts, const zval* options) -> core_error_info
 {
   if (auto [e, level] = cb_get_durability_level(options); e.ec) {
     return e;
@@ -435,8 +451,8 @@ cb_set_durability(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_store_semantics(Options& opts, const zval* options)
+auto
+cb_set_store_semantics(Options& opts, const zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -466,8 +482,8 @@ cb_set_store_semantics(Options& opts, const zval* options)
 }
 
 template<typename Options>
-core_error_info
-cb_set_read_preference(Options& opts, const zval* options)
+auto
+cb_set_read_preference(Options& opts, const zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
