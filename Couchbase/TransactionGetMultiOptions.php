@@ -51,6 +51,8 @@ class TransactionGetMultiOptions
      *
      * @return TransactionGetMultiOptions
      * @since 4.3.0
+     *
+     * @VOLATILE: This API is subject to change at any time.
      */
     public function transcoder(Transcoder $transcoder): TransactionGetMultiOptions
     {

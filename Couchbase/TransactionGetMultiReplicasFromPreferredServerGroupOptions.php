@@ -51,6 +51,8 @@ class TransactionGetMultiReplicasFromPreferredServerGroupOptions
      *
      * @return TransactionGetMultiReplicasFromPreferredServerGroupOptions
      * @since 4.3.0
+     *
+     * @VOLATILE: This API is subject to change at any time.
      */
     public function transcoder(Transcoder $transcoder): TransactionGetMultiReplicasFromPreferredServerGroupOptions
     {
