@@ -13,10 +13,10 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2025-03-18</date>
+    <date>2025-06-12</date>
     <version>
-        <release>4.2.7</release>
-        <api>4.2.1</api>
+        <release>4.3.0</release>
+        <api>4.3.0</api>
     </version>
     <stability>
         <release>stable</release>
@@ -24,10 +24,13 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
-        Fixes
-        =====
+        New features and enhancements
+        =============================
 
-        * Update core to 1.0.6 (#206).
+        * PCBC-1023: Add numVBuckets to BucketSettings. (#210)
+        * PCBC-1024: Improve SDK error messages for account lock/unlock feature. (#211)
+        * PCBC-1025: Add CAS to core append/prepend. (#208)
+        * PCBC-1020: Implement getMulti() and getMultiReplicasFromPreferredServerGroup() for transactions. (#213)
     </notes>
     <contents>
     </contents>
@@ -44,6 +47,24 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2025-03-18</date>
+            <version>
+                <release>4.2.7</release>
+                <api>4.2.1</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                Fixes
+                =====
+
+                * Update core to 1.0.6 (#206).
+            </notes>
+        </release>
         <release>
             <date>2025-01-29</date>
             <version>
