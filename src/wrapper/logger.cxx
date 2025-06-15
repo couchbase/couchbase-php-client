@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <queue>
+#include <chrono>
 
 namespace couchbase::php
 {
@@ -125,6 +126,7 @@ COUCHBASE_API
 void
 shutdown_logger()
 {
+  CB_LOG_DEBUG("Shutdown logger");
   flush_logger();
   couchbase::core::logger::shutdown();
 }
@@ -164,7 +166,9 @@ initialize_logger()
     if (const char* ini_val = COUCHBASE_G(log_path);
         ini_val != nullptr && std::strlen(ini_val) > 0) {
       configuration.filename = ini_val;
-      configuration.filename += fmt::format(".{}", spdlog::details::os::pid());
+      auto now = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::now().time_since_epoch());
+      configuration.filename += fmt::format(".{}.{}", spdlog::details::os::pid(), now.count());
     }
     configuration.unit_test = true;
     configuration.console = COUCHBASE_G(log_stderr);
