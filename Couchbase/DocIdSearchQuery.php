@@ -21,12 +21,13 @@ declare(strict_types=1);
 namespace Couchbase;
 
 use Couchbase\Exception\InvalidArgumentException;
+use JsonSerializable;
 
 /**
  * A FTS query that matches on Couchbase document IDs. Useful to restrict the search space to a list of keys (by using
  * this in a compound query).
  */
-class DocIdSearchQuery implements SearchQuery
+class DocIdSearchQuery implements JsonSerializable, SearchQuery
 {
     private array $documentIds;
     private ?float $boost = null;
@@ -91,22 +92,31 @@ class DocIdSearchQuery implements SearchQuery
 
     /**
      * @internal
+     * @return mixed
+     */
+    public function jsonSerialize(): mixed
+    {
+        return $this->export();
+    }
+
+    /**
+     * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(DocIdSearchQuery $query): array
+    public function export(): array
     {
-        if (count($query->documentIds) == 0) {
+        if (count($this->documentIds) == 0) {
             throw new InvalidArgumentException();
         }
 
         $json = [
-            'ids' => $query->documentIds,
+            'ids' => $this->documentIds,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

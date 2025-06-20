@@ -126,27 +126,27 @@ class BooleanSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return BooleanSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(BooleanSearchQuery $query): array
+    public function export(): array
     {
         $json = [];
 
-        if (count($query->must->childQueries()) > 0) {
-            $json['must'] = $query->must;
+        if (count($this->must->childQueries()) > 0) {
+            $json['must'] = $this->must;
         }
-        if (count($query->mustNot->childQueries()) > 0) {
-            $json['must_not'] = $query->mustNot;
+        if (count($this->mustNot->childQueries()) > 0) {
+            $json['must_not'] = $this->mustNot;
         }
-        if (count($query->should->childQueries()) > 0) {
-            $json['should'] = $query->should;
+        if (count($this->should->childQueries()) > 0) {
+            $json['should'] = $this->should;
         }
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
 
         return $json;

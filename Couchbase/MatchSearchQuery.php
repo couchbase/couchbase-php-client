@@ -151,34 +151,34 @@ class MatchSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return MatchSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(MatchSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'match' => $query->match,
+            'match' => $this->match,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
-        if ($query->prefixLength != null) {
-            $json['prefix_length'] = $query->prefixLength;
+        if ($this->prefixLength != null) {
+            $json['prefix_length'] = $this->prefixLength;
         }
-        if ($query->fuzziness != null) {
-            $json['fuzziness'] = $query->fuzziness;
+        if ($this->fuzziness != null) {
+            $json['fuzziness'] = $this->fuzziness;
         }
-        if ($query->analyzer != null) {
-            $json['analyzer'] = $query->analyzer;
+        if ($this->analyzer != null) {
+            $json['analyzer'] = $this->analyzer;
         }
-        if ($query->operator != null) {
-            $json['operator'] = $query->operator;
+        if ($this->operator != null) {
+            $json['operator'] = $this->operator;
         }
 
         return $json;

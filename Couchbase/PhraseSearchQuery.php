@@ -89,27 +89,27 @@ class PhraseSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return PhraseSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(PhraseSearchQuery $query): array
+    public function export(): array
     {
-        if (count($query->terms) == 0) {
+        if (count($this->terms) == 0) {
             throw new InvalidArgumentException();
         }
 
         $json = [
-            'terms' => json_encode($query->terms),
+            'terms' => json_encode($this->terms),
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

@@ -76,27 +76,27 @@ class GeoPolygonQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return GeoPolygonQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(GeoPolygonQuery $query): array
+    public function export(): array
     {
         $coordinates = [];
-        foreach ($query->coordinates as $coordinate) {
+        foreach ($this->coordinates as $coordinate) {
             $coordinates[] = $coordinate;
         }
 
         $json = [
             'polygon_points' => $coordinates,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

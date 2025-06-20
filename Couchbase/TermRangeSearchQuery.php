@@ -113,38 +113,38 @@ class TermRangeSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return TermRangeSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(TermRangeSearchQuery $query): array
+    public function export(): array
     {
-        if ($query->min == null && $query->max == null) {
+        if ($this->min == null && $this->max == null) {
             throw new InvalidArgumentException("Either max or min must be set for term range query");
         }
 
         $json = [
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
-        if ($query->min != null) {
-            $json['min'] = $query->min;
+        if ($this->min != null) {
+            $json['min'] = $this->min;
         }
-        if ($query->max != null) {
-            $json['max'] = $query->max;
+        if ($this->max != null) {
+            $json['max'] = $this->max;
         }
-        if ($query->inclusiveMin != null) {
-            $json['inclusive_min'] = $query->inclusiveMin;
+        if ($this->inclusiveMin != null) {
+            $json['inclusive_min'] = $this->inclusiveMin;
         }
-        if ($query->inclusiveMax != null) {
-            $json['inclusive_max'] = $query->inclusiveMax;
+        if ($this->inclusiveMax != null) {
+            $json['inclusive_max'] = $this->inclusiveMax;
         }
 
         return $json;

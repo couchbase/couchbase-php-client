@@ -100,23 +100,23 @@ class GeoBoundingBoxSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return GeoBoundingBoxSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(GeoBoundingBoxSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'top_left' => [$query->topLeftLongitude, $query->topLeftLatitude],
-            'bottom_right' => [$query->bottomRightLongitude, $query->bottomRightLatitude],
+            'top_left' => [$this->topLeftLongitude, $this->topLeftLatitude],
+            'bottom_right' => [$this->bottomRightLongitude, $this->bottomRightLatitude],
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

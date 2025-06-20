@@ -99,25 +99,25 @@ class MatchPhraseSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return MatchPhraseSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(MatchPhraseSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'match_phrase' => $query->matchPhrase,
+            'match_phrase' => $this->matchPhrase,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
-        if ($query->analyzer != null) {
-            $json['analyzer'] = $query->analyzer;
+        if ($this->analyzer != null) {
+            $json['analyzer'] = $this->analyzer;
         }
 
         return $json;

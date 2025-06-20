@@ -117,28 +117,28 @@ class TermSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return TermSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(TermSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'term' => $query->term,
+            'term' => $this->term,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
-        if ($query->prefixLength != null) {
-            $json['prefix_length'] = $query->prefixLength;
+        if ($this->prefixLength != null) {
+            $json['prefix_length'] = $this->prefixLength;
         }
-        if ($query->fuzziness != null) {
-            $json['fuzziness'] = $query->fuzziness;
+        if ($this->fuzziness != null) {
+            $json['fuzziness'] = $this->fuzziness;
         }
 
         return $json;

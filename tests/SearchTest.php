@@ -644,6 +644,16 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals('{"match_none":"null"}', $encodedSearchQuery);
     }
 
+    public function testVectorSearchEncodingWithPrefilter()
+    {
+        $vectorQueryOne = VectorQuery::build("foo", [0.32, -0.536, 0.842])->boost(0.5)->numCandidates(4)->prefilter(ConjunctionSearchQuery::build([MatchSearchQuery::build("Theatre")->field("name")]));
+        $searchRequest = SearchRequest::export(SearchRequest::build(VectorSearch::build([$vectorQueryOne])));
+
+        $encodedVectorSearch = json_encode($searchRequest['vectorSearch']);
+        $this->assertEquals(JSON_ERROR_NONE, json_last_error());
+        $this->assertEquals('[{"field":"foo","boost":0.5,"vector":[0.32,-0.536,0.842],"filter":{"conjuncts":[{"match":"Theatre","field":"name"}]},"k":4}]', $encodedVectorSearch);
+    }
+
     public function testVectorSearchEmptyStringThrowsInvalidArgument()
     {
         $this->expectException(\Couchbase\Exception\InvalidArgumentException::class);
