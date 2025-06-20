@@ -123,30 +123,30 @@ class DisjunctionSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return DisjunctionSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(DisjunctionSearchQuery $query): array
+    public function export(): array
     {
-        if (count($query->queries) == 0) {
+        if (count($this->queries) == 0) {
             throw new InvalidArgumentException();
         }
-        if (count($query->queries) < $query->min) {
+        if (count($this->queries) < $this->min) {
             throw new InvalidArgumentException();
         }
 
         $json = [
-            'disjuncts' => $query->queries,
+            'disjuncts' => $this->queries,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->min != null) {
-            $json['min'] = $query->min;
+        if ($this->min != null) {
+            $json['min'] = $this->min;
         }
 
         return $json;

@@ -29,6 +29,7 @@ class VectorQuery
     private ?array $vectorQuery = null;
     private ?string $base64VectorQuery = null;
     private ?float $boost = null;
+    private ?SearchQuery $prefilter = null;
 
     /**
      * @param string $vectorFieldName the document field that contains the vector
@@ -114,6 +115,20 @@ class VectorQuery
     }
 
     /**
+     * Sets the prefilter for this vector query.
+     *
+     * @param SearchQuery $prefilter the prefilter query to use
+     *
+     * @return VectorQuery
+     * @since 4.4.0
+     */
+    public function prefilter(SearchQuery $prefilter): VectorQuery
+    {
+        $this->prefilter = $prefilter;
+        return $this;
+    }
+
+    /**
      * @internal
      *
      * @param VectorQuery $query
@@ -139,6 +154,10 @@ class VectorQuery
             $json['vector'] = $vectorQueries;
         } else {
             $json['vector_base64'] = $query->base64VectorQuery;
+        }
+
+        if ($query->prefilter != null) {
+            $json['filter'] = $query->prefilter->export();
         }
 
         $json['k'] = $query->numCandidates;

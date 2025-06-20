@@ -155,40 +155,40 @@ class DateRangeSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return DateRangeSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(DateRangeSearchQuery $query): array
+    public function export(): array
     {
-        if ($query->start == null && $query->end == null) {
+        if ($this->start == null && $this->end == null) {
             throw new InvalidArgumentException();
         }
 
         $json = [];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
-        if ($query->start != null) {
-            $json['start'] = $query->start;
+        if ($this->start != null) {
+            $json['start'] = $this->start;
         }
-        if ($query->end != null) {
-            $json['end'] = $query->end;
+        if ($this->end != null) {
+            $json['end'] = $this->end;
         }
-        if ($query->inclusiveStart != null) {
-            $json['inclusive_start'] = $query->inclusiveStart;
+        if ($this->inclusiveStart != null) {
+            $json['inclusive_start'] = $this->inclusiveStart;
         }
-        if ($query->inclusiveEnd != null) {
-            $json['inclusive_end'] = $query->inclusiveEnd;
+        if ($this->inclusiveEnd != null) {
+            $json['inclusive_end'] = $this->inclusiveEnd;
         }
-        if ($query->datetimeParser != null) {
-            $json['datetime_parser'] = $query->datetimeParser;
+        if ($this->datetimeParser != null) {
+            $json['datetime_parser'] = $this->datetimeParser;
         }
 
         return $json;

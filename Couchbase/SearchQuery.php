@@ -30,4 +30,5 @@ namespace Couchbase;
  */
 interface SearchQuery
 {
+    function export(): array;
 }

@@ -83,22 +83,22 @@ class BooleanFieldSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return BooleanFieldSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(BooleanFieldSearchQuery $facet): array
+    public function export(): array
     {
         $json = [
-            'bool' => $facet->value,
+            'bool' => $this->value,
         ];
-        if ($facet->boost != null) {
-            $json['boost'] = $facet->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($facet->field != null) {
-            $json['field'] = $facet->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

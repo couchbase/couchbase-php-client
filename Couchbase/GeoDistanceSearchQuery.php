@@ -98,23 +98,23 @@ class GeoDistanceSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return GeoDistanceSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(GeoDistanceSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'location' => [$query->longitude, $query->latitude],
-            'distance' => $query->distance,
+            'location' => [$this->longitude, $this->latitude],
+            'distance' => $this->distance,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

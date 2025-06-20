@@ -86,22 +86,22 @@ class WildcardSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return WildcardSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(WildcardSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'wildcard' => $query->wildcard,
+            'wildcard' => $this->wildcard,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;

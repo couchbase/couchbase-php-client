@@ -71,19 +71,19 @@ class QueryStringSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return QueryStringSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(QueryStringSearchQuery $query): array
+    public function export(): array
     {
         $json = [
-            'query' => $query->queryString,
+            'query' => $this->queryString,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
 
         return $json;

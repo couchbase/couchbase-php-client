@@ -107,24 +107,24 @@ class ConjunctionSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return ConjunctionSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      * @throws InvalidArgumentException
      */
-    public static function export(ConjunctionSearchQuery $query): array
+    public function export(): array
     {
-        if (count($query->queries) == 0) {
+        if (count($this->queries) == 0) {
             throw new InvalidArgumentException();
         }
 
         $json = [
-            'conjuncts' => $query->queries,
+            'conjuncts' => $this->queries,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
 
         return $json;

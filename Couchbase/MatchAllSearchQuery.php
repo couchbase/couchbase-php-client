@@ -60,19 +60,19 @@ class MatchAllSearchQuery implements JsonSerializable, SearchQuery
      */
     public function jsonSerialize(): mixed
     {
-        return MatchAllSearchQuery::export($this);
+        return $this->export();
     }
 
     /**
      * @internal
      */
-    public static function export(MatchAllSearchQuery $query): array
+    public function export(): array
     {
         $json = [
             'match_all' => json_encode(null),
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
 
         return $json;

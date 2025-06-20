@@ -20,10 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use JsonSerializable;
+
 /**
  * A FTS query that allows for simple matching of regular expressions.
  */
-class RegexpSearchQuery implements SearchQuery
+class RegexpSearchQuery implements JsonSerializable, SearchQuery
 {
     private string $regexp;
     private ?float $boost = null;
@@ -77,17 +79,26 @@ class RegexpSearchQuery implements SearchQuery
 
     /**
      * @internal
+     * @return mixed
      */
-    public static function export(RegexpSearchQuery $query): array
+    public function jsonSerialize(): mixed
+    {
+        return $this->export();
+    }
+
+    /**
+     * @internal
+     */
+    public function export(): array
     {
         $json = [
-            'regexp' => $query->regexp,
+            'regexp' => $this->regexp,
         ];
-        if ($query->boost != null) {
-            $json['boost'] = $query->boost;
+        if ($this->boost != null) {
+            $json['boost'] = $this->boost;
         }
-        if ($query->field != null) {
-            $json['field'] = $query->field;
+        if ($this->field != null) {
+            $json['field'] = $this->field;
         }
 
         return $json;
