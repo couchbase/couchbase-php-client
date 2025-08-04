@@ -18,8 +18,8 @@
 #include "wrapper.hxx"
 
 #include "common.hxx"
+#include "core/operations/document_analytics.hxx"
 #include "core/utils/json.hxx"
-
 #include <couchbase/error_codes.hxx>
 
 #include <spdlog/fmt/bundled/core.h>
@@ -1067,4 +1067,12 @@ create_exception(zval* return_value, const core_error_info& error_info)
   couchbase_update_property(couchbase_exception_ce, return_value, "context", &context);
   Z_DELREF(context);
 }
+
+COUCHBASE_API
+void
+allow_enterprise_analytics()
+{
+  core::operations::analytics_request::allow_enterprise_analytics = true;
+}
+
 } // namespace couchbase::php

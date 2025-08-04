@@ -71,4 +71,8 @@ map_error_to_exception(const core_error_info& info);
 
 COUCHBASE_API void
 create_exception(zval* return_value, const couchbase::php::core_error_info& error_info);
+
+COUCHBASE_API void
+allow_enterprise_analytics();
+
 } // namespace couchbase::php

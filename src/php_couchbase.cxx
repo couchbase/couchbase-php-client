@@ -238,6 +238,12 @@ PHP_FUNCTION(loadExceptionAliases)
   RETURN_NULL();
 }
 
+PHP_FUNCTION(allowEnterpriseAnalytics)
+{
+  couchbase::php::allow_enterprise_analytics();
+  RETURN_NULL();
+}
+
 PHP_FUNCTION(createConnection)
 {
   zend_string* connection_hash = nullptr;
@@ -3833,6 +3839,9 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_loadExceptionAliases, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_allowEnterpriseAnalytics, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_clusterVersion, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -4729,6 +4738,7 @@ ZEND_END_ARG_INFO()
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, notifyFork, ai_CouchbaseExtension_notifyFork)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, loadExceptionAliases, ai_CouchbaseExtension_loadExceptionAliases)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, allowEnterpriseAnalytics, ai_CouchbaseExtension_allowEnterpriseAnalytics)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, version, ai_CouchbaseExtension_version)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, clusterVersion, ai_CouchbaseExtension_clusterVersion)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, replicasConfiguredForBucket, ai_CouchbaseExtension_replicasConfiguredForBucket)
