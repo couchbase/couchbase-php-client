@@ -297,7 +297,7 @@ jobs:
 
   build_windows:
     needs: source_abi
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -341,7 +341,7 @@ jobs:
           echo call configure.bat --disable-all --enable-cli --disable-zts --enable-couchbase >> task.bat
           echo nmake >> task.bat
           dir
-          call c:\php\php-sdk\phpsdk-vs16-x64.bat -t task.bat
+          call c:\php\php-sdk\phpsdk-vs17-x64.bat -t task.bat
           dir
           if defined CB_ABI_VERSION (
            echo Renaming so file to php_couchbase_%CB_ABI_VERSION%.dll
@@ -382,7 +382,7 @@ jobs:
     needs:
       - source_abi
       - build_windows
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
     steps:

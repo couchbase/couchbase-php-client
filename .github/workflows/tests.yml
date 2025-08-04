@@ -782,7 +782,7 @@ jobs:
 
   build_windows_vs16:
     needs: source
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
