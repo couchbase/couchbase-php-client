@@ -800,6 +800,48 @@ jobs:
           - default
           - locked
     steps:
+      - name: Download Visual Studio 2019 Enterprise bootstrapper
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Uri "https://aka.ms/vs/16/release/vs_Enterprise.exe" -OutFile "vs_Enterprise.exe"
+          Get-Item .\vs_Enterprise.exe | Select-Object Name,Length
+
+      - name: Remove previous offline layout folder if exists
+        shell: powershell
+        run: |
+          if (Test-Path .\vs_2019_offline) { Remove-Item -Recurse -Force .\vs_2019_offline }
+
+      - name: Create offline layout for Visual Studio 2019 Enterprise with logging
+        shell: powershell
+        run: |
+          .\vs_Enterprise.exe --layout .\vs_2019_offline --lang en-US --log layout.log
+          if (Test-Path .\layout.log) {
+            Get-Content .\layout.log -Tail 50
+          } else {
+            Write-Output "layout.log was not created."
+          }
+
+      - name: Verify offline layout folder contents
+        shell: powershell
+        run: |
+          if (Test-Path .\vs_2019_offline) {
+            Get-ChildItem -Recurse .\vs_2019_offline | Select-Object FullName,Length | Format-Table -AutoSize
+          } else {
+            Write-Output "Layout folder not created"
+            exit 1
+          }
+
+      - name: Install Visual Studio 2019 from offline layout silently
+        shell: powershell
+        run: |
+          .\vs_Enterprise.exe --quiet --wait --norestart --noUpdateInstaller --noWeb --allWorkloads --includeRecommended --includeOptional --layout .\vs_2019_offline
+
+      - name: List Visual Studio installations with vswhere
+        shell: powershell
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          & $vswhere -all -products * -prerelease -format text
+
       - name: Install dependencies
         shell: cmd
         run: |
