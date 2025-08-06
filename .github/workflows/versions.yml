@@ -297,7 +297,7 @@ jobs:
 
   build_windows:
     needs: source_abi
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -306,6 +306,12 @@ jobs:
           - ${{ needs.source_abi.outputs.abi_version }}
           - ${{ needs.source_abi.outputs.alternate_abi_version }}
     steps:
+      - name: Install VS 2019
+        run: choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --locale en-US"
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[16.0,17.0)'
       - name: Install dependencies
         shell: cmd
         run: |
@@ -382,7 +388,7 @@ jobs:
     needs:
       - source_abi
       - build_windows
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
     steps:

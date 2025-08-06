@@ -782,7 +782,7 @@ jobs:
 
   build_windows_vs16:
     needs: source
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
@@ -800,6 +800,12 @@ jobs:
           - default
           - locked
     steps:
+      - name: Install VS 2019
+        run: choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --passive --locale en-US"
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[16.0,17.0)'
       - name: Install dependencies
         shell: cmd
         run: |
