@@ -20,7 +20,7 @@ jobs:
           php-version: '8.1'
           ts: 'nts'
           arch: 'x64'
-          args: --disable-zts
+          args: --disable-all --enable-cli --disable-zts --enable-couchbase
       - name: Check
         run: |
           dir
