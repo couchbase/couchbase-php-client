@@ -1,995 +1,995 @@
-name: tests
-permissions: {}
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  source:
-    runs-on: ubuntu-22.04
-    outputs:
-      extension_version: ${{ steps.build_extension.outputs.extension_version }}
-      abi_version: ${{ steps.build_extension.outputs.abi_version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-          fetch-tags: true
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}
-      - name: Build
-        id: build_extension
-        run: |
-          gem install --no-document --user-install nokogiri
-          export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
-          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
-          echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
-          ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_")' src/php_couchbase.hxx)
-          echo "abi_version=${ABI_VERSION}" >> "$GITHUB_OUTPUT"
-          export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
-          ruby ./bin/package.rb
-      - name: PHPDoc
-        run: |
-          ruby ./bin/docs.rb
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            couchbase-*.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          retention-days: 1
-          name: scripts-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            bin/**/*
-            90-couchbase.ini
-            phpcs.xml
-      - uses: actions/upload-artifact@v4
-        with:
-          retention-days: 1
-          name: tests-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            tests/**/*
-      - uses: actions/upload-artifact@v4
-        with:
-          name: docs-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            build/couchbase-php-client-*/**/*
-
-  build_alpine_3_19:
-    needs: source
-    name: alpine_3_19
-    runs-on: ubuntu-22.04
-    container:
-      image: alpine:3.19
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '81'
-          - '82'
-          - '83'
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Install build environment
-        run: |
-          apk update
-          apk add --no-cache \
-            bash \
-            build-base \
-            ccache \
-            cmake \
-            curl \
-            g++ \
-            gcc \
-            git \
-            linux-headers \
-            make \
-            ninja-build \
-            php${{ matrix.php }}-dev \
-            php${{ matrix.php }}-pear \
-            openssl \
-            openssl-dev \
-            readline-dev \
-            ruby \
-            tar \
-            xz \
-            yaml-dev \
-            zlib-dev
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.php }}
-      - name: Build
-        run: |
-          pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
-          fi
-          (
-            cd couchbase
-            phpize${{ matrix.php }}
-            ./configure --enable-couchbase --with-php-config=$(which php-config${{ matrix.php }})
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          PHP_VERSION_SHORT=${{ matrix.php }}
-          PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
-          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip --strip-all ${DIST_NAME}/couchbase.so
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            couchbase-*-linux-musl-x86_64*.tgz
-
-  mock_alpine_3_19:
-    needs:
-      - source
-      - build_alpine_3_19
-    runs-on: ubuntu-22.04
-    container:
-      image: alpine:3.19
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '81'
-          - '82'
-          - '83'
-    steps:
-      - name: Install test environment
-        run: |
-          apk update
-          apk add --no-cache \
-            bash \
-            curl \
-            git \
-            php${{ matrix.php }}-dev \
-            php${{ matrix.php }}-pear \
-            php${{ matrix.php }}-dom \
-            php${{ matrix.php }}-intl \
-            php${{ matrix.php }}-mbstring \
-            php${{ matrix.php }}-pecl-pcov \
-            php${{ matrix.php }}-pecl-xdebug \
-            php${{ matrix.php }}-phar \
-            php${{ matrix.php }}-sockets \
-            php${{ matrix.php }}-tokenizer \
-            php${{ matrix.php }}-xml \
-            php${{ matrix.php }}-xmlwriter \
-            php${{ matrix.php }}-ctype \
-            openssl \
-            ruby \
-            tar \
-            xz \
-            yaml-dev \
-            zlib-dev
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
-      - name: Test
-        env:
-          CB_PHP_NAME: php${{ matrix.php }}
-        run: |
-          tar xf couchbase-*-linux-musl-x86_64.tgz
-          ruby ./bin/test.rb
-
-  build_alpine:
-    needs: source
-    name: alpine
-    runs-on: ubuntu-22.04
-    container:
-      image: alpine:3.21
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '84'
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Install build environment
-        run: |
-          apk update
-          apk add --no-cache \
-            bash \
-            build-base \
-            ccache \
-            cmake \
-            curl \
-            g++ \
-            gcc \
-            git \
-            linux-headers \
-            make \
-            ninja-build \
-            php${{ matrix.php }}-dev \
-            php${{ matrix.php }}-pear \
-            openssl \
-            openssl-dev \
-            readline-dev \
-            ruby \
-            tar \
-            xz \
-            yaml-dev \
-            zlib-dev
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.php }}
-      - name: Build
-        run: |
-          pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
-          fi
-          (
-            cd couchbase
-            phpize${{ matrix.php }}
-            ./configure --enable-couchbase --with-php-config=$(which php-config${{ matrix.php }})
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          PHP_VERSION_SHORT=${{ matrix.php }}
-          PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
-          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip --strip-all ${DIST_NAME}/couchbase.so
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            couchbase-*-linux-musl-x86_64*.tgz
-
-  mock_alpine:
-    needs:
-      - source
-      - build_alpine
-    runs-on: ubuntu-22.04
-    container:
-      image: alpine:3.21
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '84'
-    steps:
-      - name: Install test environment
-        run: |
-          apk update
-          apk add --no-cache \
-            bash \
-            curl \
-            git \
-            php${{ matrix.php }}-dev \
-            php${{ matrix.php }}-pear \
-            php${{ matrix.php }}-dom \
-            php${{ matrix.php }}-intl \
-            php${{ matrix.php }}-mbstring \
-            php${{ matrix.php }}-pecl-pcov \
-            php${{ matrix.php }}-pecl-xdebug \
-            php${{ matrix.php }}-phar \
-            php${{ matrix.php }}-sockets \
-            php${{ matrix.php }}-tokenizer \
-            php${{ matrix.php }}-xml \
-            php${{ matrix.php }}-xmlwriter \
-            php${{ matrix.php }}-ctype \
-            openssl \
-            ruby \
-            tar \
-            xz \
-            yaml-dev \
-            zlib-dev
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
-      - name: Test
-        env:
-          CB_PHP_NAME: php${{ matrix.php }}
-        run: |
-          tar xf couchbase-*-linux-musl-x86_64.tgz
-          ruby ./bin/test.rb
-
-  build_linux_x86_64:
-    needs: source
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: json, mbstring, intl
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
-      - name: Build
-        run: |
-          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
-          fi
-          (
-            cd couchbase
-            phpize
-            ./configure --enable-couchbase
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip --strip-all ${DIST_NAME}/couchbase.so
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            couchbase-*-linux-x86_64*.tgz
-
-  mock_linux_x86_64:
-    needs:
-      - source
-      - build_linux_x86_64
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: json, mbstring, intl
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
-      - name: Test
-        run: |
-          tar xf couchbase-*-linux-x86_64.tgz
-          ruby ./bin/test.rb
-
-  server_linux_x86_64:
-    needs:
-      - source
-      - build_linux_x86_64
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.3'
-        ts:
-          - nts
-          - zts
-        server:
-          - 7.6.3
-          - 7.2.7
-          - 7.1.6
-          - 7.0.5
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: json, mbstring, intl
-        env:
-          phpts: ${{ matrix.ts }}
-      - name: Install cbdinocluster
-        run: |
-          mkdir -p "$HOME/bin"
-          curl -L -o "$HOME/bin/cbdinocluster" https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.52/cbdinocluster-linux-amd64
-          chmod a+x "$HOME/bin/cbdinocluster"
-          echo "$HOME/bin" >> $GITHUB_PATH
-      - name: Initialize cbdinocluster
-        run: |
-          cbdinocluster -v init --auto
-      - name: Start couchbase cluster
-        env:
-          CLUSTERCONFIG: |
-            nodes:
-              - count: 1
-                version: ${{ matrix.server }}
-                services:
-                  - kv
-              - count: 1
-                version: ${{ matrix.server }}
-                services:
-                  - kv
-                  - n1ql
-                  - index
-              - count: 1
-                version: ${{ matrix.server }}
-                services:
-                  - kv
-                  - fts
-                  - cbas
-            docker:
-              kv-memory: 1600
-        run: |
-          CLUSTER_ID=$(cbdinocluster -v allocate --def="${CLUSTERCONFIG}")
-          CONNECTION_STRING=$(cbdinocluster -v connstr "${CLUSTER_ID}")
-          cbdinocluster -v buckets add ${CLUSTER_ID} default --ram-quota-mb=100 --flush-enabled=true --num-replicas=1
-          cbdinocluster -v buckets load-sample ${CLUSTER_ID} travel-sample
-          echo "CLUSTER_ID=${CLUSTER_ID}" >> "$GITHUB_ENV"
-          echo "TEST_CONNECTION_STRING=${CONNECTION_STRING}?dump_configuration=true" >> "$GITHUB_ENV"
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
-      - name: Test
-        timeout-minutes: 60
-        env:
-          TEST_SERVER_VERSION: "${{ matrix.server }}"
-          TEST_LOG_LEVEL: trace
-          TEST_BUCKET: default
-          TEST_USE_WAN_DEVELOPMENT_PROFILE: true
-          OTHER_TEST_BUCKET: secBucket
-        run: |
-          tar xf couchbase-*-linux-x86_64.tgz
-          ruby ./bin/test.rb
-      - name: Collect server logs
-        timeout-minutes: 15
-        if: failure()
-        run: |
-          cbdinocluster -v collect-logs $CLUSTER_ID ./logs
-      - name: Upload logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.php }}-${{ matrix.ts }}-${{ matrix.server }}-logs
-          path: |
-            logs/*
-
-  build_macos_x86_64:
-    needs: source
-    runs-on: macos-13
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
-      - name: Build
-        run: |
-          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
-          fi
-          (
-            cd couchbase
-            phpize
-            ./configure --enable-couchbase
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            couchbase-*-macos-x86_64*.tgz
-
-  mock_macos_x86_64:
-    needs:
-      - source
-      - build_macos_x86_64
-    runs-on: macos-13
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64
-      - name: Test
-        run: |
-          tar xf couchbase-*-macos-x86_64.tgz
-          CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
-
-  build_macos_arm64:
-    needs: source
-    runs-on: macos-14
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
-      - name: Build
-        run: |
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
-          fi
-          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
-          (
-            cd couchbase
-            phpize
-            ./configure --enable-couchbase
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
-          if [ "${{ matrix.abi }}" = "locked" ]
-          then
-            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            couchbase-*-macos-arm64*.tgz
-
-  mock_macos_arm64:
-    needs:
-      - source
-      - build_macos_arm64
-    runs-on: macos-14
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64
-      - name: Test
-        run: |
-          tar xf couchbase-*-macos-arm64.tgz
-          CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
-
-  build_windows_vs16:
-    needs: source
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.3.22'
-          - '8.2.28'
-          - '8.1.32'
-        ts:
-          - nts
-          - zts
-        arch:
-          - x64
-          - x86
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Install dependencies
-        shell: cmd
-        run: |
-          # winget install Git.Git
-          # winget install Kitware.CMake
-          # winget install NASM.NASM
-          choco install nasm
-          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
-          git clone --no-progress --depth 1 --branch php-${{ matrix.php }} https://github.com/php/php-src.git c:\php\php-src
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - name: Build
-        working-directory: c:\php
-        shell: cmd
-        run: |
-          7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
-          cd c:\php\php-src
-          if "${{ matrix.abi }}"=="locked" (
-            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
-          )
-          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
-          echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
-          echo nmake >> task.bat
-          call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
-
-          if "${{ matrix.abi }}"=="locked" (
-            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
-            dir
-            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
-            dir
-          )
-          exit /b %ERRORLEVEL%
-      - name: Package
-        id: package
-        working-directory: c:\php
-        run: |
-          $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
-          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
-          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
-          New-Item -ItemType Directory -Path $DistName | Out-Null
-          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
-          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
-          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
-          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
-          foreach ($File in $FilesToCopy) {
-              Write-Host "Copying file: $($File.FullName)"
-              Copy-Item -Path $File.FullName -Destination $DistName -Force
-          }
-          $ZipArchive = $DistName + ".zip"
-          Write-Host "Compressing $DistName directory into $ZipArchive"
-          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
-
-  build_windows_vs17:
-    needs: source
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.4.8'
-        ts:
-          - nts
-          - zts
-        arch:
-          - x64
-          - x86
-        abi:
-          - default
-          - locked
-    steps:
-      - name: Install dependencies
-        shell: cmd
-        run: |
-          # winget install Git.Git
-          # winget install Kitware.CMake
-          # winget install NASM.NASM
-          choco install nasm
-          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
-          git clone --no-progress --depth 1 --branch php-${{ matrix.php }} https://github.com/php/php-src.git c:\php\php-src
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - name: Build
-        working-directory: c:\php
-        shell: cmd
-        run: |
-          7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
-          cd c:\php\php-src
-          if "${{ matrix.abi }}"=="locked" (
-            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
-          )
-          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
-          echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
-          echo nmake >> task.bat
-          call c:\php\php-sdk\phpsdk-vs17-${{ matrix.arch }}.bat -t task.bat
-
-          if "${{ matrix.abi }}"=="locked" (
-            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
-            dir
-            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
-            dir
-          )
-          exit /b %ERRORLEVEL%
-      - name: Package
-        id: package
-        working-directory: c:\php
-        run: |
-          $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
-          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
-          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
-          New-Item -ItemType Directory -Path $DistName | Out-Null
-          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
-          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
-          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
-          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
-          foreach ($File in $FilesToCopy) {
-              Write-Host "Copying file: $($File.FullName)"
-              Copy-Item -Path $File.FullName -Destination $DistName -Force
-          }
-          $ZipArchive = $DistName + ".zip"
-          Write-Host "Compressing $DistName directory into $ZipArchive"
-          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
-          path: |
-            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
-
-  mock_windows:
-    needs:
-      - source
-      - build_windows_vs16
-      - build_windows_vs17
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        php:
-          - '8.1'
-          - '8.2'
-          - '8.3'
-          - '8.4'
-        ts:
-          - nts
-          - zts
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: json, mbstring, intl, sockets
-        env:
-          phpts: ${{ matrix.ts }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-windows-x64
-      - name: Test
-        timeout-minutes: 60
-        run: |
-          Expand-Archive -Path couchbase-*-windows-x64.zip
-          ruby ./bin/test.rb
+#name: tests
+#permissions: {}
+#
+#on:
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+#
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+#  cancel-in-progress: true
+#
+#jobs:
+#  source:
+#    runs-on: ubuntu-22.04
+#    outputs:
+#      extension_version: ${{ steps.build_extension.outputs.extension_version }}
+#      abi_version: ${{ steps.build_extension.outputs.abi_version }}
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          submodules: recursive
+#          fetch-depth: 0
+#          fetch-tags: true
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}
+#      - name: Build
+#        id: build_extension
+#        run: |
+#          gem install --no-document --user-install nokogiri
+#          export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
+#          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
+#          echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
+#          ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_")' src/php_couchbase.hxx)
+#          echo "abi_version=${ABI_VERSION}" >> "$GITHUB_OUTPUT"
+#          export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
+#          ruby ./bin/package.rb
+#      - name: PHPDoc
+#        run: |
+#          ruby ./bin/docs.rb
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            couchbase-*.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          retention-days: 1
+#          name: scripts-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            bin/**/*
+#            90-couchbase.ini
+#            phpcs.xml
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          retention-days: 1
+#          name: tests-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            tests/**/*
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: docs-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            build/couchbase-php-client-*/**/*
+#
+#  build_alpine_3_19:
+#    needs: source
+#    name: alpine_3_19
+#    runs-on: ubuntu-22.04
+#    container:
+#      image: alpine:3.19
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '81'
+#          - '82'
+#          - '83'
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Install build environment
+#        run: |
+#          apk update
+#          apk add --no-cache \
+#            bash \
+#            build-base \
+#            ccache \
+#            cmake \
+#            curl \
+#            g++ \
+#            gcc \
+#            git \
+#            linux-headers \
+#            make \
+#            ninja-build \
+#            php${{ matrix.php }}-dev \
+#            php${{ matrix.php }}-pear \
+#            openssl \
+#            openssl-dev \
+#            readline-dev \
+#            ruby \
+#            tar \
+#            xz \
+#            yaml-dev \
+#            zlib-dev
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.php }}
+#      - name: Build
+#        run: |
+#          pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+#          fi
+#          (
+#            cd couchbase
+#            phpize${{ matrix.php }}
+#            ./configure --enable-couchbase --with-php-config=$(which php-config${{ matrix.php }})
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          PHP_VERSION_SHORT=${{ matrix.php }}
+#          PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
+#          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
+#          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip --strip-all ${DIST_NAME}/couchbase.so
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            couchbase-*-linux-musl-x86_64*.tgz
+#
+#  mock_alpine_3_19:
+#    needs:
+#      - source
+#      - build_alpine_3_19
+#    runs-on: ubuntu-22.04
+#    container:
+#      image: alpine:3.19
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '81'
+#          - '82'
+#          - '83'
+#    steps:
+#      - name: Install test environment
+#        run: |
+#          apk update
+#          apk add --no-cache \
+#            bash \
+#            curl \
+#            git \
+#            php${{ matrix.php }}-dev \
+#            php${{ matrix.php }}-pear \
+#            php${{ matrix.php }}-dom \
+#            php${{ matrix.php }}-intl \
+#            php${{ matrix.php }}-mbstring \
+#            php${{ matrix.php }}-pecl-pcov \
+#            php${{ matrix.php }}-pecl-xdebug \
+#            php${{ matrix.php }}-phar \
+#            php${{ matrix.php }}-sockets \
+#            php${{ matrix.php }}-tokenizer \
+#            php${{ matrix.php }}-xml \
+#            php${{ matrix.php }}-xmlwriter \
+#            php${{ matrix.php }}-ctype \
+#            openssl \
+#            ruby \
+#            tar \
+#            xz \
+#            yaml-dev \
+#            zlib-dev
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
+#      - name: Test
+#        env:
+#          CB_PHP_NAME: php${{ matrix.php }}
+#        run: |
+#          tar xf couchbase-*-linux-musl-x86_64.tgz
+#          ruby ./bin/test.rb
+#
+#  build_alpine:
+#    needs: source
+#    name: alpine
+#    runs-on: ubuntu-22.04
+#    container:
+#      image: alpine:3.21
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '84'
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Install build environment
+#        run: |
+#          apk update
+#          apk add --no-cache \
+#            bash \
+#            build-base \
+#            ccache \
+#            cmake \
+#            curl \
+#            g++ \
+#            gcc \
+#            git \
+#            linux-headers \
+#            make \
+#            ninja-build \
+#            php${{ matrix.php }}-dev \
+#            php${{ matrix.php }}-pear \
+#            openssl \
+#            openssl-dev \
+#            readline-dev \
+#            ruby \
+#            tar \
+#            xz \
+#            yaml-dev \
+#            zlib-dev
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.php }}
+#      - name: Build
+#        run: |
+#          pecl${{ matrix.php }} bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+#          fi
+#          (
+#            cd couchbase
+#            phpize${{ matrix.php }}
+#            ./configure --enable-couchbase --with-php-config=$(which php-config${{ matrix.php }})
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          PHP_VERSION_SHORT=${{ matrix.php }}
+#          PHP_VERSION="${PHP_VERSION_SHORT:0:1}.${PHP_VERSION_SHORT:1}"
+#          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_ENV
+#          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${PHP_VERSION}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip --strip-all ${DIST_NAME}/couchbase.so
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            couchbase-*-linux-musl-x86_64*.tgz
+#
+#  mock_alpine:
+#    needs:
+#      - source
+#      - build_alpine
+#    runs-on: ubuntu-22.04
+#    container:
+#      image: alpine:3.21
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '84'
+#    steps:
+#      - name: Install test environment
+#        run: |
+#          apk update
+#          apk add --no-cache \
+#            bash \
+#            curl \
+#            git \
+#            php${{ matrix.php }}-dev \
+#            php${{ matrix.php }}-pear \
+#            php${{ matrix.php }}-dom \
+#            php${{ matrix.php }}-intl \
+#            php${{ matrix.php }}-mbstring \
+#            php${{ matrix.php }}-pecl-pcov \
+#            php${{ matrix.php }}-pecl-xdebug \
+#            php${{ matrix.php }}-phar \
+#            php${{ matrix.php }}-sockets \
+#            php${{ matrix.php }}-tokenizer \
+#            php${{ matrix.php }}-xml \
+#            php${{ matrix.php }}-xmlwriter \
+#            php${{ matrix.php }}-ctype \
+#            openssl \
+#            ruby \
+#            tar \
+#            xz \
+#            yaml-dev \
+#            zlib-dev
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-nts-linux-musl-x86_64
+#      - name: Test
+#        env:
+#          CB_PHP_NAME: php${{ matrix.php }}
+#        run: |
+#          tar xf couchbase-*-linux-musl-x86_64.tgz
+#          ruby ./bin/test.rb
+#
+#  build_linux_x86_64:
+#    needs: source
+#    runs-on: ubuntu-22.04
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          extensions: json, mbstring, intl
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
+#      - name: Build
+#        run: |
+#          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+#          fi
+#          (
+#            cd couchbase
+#            phpize
+#            ./configure --enable-couchbase
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip --strip-all ${DIST_NAME}/couchbase.so
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            couchbase-*-linux-x86_64*.tgz
+#
+#  mock_linux_x86_64:
+#    needs:
+#      - source
+#      - build_linux_x86_64
+#    runs-on: ubuntu-22.04
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          extensions: json, mbstring, intl
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
+#      - name: Test
+#        run: |
+#          tar xf couchbase-*-linux-x86_64.tgz
+#          ruby ./bin/test.rb
+#
+#  server_linux_x86_64:
+#    needs:
+#      - source
+#      - build_linux_x86_64
+#    runs-on: ubuntu-22.04
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.3'
+#        ts:
+#          - nts
+#          - zts
+#        server:
+#          - 7.6.3
+#          - 7.2.7
+#          - 7.1.6
+#          - 7.0.5
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          extensions: json, mbstring, intl
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - name: Install cbdinocluster
+#        run: |
+#          mkdir -p "$HOME/bin"
+#          curl -L -o "$HOME/bin/cbdinocluster" https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.52/cbdinocluster-linux-amd64
+#          chmod a+x "$HOME/bin/cbdinocluster"
+#          echo "$HOME/bin" >> $GITHUB_PATH
+#      - name: Initialize cbdinocluster
+#        run: |
+#          cbdinocluster -v init --auto
+#      - name: Start couchbase cluster
+#        env:
+#          CLUSTERCONFIG: |
+#            nodes:
+#              - count: 1
+#                version: ${{ matrix.server }}
+#                services:
+#                  - kv
+#              - count: 1
+#                version: ${{ matrix.server }}
+#                services:
+#                  - kv
+#                  - n1ql
+#                  - index
+#              - count: 1
+#                version: ${{ matrix.server }}
+#                services:
+#                  - kv
+#                  - fts
+#                  - cbas
+#            docker:
+#              kv-memory: 1600
+#        run: |
+#          CLUSTER_ID=$(cbdinocluster -v allocate --def="${CLUSTERCONFIG}")
+#          CONNECTION_STRING=$(cbdinocluster -v connstr "${CLUSTER_ID}")
+#          cbdinocluster -v buckets add ${CLUSTER_ID} default --ram-quota-mb=100 --flush-enabled=true --num-replicas=1
+#          cbdinocluster -v buckets load-sample ${CLUSTER_ID} travel-sample
+#          echo "CLUSTER_ID=${CLUSTER_ID}" >> "$GITHUB_ENV"
+#          echo "TEST_CONNECTION_STRING=${CONNECTION_STRING}?dump_configuration=true" >> "$GITHUB_ENV"
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-linux-x86_64
+#      - name: Test
+#        timeout-minutes: 60
+#        env:
+#          TEST_SERVER_VERSION: "${{ matrix.server }}"
+#          TEST_LOG_LEVEL: trace
+#          TEST_BUCKET: default
+#          TEST_USE_WAN_DEVELOPMENT_PROFILE: true
+#          OTHER_TEST_BUCKET: secBucket
+#        run: |
+#          tar xf couchbase-*-linux-x86_64.tgz
+#          ruby ./bin/test.rb
+#      - name: Collect server logs
+#        timeout-minutes: 15
+#        if: failure()
+#        run: |
+#          cbdinocluster -v collect-logs $CLUSTER_ID ./logs
+#      - name: Upload logs
+#        if: failure()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ matrix.php }}-${{ matrix.ts }}-${{ matrix.server }}-logs
+#          path: |
+#            logs/*
+#
+#  build_macos_x86_64:
+#    needs: source
+#    runs-on: macos-13
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
+#      - name: Build
+#        run: |
+#          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+#          fi
+#          (
+#            cd couchbase
+#            phpize
+#            ./configure --enable-couchbase
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            couchbase-*-macos-x86_64*.tgz
+#
+#  mock_macos_x86_64:
+#    needs:
+#      - source
+#      - build_macos_x86_64
+#    runs-on: macos-13
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-x86_64
+#      - name: Test
+#        run: |
+#          tar xf couchbase-*-macos-x86_64.tgz
+#          CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
+#
+#  build_macos_arm64:
+#    needs: source
+#    runs-on: macos-14
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.php }}-${{ matrix.ts }}
+#      - name: Build
+#        run: |
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            export CB_ABI_VERSION=${{ needs.source.outputs.abi_version }}
+#          fi
+#          pecl bundle couchbase-${{ needs.source.outputs.extension_version }}.tgz
+#          (
+#            cd couchbase
+#            phpize
+#            ./configure --enable-couchbase
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          DIST_NAME=couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
+#          if [ "${{ matrix.abi }}" = "locked" ]
+#          then
+#            mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            couchbase-*-macos-arm64*.tgz
+#
+#  mock_macos_arm64:
+#    needs:
+#      - source
+#      - build_macos_arm64
+#    runs-on: macos-14
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-macos-arm64
+#      - name: Test
+#        run: |
+#          tar xf couchbase-*-macos-arm64.tgz
+#          CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb
+#
+#  build_windows_vs16:
+#    needs: source
+#    runs-on: windows-2019
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.3.22'
+#          - '8.2.28'
+#          - '8.1.32'
+#        ts:
+#          - nts
+#          - zts
+#        arch:
+#          - x64
+#          - x86
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Install dependencies
+#        shell: cmd
+#        run: |
+#          # winget install Git.Git
+#          # winget install Kitware.CMake
+#          # winget install NASM.NASM
+#          choco install nasm
+#          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
+#          git clone --no-progress --depth 1 --branch php-${{ matrix.php }} https://github.com/php/php-src.git c:\php\php-src
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - name: Build
+#        working-directory: c:\php
+#        shell: cmd
+#        run: |
+#          7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
+#          cd c:\php\php-src
+#          if "${{ matrix.abi }}"=="locked" (
+#            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
+#          )
+#          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
+#          echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
+#          echo nmake >> task.bat
+#          call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
+#
+#          if "${{ matrix.abi }}"=="locked" (
+#            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
+#            dir
+#            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
+#            dir
+#          )
+#          exit /b %ERRORLEVEL%
+#      - name: Package
+#        id: package
+#        working-directory: c:\php
+#        run: |
+#          $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
+#          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
+#          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
+#          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
+#          New-Item -ItemType Directory -Path $DistName | Out-Null
+#          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
+#          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
+#          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
+#          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
+#          foreach ($File in $FilesToCopy) {
+#              Write-Host "Copying file: $($File.FullName)"
+#              Copy-Item -Path $File.FullName -Destination $DistName -Force
+#          }
+#          $ZipArchive = $DistName + ".zip"
+#          Write-Host "Compressing $DistName directory into $ZipArchive"
+#          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
+#
+#  build_windows_vs17:
+#    needs: source
+#    runs-on: windows-2022
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.4.8'
+#        ts:
+#          - nts
+#          - zts
+#        arch:
+#          - x64
+#          - x86
+#        abi:
+#          - default
+#          - locked
+#    steps:
+#      - name: Install dependencies
+#        shell: cmd
+#        run: |
+#          # winget install Git.Git
+#          # winget install Kitware.CMake
+#          # winget install NASM.NASM
+#          choco install nasm
+#          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
+#          git clone --no-progress --depth 1 --branch php-${{ matrix.php }} https://github.com/php/php-src.git c:\php\php-src
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - name: Build
+#        working-directory: c:\php
+#        shell: cmd
+#        run: |
+#          7z x couchbase-${{ needs.source.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
+#          cd c:\php\php-src
+#          if "${{ matrix.abi }}"=="locked" (
+#            echo set CB_ABI_VERSION=${{ needs.source.outputs.abi_version }} >> task.bat
+#          )
+#          echo call buildconf.bat --add-modules-dir=c:\php >> task.bat
+#          echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
+#          echo nmake >> task.bat
+#          call c:\php\php-sdk\phpsdk-vs17-${{ matrix.arch }}.bat -t task.bat
+#
+#          if "${{ matrix.abi }}"=="locked" (
+#            cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
+#            dir
+#            powershell -Command "Get-ChildItem -Filter 'php_couchbase*' | ForEach-Object { Rename-Item $_.FullName -NewName ($_.Name -replace '^php_couchbase(?!_)', 'php_couchbase_${{ needs.source.outputs.abi_version }}') }"
+#            dir
+#          )
+#          exit /b %ERRORLEVEL%
+#      - name: Package
+#        id: package
+#        working-directory: c:\php
+#        run: |
+#          $PhpVersion = ("${{ matrix.php }}" -split '\.')[0..1] -join '.'
+#          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
+#          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
+#          $DistName = "couchbase-${{ needs.source.outputs.extension_version }}-php${PhpVersion}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}"
+#          New-Item -ItemType Directory -Path $DistName | Out-Null
+#          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
+#          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
+#          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
+#          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}" -Filter "php_couchbase*"
+#          foreach ($File in $FilesToCopy) {
+#              Write-Host "Copying file: $($File.FullName)"
+#              Copy-Item -Path $File.FullName -Destination $DistName -Force
+#          }
+#          $ZipArchive = $DistName + ".zip"
+#          Write-Host "Compressing $DistName directory into $ZipArchive"
+#          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ steps.package.outputs.php_version }}-${{ matrix.ts }}-windows-${{ matrix.arch }}${{ matrix.abi == 'locked' && '-abi' || '' }}
+#          path: |
+#            c:\php\couchbase-*-windows-${{ matrix.arch }}*.zip
+#
+#  mock_windows:
+#    needs:
+#      - source
+#      - build_windows_vs16
+#      - build_windows_vs17
+#    runs-on: windows-2022
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        php:
+#          - '8.1'
+#          - '8.2'
+#          - '8.3'
+#          - '8.4'
+#        ts:
+#          - nts
+#          - zts
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: ${{ matrix.php }}
+#          extensions: json, mbstring, intl, sockets
+#        env:
+#          phpts: ${{ matrix.ts }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source.outputs.extension_version }}-php${{ matrix.php }}-${{ matrix.ts }}-windows-x64
+#      - name: Test
+#        timeout-minutes: 60
+#        run: |
+#          Expand-Archive -Path couchbase-*-windows-x64.zip
+#          ruby ./bin/test.rb

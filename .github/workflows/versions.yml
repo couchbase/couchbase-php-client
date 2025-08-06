@@ -1,437 +1,437 @@
-name: versions
-permissions: {}
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  source_abi:
-    runs-on: ubuntu-22.04
-    outputs:
-      extension_version: ${{ steps.build_extension.outputs.extension_version }}
-      abi_version: ${{ steps.build_extension.outputs.abi_version }}
-      alternate_abi_version: ${{ steps.build_extension.outputs.alternate_abi_version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-          fetch-tags: true
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}
-      - name: Build
-        id: build_extension
-        run: |
-          gem install --no-document --user-install nokogiri
-          export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
-          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
-          echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
-          ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_")' src/php_couchbase.hxx)
-          ALTERNATE_ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_").succ' src/php_couchbase.hxx)
-          echo "abi_version=${ABI_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "alternate_abi_version=${ALTERNATE_ABI_VERSION}" >> "$GITHUB_OUTPUT"
-          export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
-          ruby ./bin/package.rb
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            couchbase-*.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          retention-days: 1
-          name: scripts-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            bin/**/*
-            90-couchbase.ini
-            phpcs.xml
-      - uses: actions/upload-artifact@v4
-        with:
-          retention-days: 1
-          name: tests-${{ steps.build_extension.outputs.extension_version }}
-          path: |
-            tests/**/*
-  abi_linux_build:
-    needs: source_abi
-    runs-on: ubuntu-22.04
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - unversioned
-          - ${{ needs.source_abi.outputs.abi_version }}
-          - ${{ needs.source_abi.outputs.alternate_abi_version }}
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: json, mbstring, intl
-        env:
-          phpts: nts
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.version }}
-      - name: Set env variable
-        run: |
-          if [ "${{ matrix.version }}" != "unversioned" ]; then
-            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $GITHUB_ENV
-          else
-            echo "Building unversioned extension"
-          fi
-      - name: Build
-        run: |
-          echo "Building versioned extension: ${CB_ABI_VERSION}"
-          pecl bundle couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz
-          (
-            cd couchbase
-            phpize
-            ./configure --enable-couchbase
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          DIST_NAME=couchbase-${{ matrix.version }}-linux-x86_64
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip --strip-all ${DIST_NAME}/couchbase.so
-          if [ -n "${CB_ABI_VERSION}" ]; then
-              echo "Renaming so file to couchbase_${CB_ABI_VERSION}.so"
-              mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          else
-            echo "CB_ABI_VERSION not set, keeping couchbase.so"
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ matrix.version }}-linux-x86_64
-          path: |
-            couchbase-*-linux-x86_64.tgz
-  abi_linux_x86_64_test:
-    needs:
-      - source_abi
-      - abi_linux_build
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: json, mbstring, intl
-        env:
-          phpts: nts
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-unversioned-linux-x86_64
-      - name: Test
-        env:
-          CB_ABI_VERSION: ${{ needs.source_abi.outputs.abi_version }}
-        run: |
-          tar xf couchbase-unversioned-linux-x86_64.tgz
-          tar xf couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64.tgz
-          tar xf couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64.tgz
-          TEST_ABI=both ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          TEST_ABI=versioned ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
-
-          ruby -e '
-            file_paths = [
-             "couchbase-unversioned-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php"
-            ]
-            file_paths.each do |file_name|
-              text = File.read(file_name)
-              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
-              File.open(file_name, "w") { |file| file.puts new_contents }
-            end
-          '
-          TEST_ABI=both ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          TEST_ABI=versioned ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
-  build_macos_x86_64:
-    needs: source_abi
-    runs-on: macos-13
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-            - unversioned
-            - ${{ needs.source_abi.outputs.abi_version }}
-            - ${{ needs.source_abi.outputs.alternate_abi_version }}
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: nts
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          max-size: 2G
-          key: ${{ github.job }}-${{ matrix.version }}
-      - name: Set env variable
-        run: |
-          if [ "${{ matrix.version }}" != "unversioned" ]; then
-            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $GITHUB_ENV
-          else
-            echo "Building unversioned extension"
-          fi
-      - name: Build
-        run: |
-          echo "Building versioned extension: ${CB_ABI_VERSION}"
-          pecl bundle couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz
-          (
-            cd couchbase
-            phpize
-            ./configure --enable-couchbase
-            mkdir target
-            make INSTALL_ROOT="$(realpath target)" install
-          )
-          DIST_NAME=couchbase-${{ matrix.version }}-macos-x86_64
-          mkdir ${DIST_NAME}
-          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
-          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
-          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
-          if [ -n "${CB_ABI_VERSION}" ]; then
-              echo "Renaming so file to couchbase_${CB_ABI_VERSION}.so"
-              mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
-          else
-            echo "CB_ABI_VERSION not set, keeping couchbase.so"
-          fi
-          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ matrix.version }}-macos-x86_64
-          path: |
-            couchbase-*-macos-x86_64.tgz
-  macos_x86_64_test:
-    needs:
-      - source_abi
-      - build_macos_x86_64
-    runs-on: macos-13
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: nts
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-unversioned-macos-x86_64
-      - name: Test
-        env:
-          CB_ABI_VERSION: ${{ needs.source_abi.outputs.abi_version }}
-        run: |
-          tar xf couchbase-unversioned-macos-x86_64.tgz
-          tar xf couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64.tgz
-          tar xf couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64.tgz
-          TEST_ABI=both CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          TEST_ABI=versioned CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
-          ruby -e '
-            file_paths = [
-             "couchbase-unversioned-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php"
-            ]
-            file_paths.each do |file_name|
-              text = File.read(file_name)
-              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
-              File.open(file_name, "w") { |file| file.puts new_contents }
-            end
-          '
-          TEST_ABI=both CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          TEST_ABI=versioned CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
-
-  build_windows:
-    needs: source_abi
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - unversioned
-          - ${{ needs.source_abi.outputs.abi_version }}
-          - ${{ needs.source_abi.outputs.alternate_abi_version }}
-    steps:
-      - name: Install dependencies
-        shell: cmd
-        run: |
-          # winget install Git.Git
-          # winget install Kitware.CMake
-          # winget install NASM.NASM
-          choco install nasm
-          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
-          git clone --no-progress --depth 1 --branch php-8.3.4 https://github.com/php/php-src.git c:\php\php-src
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: c:\php
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - name: Set env variable
-        shell: pwsh
-        run: |
-          if ("${{ matrix.version }}" -ne "unversioned") {
-            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $env:GITHUB_ENV
-          } else {
-            Write-Output "Building unversioned extension"
-          }
-      - name: Build
-        working-directory: c:\php
-        shell: cmd
-        run: |
-          7z x couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
-          cd c:\php\php-src
-          echo call buildconf.bat --add-modules-dir=c:\php > task.bat
-          echo call configure.bat --disable-all --enable-cli --disable-zts --enable-couchbase >> task.bat
-          echo nmake >> task.bat
-          dir
-          call c:\php\php-sdk\phpsdk-vs16-x64.bat -t task.bat
-          dir
-          if defined CB_ABI_VERSION (
-           echo Renaming so file to php_couchbase_%CB_ABI_VERSION%.dll
-           move "C:\php\php-src\x64\Release\php_couchbase.dll" "C:\php\php-src\x64\Release\php_couchbase_%CB_ABI_VERSION%.dll"
-          ) else (
-            echo CB_ABI_VERSION not set, keeping php_couchbase.dll
-          )
-          exit /b %ERRORLEVEL%
-      - name: Package
-        id: package
-        working-directory: c:\php
-        run: |
-          $PhpVersion = ("8.3.4" -split '\.')[0..1] -join '.'
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
-          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
-          $DistName = "couchbase-${{ matrix.version }}-windows-x64"
-          New-Item -ItemType Directory -Path $DistName | Out-Null
-          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
-          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
-          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
-          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
-          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\x64\Release" -Filter "php_couchbase*"
-          foreach ($File in $FilesToCopy) {
-              Write-Host "Copying file: $($File.FullName)"
-              Copy-Item -Path $File.FullName -Destination $DistName -Force
-          }
-          $ZipArchive = $DistName + ".zip"
-          Write-Host "Compressing $DistName directory into $ZipArchive"
-          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
-      - uses: actions/upload-artifact@v4
-        with:
-          name: couchbase-${{ matrix.version }}-windows-x64
-          path: |
-            c:\php\couchbase-*-windows-x64.zip
-
-  mock_windows:
-    needs:
-      - source_abi
-      - build_windows
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-    steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.3
-          extensions: json, mbstring, intl, sockets
-        env:
-          phpts: nts
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: scripts-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          path: tests
-          name: tests-${{ needs.source_abi.outputs.extension_version }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-unversioned-windows-x64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64
-      - uses: actions/download-artifact@v4
-        with:
-          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64
-      - name: Test
-        timeout-minutes: 60
-        run: |
-          Expand-Archive -Path couchbase-unversioned-windows-x64.zip
-          Expand-Archive -Path couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64.zip
-          Expand-Archive -Path couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64.zip
-          $env:TEST_ABI='both'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          $env:TEST_ABI='versioned'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
-
-          ruby -e '
-            file_paths = [
-             "couchbase-unversioned-windows-x64/couchbase-unversioned-windows-x64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64/couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64/Couchbase/ExtensionNamespaceResolver.php",
-             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64/couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64/Couchbase/ExtensionNamespaceResolver.php"
-            ]
-            file_paths.each do |file_name|
-              text = File.read(file_name)
-              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
-              File.open(file_name, "w") { |file| file.puts new_contents }
-            end
-          '
-          $env:TEST_ABI='both'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
-          $env:TEST_ABI='versioned'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
+#name: versions
+#permissions: {}
+#
+#on:
+#  push:
+#    branches: [main]
+#  pull_request:
+#    branches: [main]
+#
+#jobs:
+#  source_abi:
+#    runs-on: ubuntu-22.04
+#    outputs:
+#      extension_version: ${{ steps.build_extension.outputs.extension_version }}
+#      abi_version: ${{ steps.build_extension.outputs.abi_version }}
+#      alternate_abi_version: ${{ steps.build_extension.outputs.alternate_abi_version }}
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          submodules: recursive
+#          fetch-depth: 0
+#          fetch-tags: true
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}
+#      - name: Build
+#        id: build_extension
+#        run: |
+#          gem install --no-document --user-install nokogiri
+#          export COMMITS_SINCE_LAST_TAG=$(git describe --tags --always --long | awk -F '-' '{print $2}')
+#          EXTENSION_VERSION=$(ruby -e 'print [ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1], ENV["COMMITS_SINCE_LAST_TAG"].to_i > 0 ? ENV["COMMITS_SINCE_LAST_TAG"] : nil].compact.join(".")' src/php_couchbase.hxx)
+#          echo "extension_version=${EXTENSION_VERSION}" >> "$GITHUB_OUTPUT"
+#          ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_")' src/php_couchbase.hxx)
+#          ALTERNATE_ABI_VERSION=$(ruby -e 'print ARGF.read[/PHP_COUCHBASE_VERSION "(\d+\.\d+\.\d+)"/, 1].gsub(".", "_").succ' src/php_couchbase.hxx)
+#          echo "abi_version=${ABI_VERSION}" >> "$GITHUB_OUTPUT"
+#          echo "alternate_abi_version=${ALTERNATE_ABI_VERSION}" >> "$GITHUB_OUTPUT"
+#          export BUILD_NUMBER="${COMMITS_SINCE_LAST_TAG}"
+#          ruby ./bin/package.rb
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            couchbase-*.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          retention-days: 1
+#          name: scripts-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            bin/**/*
+#            90-couchbase.ini
+#            phpcs.xml
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          retention-days: 1
+#          name: tests-${{ steps.build_extension.outputs.extension_version }}
+#          path: |
+#            tests/**/*
+#  abi_linux_build:
+#    needs: source_abi
+#    runs-on: ubuntu-22.04
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        version:
+#          - unversioned
+#          - ${{ needs.source_abi.outputs.abi_version }}
+#          - ${{ needs.source_abi.outputs.alternate_abi_version }}
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: '8.3'
+#          extensions: json, mbstring, intl
+#        env:
+#          phpts: nts
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.version }}
+#      - name: Set env variable
+#        run: |
+#          if [ "${{ matrix.version }}" != "unversioned" ]; then
+#            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $GITHUB_ENV
+#          else
+#            echo "Building unversioned extension"
+#          fi
+#      - name: Build
+#        run: |
+#          echo "Building versioned extension: ${CB_ABI_VERSION}"
+#          pecl bundle couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz
+#          (
+#            cd couchbase
+#            phpize
+#            ./configure --enable-couchbase
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          DIST_NAME=couchbase-${{ matrix.version }}-linux-x86_64
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip --strip-all ${DIST_NAME}/couchbase.so
+#          if [ -n "${CB_ABI_VERSION}" ]; then
+#              echo "Renaming so file to couchbase_${CB_ABI_VERSION}.so"
+#              mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          else
+#            echo "CB_ABI_VERSION not set, keeping couchbase.so"
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ matrix.version }}-linux-x86_64
+#          path: |
+#            couchbase-*-linux-x86_64.tgz
+#  abi_linux_x86_64_test:
+#    needs:
+#      - source_abi
+#      - abi_linux_build
+#    runs-on: ubuntu-22.04
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: '8.3'
+#          extensions: json, mbstring, intl
+#        env:
+#          phpts: nts
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-unversioned-linux-x86_64
+#      - name: Test
+#        env:
+#          CB_ABI_VERSION: ${{ needs.source_abi.outputs.abi_version }}
+#        run: |
+#          tar xf couchbase-unversioned-linux-x86_64.tgz
+#          tar xf couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64.tgz
+#          tar xf couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64.tgz
+#          TEST_ABI=both ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          TEST_ABI=versioned ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
+#
+#          ruby -e '
+#            file_paths = [
+#             "couchbase-unversioned-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.abi_version }}-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-linux-x86_64/Couchbase/ExtensionNamespaceResolver.php"
+#            ]
+#            file_paths.each do |file_name|
+#              text = File.read(file_name)
+#              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
+#              File.open(file_name, "w") { |file| file.puts new_contents }
+#            end
+#          '
+#          TEST_ABI=both ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          TEST_ABI=versioned ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
+#  build_macos_x86_64:
+#    needs: source_abi
+#    runs-on: macos-13
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        version:
+#            - unversioned
+#            - ${{ needs.source_abi.outputs.abi_version }}
+#            - ${{ needs.source_abi.outputs.alternate_abi_version }}
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: '8.3'
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: nts
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          max-size: 2G
+#          key: ${{ github.job }}-${{ matrix.version }}
+#      - name: Set env variable
+#        run: |
+#          if [ "${{ matrix.version }}" != "unversioned" ]; then
+#            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $GITHUB_ENV
+#          else
+#            echo "Building unversioned extension"
+#          fi
+#      - name: Build
+#        run: |
+#          echo "Building versioned extension: ${CB_ABI_VERSION}"
+#          pecl bundle couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz
+#          (
+#            cd couchbase
+#            phpize
+#            ./configure --enable-couchbase
+#            mkdir target
+#            make INSTALL_ROOT="$(realpath target)" install
+#          )
+#          DIST_NAME=couchbase-${{ matrix.version }}-macos-x86_64
+#          mkdir ${DIST_NAME}
+#          cp -av couchbase/LICENSE 90-couchbase.ini couchbase/Couchbase couchbase/GPBMetadata ${DIST_NAME}/
+#          find couchbase/target -name couchbase.so -exec cp -v {} ${DIST_NAME}/ \;
+#          strip ${DIST_NAME}/couchbase.so 2>/dev/null || true
+#          if [ -n "${CB_ABI_VERSION}" ]; then
+#              echo "Renaming so file to couchbase_${CB_ABI_VERSION}.so"
+#              mv ${DIST_NAME}/couchbase.so ${DIST_NAME}/couchbase_${CB_ABI_VERSION}.so
+#          else
+#            echo "CB_ABI_VERSION not set, keeping couchbase.so"
+#          fi
+#          tar cv ${DIST_NAME}/ | gzip -9 > ${DIST_NAME}.tgz
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ matrix.version }}-macos-x86_64
+#          path: |
+#            couchbase-*-macos-x86_64.tgz
+#  macos_x86_64_test:
+#    needs:
+#      - source_abi
+#      - build_macos_x86_64
+#    runs-on: macos-13
+#    strategy:
+#      fail-fast: false
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: '8.3'
+#          # https://github.com/shivammathur/icu-intl#icu4c-builds
+#          extensions: json, mbstring, intl-74.1
+#        env:
+#          phpts: nts
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-unversioned-macos-x86_64
+#      - name: Test
+#        env:
+#          CB_ABI_VERSION: ${{ needs.source_abi.outputs.abi_version }}
+#        run: |
+#          tar xf couchbase-unversioned-macos-x86_64.tgz
+#          tar xf couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64.tgz
+#          tar xf couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64.tgz
+#          TEST_ABI=both CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          TEST_ABI=versioned CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
+#          ruby -e '
+#            file_paths = [
+#             "couchbase-unversioned-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.abi_version }}-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-macos-x86_64/Couchbase/ExtensionNamespaceResolver.php"
+#            ]
+#            file_paths.each do |file_name|
+#              text = File.read(file_name)
+#              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
+#              File.open(file_name, "w") { |file| file.puts new_contents }
+#            end
+#          '
+#          TEST_ABI=both CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          TEST_ABI=versioned CB_PHP_EXECUTABLE=$(which php) ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
+#
+#  build_windows:
+#    needs: source_abi
+#    runs-on: windows-2019
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        version:
+#          - unversioned
+#          - ${{ needs.source_abi.outputs.abi_version }}
+#          - ${{ needs.source_abi.outputs.alternate_abi_version }}
+#    steps:
+#      - name: Install dependencies
+#        shell: cmd
+#        run: |
+#          # winget install Git.Git
+#          # winget install Kitware.CMake
+#          # winget install NASM.NASM
+#          choco install nasm
+#          git clone --no-progress https://github.com/php/php-sdk-binary-tools.git c:\php\php-sdk
+#          git clone --no-progress --depth 1 --branch php-8.3.4 https://github.com/php/php-src.git c:\php\php-src
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: c:\php
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - name: Set env variable
+#        shell: pwsh
+#        run: |
+#          if ("${{ matrix.version }}" -ne "unversioned") {
+#            echo "CB_ABI_VERSION=${{ matrix.version }}" >> $env:GITHUB_ENV
+#          } else {
+#            Write-Output "Building unversioned extension"
+#          }
+#      - name: Build
+#        working-directory: c:\php
+#        shell: cmd
+#        run: |
+#          7z x couchbase-${{ needs.source_abi.outputs.extension_version }}.tgz -so | 7z x -aoa -si -ttar
+#          cd c:\php\php-src
+#          echo call buildconf.bat --add-modules-dir=c:\php > task.bat
+#          echo call configure.bat --disable-all --enable-cli --disable-zts --enable-couchbase >> task.bat
+#          echo nmake >> task.bat
+#          dir
+#          call c:\php\php-sdk\phpsdk-vs16-x64.bat -t task.bat
+#          dir
+#          if defined CB_ABI_VERSION (
+#           echo Renaming so file to php_couchbase_%CB_ABI_VERSION%.dll
+#           move "C:\php\php-src\x64\Release\php_couchbase.dll" "C:\php\php-src\x64\Release\php_couchbase_%CB_ABI_VERSION%.dll"
+#          ) else (
+#            echo CB_ABI_VERSION not set, keeping php_couchbase.dll
+#          )
+#          exit /b %ERRORLEVEL%
+#      - name: Package
+#        id: package
+#        working-directory: c:\php
+#        run: |
+#          $PhpVersion = ("8.3.4" -split '\.')[0..1] -join '.'
+#          Add-Content -Path $env:GITHUB_OUTPUT -Value "php_version=$PhpVersion"
+#          $SourceDirectory = (Get-ChildItem -Path "c:\php" -Directory "couchbase-*" | Select-Object -First 1).FullName
+#          $DistName = "couchbase-${{ matrix.version }}-windows-x64"
+#          New-Item -ItemType Directory -Path $DistName | Out-Null
+#          $FilesToCopy = Get-ChildItem -Path . -Filter "couchbase-*" -Include LICENSE,"Couchbase","GPBMetadata"
+#          Copy-Item -Path 90-couchbase.ini -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\LICENSE" -Destination $DistName -Force
+#          Copy-Item -Path "${SourceDirectory}\Couchbase" -Destination $DistName -Force -Recurse
+#          Copy-Item -Path "${SourceDirectory}\GPBMetadata" -Destination $DistName -Force -Recurse
+#          $FilesToCopy = Get-ChildItem -Path "C:\php\php-src\x64\Release" -Filter "php_couchbase*"
+#          foreach ($File in $FilesToCopy) {
+#              Write-Host "Copying file: $($File.FullName)"
+#              Copy-Item -Path $File.FullName -Destination $DistName -Force
+#          }
+#          $ZipArchive = $DistName + ".zip"
+#          Write-Host "Compressing $DistName directory into $ZipArchive"
+#          Compress-Archive -Path $DistName -DestinationPath $ZipArchive -CompressionLevel Optimal
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: couchbase-${{ matrix.version }}-windows-x64
+#          path: |
+#            c:\php\couchbase-*-windows-x64.zip
+#
+#  mock_windows:
+#    needs:
+#      - source_abi
+#      - build_windows
+#    runs-on: windows-2019
+#    strategy:
+#      fail-fast: false
+#    steps:
+#      - name: Setup PHP
+#        uses: shivammathur/setup-php@v2
+#        with:
+#          php-version: 8.3
+#          extensions: json, mbstring, intl, sockets
+#        env:
+#          phpts: nts
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: scripts-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          path: tests
+#          name: tests-${{ needs.source_abi.outputs.extension_version }}
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-unversioned-windows-x64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64
+#      - name: Test
+#        timeout-minutes: 60
+#        run: |
+#          Expand-Archive -Path couchbase-unversioned-windows-x64.zip
+#          Expand-Archive -Path couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64.zip
+#          Expand-Archive -Path couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64.zip
+#          $env:TEST_ABI='both'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          $env:TEST_ABI='versioned'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }}
+#
+#          ruby -e '
+#            file_paths = [
+#             "couchbase-unversioned-windows-x64/couchbase-unversioned-windows-x64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64/couchbase-${{ needs.source_abi.outputs.abi_version }}-windows-x64/Couchbase/ExtensionNamespaceResolver.php",
+#             "couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64/couchbase-${{ needs.source_abi.outputs.alternate_abi_version }}-windows-x64/Couchbase/ExtensionNamespaceResolver.php"
+#            ]
+#            file_paths.each do |file_name|
+#              text = File.read(file_name)
+#              new_contents = text.gsub("${{ needs.source_abi.outputs.abi_version }}", "${{ needs.source_abi.outputs.alternate_abi_version }}")
+#              File.open(file_name, "w") { |file| file.puts new_contents }
+#            end
+#          '
+#          $env:TEST_ABI='both'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.abi_version }} -v ${{ needs.source_abi.outputs.alternate_abi_version }} -v unversioned
+#          $env:TEST_ABI='versioned'; ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
