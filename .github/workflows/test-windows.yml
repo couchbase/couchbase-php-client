@@ -10,6 +10,7 @@ on:
 
 jobs:
   build_windows_with_builder:
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
