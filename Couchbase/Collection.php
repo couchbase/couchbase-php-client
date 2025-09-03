@@ -29,6 +29,7 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\CollectionQueryIndexManager;
+use Couchbase\Utilities\ExpiryHelper;
 use DateTimeInterface;
 
 /**
@@ -196,11 +197,7 @@ class Collection implements CollectionInterface
      */
     public function getAndTouch(string $id, $expiry, ?GetAndTouchOptions $options = null): GetResult
     {
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-        } else {
-            $expirySeconds = (int)$expiry;
-        }
+        $expirySeconds = ExpiryHelper::parseExpiry($expiry);
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndTouch';
         $response = $function(
             $this->core,
@@ -434,11 +431,7 @@ class Collection implements CollectionInterface
      */
     public function touch(string $id, $expiry, ?TouchOptions $options = null): MutationResult
     {
-        if ($expiry instanceof DateTimeInterface) {
-            $expirySeconds = $expiry->getTimestamp();
-        } else {
-            $expirySeconds = (int)$expiry;
-        }
+        $expirySeconds = ExpiryHelper::parseExpiry($expiry);
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentTouch';
         $response = $function(
             $this->core,
