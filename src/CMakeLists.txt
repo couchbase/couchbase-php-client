@@ -108,12 +108,10 @@ target_include_directories(
           ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/cxx_function
           ${PROJECT_SOURCE_DIR}/deps/couchbase-cxx-client/third_party/expected/include)
 target_compile_definitions(couchbase PRIVATE ZEND_COMPILE_DL_EXT=1)
-set_target_properties(couchbase_cxx_client_static PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
+set_target_properties(couchbase_cxx_client_static_intermediate PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
 target_link_libraries(
   couchbase
-  PRIVATE project_options
-          project_warnings
-          couchbase_cxx_client_static
+  PRIVATE couchbase_cxx_client_static_intermediate
           spdlog::spdlog
           taocpp::json
           asio
