@@ -15,8 +15,8 @@
     </lead>
     <date>2025-06-12</date>
     <version>
-        <release>4.3.0</release>
-        <api>4.3.0</api>
+        <release>4.4.0</release>
+        <api>4.4.0</api>
     </version>
     <stability>
         <release>stable</release>
@@ -27,10 +27,9 @@
         New features and enhancements
         =============================
 
-        * PCBC-1023: Add numVBuckets to BucketSettings. (#210)
-        * PCBC-1024: Improve SDK error messages for account lock/unlock feature. (#211)
-        * PCBC-1025: Add CAS to core append/prepend. (#208)
-        * PCBC-1020: Implement getMulti() and getMultiReplicasFromPreferredServerGroup() for transactions. (#213)
+        * PCBC-1026: Implement FTS vector search pre-filters
+        * PCBC-1030: Fix how SDK handles KV Expiry (#226)
+        * Install VS2019 tools for building on windows 2022 (#225)
     </notes>
     <contents>
     </contents>
@@ -47,6 +46,27 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2025-06-12</date>
+            <version>
+                <release>4.3.0</release>
+                <api>4.3.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                New features and enhancements
+                =============================
+
+                * PCBC-1023: Add numVBuckets to BucketSettings. (#210)
+                * PCBC-1024: Improve SDK error messages for account lock/unlock feature. (#211)
+                * PCBC-1025: Add CAS to core append/prepend. (#208)
+                * PCBC-1020: Implement getMulti() and getMultiReplicasFromPreferredServerGroup() for transactions. (#213)
+            </notes>
+        </release>
         <release>
             <date>2025-03-18</date>
             <version>
