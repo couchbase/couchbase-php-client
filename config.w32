@@ -65,12 +65,17 @@ if (PHP_COUCHBASE != "no") {
 
     EXTENSION("couchbase", "dummy.c", true);
 
+    COUCHBASE_DEFAULT_CMAKE_BUILD_TYPE="RelWithDebInfo"
+    if (PHP_DEBUG == "yes" || PHP_DEBUG == "1") {
+        COUCHBASE_DEFAULT_CMAKE_BUILD_TYPE="Debug"
+    }
+
     cmake_command =
         'cmd /c ""' + CMAKE  + '"' +
         ' -S "' + COUCHBASE_CMAKE_SOURCE_DIRECTORY + '"' +
         ' -B "' + COUCHBASE_CMAKE_BUILD_DIRECTORY + '"' +
         ' -G "NMake Makefiles"' +
-        ' -D CMAKE_BUILD_TYPE=RelWithDebInfo' +
+        ' -D CMAKE_BUILD_TYPE=' + COUCHBASE_DEFAULT_CMAKE_BUILD_TYPE +
         ' -D CMAKE_ASM_NASM_COMPILER:PATH="' + NASM + '"' +
         ' -D COUCHBASE_PHP_CFLAGS="' + COUCHBASE_PHP_CFLAGS + '"' +
         ' -D COUCHBASE_PHP_INCLUDES="' + COUCHBASE_PHP_INCLUDES + '"' +
