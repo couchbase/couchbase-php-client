@@ -66,6 +66,7 @@ class ClusterOptions
     private ?ThresholdLoggingOptions $thresholdLoggingTracerOptions = null;
     private ?LoggingMeterOptions $loggingMeterOptions = null;
     private ?TransactionsConfiguration $transactionsConfiguration = null;
+    private ?AppTelemetryConfiguration $appTelemetryConfiguration = null;
 
     private ?Authenticator $authenticator;
 
@@ -491,6 +492,18 @@ class ClusterOptions
     }
 
     /**
+     * @param AppTelemetryConfiguration $options
+     *
+     * @return ClusterOptions
+     * @since 4.5.0
+     */
+    public function appTelemetryConfiguration(AppTelemetryConfiguration $options): ClusterOptions
+    {
+        $this->appTelemetryConfiguration = $options;
+        return $this;
+    }
+
+    /**
      * Select the server group to use for replica APIs.
      *
      * For some use-cases it might be necessary to restrict list of the nodes,
@@ -609,6 +622,8 @@ class ClusterOptions
             'thresholdLoggingTracerOptions' =>
                 $this->thresholdLoggingTracerOptions == null ? null : $this->thresholdLoggingTracerOptions->export(),
             'loggingMeterOptions' => $this->loggingMeterOptions == null ? null : $this->loggingMeterOptions->export(),
+            'appTelemetryConfiguration' =>
+                $this->appTelemetryConfiguration == null ? null : $this->appTelemetryConfiguration->export(),
         ];
     }
 }

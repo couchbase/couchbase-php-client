@@ -6222,6 +6222,39 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
         }
         ZEND_HASH_FOREACH_END();
       }
+
+      if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("appTelemetryConfiguration")) == 0) {
+        if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
+          continue;
+        }
+
+        const zend_string* k = nullptr;
+        const zval* v = nullptr;
+        ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(value), k, v)
+        {
+          options::assign_boolean(ZEND_STRL("enabled"), k, v, [&](auto v) {
+            cluster_options.application_telemetry().enable(v);
+          });
+
+          options::assign_string(ZEND_STRL("endpoint"), k, v, [&](auto v) {
+            cluster_options.application_telemetry().override_endpoint(std::move(v));
+          });
+
+          options::assign_duration(ZEND_STRL("backoff"), k, v, [&](auto v) {
+            cluster_options.application_telemetry().backoff_interval(v);
+          });
+
+          options::assign_duration(ZEND_STRL("pingInterval"), k, v, [&](auto v) {
+            cluster_options.application_telemetry().ping_interval(v);
+          });
+
+          options::assign_duration(ZEND_STRL("pingTimeout"), k, v, [&](auto v) {
+            cluster_options.application_telemetry().ping_timeout(v);
+          });
+        }
+        ZEND_HASH_FOREACH_END();
+      }
+
     } catch (const core_error_info& e) {
       return e;
     }
