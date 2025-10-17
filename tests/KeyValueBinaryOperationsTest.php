@@ -55,10 +55,15 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId();
 
         $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
-        $cas = (string)((int)$res->cas() + 1);
+
+        // Replaces the last hex digit of the CAS to ensure CAS mismatch
+        $cas = $res->cas();
+        $last = substr($cas, -1);
+        $newLast = $last === '0' ? '1' : '0';
+        $invalidCas = substr_replace($cas, $newLast, -1);
 
         $this->expectException(CasMismatchException::class);
-        $collection->binary()->append($id, "bar", AppendOptions::build()->cas($cas));
+        $collection->binary()->append($id, "bar", AppendOptions::build()->cas($invalidCas));
     }
 
     public function testPrependAddsBytesToTheBeginningOfTheDocument()
@@ -85,10 +90,15 @@ class KeyValueBinaryOperationsTest extends Helpers\CouchbaseTestCase
         $id = $this->uniqueId();
 
         $res = $collection->upsert($id, "foo", UpsertOptions::build()->transcoder(RawBinaryTranscoder::getInstance()));
-        $cas = (string)((int)((int)$res->cas() + 1));
+
+        // Replaces the last hex digit of the CAS to ensure CAS mismatch
+        $cas = $res->cas();
+        $last = substr($cas, -1);
+        $newLast = $last === '0' ? '1' : '0';
+        $invalidCas = substr_replace($cas, $newLast, -1);
 
         $this->expectException(CasMismatchException::class);
-        $collection->binary()->prepend($id, "bar", PrependOptions::build()->cas($cas));
+        $collection->binary()->prepend($id, "bar", PrependOptions::build()->cas($invalidCas));
     }
 
     public function testAppendThrowsExceptionIfDocumentDoesNotExist()
