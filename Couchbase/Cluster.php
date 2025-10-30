@@ -249,6 +249,23 @@ class Cluster implements ClusterInterface
     }
 
     /**
+     * Replaces the current authenticator used by this cluster.
+     *
+     * NOTE: Setting a new authenticator does not change the authentication status of existing connections.
+     *
+     * @param Authenticator $authenticator The authenticator to replace
+     *
+     * @return void
+     * @throws InvalidArgumentException if TLS is not enabled but provided authenticator requires TLS
+     * @since 4.5.0
+     */
+    public function setAuthenticator(Authenticator $authenticator): void
+    {
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\authenticatorSet';
+        $function($this->core, $authenticator->export());
+    }
+
+    /**
      * Creates a new bucket manager object for managing buckets.
      *
      * @return BucketManager

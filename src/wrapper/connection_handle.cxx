@@ -727,6 +727,80 @@ connection_handle::bucket_close(const zend_string* name) -> core_error_info
   return impl_->bucket_close(cb_string_new(name));
 }
 
+COUCHBASE_API
+auto
+connection_handle::authenticator_set(const zval* auth) -> core_error_info
+{
+  if (auth == nullptr || Z_TYPE_P(auth) != IS_ARRAY) {
+    return { errc::common::invalid_argument, ERROR_LOCATION, "expected array for authenticator" };
+  }
+
+  const zval* auth_type = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("type"));
+  if (auth_type == nullptr || Z_TYPE_P(auth_type) != IS_STRING) {
+    return { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             "unexpected type of the authenticator" };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("password")) ==
+      0) {
+    const zval* username = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("username"));
+    if (username == nullptr || Z_TYPE_P(username) != IS_STRING) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected username to be a string in the authenticator" };
+    }
+    const zval* password = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("password"));
+    if (password == nullptr || Z_TYPE_P(password) != IS_STRING) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected password to be a string in the authenticator" };
+    }
+    couchbase::password_authenticator password_auth{
+      Z_STRVAL_P(username),
+      Z_STRVAL_P(password),
+    };
+
+    auto ctx = impl_->public_api().set_authenticator(password_auth);
+
+    if (ctx.ec()) {
+      return { ctx.ec(), ERROR_LOCATION, "unable to set authenticator", build_error_context(ctx) };
+    }
+    return {};
+  }
+
+  if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("certificate")) ==
+      0) {
+    const zval* certificate_path =
+      zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("certificatePath"));
+    if (certificate_path == nullptr || Z_TYPE_P(certificate_path) != IS_STRING) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected certificate path to be a string in the authenticator" };
+    }
+    const zval* key_path = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("keyPath"));
+    if (key_path == nullptr || Z_TYPE_P(key_path) != IS_STRING) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected key path to be a string in the authenticator" };
+    }
+
+    couchbase::certificate_authenticator certificate_auth{
+      Z_STRVAL_P(certificate_path),
+      Z_STRVAL_P(key_path),
+    };
+
+    auto ctx = impl_->public_api().set_authenticator(certificate_auth);
+    if (ctx.ec()) {
+      return { ctx.ec(), ERROR_LOCATION, "unable to set authenticator", build_error_context(ctx) };
+    }
+    return {};
+  }
+  return { errc::common::invalid_argument,
+           ERROR_LOCATION,
+           fmt::format("unknown type of the authenticator: {}",
+                       std::string(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type))) };
+}
+
 namespace
 {
 template<typename Request>

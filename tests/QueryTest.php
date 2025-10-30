@@ -1,9 +1,12 @@
 <?php
 
 use Couchbase\ClusterInterface;
+use Couchbase\ClusterOptions;
+use Couchbase\Exception\InternalServerFailureException;
 use Couchbase\GetOptions;
 use Couchbase\JsonTranscoder;
 use Couchbase\MutationState;
+use Couchbase\PasswordAuthenticator;
 use Couchbase\QueryOptions;
 use Couchbase\QueryScanConsistency;
 use Couchbase\UpsertOptions;
@@ -274,5 +277,26 @@ class QueryTest extends Helpers\CouchbaseTestCase
         $rows = $res->rows();
         $this->assertNotEmpty($rows);
         $this->assertEquals(42, $res->rows()[0][$collection->name()]['bar']);
+    }
+
+    public function testQueryAfterChangingCredentials()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsQueryMB39484());
+
+        $options = new ClusterOptions();
+        $options->idleHttpConnectionTimeout(0);
+        $cluster = $this->connectClusterUnique($options);
+
+        $res = $cluster->query("SELECT 1=1");
+        $rows = $res->rows();
+        $this->assertNotEmpty($rows);
+
+        $wrongPasswordAuth = new PasswordAuthenticator("wrong-username", "wrong-password");
+
+        $cluster->setAuthenticator($wrongPasswordAuth);
+
+        $this->expectException(InternalServerFailureException::class);
+        $cluster->query("SELECT 1=1");
     }
 }

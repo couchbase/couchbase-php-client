@@ -110,6 +110,9 @@ public:
   auto bucket_close(const zend_string* name) -> core_error_info;
 
   COUCHBASE_API
+  auto authenticator_set(const zval* authenticator) -> core_error_info;
+
+  COUCHBASE_API
   auto document_upsert(zval* return_value,
                        const zend_string* bucket,
                        const zend_string* scope,

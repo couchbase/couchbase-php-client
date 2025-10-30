@@ -29,4 +29,6 @@ interface ClusterInterface
     public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult;
 
     public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult;
+
+    public function setAuthenticator(Authenticator $authenticator): void;
 }

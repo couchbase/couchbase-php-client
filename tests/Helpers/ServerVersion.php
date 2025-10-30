@@ -300,6 +300,12 @@ class ServerVersion
         return ($this->major == 7 && $this->minor >= 6) || $this->major > 7;
     }
 
+    // MB-39484: The query service authenticates all requests, not just those that require RBAC
+    public function supportsQueryMB39484(): bool
+    {
+        return ($this->major == 7 && $this->minor >= 6) || $this->major > 7;
+    }
+
     public function supportsServerGroupReplicaReads(): bool
     {
         // 7.6.2 or above
