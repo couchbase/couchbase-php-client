@@ -59,6 +59,7 @@ cmake = which("cmake", cmake_extra_locations) || which("cmake3", cmake_extra_loc
 cmake_flags = [
   "-S#{cxx_core_source_dir}",
   "-B#{cxx_core_build_dir}",
+  "-DCOUCHBASE_CXX_CLIENT_BUILD_OPENTELEMETRY=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_TOOLS=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_DOCS=OFF",
@@ -170,6 +171,7 @@ end
 cmake_flags = [
   "-S#{cxx_core_source_dir}",
   "-B#{cxx_core_build_dir}",
+  "-DCOUCHBASE_CXX_CLIENT_BUILD_OPENTELEMETRY=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_TESTS=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_TOOLS=OFF",
   "-DCOUCHBASE_CXX_CLIENT_BUILD_DOCS=OFF",

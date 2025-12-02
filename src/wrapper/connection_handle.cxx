@@ -25,6 +25,7 @@
 #include "passthrough_transcoder.hxx"
 #include "version.hxx"
 
+#define COUCHBASE_CXX_CLIENT_IGNORE_CORE_DEPRECATIONS
 #include <core/cluster.hxx>
 #include <core/error_context/analytics.hxx>
 #include <core/error_context/search.hxx>
@@ -32,6 +33,7 @@
 #include <core/logger/logger.hxx>
 #include <core/management/bucket_settings.hxx>
 #include <core/operations.hxx>
+#include <core/operations/document_view.hxx>
 #include <core/operations/management/analytics.hxx>
 #include <core/operations/management/bucket.hxx>
 #include <core/operations/management/cluster_describe.hxx>
@@ -3630,9 +3632,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
     return { e, {} };
   }
 
-  if (auto e = cb_assign_integer(
-        bucket.num_vbuckets, bucket_settings, "numVBuckets");
-      e.ec) {
+  if (auto e = cb_assign_integer(bucket.num_vbuckets, bucket_settings, "numVBuckets"); e.ec) {
     return { e, {} };
   }
 
@@ -3828,8 +3828,7 @@ cb_bucket_settings_to_zval(
   }
 
   if (bucket_settings.num_vbuckets.has_value()) {
-    add_assoc_long(
-      return_value, "numVBuckets", bucket_settings.num_vbuckets.value());
+    add_assoc_long(return_value, "numVBuckets", bucket_settings.num_vbuckets.value());
   }
 
   return {};
@@ -6067,6 +6066,9 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
       options::assign_boolean(ZEND_STRL("enableTcpKeepAlive"), key, value, [&](auto v) {
         cluster_options.network().enable_tcp_keep_alive(v);
       });
+      options::assign_boolean(ZEND_STRL("enableLazyConnections"), key, value, [&](auto v) {
+        cluster_options.network().enable_lazy_connections(v);
+      });
       options::assign_boolean(ZEND_STRL("enableUnorderedExecution"), key, value, [&](auto v) {
         cluster_options.behavior().enable_unordered_execution(v);
       });
@@ -6223,7 +6225,8 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
         ZEND_HASH_FOREACH_END();
       }
 
-      if (zend_binary_strcmp(ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("appTelemetryConfiguration")) == 0) {
+      if (zend_binary_strcmp(
+            ZSTR_VAL(key), ZSTR_LEN(key), ZEND_STRL("appTelemetryConfiguration")) == 0) {
         if (value == nullptr || Z_TYPE_P(value) == IS_NULL) {
           continue;
         }

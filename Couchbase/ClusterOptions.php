@@ -54,6 +54,7 @@ class ClusterOptions
     private ?bool $enableTracing = null;
     private ?bool $enableUnorderedExecution = null;
     private ?bool $showQueries = null;
+    private ?bool $enableLazyConnections = null;
 
     private ?string $network = null;
     private ?string $trustCertificate = null;
@@ -547,6 +548,20 @@ class ClusterOptions
     }
 
     /**
+     * @param bool $enable
+     *
+     * @return ClusterOptions
+     * @since 4.5.0
+     *
+     * @VOLATILE: This API is subject to change at any time.
+     */
+    public function enableLazyConnections(bool $enable): ClusterOptions
+    {
+        $this->enableLazyConnections = $enable;
+        return $this;
+    }
+
+    /**
      * @return string the string that uniquely identifies particular authenticator layout
      * @throws InvalidArgumentException
      * @internal
@@ -610,6 +625,7 @@ class ClusterOptions
             'enableUnorderedExecution' => $this->enableUnorderedExecution,
             'useIpProtocol' => $this->useIpProtocol,
             'showQueries' => $this->showQueries,
+            'enableLazyConnections' => $this->enableLazyConnections,
 
             'network' => $this->network,
             'trustCertificate' => $this->trustCertificate,
