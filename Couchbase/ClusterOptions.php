@@ -244,6 +244,18 @@ class ClusterOptions
      * @param int $milliseconds
      *
      * @return ClusterOptions
+     * @since 4.5.0
+     */
+    public function idleHttpConnectionTimeout(int $milliseconds): ClusterOptions
+    {
+        $this->idleHttpConnectionTimeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * @param int $milliseconds
+     *
+     * @return ClusterOptions
      * @since 4.0.0
      */
     public function configIdleRedialTimeout(int $milliseconds): ClusterOptions

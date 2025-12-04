@@ -374,6 +374,29 @@ PHP_FUNCTION(closeBucket)
   }
 }
 
+PHP_FUNCTION(authenticatorSet)
+{
+  zval* connection = nullptr;
+  zval* authenticator = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 2)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_ARRAY(authenticator)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+
+  if (auto e = handle->authenticator_set(authenticator); e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
 PHP_FUNCTION(documentUpsert)
 {
   zval* connection = nullptr;
@@ -3868,6 +3891,11 @@ ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_authenticatorSet, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, authenticator, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentUpsert, 0, 0, 7)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -4745,6 +4773,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, createConnection, ai_CouchbaseExtension_createConnection)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, openBucket, ai_CouchbaseExtension_openBucket)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, closeBucket, ai_CouchbaseExtension_closeBucket)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, authenticatorSet, ai_CouchbaseExtension_authenticatorSet)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentUpsert, ai_CouchbaseExtension_documentUpsert)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentInsert, ai_CouchbaseExtension_documentInsert)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentReplace, ai_CouchbaseExtension_documentReplace)
