@@ -795,6 +795,21 @@ connection_handle::authenticator_set(const zval* auth) -> core_error_info
     }
     return {};
   }
+  if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("jwt")) == 0) {
+    const zval* token = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("token"));
+    if (token == nullptr || Z_TYPE_P(token) != IS_STRING) {
+      return { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected jwt to be a string in the authenticator" };
+    }
+    couchbase::jwt_authenticator jwt_auth{ Z_STRVAL_P(token) };
+
+    auto ctx = impl_->public_api().set_authenticator(jwt_auth);
+    if (ctx.ec()) {
+      return { ctx.ec(), ERROR_LOCATION, "unable to set authenticator", build_error_context(ctx) };
+    }
+    return {};
+  }
   return { errc::common::invalid_argument,
            ERROR_LOCATION,
            fmt::format("unknown type of the authenticator: {}",
@@ -6435,6 +6450,26 @@ construct_cluster_options(zval* options)
         certificate_authenticator{
           Z_STRVAL_P(certificate_path),
           Z_STRVAL_P(key_path),
+        },
+      },
+    };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(auth_type), Z_STRLEN_P(auth_type), ZEND_STRL("jwt")) ==
+      0) {
+    const zval* token = zend_symtable_str_find(Z_ARRVAL_P(auth), ZEND_STRL("token"));
+    if (token == nullptr || Z_TYPE_P(token) != IS_STRING) {
+      return {
+        { errc::common::invalid_argument,
+          ERROR_LOCATION,
+          "expected jwt token to be a string in the authenticator" },
+        {},
+      };
+    }
+    return {
+      {},
+      cluster_options{
+        jwt_authenticator{
+          Z_STRVAL_P(token),
         },
       },
     };

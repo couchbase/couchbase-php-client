@@ -588,6 +588,8 @@ class ClusterOptions
             return hash("sha256", sprintf("--%s--%s--", $exported['username'], $exported['password']));
         } elseif ($exported['type'] == 'certificate') {
             return hash("sha256", sprintf("--%s--%s--", $exported['certificatePath'], $exported['keyPath']));
+        } elseif ($exported['type'] == 'jwt') {
+            return hash("sha256", sprintf("--%s--", $exported['token']));
         } else {
             throw new InvalidArgumentException("unknown type of the authenticator: " . $exported['type']);
         }
