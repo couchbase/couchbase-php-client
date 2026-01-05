@@ -174,7 +174,7 @@ jobs:
           TEST_ABI=versioned ruby ./bin/test.rb -v ${{ needs.source_abi.outputs.alternate_abi_version }}
   build_macos_x86_64:
     needs: source_abi
-    runs-on: macos-13
+    runs-on: macos-15-intel
     strategy:
       fail-fast: false
       matrix:
@@ -240,7 +240,7 @@ jobs:
     needs:
       - source_abi
       - build_macos_x86_64
-    runs-on: macos-13
+    runs-on: macos-15-intel
     strategy:
       fail-fast: false
     steps:
