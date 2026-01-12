@@ -121,6 +121,10 @@ class Bucket implements BucketInterface
      * @param string $viewName the view to use for the query
      * @param ViewOptions|null $options the options to use when executing the query
      *
+     * @deprecated Views are deprecated in Couchbase Server 7.0+, and will be removed from a future server version.
+     *             Views are not compatible with the Magma storage engine. Instead of views, use indexes and queries using the
+     *             Index Service (GSI) and the Query Service (SQL++).
+     *
      * @return ViewResult
      * @since 4.0.0
      */
@@ -152,6 +156,9 @@ class Bucket implements BucketInterface
      *
      * @return ViewIndexManager
      * @throws UnsupportedOperationException
+     * @deprecated Views are deprecated in Couchbase Server 7.0+, and will be removed from a future server version.
+     *             Views are not compatible with the Magma storage engine. Instead of views, use indexes and queries using the
+     *             Index Service (GSI) and the Query Service (SQL++).
      * @since 4.0.0
      */
     public function viewIndexes(): ViewIndexManager
