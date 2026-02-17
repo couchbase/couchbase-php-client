@@ -1208,6 +1208,18 @@ cb_get_legacy_durability_replicate_to(const zval* options)
   return {};
 }
 
+auto
+cb_needs_request_with_legacy_durability(
+  const std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>& constraints)
+  -> bool
+{
+  if (!constraints.has_value()) {
+    return false;
+  }
+  auto [persist_to, replicate_to] = constraints.value();
+  return persist_to != couchbase::persist_to::none || replicate_to != couchbase::replicate_to::none;
+}
+
 std::pair<core_error_info, std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>
 cb_get_legacy_durability_constraints(const zval* options)
 {
@@ -1235,5 +1247,40 @@ cb_get_legacy_durability_constraints(const zval* options)
   return { {},
            std::make_pair(persist_to.value_or(couchbase::persist_to::none),
                           replicate_to.value_or(couchbase::replicate_to::none)) };
+}
+
+auto
+decode_lookup_subdoc_opcode(const zval* spec)
+  -> std::pair<core::protocol::subdoc_opcode, core_error_info>
+{
+  if (spec == nullptr || Z_TYPE_P(spec) != IS_ARRAY) {
+    return { {},
+             { errc::common::invalid_argument,
+               ERROR_LOCATION,
+               "expected that spec will be represented as an array" } };
+  }
+  const zval* value = zend_symtable_str_find(Z_ARRVAL_P(spec), ZEND_STRL("opcode"));
+  if (value == nullptr || Z_TYPE_P(value) != IS_STRING) {
+    return {
+      {}, { errc::common::invalid_argument, ERROR_LOCATION, "missing opcode field of the spec" }
+    };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("getDocument")) == 0) {
+    return { { core::protocol::subdoc_opcode::get_doc }, {} };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("get")) == 0) {
+    return { { core::protocol::subdoc_opcode::get }, {} };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("exists")) == 0) {
+    return { { core::protocol::subdoc_opcode::exists }, {} };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("getCount")) == 0) {
+    return { { core::protocol::subdoc_opcode::get_count }, {} };
+  }
+  return { {},
+           { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unexpected opcode field of the spec: \"{}\"",
+                         std::string(Z_STRVAL_P(value), Z_STRLEN_P(value))) } };
 }
 } // namespace couchbase::php

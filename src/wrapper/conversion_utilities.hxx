@@ -29,6 +29,8 @@
 
 #include <couchbase/cas.hxx>
 #include <couchbase/durability_level.hxx>
+#include <couchbase/expiry.hxx>
+#include <couchbase/lookup_in_specs.hxx>
 #include <couchbase/persist_to.hxx>
 #include <couchbase/replicate_to.hxx>
 
@@ -247,15 +249,31 @@ cb_assign_timeout(Request& req, const zval* options) -> core_error_info
   return err;
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_expiry(Options& opts, const zval* options) -> core_error_info
+cb_assign_content(Request& req, const zend_string* value) -> core_error_info
+{
+  req.value = cb_binary_new(value);
+  return {};
+}
+
+template<typename Request>
+auto
+cb_assign_flags(Request& req, zend_long flags) -> core_error_info
+{
+  req.flags = static_cast<std::uint32_t>(flags);
+  return {};
+}
+
+template<typename Request>
+auto
+cb_assign_expiry(Request& req, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "expirySeconds"); e.ec) {
     return e;
   } else if (value) {
     try {
-      opts.expiry(std::chrono::seconds{ value.value() });
+      req.expiry = core::impl::expiry_relative(std::chrono::seconds{ value.value() });
     } catch (const std::system_error& ec) {
       return { ec.code(), ERROR_LOCATION, ec.what() };
     }
@@ -266,7 +284,8 @@ cb_set_expiry(Options& opts, const zval* options) -> core_error_info
     return e;
   } else if (value) {
     try {
-      opts.expiry(std::chrono::system_clock::time_point{ std::chrono::seconds{ value.value() } });
+      req.expiry = core::impl::expiry_absolute(
+        std::chrono::system_clock::time_point{ std::chrono::seconds{ value.value() } });
     } catch (const std::system_error& ec) {
       return { ec.code(), ERROR_LOCATION, ec.what() };
     }
@@ -274,40 +293,26 @@ cb_set_expiry(Options& opts, const zval* options) -> core_error_info
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_initial_value(Options& opts, const zval* options) -> core_error_info
+cb_assign_initial_value(Request& req, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "initialValue"); e.ec) {
     return e;
   } else if (value) {
-    opts.initial(value.value());
+    req.initial_value = value.value();
   }
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_delta(Options& opts, const zval* options) -> core_error_info
+cb_assign_delta(Request& req, const zval* options) -> core_error_info
 {
   if (auto [e, value] = cb_get_integer<std::uint64_t>(options, "delta"); e.ec) {
     return e;
   } else if (value) {
-    opts.delta(value.value());
-  }
-  return {};
-}
-
-template<typename Options>
-auto
-cb_set_timeout(Options& opts, const zval* options) -> core_error_info
-{
-  auto [err, timeout] = cb_get_timeout(options);
-  if (err.ec) {
-    return err;
-  }
-  if (timeout) {
-    opts.timeout(timeout.value());
+    req.delta = value.value();
   }
   return {};
 }
@@ -316,44 +321,44 @@ auto
 cb_get_boolean(const zval* options, std::string_view name)
   -> std::pair<core_error_info, std::optional<bool>>;
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_access_deleted(Options& opts, const zval* options) -> core_error_info
+cb_assign_access_deleted(Request& req, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "accessDeleted");
   if (err.ec) {
     return err;
   }
   if (value.has_value()) {
-    opts.access_deleted(value.value());
+    req.access_deleted = value.value();
   }
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_preserve_expiry(Options& opts, const zval* options) -> core_error_info
+cb_assign_preserve_expiry(Request& req, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "preserveExpiry");
   if (err.ec) {
     return err;
   }
   if (value.has_value()) {
-    opts.preserve_expiry(value.value());
+    req.preserve_expiry = value.value();
   }
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_create_as_deleted(Options& opts, const zval* options) -> core_error_info
+cb_assign_create_as_deleted(Request& req, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_boolean(options, "createAsDeleted");
   if (err.ec) {
     return err;
   }
   if (value.has_value()) {
-    opts.create_as_deleted(value.value());
+    req.create_as_deleted = value.value();
   }
   return {};
 }
@@ -361,16 +366,16 @@ cb_set_create_as_deleted(Options& opts, const zval* options) -> core_error_info
 auto
 cb_get_cas(const zval* options) -> std::pair<core_error_info, std::optional<couchbase::cas>>;
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_cas(Options& opts, const zval* options) -> core_error_info
+cb_assign_cas(Request& req, const zval* options) -> core_error_info
 {
   auto [err, value] = cb_get_cas(options);
   if (err.ec) {
     return err;
   }
   if (value.has_value()) {
-    opts.cas(value.value());
+    req.cas = value.value();
   }
   return {};
 }
@@ -425,6 +430,11 @@ cb_get_durability_level(const zval* options)
   -> std::pair<core_error_info, std::optional<couchbase::durability_level>>;
 
 auto
+cb_needs_request_with_legacy_durability(
+  const std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>& constraints)
+  -> bool;
+
+auto
 cb_get_legacy_durability_constraints(const zval* options)
   -> std::pair<core_error_info,
                std::optional<std::pair<couchbase::persist_to, couchbase::replicate_to>>>;
@@ -450,9 +460,23 @@ cb_set_durability(Options& opts, const zval* options) -> core_error_info
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_store_semantics(Options& opts, const zval* options) -> core_error_info
+cb_assign_durability_level(Request& req, const zval* options) -> core_error_info
+{
+  auto [err, durability] = cb_get_durability_level(options);
+  if (err.ec) {
+    return err;
+  }
+  if (durability) {
+    req.durability_level = durability.value();
+  }
+  return {};
+}
+
+template<typename Request>
+auto
+cb_assign_store_semantics(Request& req, const zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -467,11 +491,11 @@ cb_set_store_semantics(Options& opts, const zval* options) -> core_error_info
     return e;
   } else if (value) {
     if (value.value() == "replace") {
-      opts.store_semantics(store_semantics::replace);
+      req.store_semantics = store_semantics::replace;
     } else if (value.value() == "insert") {
-      opts.store_semantics(store_semantics::insert);
+      req.store_semantics = store_semantics::insert;
     } else if (value.value() == "upsert") {
-      opts.store_semantics(store_semantics::upsert);
+      req.store_semantics = store_semantics::upsert;
     } else if (!value.value().empty()) {
       return { errc::common::invalid_argument,
                ERROR_LOCATION,
@@ -481,9 +505,9 @@ cb_set_store_semantics(Options& opts, const zval* options) -> core_error_info
   return {};
 }
 
-template<typename Options>
+template<typename Request>
 auto
-cb_set_read_preference(Options& opts, const zval* options) -> core_error_info
+cb_assign_read_preference(Request& req, const zval* options) -> core_error_info
 {
   if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
     return {};
@@ -499,9 +523,9 @@ cb_set_read_preference(Options& opts, const zval* options) -> core_error_info
     return e;
   } else if (value) {
     if (value.value() == "noPreference") {
-      opts.read_preference(read_preference::no_preference);
+      req.read_preference = read_preference::no_preference;
     } else if (value.value() == "selectedServerGroup") {
-      opts.read_preference(read_preference::selected_server_group);
+      req.read_preference = read_preference::selected_server_group;
     } else if (!value.value().empty()) {
       return { errc::common::invalid_argument,
                ERROR_LOCATION,
@@ -511,4 +535,148 @@ cb_set_read_preference(Options& opts, const zval* options) -> core_error_info
   return {};
 }
 
+auto
+decode_lookup_subdoc_opcode(const zval* spec)
+  -> std::pair<core::protocol::subdoc_opcode, core_error_info>;
+
+template<typename Request>
+auto
+cb_assign_lookup_in_specs(Request& req, const zval* specs) -> core_error_info
+{
+  if (Z_TYPE_P(specs) != IS_ARRAY) {
+    return { errc::common::invalid_argument, ERROR_LOCATION, "specs must be an array" };
+  }
+
+  couchbase::lookup_in_specs cxx_specs;
+
+  const zval* item = nullptr;
+  ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(specs), item)
+  {
+    auto [operation, e] = decode_lookup_subdoc_opcode(item);
+    if (e.ec) {
+      return e;
+    }
+    bool xattr = false;
+    if (e = cb_assign_boolean(xattr, item, "isXattr"); e.ec) {
+      return e;
+    }
+    std::string path;
+    if (e = cb_assign_string(path, item, "path"); e.ec) {
+      return e;
+    }
+    switch (operation) {
+      case core::protocol::subdoc_opcode::get_doc:
+      case core::protocol::subdoc_opcode::get:
+        cxx_specs.push_back(lookup_in_specs::get(path).xattr(xattr));
+        break;
+      case core::protocol::subdoc_opcode::exists:
+        cxx_specs.push_back(lookup_in_specs::exists(path).xattr(xattr));
+        break;
+      case core::protocol::subdoc_opcode::get_count:
+        cxx_specs.push_back(lookup_in_specs::count(path).xattr(xattr));
+        break;
+      default:
+        break;
+    }
+  }
+  ZEND_HASH_FOREACH_END();
+
+  req.specs = cxx_specs.specs();
+  return {};
+}
+
+template<typename Response>
+void
+cb_create_lookup_in_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  array_init(return_value);
+
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
+  add_assoc_bool(return_value, "deleted", resp.deleted);
+
+  auto cas = fmt::format("{:x}", resp.cas.value());
+  add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+
+  zval fields;
+  array_init_size(&fields, resp.fields.size());
+  for (const auto& field : resp.fields) {
+    zval entry;
+    array_init(&entry);
+    add_assoc_stringl(&entry, "path", field.path.data(), field.path.size());
+    add_assoc_bool(&entry, "exists", field.exists);
+    if (!field.value.empty()) {
+      add_assoc_stringl(
+        &entry, "value", reinterpret_cast<const char*>(field.value.data()), field.value.size());
+    }
+    add_index_zval(&fields, field.original_index, &entry);
+  }
+  add_assoc_zval(return_value, "fields", &fields);
+}
+
+template<typename Response>
+void
+cb_create_lookup_in_replica_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  cb_create_lookup_in_result(return_value, resp, id);
+  add_assoc_bool(return_value, "isReplica", resp.is_replica);
+}
+
+template<typename Response>
+void
+cb_create_mutation_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  array_init(return_value);
+
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
+
+  auto cas = fmt::format("{:x}", resp.cas.value());
+  add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+
+  if (!resp.token.bucket_name().empty() && resp.token.partition_uuid() > 0) {
+    zval token_val;
+    {
+      array_init(&token_val);
+      add_assoc_stringl(
+        &token_val, "bucketName", resp.token.bucket_name().data(), resp.token.bucket_name().size());
+      add_assoc_long(&token_val, "partitionId", resp.token.partition_id());
+      auto val = fmt::format("{:x}", resp.token.partition_uuid());
+      add_assoc_stringl(&token_val, "partitionUuid", val.data(), val.size());
+      val = fmt::format("{:x}", resp.token.sequence_number());
+      add_assoc_stringl(&token_val, "sequenceNumber", val.data(), val.size());
+    }
+    add_assoc_zval(return_value, "mutationToken", &token_val);
+  }
+}
+
+template<typename Response>
+void
+cb_create_counter_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  cb_create_mutation_result(return_value, resp, id);
+
+  add_assoc_long(return_value, "value", static_cast<zend_long>(resp.content));
+  auto value_str = fmt::format("{}", resp.content);
+  add_assoc_stringl(return_value, "valueString", value_str.data(), value_str.size());
+}
+
+template<typename Response>
+void
+cb_create_get_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  array_init(return_value);
+  add_assoc_stringl(return_value, "id", ZSTR_VAL(id), ZSTR_LEN(id));
+  auto cas = fmt::format("{:x}", resp.cas.value());
+  add_assoc_stringl(return_value, "cas", cas.data(), cas.size());
+  add_assoc_long(return_value, "flags", resp.flags);
+  add_assoc_stringl(
+    return_value, "value", reinterpret_cast<const char*>(resp.value.data()), resp.value.size());
+}
+
+template<typename Response>
+void
+cb_create_get_replica_result(zval* return_value, const Response& resp, const zend_string* id)
+{
+  cb_create_get_result(return_value, resp, id);
+  add_assoc_bool(return_value, "isReplica", resp.replica);
+}
 } // namespace couchbase::php

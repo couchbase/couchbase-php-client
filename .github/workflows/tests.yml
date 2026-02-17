@@ -490,7 +490,7 @@ jobs:
       - name: Install cbdinocluster
         run: |
           mkdir -p "$HOME/bin"
-          curl -L -o "$HOME/bin/cbdinocluster" https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.52/cbdinocluster-linux-amd64
+          curl -L -o "$HOME/bin/cbdinocluster" https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.100/cbdinocluster-linux-amd64
           chmod a+x "$HOME/bin/cbdinocluster"
           echo "$HOME/bin" >> $GITHUB_PATH
       - name: Initialize cbdinocluster
