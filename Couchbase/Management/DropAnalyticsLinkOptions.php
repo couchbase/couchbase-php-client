@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DropAnalyticsLinkOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -47,6 +50,28 @@ class DropAnalyticsLinkOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DropAnalyticsLinkOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DropAnalyticsLinkOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DropAnalyticsLinkOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

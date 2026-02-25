@@ -23,6 +23,7 @@ namespace Couchbase;
 class TouchOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -47,6 +48,28 @@ class TouchOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return TouchOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): TouchOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?TouchOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

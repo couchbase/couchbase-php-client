@@ -24,6 +24,7 @@ class GetAndTouchOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -70,6 +71,28 @@ class GetAndTouchOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAndTouchOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAndTouchOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAndTouchOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

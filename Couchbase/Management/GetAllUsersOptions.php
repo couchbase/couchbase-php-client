@@ -20,10 +20,13 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class GetAllUsersOptions
 {
     private ?string $domainName = null;
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -69,6 +72,28 @@ class GetAllUsersOptions
     {
         $this->domainName = $domain;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAllUsersOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAllUsersOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAllUsersOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

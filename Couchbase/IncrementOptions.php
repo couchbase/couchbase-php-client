@@ -31,6 +31,7 @@ class IncrementOptions
     private ?int $expiryTimestamp = null;
     private int $delta = 1;
     private ?int $initialValue = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -124,6 +125,36 @@ class IncrementOptions
             $this->expirySeconds = (int)$seconds;
         }
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return IncrementOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): IncrementOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?IncrementOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+        /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?IncrementOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

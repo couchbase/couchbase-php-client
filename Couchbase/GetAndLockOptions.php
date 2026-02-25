@@ -24,6 +24,7 @@ class GetAndLockOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -70,6 +71,28 @@ class GetAndLockOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAndLockOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAndLockOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAndLockOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

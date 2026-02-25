@@ -56,12 +56,15 @@ class ExpiryHelper
         }
 
         if ($expiry > self::FIFTY_YEARS_IN_SECONDS) {
-            trigger_error(sprintf(
-                "The specified expiry (%d) is greater than 50 years in seconds. "
-                . "Unix timestamps passed directly as a number are not supported. "
-                . "If you want an absolute expiry, construct a DateTime from the timestamp.",
-                $expiry
-            ), E_USER_WARNING);
+            trigger_error(
+                sprintf(
+                    "The specified expiry (%d) is greater than 50 years in seconds. "
+                    . "Unix timestamps passed directly as a number are not supported. "
+                    . "If you want an absolute expiry, construct a DateTime from the timestamp.",
+                    $expiry
+                ),
+                E_USER_WARNING
+            );
         }
 
         if ($expiry < self::THIRTY_DAYS_IN_SECONDS) {

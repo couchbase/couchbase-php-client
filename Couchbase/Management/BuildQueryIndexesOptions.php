@@ -20,11 +20,14 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class BuildQueryIndexesOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $scopeName = null;
     private ?string $collectionName = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -75,6 +78,28 @@ class BuildQueryIndexesOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return BuildQueryIndexesOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): BuildQueryIndexesOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?BuildQueryIndexesOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

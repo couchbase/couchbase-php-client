@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class GetAllScopesOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -48,6 +51,29 @@ class GetAllScopesOptions
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAllScopesOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAllScopesOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAllScopesOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
 
     /**
      * @param GetAllScopesOptions|null $options

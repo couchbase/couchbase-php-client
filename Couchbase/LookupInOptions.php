@@ -25,6 +25,7 @@ class LookupInOptions
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
     private ?bool $withExpiry = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -103,6 +104,28 @@ class LookupInOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return LookupInOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): LookupInOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?LookupInOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

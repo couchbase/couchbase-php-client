@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class CreateQueryIndexOptions
 {
     private ?int $timeoutMilliseconds = null;
@@ -29,6 +31,7 @@ class CreateQueryIndexOptions
     private ?bool $ignoreIfExists = null;
     private ?int $numberOfReplicas = null;
     private ?bool $deferred = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -127,6 +130,28 @@ class CreateQueryIndexOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return CreateQueryIndexOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): CreateQueryIndexOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?CreateQueryIndexOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

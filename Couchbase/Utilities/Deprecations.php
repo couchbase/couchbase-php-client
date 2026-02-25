@@ -140,7 +140,7 @@ class Deprecations
                 return DurabilityLevel::PERSIST_TO_MAJORITY;
             default:
                 throw new InvalidArgumentException(
-                    sprintf("Integer value for query scan consistency must be in [0, 3] interval. Given: %d", $level)
+                    sprintf("Integer value for durability level must be in [0, 3] interval. Given: %d", $level)
                 );
         }
     }

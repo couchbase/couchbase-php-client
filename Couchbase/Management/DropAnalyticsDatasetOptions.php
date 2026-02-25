@@ -20,11 +20,14 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DropAnalyticsDatasetOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?bool $ignoreIfDoesNotExist = null;
     private ?string $dataverseName = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -76,6 +79,29 @@ class DropAnalyticsDatasetOptions
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DropAnalyticsDatasetOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DropAnalyticsDatasetOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DropAnalyticsDatasetOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
 
     /**
      * @internal

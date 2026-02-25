@@ -25,6 +25,9 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Management\ScopeSearchIndexManager;
 use Couchbase\Management\ScopeSearchIndexManagerInterface;
+use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityHandler;
+use Couchbase\Observability\ObservabilityContext;
 
 /**
  * Scope is an object for providing access to collections.
@@ -38,20 +41,28 @@ class Scope implements ScopeInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @param string $name
      * @param string $bucketName
      * @param resource $core
+     * @param ObservabilityContext $observability
      *
      * @internal
      *
      * @since 4.0.0
      */
-    public function __construct(string $name, string $bucketName, $core)
+    public function __construct(string $name, string $bucketName, $core, ObservabilityContext $observability)
     {
         $this->name = $name;
         $this->bucketName = $bucketName;
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            bucketName: $bucketName,
+            scopeName:$name
+        );
     }
 
     /**
@@ -75,7 +86,7 @@ class Scope implements ScopeInterface
      */
     public function collection(string $name): CollectionInterface
     {
-        return new Collection($name, $this->name, $this->bucketName, $this->core);
+        return new Collection($name, $this->name, $this->bucketName, $this->core, $this->observability);
     }
 
     /**
@@ -91,10 +102,19 @@ class Scope implements ScopeInterface
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-        $result = $function($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_QUERY,
+            QueryOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($statement, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_QUERY);
+                $obsHandler->addQueryStatement($statement, $options);
 
-        return new QueryResult($result, QueryOptions::getTranscoder($options));
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
+                $result = $function($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName));
+
+                return new QueryResult($result, QueryOptions::getTranscoder($options));
+            }
+        );
     }
 
     /**
@@ -110,10 +130,19 @@ class Scope implements ScopeInterface
      */
     public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-        $result = $function($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_ANALYTICS_QUERY,
+            AnalyticsOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($statement, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_ANALYTICS);
+                $obsHandler->addQueryStatement($statement, $options);
 
-        return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
+                $result = $function($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName));
+
+                return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
+            }
+        );
     }
 
     /**
@@ -131,25 +160,33 @@ class Scope implements ScopeInterface
      */
     public function search(string $indexName, SearchRequest $request, ?SearchOptions $options = null): SearchResult
     {
-        $exportedRequest = SearchRequest::export($request);
-        $exportedOptions = SearchOptions::export($options);
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SEARCH_QUERY,
+            SearchOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($indexName, $request, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
-        $exportedOptions['bucketName'] = $this->bucketName;
-        $exportedOptions['scopeName'] = $this->name;
+                $exportedRequest = SearchRequest::export($request);
+                $exportedOptions = SearchOptions::export($options);
 
-        $exportedOptions["showRequest"] = false;
-        $query = $exportedRequest['searchQuery'];
+                $exportedOptions['bucketName'] = $this->bucketName;
+                $exportedOptions['scopeName'] = $this->name;
 
-        if (!$exportedRequest['vectorSearch']) {
-            $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-            $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
-            return new SearchResult($result);
-        }
+                $exportedOptions["showRequest"] = false;
+                $query = $exportedRequest['searchQuery'];
 
-        $vectorSearch = $exportedRequest['vectorSearch'];
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-        $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
-        return new SearchResult($result);
+                if (!$exportedRequest['vectorSearch']) {
+                    $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
+                    return new SearchResult($result);
+                }
+
+                $vectorSearch = $exportedRequest['vectorSearch'];
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
+                $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+                return new SearchResult($result);
+            }
+        );
     }
 
     /**

@@ -36,6 +36,7 @@ class AnalyticsOptions
     private ?bool $priority = null;
     private ?bool $readonly = null;
     private ?string $scanConsistency = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -67,6 +68,20 @@ class AnalyticsOptions
     public function timeout(int $milliseconds): AnalyticsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return AnalyticsOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): AnalyticsOptions
+    {
+        $this->parentSpan = $parentSpan;
         return $this;
     }
 
@@ -186,6 +201,29 @@ class AnalyticsOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function usingParameters(?AnalyticsOptions $options): bool
+    {
+        if ($options == null) {
+            return false;
+        }
+
+        $hasPositional = !is_null($options->positionalParameters) && count($options->positionalParameters) > 0;
+        $hasNamed = !is_null($options->namedParameters) && count($options->namedParameters) > 0;
+
+        return $hasPositional || $hasNamed;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?AnalyticsOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

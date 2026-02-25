@@ -23,6 +23,7 @@ namespace Couchbase;
 class UnlockOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -47,6 +48,28 @@ class UnlockOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return UnlockOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): UnlockOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?UnlockOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

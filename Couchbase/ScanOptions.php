@@ -31,6 +31,7 @@ class ScanOptions
     private ?int $batchByteLimit = null;
     private ?int $batchItemLimit = null;
     private ?int $concurrency = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.1.6
@@ -153,6 +154,28 @@ class ScanOptions
         }
         $this->concurrency = $concurrency;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ScanOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ScanOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ScanOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

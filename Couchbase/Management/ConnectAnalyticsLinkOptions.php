@@ -20,12 +20,15 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class ConnectAnalyticsLinkOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $dataverseName = null;
     private ?string $linkName = null;
     private ?bool $force = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -78,6 +81,28 @@ class ConnectAnalyticsLinkOptions
     {
         $this->linkName = $linkName;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ConnectAnalyticsLinkOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ConnectAnalyticsLinkOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ConnectAnalyticsLinkOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

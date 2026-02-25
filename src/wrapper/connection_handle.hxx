@@ -113,6 +113,9 @@ public:
   auto authenticator_set(const zval* authenticator) -> core_error_info;
 
   COUCHBASE_API
+  void cluster_labels(zval* return_value);
+
+  COUCHBASE_API
   auto document_upsert(zval* return_value,
                        const zend_string* bucket,
                        const zend_string* scope,

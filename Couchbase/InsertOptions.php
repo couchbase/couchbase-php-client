@@ -31,6 +31,7 @@ class InsertOptions
     private ?int $expiryTimestamp = null;
     private ?string $durabilityLevel = null;
     private ?int $durabilityTimeoutSeconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -122,6 +123,28 @@ class InsertOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return InsertOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): InsertOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?InsertOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * Delegates encoding of the document to associated transcoder
      *
      * @param InsertOptions|null $options
@@ -136,6 +159,14 @@ class InsertOptions
             return JsonTranscoder::getInstance()->encode($document);
         }
         return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?InsertOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class CreateCollectionOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      *  Static helper to keep code more readable
@@ -50,12 +53,33 @@ class CreateCollectionOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return CreateCollectionOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): CreateCollectionOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?CreateCollectionOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * @param CreateCollectionOptions|null $options
      * @return array
      * @internal
      * @since 4.1.3
      */
-
     public static function export(?CreateCollectionOptions $options): array
     {
         if ($options == null) {

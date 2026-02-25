@@ -25,6 +25,7 @@ class GetAnyReplicaOptions
     private Transcoder $transcoder;
     private string $readPreference;
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.1
@@ -90,6 +91,28 @@ class GetAnyReplicaOptions
     {
         $this->readPreference = $readPreference;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAnyReplicaOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAnyReplicaOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAnyReplicaOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

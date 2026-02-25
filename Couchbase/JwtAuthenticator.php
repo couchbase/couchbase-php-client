@@ -20,7 +20,6 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-
 /**
  * Authenticator type which uses a JWT token to authenticate with the cluster.
  *
@@ -28,7 +27,7 @@ namespace Couchbase;
  *
  * @UNCOMMITTED: This API may change in the future.
  */
-Class JwtAuthenticator implements Authenticator
+class JwtAuthenticator implements Authenticator
 {
     private string $token;
 

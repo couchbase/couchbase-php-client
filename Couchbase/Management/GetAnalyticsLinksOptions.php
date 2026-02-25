@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\RequestSpan;
 
 class GetAnalyticsLinksOptions
 {
@@ -28,6 +29,7 @@ class GetAnalyticsLinksOptions
     private ?string $dataverseName = null;
     private ?string $name = null;
     private ?string $linkType = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -107,6 +109,28 @@ class GetAnalyticsLinksOptions
     {
         $this->name = $name;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAnalyticsLinksOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAnalyticsLinksOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAnalyticsLinksOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

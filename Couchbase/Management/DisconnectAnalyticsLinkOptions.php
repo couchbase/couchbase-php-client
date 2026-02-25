@@ -20,11 +20,14 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DisconnectAnalyticsLinkOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $dataverseName = null;
     private ?string $linkName = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -77,6 +80,28 @@ class DisconnectAnalyticsLinkOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DisconnectAnalyticsLinkOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DisconnectAnalyticsLinkOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DisconnectAnalyticsLinkOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

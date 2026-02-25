@@ -37,6 +37,7 @@ class SearchOptions implements JsonSerializable
     private ?array $collectionNames = null;
     private ?array $raw;
     private ?bool $includeLocations = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -272,6 +273,28 @@ class SearchOptions implements JsonSerializable
     {
         $this->includeLocations = $enabled;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return SearchOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): SearchOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?SearchOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**
