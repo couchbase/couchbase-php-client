@@ -52,6 +52,8 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
     public function testCreateMemcachedBucket()
     {
         $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsMemcachedBuckets());
+
         $settings = new BucketSettings($this->bucketName);
         $settings->setBucketType(BucketType::MEMCACHED);
         $this->manager->createBucket($settings);
@@ -176,8 +178,10 @@ class BucketManagerTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfReplicasAreNotConfigured();
 
-        $settings = new BucketSettings($this->bucketName);
-        $settings->setBucketType(BucketType::COUCHBASE)->enableReplicaIndexes(true);
+        $settings = (new BucketSettings($this->bucketName))
+            ->setBucketType(BucketType::COUCHBASE)
+            ->setStorageBackend(StorageBackend::COUCHSTORE) // Views are only supported with Couchstore
+            ->enableReplicaIndexes(true);
         $this->manager->createBucket($settings);
         $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 

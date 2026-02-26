@@ -10,6 +10,7 @@ use Couchbase\DurabilityLevel;
 use Couchbase\Management\BucketManager;
 use Couchbase\Management\BucketType;
 use Couchbase\Management\BucketSettings;
+use Couchbase\Management\StorageBackend;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -30,8 +31,10 @@ class ViewTest extends Helpers\CouchbaseTestCase
         $this->bucketName = $this->uniqueId("viewtest");
 
         $this->bucketManager = $this->cluster->buckets();
-        $settings = new BucketSettings($this->bucketName);
-        $settings->setBucketType(BucketType::COUCHBASE);
+        $settings = (new BucketSettings($this->bucketName))
+            ->setBucketType(BucketType::COUCHBASE)
+            ->setStorageBackend(StorageBackend::COUCHSTORE); // Views are only supported on Couchstore.
+
         $this->bucketManager->createBucket($settings);
         $this->consistencyUtil()->waitUntilBucketPresent($this->bucketName);
 
