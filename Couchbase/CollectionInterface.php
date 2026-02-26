@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Management\CollectionQueryIndexManagerInterface;
+
 interface CollectionInterface
 {
     public function bucketName(): string;
@@ -57,4 +59,6 @@ interface CollectionInterface
     public function mutateIn(string $id, array $specs, ?MutateInOptions $options = null): MutateInResult;
 
     public function binary(): BinaryCollectionInterface;
+
+    public function queryIndexes(): CollectionQueryIndexManagerInterface;
 }

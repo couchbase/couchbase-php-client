@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Management\CollectionManagerInterface;
+
 interface BucketInterface
 {
     public function defaultScope(): ScopeInterface;
@@ -31,4 +33,6 @@ interface BucketInterface
     public function name(): string;
 
     public function viewQuery(string $designDoc, string $viewName, ?ViewOptions $options = null): ViewResult;
+
+    public function collections(): CollectionManagerInterface;
 }
