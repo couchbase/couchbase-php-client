@@ -21,6 +21,8 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Extension;
+use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityContext;
 
 class BucketManager implements BucketManagerInterface
 {
@@ -29,14 +31,23 @@ class BucketManager implements BucketManagerInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @internal
+     *
      * @param $core
+     * @param ObservabilityContext $observability
+     *
      * @since 4.0.0
      */
-    public function __construct($core)
+    public function __construct($core, ObservabilityContext $observability)
     {
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_MANAGEMENT
+        );
     }
 
     /**
@@ -48,8 +59,16 @@ class BucketManager implements BucketManagerInterface
      */
     public function createBucket(BucketSettings $settings, ?CreateBucketOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketCreate';
-        $function($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_CREATE_BUCKET,
+            CreateBucketOptions::getParentSpan($options),
+            function ($obsHandler) use ($settings, $options) {
+                $obsHandler->addBucketName($settings->name());
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketCreate';
+                $function($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -61,8 +80,16 @@ class BucketManager implements BucketManagerInterface
      */
     public function updateBucket(BucketSettings $settings, ?UpdateBucketOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketUpdate';
-        $function($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_UPDATE_BUCKET,
+            UpdateBucketOptions::getParentSpan($options),
+            function ($obsHandler) use ($settings, $options) {
+                $obsHandler->addBucketName($settings->name());
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketUpdate';
+                $function($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -86,8 +113,16 @@ class BucketManager implements BucketManagerInterface
      */
     public function dropBucket(string $name, ?DropBucketOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketDrop';
-        $function($this->core, $name, DropBucketOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_DROP_BUCKET,
+            DropBucketOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $obsHandler->addBucketName($name);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketDrop';
+                $function($this->core, $name, DropBucketOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -99,9 +134,17 @@ class BucketManager implements BucketManagerInterface
      */
     public function getBucket(string $name, ?GetBucketOptions $options = null): BucketSettings
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGet';
-        $result = $function($this->core, $name, GetBucketOptions::export($options));
-        return BucketSettings::import($result);
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_GET_BUCKET,
+            GetBucketOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $obsHandler->addBucketName($name);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGet';
+                $result = $function($this->core, $name, GetBucketOptions::export($options));
+                return BucketSettings::import($result);
+            }
+        );
     }
 
     /**
@@ -113,13 +156,19 @@ class BucketManager implements BucketManagerInterface
      */
     public function getAllBuckets(?GetAllBucketsOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGetAll';
-        $result = $function($this->core, GetAllBucketsOptions::export($options));
-        $buckets = [];
-        foreach ($result as $bucket) {
-            $buckets[] = BucketSettings::import($bucket);
-        }
-        return $buckets;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_GET_ALL_BUCKETS,
+            GetAllBucketsOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGetAll';
+                $result = $function($this->core, GetAllBucketsOptions::export($options));
+                $buckets = [];
+                foreach ($result as $bucket) {
+                    $buckets[] = BucketSettings::import($bucket);
+                }
+                return $buckets;
+            }
+        );
     }
 
     /**
@@ -131,7 +180,15 @@ class BucketManager implements BucketManagerInterface
      */
     public function flush(string $name, ?FlushBucketOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketFlush';
-        $function($this->core, $name, FlushBucketOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_BM_FLUSH_BUCKET,
+            FlushBucketOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $obsHandler->addBucketName($name);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketFlush';
+                $function($this->core, $name, FlushBucketOptions::export($options));
+            }
+        );
     }
 }

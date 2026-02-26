@@ -21,6 +21,8 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Extension;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
 
 class UserManager implements UserManagerInterface
 {
@@ -29,14 +31,21 @@ class UserManager implements UserManagerInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @internal
      * @param $core
+     * @param ObservabilityContext $observability
      * @since 4.0.0
      */
-    public function __construct($core)
+    public function __construct($core, ObservabilityContext $observability)
     {
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_MANAGEMENT
+        );
     }
 
     /**
@@ -49,9 +58,15 @@ class UserManager implements UserManagerInterface
      */
     public function getUser(string $name, ?GetUserOptions $options = null): UserAndMetadata
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGet';
-        $result = $function($this->core, $name, GetUserOptions::export($options));
-        return UserAndMetadata::import($result);
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_GET_USER,
+            GetUserOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGet';
+                $result = $function($this->core, $name, GetUserOptions::export($options));
+                return UserAndMetadata::import($result);
+            }
+        );
     }
 
     /**
@@ -63,14 +78,20 @@ class UserManager implements UserManagerInterface
      */
     public function getAllUsers(?GetAllUsersOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGetAll';
-        $result = $function($this->core, GetAllUsersOptions::export($options));
-        $users = [];
-        foreach ($result as $user) {
-            $users[] = UserAndMetadata::import($user);
-        }
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_GET_ALL_USERS,
+            GetAllUsersOptions::getParentSpan($options),
+            function ($obsHandler) use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGetAll';
+                $result = $function($this->core, GetAllUsersOptions::export($options));
+                $users = [];
+                foreach ($result as $user) {
+                    $users[] = UserAndMetadata::import($user);
+                }
 
-        return $users;
+                return $users;
+            }
+        );
     }
 
     /**
@@ -82,8 +103,14 @@ class UserManager implements UserManagerInterface
      */
     public function upsertUser(User $user, ?UpsertUserOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userUpsert';
-        $function($this->core, User::export($user), UpsertUserOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_UPSERT_USER,
+            UpsertUserOptions::getParentSpan($options),
+            function ($obsHandler) use ($user, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userUpsert';
+                $function($this->core, User::export($user), UpsertUserOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -95,8 +122,14 @@ class UserManager implements UserManagerInterface
      */
     public function dropUser(string $name, ?DropUserOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userDrop';
-        $function($this->core, $name, DropUserOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_DROP_USER,
+            DropUserOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userDrop';
+                $function($this->core, $name, DropUserOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -109,13 +142,19 @@ class UserManager implements UserManagerInterface
      */
     public function getRoles(?GetRolesOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\roleGetAll';
-        $result = $function($this->core, GetRolesOptions::export($options));
-        foreach ($result as $role) {
-            $roles[] = RoleAndDescription::import($role);
-        }
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_GET_ROLES,
+            GetRolesOptions::getParentSpan($options),
+            function ($obsHandler) use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\roleGetAll';
+                $result = $function($this->core, GetRolesOptions::export($options));
+                foreach ($result as $role) {
+                    $roles[] = RoleAndDescription::import($role);
+                }
 
-        return $roles;
+                return $roles;
+            }
+        );
     }
 
     /**
@@ -128,9 +167,15 @@ class UserManager implements UserManagerInterface
      */
     public function getGroup(string $name, ?GetGroupOptions $options = null): Group
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGet';
-        $result = $function($this->core, $name, GetGroupOptions::export($options));
-        return Group::import($result);
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_GET_GROUP,
+            GetGroupOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGet';
+                $result = $function($this->core, $name, GetGroupOptions::export($options));
+                return Group::import($result);
+            }
+        );
     }
 
     /**
@@ -143,14 +188,20 @@ class UserManager implements UserManagerInterface
      */
     public function getAllGroups(?GetAllGroupsOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGetAll';
-        $result = $function($this->core, GetAllGroupsOptions::export($options));
-        $groups = [];
-        foreach ($result as $group) {
-            $groups[] = Group::import($group);
-        }
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_GET_ALL_GROUPS,
+            GetAllGroupsOptions::getParentSpan($options),
+            function ($obsHandler) use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGetAll';
+                $result = $function($this->core, GetAllGroupsOptions::export($options));
+                $groups = [];
+                foreach ($result as $group) {
+                    $groups[] = Group::import($group);
+                }
 
-        return $groups;
+                return $groups;
+            }
+        );
     }
 
     /**
@@ -162,8 +213,14 @@ class UserManager implements UserManagerInterface
      */
     public function upsertGroup(Group $group, ?UpsertGroupOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupUpsert';
-        $function($this->core, Group::export($group), UpsertGroupOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_UPSERT_GROUP,
+            UpsertGroupOptions::getParentSpan($options),
+            function ($obsHandler) use ($group, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupUpsert';
+                $function($this->core, Group::export($group), UpsertGroupOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -175,8 +232,14 @@ class UserManager implements UserManagerInterface
      */
     public function dropGroup(string $name, ?DropGroupOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupDrop';
-        $function($this->core, $name, DropGroupOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_DROP_GROUP,
+            DropGroupOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupDrop';
+                $function($this->core, $name, DropGroupOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -187,7 +250,13 @@ class UserManager implements UserManagerInterface
      */
     public function changePassword(string $newPassword, ?ChangePasswordOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\passwordChange';
-        $function($this->core, $newPassword, ChangePasswordOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_UM_CHANGE_PASSWORD,
+            ChangePasswordOptions::getParentSpan($options),
+            function ($obsHandler) use ($newPassword, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\passwordChange';
+                $function($this->core, $newPassword, ChangePasswordOptions::export($options));
+            }
+        );
     }
 }

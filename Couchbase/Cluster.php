@@ -311,7 +311,7 @@ class Cluster implements ClusterInterface
      */
     public function buckets(): BucketManager
     {
-        return new BucketManager($this->core);
+        return new BucketManager($this->core, $this->observability);
     }
 
     /**
@@ -322,7 +322,7 @@ class Cluster implements ClusterInterface
      */
     public function users(): UserManager
     {
-        return new UserManager($this->core);
+        return new UserManager($this->core, $this->observability);
     }
 
     /**
@@ -333,7 +333,7 @@ class Cluster implements ClusterInterface
      */
     public function analyticsIndexes(): AnalyticsIndexManager
     {
-        return new AnalyticsIndexManager($this->core);
+        return new AnalyticsIndexManager($this->core, $this->observability);
     }
 
     /**
@@ -344,7 +344,7 @@ class Cluster implements ClusterInterface
      */
     public function queryIndexes(): QueryIndexManager
     {
-        return new QueryIndexManager($this->core);
+        return new QueryIndexManager($this->core, $this->observability);
     }
 
     /**
@@ -354,7 +354,7 @@ class Cluster implements ClusterInterface
      */
     public function searchIndexes(): SearchIndexManager
     {
-        return new SearchIndexManager($this->core);
+        return new SearchIndexManager($this->core, $this->observability);
     }
 
     /**

@@ -162,7 +162,7 @@ class Bucket implements BucketInterface
      */
     public function collections(): CollectionManager
     {
-        return new CollectionManager($this->core, $this->name);
+        return new CollectionManager($this->core, $this->name, $this->observability);
     }
 
     /**
