@@ -475,10 +475,10 @@ jobs:
           - nts
           - zts
         server:
+          - 8.0.0
           - 7.6.3
           - 7.2.7
           - 7.1.6
-          - 7.0.5
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -518,6 +518,7 @@ jobs:
                   - cbas
             docker:
               kv-memory: 1600
+              fts-memory: 2000
         run: |
           CLUSTER_ID=$(cbdinocluster -v allocate --def="${CLUSTERCONFIG}")
           CONNECTION_STRING=$(cbdinocluster -v connstr "${CLUSTER_ID}")
