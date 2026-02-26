@@ -21,6 +21,9 @@ namespace Couchbase\Management;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Extension;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityHandler;
 
 class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterface
 {
@@ -32,22 +35,31 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     private $core;
 
+    private ObservabilityContext $observability;
 
     /**
      * @param string $collectionName
      * @param string $scopeName
      * @param string $bucketName
      * @param $core
+     * @param ObservabilityContext $observability
      *
      * @internal
      * @since 4.1.2
      */
-    public function __construct(string $collectionName, string $scopeName, string $bucketName, $core)
+    public function __construct(string $collectionName, string $scopeName, string $bucketName, $core, ObservabilityContext $observability)
     {
         $this->collectionName = $collectionName;
         $this->scopeName = $scopeName;
         $this->bucketName = $bucketName;
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            bucketName: $bucketName,
+            scopeName: $scopeName,
+            collectionName: $collectionName,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_QUERY
+        );
     }
 
     /**
@@ -61,15 +73,21 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function getAllIndexes(?GetAllQueryIndexesOptions $options = null): array
     {
-        $exported = GetAllQueryIndexesOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexGetAll';
-        $responses = $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
-        return array_map(
-            function (array $response) {
-                return new QueryIndex($response);
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_GET_ALL_INDEXES,
+            GetAllQueryIndexesOptions::getParentSpan($options),
+            function () use ($options) {
+                $exported = GetAllQueryIndexesOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexGetAll';
+                $responses = $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+                return array_map(
+                    function (array $response) {
+                        return new QueryIndex($response);
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -85,10 +103,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function createIndex(string $indexName, array $keys, ?CreateQueryIndexOptions $options = null)
     {
-        $exported = CreateQueryIndexOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreate';
-        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported);
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_CREATE_INDEX,
+            CreateQueryIndexOptions::getParentSpan($options),
+            function () use ($indexName, $keys, $options) {
+                $exported = CreateQueryIndexOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreate';
+                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported);
+            }
+        );
     }
 
     /**
@@ -101,10 +125,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function createPrimaryIndex(?CreateQueryPrimaryIndexOptions $options = null)
     {
-        $exported = CreateQueryPrimaryIndexOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreatePrimary';
-        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_CREATE_PRIMARY_INDEX,
+            CreateQueryPrimaryIndexOptions::getParentSpan($options),
+            function () use ($options) {
+                $exported = CreateQueryPrimaryIndexOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreatePrimary';
+                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+            }
+        );
     }
 
     /**
@@ -118,10 +148,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function dropIndex(string $indexName, ?DropQueryIndexOptions $options = null)
     {
-        $exported = DropQueryIndexOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDrop';
-        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $exported);
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_DROP_INDEX,
+            DropQueryIndexOptions::getParentSpan($options),
+            function () use ($indexName, $options) {
+                $exported = DropQueryIndexOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDrop';
+                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $exported);
+            }
+        );
     }
 
     /**
@@ -134,10 +170,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function dropPrimaryIndex(?DropQueryPrimaryIndexOptions $options = null)
     {
-        $exported = DropQueryPrimaryIndexOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDropPrimary';
-        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_DROP_PRIMARY_INDEX,
+            DropQueryPrimaryIndexOptions::getParentSpan($options),
+            function () use ($options) {
+                $exported = DropQueryPrimaryIndexOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDropPrimary';
+                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+            }
+        );
     }
 
     /**
@@ -150,10 +192,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function buildDeferredIndexes(?BuildQueryIndexesOptions $options = null)
     {
-        $exported = BuildQueryIndexesOptions::export($options);
-        $this->checkOptions($exported);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexBuildDeferred';
-        $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_BUILD_DEFERRED_INDEXES,
+            BuildQueryIndexesOptions::getParentSpan($options),
+            function () use ($options) {
+                $exported = BuildQueryIndexesOptions::export($options);
+                $this->checkOptions($exported);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexBuildDeferred';
+                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported);
+            }
+        );
     }
 
     /**
@@ -168,50 +216,58 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
      */
     public function watchIndexes(array $indexNames, int $timeoutMilliseconds, ?WatchQueryIndexesOptions $options = null)
     {
-        $exported = WatchQueryIndexesOptions::export($options);
-        $this->checkOptions($exported);
-        if (array_key_exists("watchPrimary", $exported) && $exported["watchPrimary"]) {
-            $indexNames [] = "#primary";
-        }
-        $deadline = (int)(microtime(true) * 1000) + $timeoutMilliseconds;
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_QM_WATCH_INDEXES,
+            WatchQueryIndexesOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($indexNames, $timeoutMilliseconds, $options) {
+                $exported = WatchQueryIndexesOptions::export($options);
+                $this->checkOptions($exported);
+                if (array_key_exists("watchPrimary", $exported) && $exported["watchPrimary"]) {
+                    $indexNames [] = "#primary";
+                }
+                $deadline = (int)(microtime(true) * 1000) + $timeoutMilliseconds;
 
-        while (true) {
-            $now = (int)(microtime(true) * 1000);
-            if ($now >= $deadline) {
-                throw new UnambiguousTimeoutException(
-                    sprintf(
-                        "Failed to find all indexes online within the allotted time (%dms)",
-                        $timeoutMilliseconds
-                    )
-                );
-            }
-            $options = GetAllQueryIndexesOptions::build()->timeout($deadline - $now);
-            $foundIndexes = $this->getAllIndexes($options);
-            $onlineIndexes = [];
-            /**
-             * @var QueryIndex $index
-             */
-            foreach ($foundIndexes as $index) {
-                if ($index->state() == "online") {
-                    $onlineIndexes[$index->name()] = true;
+                while (true) {
+                    $now = (int)(microtime(true) * 1000);
+                    if ($now >= $deadline) {
+                        throw new UnambiguousTimeoutException(
+                            sprintf(
+                                "Failed to find all indexes online within the allotted time (%dms)",
+                                $timeoutMilliseconds
+                            )
+                        );
+                    }
+                    $getAllOptions = GetAllQueryIndexesOptions::build()
+                        ->timeout($deadline - $now)
+                        ->parentSpan($obsHandler->getOpSpan());
+                    $foundIndexes = $this->getAllIndexes($getAllOptions);
+                    $onlineIndexes = [];
+                    /**
+                     * @var QueryIndex $index
+                     */
+                    foreach ($foundIndexes as $index) {
+                        if ($index->state() == "online") {
+                            $onlineIndexes[$index->name()] = true;
+                        }
+                    }
+                    $allOnline = true;
+                    /**
+                     * @var string $name
+                     */
+                    foreach ($indexNames as $name) {
+                        if (!array_key_exists($name, $onlineIndexes)) {
+                            $allOnline = false;
+                            break;
+                        }
+                    }
+                    if ($allOnline) {
+                        break;
+                    }
+
+                    usleep(100_000); /* wait for 100ms */
                 }
             }
-            $allOnline = true;
-            /**
-             * @var string $name
-             */
-            foreach ($indexNames as $name) {
-                if (!array_key_exists($name, $onlineIndexes)) {
-                    $allOnline = false;
-                    break;
-                }
-            }
-            if ($allOnline) {
-                break;
-            }
-
-            usleep(100_000); /* wait for 100ms */
-        }
+        );
     }
 
     /**
