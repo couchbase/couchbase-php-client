@@ -21,18 +21,25 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Extension;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
 
 class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
 {
     private $core;
     private string $bucketName;
     private string $scopeName;
+    private ObservabilityContext $observability;
 
-    public function __construct($core, string $bucketName, string $scopeName)
+    public function __construct($core, string $bucketName, string $scopeName, ObservabilityContext $observability)
     {
         $this->core = $core;
         $this->bucketName = $bucketName;
         $this->scopeName = $scopeName;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH
+        );
     }
 
     /**
@@ -46,10 +53,16 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getIndex(string $indexName, ?GetSearchIndexOptions $options = null): SearchIndex
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGet';
-        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_GET_INDEX,
+            GetSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGet';
+                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options));
 
-        return SearchIndex::import($result);
+                return SearchIndex::import($result);
+            }
+        );
     }
 
     /**
@@ -62,13 +75,19 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getAllIndexes(?GetAllSearchIndexesOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetAll';
-        $result = $function($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options));
-        $indexes = [];
-        foreach ($result as $index) {
-            $indexes[] = SearchIndex::import($index);
-        }
-        return $indexes;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_GET_ALL_INDEXES,
+            GetAllSearchIndexesOptions::getParentSpan($options),
+            function ($obsHandler) use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetAll';
+                $result = $function($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options));
+                $indexes = [];
+                foreach ($result as $index) {
+                    $indexes[] = SearchIndex::import($index);
+                }
+                return $indexes;
+            }
+        );
     }
 
     /**
@@ -81,8 +100,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function upsertIndex(SearchIndex $indexDefinition, ?UpsertSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexUpsert';
-        $function($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_UPSERT_INDEX,
+            UpsertSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexDefinition, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexUpsert';
+                $function($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -95,8 +120,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function dropIndex(string $name, ?DropSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDrop';
-        $function($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_DROP_INDEX,
+            DropSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDrop';
+                $function($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -110,9 +141,15 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function getIndexedDocumentsCount(string $indexName, ?GetIndexedSearchIndexOptions $options = null): int
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetDocumentsCount';
-        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options));
-        return $result['count'];
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_GET_INDEXED_DOCUMENTS_COUNT,
+            GetIndexedSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetDocumentsCount';
+                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options));
+                return $result['count'];
+            }
+        );
     }
 
     /**
@@ -125,8 +162,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function pauseIngest(string $indexName, ?PauseIngestSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestPause';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_PAUSE_INGEST,
+            PauseIngestSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestPause';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -139,8 +182,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function resumeIngest(string $indexName, ?ResumeIngestSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestResume';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_RESUME_INGEST,
+            ResumeIngestSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestResume';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -153,8 +202,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function allowQuerying(string $indexName, ?AllowQueryingSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingAllow';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_ALLOW_QUERYING,
+            AllowQueryingSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingAllow';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -167,8 +222,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function disallowQuerying(string $indexName, ?DisallowQueryingSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingDisallow';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_DISALLOW_QUERYING,
+            DisallowQueryingSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingDisallow';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -181,8 +242,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function freezePlan(string $indexName, ?FreezePlanSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanFreeze';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_FREEZE_PLAN,
+            FreezePlanSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanFreeze';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -195,8 +262,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function unfreezePlan(string $indexName, ?UnfreezePlanSearchIndexOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanUnfreeze';
-        $function($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_UNFREEZE_PLAN,
+            UnfreezePlanSearchIndexOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanUnfreeze';
+                $function($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -211,8 +284,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
      */
     public function analyzeDocument(string $indexName, $document, ?AnalyzeDocumentOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDocumentAnalyze';
-        $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
-        return json_decode($result["analysis"], true);
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SM_ANALYZE_DOCUMENT,
+            AnalyzeDocumentOptions::getParentSpan($options),
+            function ($obsHandler) use ($indexName, $document, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDocumentAnalyze';
+                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options));
+                return json_decode($result["analysis"], true);
+            }
+        );
     }
 }

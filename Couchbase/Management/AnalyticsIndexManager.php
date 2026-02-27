@@ -23,6 +23,8 @@ namespace Couchbase\Management;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Extension;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
 
 class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
 {
@@ -31,12 +33,18 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @internal
      */
-    public function __construct($core)
+    public function __construct($core, ObservabilityContext $observability)
     {
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_ANALYTICS
+        );
     }
 
     /**
@@ -49,8 +57,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function createDataverse(string $dataverseName, ?CreateAnalyticsDataverseOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseCreate';
-        $function($this->core, $dataverseName, CreateAnalyticsDataverseOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_CREATE_DATAVERSE,
+            CreateAnalyticsDataverseOptions::getParentSpan($options),
+            function () use ($dataverseName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseCreate';
+                $function($this->core, $dataverseName, CreateAnalyticsDataverseOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -63,8 +77,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function dropDataverse(string $dataverseName, ?DropAnalyticsDataverseOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseDrop';
-        $function($this->core, $dataverseName, DropAnalyticsDataverseOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_DROP_DATAVERSE,
+            DropAnalyticsDataverseOptions::getParentSpan($options),
+            function () use ($dataverseName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDataverseDrop';
+                $function($this->core, $dataverseName, DropAnalyticsDataverseOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -78,8 +98,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function createDataset(string $datasetName, string $bucketName, ?CreateAnalyticsDatasetOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetCreate';
-        $function($this->core, $datasetName, $bucketName, CreateAnalyticsDatasetOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_CREATE_DATASET,
+            CreateAnalyticsDatasetOptions::getParentSpan($options),
+            function () use ($datasetName, $bucketName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetCreate';
+                $function($this->core, $datasetName, $bucketName, CreateAnalyticsDatasetOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -92,8 +118,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function dropDataset(string $datasetName, ?DropAnalyticsDatasetOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetDrop';
-        $function($this->core, $datasetName, DropAnalyticsDatasetOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_DROP_DATASET,
+            DropAnalyticsDatasetOptions::getParentSpan($options),
+            function () use ($datasetName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetDrop';
+                $function($this->core, $datasetName, DropAnalyticsDatasetOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -106,13 +138,19 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function getAllDatasets(?GetAllAnalyticsDatasetsOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetGetAll';
-        $result = $function($this->core, GetAllAnalyticsDatasetsOptions::export($options));
-        $datasets = [];
-        foreach ($result as $dataset) {
-            $datasets[] = AnalyticsDataset::import($dataset);
-        }
-        return $datasets;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_GET_ALL_DATASETS,
+            GetAllAnalyticsDatasetsOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsDatasetGetAll';
+                $result = $function($this->core, GetAllAnalyticsDatasetsOptions::export($options));
+                $datasets = [];
+                foreach ($result as $dataset) {
+                    $datasets[] = AnalyticsDataset::import($dataset);
+                }
+                return $datasets;
+            }
+        );
     }
 
     /**
@@ -127,8 +165,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function createIndex(string $datasetName, string $indexName, array $fields, ?CreateAnalyticsIndexOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexCreate';
-        $function($this->core, $datasetName, $indexName, $fields, CreateAnalyticsIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_CREATE_INDEX,
+            CreateAnalyticsIndexOptions::getParentSpan($options),
+            function () use ($datasetName, $indexName, $fields, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexCreate';
+                $function($this->core, $datasetName, $indexName, $fields, CreateAnalyticsIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -142,8 +186,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function dropIndex(string $datasetName, string $indexName, ?DropAnalyticsIndexOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexDrop';
-        $function($this->core, $datasetName, $indexName, DropAnalyticsIndexOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_DROP_INDEX,
+            DropAnalyticsIndexOptions::getParentSpan($options),
+            function () use ($datasetName, $indexName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexDrop';
+                $function($this->core, $datasetName, $indexName, DropAnalyticsIndexOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -156,13 +206,19 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function getAllIndexes(?GetAllAnalyticsIndexesOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexGetAll';
-        $result = $function($this->core, GetAllAnalyticsIndexesOptions::export($options));
-        $indexes = [];
-        foreach ($result as $index) {
-            $indexes[] = AnalyticsIndex::import($index);
-        }
-        return $indexes;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_GET_ALL_INDEXES,
+            GetAllAnalyticsIndexesOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsIndexGetAll';
+                $result = $function($this->core, GetAllAnalyticsIndexesOptions::export($options));
+                $indexes = [];
+                foreach ($result as $index) {
+                    $indexes[] = AnalyticsIndex::import($index);
+                }
+                return $indexes;
+            }
+        );
     }
 
     /**
@@ -174,8 +230,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function connectLink(?ConnectAnalyticsLinkOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkConnect';
-        $function($this->core, ConnectAnalyticsLinkOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_CONNECT_LINK,
+            ConnectAnalyticsLinkOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkConnect';
+                $function($this->core, ConnectAnalyticsLinkOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -187,8 +249,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function disconnectLink(?DisconnectAnalyticsLinkOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDisconnect';
-        $function($this->core, DisconnectAnalyticsLinkOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_DISCONNECT_LINK,
+            DisconnectAnalyticsLinkOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDisconnect';
+                $function($this->core, DisconnectAnalyticsLinkOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -202,10 +270,16 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function getPendingMutations(?GetAnalyticsPendingMutationsOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsPendingMutationsGet';
-        $results = $function($this->core, GetAnalyticsPendingMutationsOptions::export($options));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_GET_PENDING_MUTATIONS,
+            GetAnalyticsPendingMutationsOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsPendingMutationsGet';
+                $results = $function($this->core, GetAnalyticsPendingMutationsOptions::export($options));
 
-        return GetAnalyticsPendingMutationsOptions::import($results);
+                return GetAnalyticsPendingMutationsOptions::import($results);
+            }
+        );
     }
 
     /**
@@ -222,8 +296,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function createLink(AnalyticsLink $link, ?CreateAnalyticsLinkOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkCreate';
-        $function($this->core, $link->export(), CreateAnalyticsLinkOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_CREATE_LINK,
+            CreateAnalyticsLinkOptions::getParentSpan($options),
+            function () use ($link, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkCreate';
+                $function($this->core, $link->export(), CreateAnalyticsLinkOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -240,8 +320,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function replaceLink(AnalyticsLink $link, ?ReplaceAnalyticsLinkOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkReplace';
-        $function($this->core, $link->export(), ReplaceAnalyticsLinkOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_REPLACE_LINK,
+            ReplaceAnalyticsLinkOptions::getParentSpan($options),
+            function () use ($link, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkReplace';
+                $function($this->core, $link->export(), ReplaceAnalyticsLinkOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -255,8 +341,14 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function dropLink(string $linkName, string $dataverseName, ?DropAnalyticsLinkOptions $options = null): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDrop';
-        $function($this->core, $linkName, $dataverseName, DropAnalyticsLinkOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_DROP_LINK,
+            DropAnalyticsLinkOptions::getParentSpan($options),
+            function () use ($linkName, $dataverseName, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkDrop';
+                $function($this->core, $linkName, $dataverseName, DropAnalyticsLinkOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -272,12 +364,18 @@ class AnalyticsIndexManager implements AnalyticsIndexManagerInterface
      */
     public function getLinks(?GetAnalyticsLinksOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkGetAll';
-        $result = $function($this->core, GetAnalyticsLinksOptions::export($options));
-        $links = [];
-        foreach ($result as $link) {
-            $links[] = AnalyticsLink::import($link);
-        }
-        return $links;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_AM_GET_LINKS,
+            GetAnalyticsLinksOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsLinkGetAll';
+                $result = $function($this->core, GetAnalyticsLinksOptions::export($options));
+                $links = [];
+                foreach ($result as $link) {
+                    $links[] = AnalyticsLink::import($link);
+                }
+                return $links;
+            }
+        );
     }
 }
