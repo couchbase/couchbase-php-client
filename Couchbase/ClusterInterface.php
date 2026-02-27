@@ -20,6 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Management\BucketManagerInterface;
+use Couchbase\Management\QueryIndexManagerInterface;
+use Couchbase\Management\UserManagerInterface;
+use Couchbase\Management\AnalyticsIndexManagerInterface;
+use Couchbase\Management\SearchIndexManagerInterface;
+
 interface ClusterInterface
 {
     public function bucket(string $name): BucketInterface;
@@ -31,4 +37,14 @@ interface ClusterInterface
     public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult;
 
     public function setAuthenticator(Authenticator $authenticator): void;
+
+    public function buckets(): BucketManagerInterface;
+
+    public function users(): UserManagerInterface;
+
+    public function analyticsIndexes(): AnalyticsIndexManagerInterface;
+
+    public function queryIndexes(): QueryIndexManagerInterface;
+
+    public function searchIndexes(): SearchIndexManagerInterface;
 }

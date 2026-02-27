@@ -23,9 +23,13 @@ namespace Couchbase\Protostellar;
 
 use Couchbase\AnalyticsOptions;
 use Couchbase\AnalyticsResult;
+use Couchbase\Authenticator;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Management\AnalyticsIndexManagerInterface;
+use Couchbase\Management\UserManagerInterface;
 use Couchbase\Protostellar\Internal\Analytics\AnalyticsResponseConverter;
 use Couchbase\Protostellar\Internal\Client;
 use Couchbase\Protostellar\Internal\Query\QueryResponseConverter;
@@ -129,5 +133,20 @@ class Cluster implements ClusterInterface
     public function searchIndexes(): SearchIndexManager
     {
         return new SearchIndexManager($this->client);
+    }
+
+    public function setAuthenticator(Authenticator $authenticator): void
+    {
+        throw new UnsupportedOperationException("setAuthenticator is not supported with the couchbase2 scheme yet");
+    }
+
+    public function users(): UserManagerInterface
+    {
+        throw new UnsupportedOperationException("User management is not supported with the couchbase2 scheme yet");
+    }
+
+    public function analyticsIndexes(): AnalyticsIndexManagerInterface
+    {
+        throw new UnsupportedOperationException("Analytics index management is not supported with the couchbase2 scheme yet");
     }
 }
