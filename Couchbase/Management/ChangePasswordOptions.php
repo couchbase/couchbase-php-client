@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class ChangePasswordOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     public function __construct()
     {
@@ -51,6 +54,27 @@ class ChangePasswordOptions
         return $this;
     }
 
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ChangePasswordOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ChangePasswordOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ChangePasswordOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
 
     /**
      * @internal

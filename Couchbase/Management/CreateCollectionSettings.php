@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\RequestSpan;
 
 class CreateCollectionSettings
 {

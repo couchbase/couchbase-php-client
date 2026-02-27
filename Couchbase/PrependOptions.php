@@ -27,6 +27,7 @@ class PrependOptions
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -85,6 +86,36 @@ class PrependOptions
     {
         $this->cas = $cas;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return PrependOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): PrependOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?PrependOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?PrependOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

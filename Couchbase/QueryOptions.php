@@ -46,6 +46,7 @@ class QueryOptions
     private ?string $queryContext = null;
     private ?bool $useReplica = null;
     private Transcoder $transcoder;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -399,6 +400,28 @@ class QueryOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return QueryOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): QueryOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?QueryOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * Returns associated transcoder.
      *
      * @param QueryOptions|null $options
@@ -412,6 +435,21 @@ class QueryOptions
             return JsonTranscoder::getInstance();
         }
         return $options->transcoder;
+    }
+
+    /**
+     * @internal
+     */
+    public static function usingParameters(?QueryOptions $options): bool
+    {
+        if ($options == null) {
+            return false;
+        }
+
+        $hasPositional = !is_null($options->positionalParameters) && count($options->positionalParameters) > 0;
+        $hasNamed = !is_null($options->namedParameters) && count($options->namedParameters) > 0;
+
+        return $hasPositional || $hasNamed;
     }
 
     public static function export(?QueryOptions $options, ?string $scopeName = null, ?string $bucketName = null): array
@@ -448,8 +486,7 @@ class QueryOptions
 
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
-
-            "consistentWith" => $options->consistentWith == null ? null : $options->consistentWith->export(),
+            'consistentWith' => $options->consistentWith == null ? null : $options->consistentWith->export(),
             'scanConsistency' => $options->scanConsistency,
             'scanWait' => $options->scanWaitMilliseconds,
             'scanCap' => $options->scanCap,

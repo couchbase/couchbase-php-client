@@ -28,7 +28,22 @@ namespace Couchbase;
  */
 class NoopMeter implements Meter
 {
+    private static ?NoopMeter $instance = null;
+
     public function valueRecorder(string $name, array $tags): ValueRecorder
     {
+        return NoopValueRecorder::getInstance();
+    }
+
+    public function close(): void
+    {
+    }
+
+    public static function getInstance(): NoopMeter
+    {
+        if (self::$instance === null) {
+            self::$instance = new NoopMeter();
+        }
+        return self::$instance;
     }
 }

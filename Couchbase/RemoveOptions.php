@@ -27,6 +27,7 @@ class RemoveOptions
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -85,6 +86,36 @@ class RemoveOptions
         }
         $this->durabilityLevel = $level;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return RemoveOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): RemoveOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?RemoveOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?RemoveOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

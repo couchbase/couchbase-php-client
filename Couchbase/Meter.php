@@ -34,4 +34,6 @@ interface Meter
      * @return ValueRecorder
      */
     public function valueRecorder(string $name, array $tags): ValueRecorder;
+
+    public function close(): void;
 }

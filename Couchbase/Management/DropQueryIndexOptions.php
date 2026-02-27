@@ -20,12 +20,15 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DropQueryIndexOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $scopeName = null;
     private ?string $collectionName = null;
     private ?bool $ignoreIfDoesNotExist = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -88,6 +91,28 @@ class DropQueryIndexOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DropQueryIndexOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DropQueryIndexOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DropQueryIndexOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

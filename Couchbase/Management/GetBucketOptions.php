@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class GetBucketOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -46,6 +49,28 @@ class GetBucketOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetBucketOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetBucketOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetBucketOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

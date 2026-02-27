@@ -23,6 +23,9 @@ namespace Couchbase;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\TimeoutException;
+use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityHandler;
+use Couchbase\Observability\ObservabilityContext;
 
 /**
  * BinaryCollection is an object containing functionality for performing KeyValue operations against the server with
@@ -38,20 +41,30 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @param string $name
      * @param string $scopeName
      * @param string $bucketName
      * @param resource $core
+     * @param ObservabilityContext $observability
      *
      * @internal
      */
-    public function __construct(string $name, string $scopeName, string $bucketName, $core)
+    public function __construct(string $name, string $scopeName, string $bucketName, $core, ObservabilityContext $observability)
     {
         $this->name = $name;
         $this->scopeName = $scopeName;
         $this->bucketName = $bucketName;
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            bucketName: $bucketName,
+            scopeName:$scopeName,
+            collectionName: $name,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_KV
+        );
     }
 
     /**
@@ -80,17 +93,25 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function append(string $id, string $value, ?AppendOptions $options = null): MutationResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentAppend';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $value,
-            AppendOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_APPEND,
+            AppendOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
+                $obsHandler->addDurabilityLevel(AppendOptions::getDurabilityLevel($options));
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentAppend';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $value,
+                    AppendOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -108,17 +129,25 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function prepend(string $id, string $value, ?PrependOptions $options = null): MutationResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentPrepend';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $value,
-            PrependOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_PREPEND,
+            PrependOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
+                $obsHandler->addDurabilityLevel(PrependOptions::getDurabilityLevel($options));
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentPrepend';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $value,
+                    PrependOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -135,16 +164,24 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function increment(string $id, ?IncrementOptions $options = null): CounterResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentIncrement';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            IncrementOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_INCREMENT,
+            IncrementOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $obsHandler->addDurabilityLevel(IncrementOptions::getDurabilityLevel($options));
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentIncrement';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    IncrementOptions::export($options)
+                );
+                return new CounterResult($response);
+            }
         );
-        return new CounterResult($response);
     }
 
     /**
@@ -161,15 +198,23 @@ class BinaryCollection implements BinaryCollectionInterface
      */
     public function decrement(string $id, ?DecrementOptions $options = null): CounterResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentDecrement';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            DecrementOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_DECREMENT,
+            DecrementOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $obsHandler->addDurabilityLevel(DecrementOptions::getDurabilityLevel($options));
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentDecrement';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    DecrementOptions::export($options)
+                );
+                return new CounterResult($response);
+            }
         );
-        return new CounterResult($response);
     }
 }

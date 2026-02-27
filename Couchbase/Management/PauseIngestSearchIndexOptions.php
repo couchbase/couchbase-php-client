@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class PauseIngestSearchIndexOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to make code more readable
@@ -47,6 +50,28 @@ class PauseIngestSearchIndexOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return PauseIngestSearchIndexOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): PauseIngestSearchIndexOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?PauseIngestSearchIndexOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

@@ -69,6 +69,9 @@ class ClusterOptions
     private ?TransactionsConfiguration $transactionsConfiguration = null;
     private ?AppTelemetryConfiguration $appTelemetryConfiguration = null;
 
+    private ?RequestTracer $tracer = null;
+    private ?Meter $meter = null;
+
     private ?Authenticator $authenticator;
 
     /**
@@ -517,6 +520,30 @@ class ClusterOptions
     }
 
     /**
+     * @param RequestTracer $tracer
+     *
+     * @return ClusterOptions
+     * @since 4.5.0
+     */
+    public function tracer(RequestTracer $tracer): ClusterOptions
+    {
+        $this->tracer = $tracer;
+        return $this;
+    }
+
+    /**
+     * @param Meter $meter
+     *
+     * @return ClusterOptions
+     * @since 4.5.0
+     */
+    public function meter(Meter $meter): ClusterOptions
+    {
+        $this->meter = $meter;
+        return $this;
+    }
+
+    /**
      * Select the server group to use for replica APIs.
      *
      * For some use-cases it might be necessary to restrict list of the nodes,
@@ -655,5 +682,32 @@ class ClusterOptions
             'appTelemetryConfiguration' =>
                 $this->appTelemetryConfiguration == null ? null : $this->appTelemetryConfiguration->export(),
         ];
+    }
+
+    /**
+     * @param ClusterOptions|null $options
+     * @return RequestTracer
+     * @internal
+     */
+    public static function getTracer(?ClusterOptions $options): RequestTracer
+    {
+        if ($options == null || $options->tracer == null) {
+            // TODO(DC): Change this to ThresholdLoggingTracer once implemented on the PHP side.
+            return NoopTracer::getInstance();
+        }
+        return $options->tracer;
+    }
+
+    /**
+     * @param ClusterOptions|null $options
+     * @return Meter
+     * @internal
+     */
+    public static function getMeter(?ClusterOptions $options): Meter
+    {
+        if ($options == null || $options->meter == null) {
+            return NoopMeter::getInstance();
+        }
+        return $options->meter;
     }
 }

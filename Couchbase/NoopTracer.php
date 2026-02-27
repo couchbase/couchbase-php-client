@@ -28,7 +28,22 @@ namespace Couchbase;
  */
 class NoopTracer implements RequestTracer
 {
-    public function requestSpan(string $name, ?RequestSpan $parent = null)
+    private static ?NoopTracer $instance = null;
+
+    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null)
     {
+        return NoopSpan::getInstance();
+    }
+
+    public function close(): void
+    {
+    }
+
+    public static function getInstance(): NoopTracer
+    {
+        if (self::$instance == null) {
+            self::$instance = new NoopTracer();
+        }
+        return self::$instance;
     }
 }

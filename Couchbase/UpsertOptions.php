@@ -31,6 +31,7 @@ class UpsertOptions
     private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -134,6 +135,28 @@ class UpsertOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return UpsertOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): UpsertOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?UpsertOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * Delegates encoding of the document to associated transcoder
      *
      * @param UpsertOptions|null $options
@@ -148,6 +171,14 @@ class UpsertOptions
             return JsonTranscoder::getInstance()->encode($document);
         }
         return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?UpsertOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

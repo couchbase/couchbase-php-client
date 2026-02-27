@@ -26,6 +26,7 @@ class LookupInAnyReplicaOptions
     private string $readPreference;
     private ?int $timeoutMilliseconds = null;
     private ?bool $withExpiry = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.1.6
@@ -122,6 +123,28 @@ class LookupInAnyReplicaOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return LookupInAnyReplicaOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): LookupInAnyReplicaOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?LookupInAnyReplicaOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

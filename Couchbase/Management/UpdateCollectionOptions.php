@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class UpdateCollectionOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      *  Static helper to keep code more readable
@@ -50,12 +53,33 @@ class UpdateCollectionOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return UpdateCollectionOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): UpdateCollectionOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?UpdateCollectionOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * @param UpdateCollectionOptions|null $options
      * @return array
      * @internal
      * @since 4.1.3
      */
-
     public static function export(?UpdateCollectionOptions $options): array
     {
         if ($options == null) {

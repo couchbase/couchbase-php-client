@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DisallowQueryingSearchIndexOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to make code more readable
@@ -48,6 +51,29 @@ class DisallowQueryingSearchIndexOptions
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
     }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DisallowQueryingSearchIndexOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DisallowQueryingSearchIndexOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DisallowQueryingSearchIndexOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
 
     /**
      * @param DisallowQueryingSearchIndexOptions|null $options

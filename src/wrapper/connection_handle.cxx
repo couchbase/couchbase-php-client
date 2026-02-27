@@ -27,6 +27,7 @@
 
 #define COUCHBASE_CXX_CLIENT_IGNORE_CORE_DEPRECATIONS
 #include <core/cluster.hxx>
+#include <core/cluster_label_listener.hxx>
 #include <core/error_context/analytics.hxx>
 #include <core/error_context/search.hxx>
 #include <core/error_context/view.hxx>
@@ -802,6 +803,23 @@ is_mutation_token_valid(const mutation_token& token) -> bool
   return !token.bucket_name().empty() && token.partition_uuid() > 0;
 }
 } // namespace
+
+COUCHBASE_API
+void
+connection_handle::cluster_labels(zval* return_value)
+{
+  array_init(return_value);
+  const auto [cluster_name, cluster_uuid] =
+    impl_->core_api().cluster_label_listener()->cluster_labels();
+  if (cluster_name.has_value()) {
+    add_assoc_stringl(
+      return_value, "clusterName", cluster_name.value().data(), cluster_name.value().size());
+  }
+  if (cluster_uuid.has_value()) {
+    add_assoc_stringl(
+      return_value, "clusterUuid", cluster_uuid.value().data(), cluster_uuid.value().size());
+  }
+}
 
 COUCHBASE_API
 auto

@@ -45,6 +45,7 @@ class ViewOptions
     private ?int $onError = null;
     private ?bool $debug = null;
     private ?int $namespace = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -393,6 +394,28 @@ class ViewOptions
     {
         $this->namespace = $namespace;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ViewOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ViewOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ViewOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     public static function export(?ViewOptions $options): array

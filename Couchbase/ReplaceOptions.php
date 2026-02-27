@@ -32,6 +32,7 @@ class ReplaceOptions
     private ?bool $preserveExpiry = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -150,6 +151,28 @@ class ReplaceOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ReplaceOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ReplaceOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ReplaceOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * Delegates encoding of the document to associated transcoder
      *
      * @param ReplaceOptions|null $options
@@ -164,6 +187,14 @@ class ReplaceOptions
             return JsonTranscoder::getInstance()->encode($document);
         }
         return $options->transcoder->encode($document);
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?ReplaceOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

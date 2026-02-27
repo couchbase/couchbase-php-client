@@ -31,6 +31,9 @@ use Couchbase\Management\QueryIndexManager;
 use Couchbase\Management\SearchIndexManager;
 use Couchbase\Management\User;
 use Couchbase\Management\UserManager;
+use Couchbase\Observability\ObservabilityHandler;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
 
 /**
  * Cluster is an object containing functionality for performing cluster level operations
@@ -41,7 +44,7 @@ use Couchbase\Management\UserManager;
 class Cluster implements ClusterInterface
 {
     private ClusterOptions $options;
-
+    private ObservabilityContext $observability;
     private string $connectionHash;
     /**
      * @var resource
@@ -64,6 +67,7 @@ class Cluster implements ClusterInterface
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
         $this->core = $function($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
+        $this->observability = new ObservabilityContext($this->core, ClusterOptions::getTracer($options), ClusterOptions::getMeter($options));
     }
 
     /**
@@ -153,7 +157,7 @@ class Cluster implements ClusterInterface
      */
     public function bucket(string $name): BucketInterface
     {
-        return new Bucket($name, $this->core);
+        return new Bucket($name, $this->core, $this->observability);
     }
 
     /**
@@ -171,10 +175,19 @@ class Cluster implements ClusterInterface
      */
     public function query(string $statement, ?QueryOptions $options = null): QueryResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-        $result = $function($this->core, $statement, QueryOptions::export($options));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_QUERY,
+            QueryOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($statement, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_QUERY);
+                $obsHandler->addQueryStatement($statement, $options);
 
-        return new QueryResult($result, QueryOptions::getTranscoder($options));
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
+                $result = $function($this->core, $statement, QueryOptions::export($options));
+
+                return new QueryResult($result, QueryOptions::getTranscoder($options));
+            }
+        );
     }
 
     /**
@@ -191,10 +204,19 @@ class Cluster implements ClusterInterface
      */
     public function analyticsQuery(string $statement, ?AnalyticsOptions $options = null): AnalyticsResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-        $result = $function($this->core, $statement, AnalyticsOptions::export($options));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_ANALYTICS_QUERY,
+            AnalyticsOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($statement, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_ANALYTICS);
+                $obsHandler->addQueryStatement($statement, $options);
 
-        return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
+                $result = $function($this->core, $statement, AnalyticsOptions::export($options));
+
+                return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
+            }
+        );
     }
 
     /**
@@ -210,10 +232,18 @@ class Cluster implements ClusterInterface
      */
     public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-        $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SEARCH_QUERY,
+            SearchOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($indexName, $query, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
-        return new SearchResult($result);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+
+                return new SearchResult($result);
+            }
+        );
     }
 
     /**
@@ -231,21 +261,29 @@ class Cluster implements ClusterInterface
      */
     public function search(string $indexName, SearchRequest $request, ?SearchOptions $options = null): SearchResult
     {
-        $exportedRequest = SearchRequest::export($request);
-        $exportedOptions = SearchOptions::export($options);
-        $exportedOptions["showRequest"] = false;
-        $query = $exportedRequest['searchQuery'];
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SEARCH_QUERY,
+            SearchOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($indexName, $request, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
-        if (!$exportedRequest['vectorSearch']) {
-            $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-            $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
-            return new SearchResult($result);
-        }
+                $exportedRequest = SearchRequest::export($request);
+                $exportedOptions = SearchOptions::export($options);
+                $exportedOptions["showRequest"] = false;
+                $query = $exportedRequest['searchQuery'];
 
-        $vectorSearch = $exportedRequest['vectorSearch'];
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-        $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
-        return new SearchResult($result);
+                if (!$exportedRequest['vectorSearch']) {
+                    $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
+                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
+                    return new SearchResult($result);
+                }
+
+                $vectorSearch = $exportedRequest['vectorSearch'];
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
+                $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+                return new SearchResult($result);
+            }
+        );
     }
 
     /**

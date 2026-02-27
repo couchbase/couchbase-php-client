@@ -31,6 +31,7 @@ class DecrementOptions
     private ?int $expiryTimestamp = null;
     private int $delta = 1;
     private ?int $initialValue = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -124,6 +125,36 @@ class DecrementOptions
             $this->expirySeconds = (int)$seconds;
         }
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DecrementOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DecrementOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DecrementOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?DecrementOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

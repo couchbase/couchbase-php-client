@@ -29,6 +29,9 @@ use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\CollectionQueryIndexManager;
+use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityHandler;
+use Couchbase\Observability\ObservabilityContext;
 use Couchbase\Utilities\ExpiryHelper;
 use DateTimeInterface;
 
@@ -40,6 +43,7 @@ class Collection implements CollectionInterface
     private string $bucketName;
     private string $scopeName;
     private string $name;
+    private ObservabilityContext $observability;
     /**
      * @var resource
      */
@@ -50,19 +54,32 @@ class Collection implements CollectionInterface
      * @param string $scopeName
      * @param string $bucketName
      * @param resource $core
+     * @param ObservabilityContext $observability
      *
      * @internal
      *
      * @since 4.0.0
      */
-    public function __construct(string $name, string $scopeName, string $bucketName, $core)
+    public function __construct(
+        string $name,
+        string $scopeName,
+        string $bucketName,
+        $core,
+        ObservabilityContext $observability
+    )
     {
         $this->name = $name;
         $this->scopeName = $scopeName;
         $this->bucketName = $bucketName;
         $this->core = $core;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            bucketName:$bucketName,
+            scopeName: $scopeName,
+            collectionName: $name,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_KV
+        );
     }
-
 
     /**
      * Get the name of the bucket.
@@ -116,16 +133,22 @@ class Collection implements CollectionInterface
      */
     public function get(string $id, ?GetOptions $options = null): GetResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . "\\documentGet";
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            GetOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET,
+            GetOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . "\\documentGet";
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    GetOptions::export($options)
+                );
+                return new GetResult($response, GetOptions::getTranscoder($options));
+            }
         );
-        return new GetResult($response, GetOptions::getTranscoder($options));
     }
 
     /**
@@ -141,16 +164,22 @@ class Collection implements CollectionInterface
      */
     public function exists(string $id, ?ExistsOptions $options = null): ExistsResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentExists';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            ExistsOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_EXISTS,
+            ExistsOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentExists';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    ExistsOptions::export($options)
+                );
+                return new ExistsResult($response);
+            }
         );
-        return new ExistsResult($response);
     }
 
     /**
@@ -169,17 +198,23 @@ class Collection implements CollectionInterface
      */
     public function getAndLock(string $id, int $lockTimeSeconds, ?GetAndLockOptions $options = null): GetResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndLock';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $lockTimeSeconds,
-            GetAndLockOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_AND_LOCK,
+            GetAndLockOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $lockTimeSeconds, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndLock';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $lockTimeSeconds,
+                    GetAndLockOptions::export($options)
+                );
+                return new GetResult($response, GetAndLockOptions::getTranscoder($options));
+            }
         );
-        return new GetResult($response, GetAndLockOptions::getTranscoder($options));
     }
 
     /**
@@ -197,18 +232,24 @@ class Collection implements CollectionInterface
      */
     public function getAndTouch(string $id, $expiry, ?GetAndTouchOptions $options = null): GetResult
     {
-        $expirySeconds = ExpiryHelper::parseExpiry($expiry);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndTouch';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $expirySeconds,
-            GetAndTouchOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_AND_TOUCH,
+            GetAndTouchOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $expiry, $options) {
+                $expirySeconds = ExpiryHelper::parseExpiry($expiry);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndTouch';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $expirySeconds,
+                    GetAndTouchOptions::export($options)
+                );
+                return new GetResult($response, GetAndTouchOptions::getTranscoder($options));
+            }
         );
-        return new GetResult($response, GetAndTouchOptions::getTranscoder($options));
     }
 
     /**
@@ -226,16 +267,22 @@ class Collection implements CollectionInterface
      */
     public function getAnyReplica(string $id, ?GetAnyReplicaOptions $options = null): GetReplicaResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAnyReplica';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            GetAnyReplicaOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_ANY_REPLICA,
+            GetAnyReplicaOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAnyReplica';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    GetAnyReplicaOptions::export($options)
+                );
+                return new GetReplicaResult($response, GetAnyReplicaOptions::getTranscoder($options));
+            }
         );
-        return new GetReplicaResult($response, GetAnyReplicaOptions::getTranscoder($options));
     }
 
     /**
@@ -252,20 +299,26 @@ class Collection implements CollectionInterface
      */
     public function getAllReplicas(string $id, ?GetAllReplicasOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAllReplicas';
-        $responses = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            GetAllReplicasOptions::export($options)
-        );
-        return array_map(
-            function (array $response) use ($options) {
-                return new GetReplicaResult($response, GetAllReplicasOptions::getTranscoder($options));
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_ALL_REPLICAS,
+            GetAllReplicasOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAllReplicas';
+                $responses = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    GetAllReplicasOptions::export($options)
+                );
+                return array_map(
+                    function (array $response) use ($options) {
+                        return new GetReplicaResult($response, GetAllReplicasOptions::getTranscoder($options));
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -283,19 +336,30 @@ class Collection implements CollectionInterface
      */
     public function upsert(string $id, $value, ?UpsertOptions $options = null): MutationResult
     {
-        $encoded = UpsertOptions::encodeDocument($options, $value);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsert';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded[0],
-            $encoded[1],
-            UpsertOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UPSERT,
+            UpsertOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
+                $obsHandler->addDurabilityLevel(UpsertOptions::getDurabilityLevel($options));
+                $encoded = $obsHandler->withRequestEncodingSpan(
+                    function () use ($options, $value) {
+                        return UpsertOptions::encodeDocument($options, $value);
+                    }
+                );
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsert';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded[0],
+                    $encoded[1],
+                    UpsertOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -313,19 +377,30 @@ class Collection implements CollectionInterface
      */
     public function insert(string $id, $value, ?InsertOptions $options = null): MutationResult
     {
-        $encoded = InsertOptions::encodeDocument($options, $value);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentInsert';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded[0],
-            $encoded[1],
-            InsertOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_INSERT,
+            InsertOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
+                $obsHandler->addDurabilityLevel(InsertOptions::getDurabilityLevel($options));
+                $encoded = $obsHandler->withRequestEncodingSpan(
+                    function () use ($options, $value) {
+                        return InsertOptions::encodeDocument($options, $value);
+                    }
+                );
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentInsert';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded[0],
+                    $encoded[1],
+                    InsertOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -344,19 +419,30 @@ class Collection implements CollectionInterface
      */
     public function replace(string $id, $value, ?ReplaceOptions $options = null): MutationResult
     {
-        $encoded = ReplaceOptions::encodeDocument($options, $value);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentReplace';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded[0],
-            $encoded[1],
-            ReplaceOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_REPLACE,
+            ReplaceOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
+                $obsHandler->addDurabilityLevel(ReplaceOptions::getDurabilityLevel($options));
+                $encoded = $obsHandler->withRequestEncodingSpan(
+                    function () use ($options, $value) {
+                        return ReplaceOptions::encodeDocument($options, $value);
+                    }
+                );
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentReplace';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded[0],
+                    $encoded[1],
+                    ReplaceOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -374,16 +460,24 @@ class Collection implements CollectionInterface
      */
     public function remove(string $id, ?RemoveOptions $options = null): MutationResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemove';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            RemoveOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_REMOVE,
+            RemoveOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $options) {
+                $obsHandler->addDurabilityLevel(RemoveOptions::getDurabilityLevel($options));
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemove';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    RemoveOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -403,17 +497,23 @@ class Collection implements CollectionInterface
      */
     public function unlock(string $id, string $cas, ?UnlockOptions $options = null): Result
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUnlock';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $cas,
-            UnlockOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UNLOCK,
+            UnlockOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $cas, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUnlock';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $cas,
+                    UnlockOptions::export($options)
+                );
+                return new Result($response);
+            }
         );
-        return new Result($response);
     }
 
     /**
@@ -431,18 +531,24 @@ class Collection implements CollectionInterface
      */
     public function touch(string $id, $expiry, ?TouchOptions $options = null): MutationResult
     {
-        $expirySeconds = ExpiryHelper::parseExpiry($expiry);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentTouch';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $expirySeconds,
-            TouchOptions::export($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_TOUCH,
+            TouchOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $expiry, $options) {
+                $expirySeconds = ExpiryHelper::parseExpiry($expiry);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentTouch';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $expirySeconds,
+                    TouchOptions::export($options)
+                );
+                return new MutationResult($response);
+            }
         );
-        return new MutationResult($response);
     }
 
     /**
@@ -460,26 +566,32 @@ class Collection implements CollectionInterface
      */
     public function lookupIn(string $id, array $specs, ?LookupInOptions $options = null): LookupInResult
     {
-        $encoded = array_map(
-            function (LookupInSpec $item) {
-                return $item->export();
-            },
-            $specs
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_LOOKUP_IN,
+            LookupInOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $specs, $options) {
+                $encoded = array_map(
+                    function (LookupInSpec $item) {
+                        return $item->export();
+                    },
+                    $specs
+                );
+                if ($options != null && $options->needToFetchExpiry()) {
+                    $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+                }
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupIn';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded,
+                    LookupInOptions::export($options)
+                );
+                return new LookupInResult($response, LookupInOptions::getTranscoder($options));
+            }
         );
-        if ($options != null && $options->needToFetchExpiry()) {
-            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
-        }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupIn';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded,
-            LookupInOptions::export($options)
-        );
-        return new LookupInResult($response, LookupInOptions::getTranscoder($options));
     }
 
     /**
@@ -497,26 +609,32 @@ class Collection implements CollectionInterface
      */
     public function lookupInAnyReplica(string $id, array $specs, ?LookupInAnyReplicaOptions $options = null): LookupInReplicaResult
     {
-        $encoded = array_map(
-            function (LookupInSpec $item) {
-                return $item->export();
-            },
-            $specs
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_LOOKUP_IN_ANY_REPLICA,
+            LookupInAnyReplicaOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $specs, $options) {
+                $encoded = array_map(
+                    function (LookupInSpec $item) {
+                        return $item->export();
+                    },
+                    $specs
+                );
+                if ($options != null && $options->needToFetchExpiry()) {
+                    $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+                }
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAnyReplica';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded,
+                    LookupInAnyReplicaOptions::export($options)
+                );
+                return new LookupInReplicaResult($response, LookupInAnyReplicaOptions::getTranscoder($options));
+            }
         );
-        if ($options != null && $options->needToFetchExpiry()) {
-            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
-        }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAnyReplica';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded,
-            LookupInAnyReplicaOptions::export($options)
-        );
-        return new LookupInReplicaResult($response, LookupInAnyReplicaOptions::getTranscoder($options));
     }
 
     /**
@@ -535,30 +653,36 @@ class Collection implements CollectionInterface
      */
     public function lookupInAllReplicas(string $id, array $specs, ?LookupInAllReplicasOptions $options = null): array
     {
-        $encoded = array_map(
-            function (LookupInSpec $item) {
-                return $item->export();
-            },
-            $specs
-        );
-        if ($options != null && $options->needToFetchExpiry()) {
-            $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
-        }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAllReplicas';
-        $responses = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded,
-            LookupInAllReplicasOptions::export($options)
-        );
-        return array_map(
-            function (array $response) use ($options) {
-                return new LookupInReplicaResult($response, LookupInAllReplicasOptions::getTranscoder($options));
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_LOOKUP_IN_ALL_REPLICAS,
+            LookupInAllReplicasOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $specs, $options) {
+                $encoded = array_map(
+                    function (LookupInSpec $item) {
+                        return $item->export();
+                    },
+                    $specs
+                );
+                if ($options != null && $options->needToFetchExpiry()) {
+                    $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
+                }
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAllReplicas';
+                $responses = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded,
+                    LookupInAllReplicasOptions::export($options)
+                );
+                return array_map(
+                    function (array $response) use ($options) {
+                        return new LookupInReplicaResult($response, LookupInAllReplicasOptions::getTranscoder($options));
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -578,23 +702,36 @@ class Collection implements CollectionInterface
      */
     public function mutateIn(string $id, array $specs, ?MutateInOptions $options = null): MutateInResult
     {
-        $encoded = array_map(
-            function (MutateInSpec $item) use ($options) {
-                return $item->export($options);
-            },
-            $specs
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_MUTATE_IN,
+            MutateInOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $specs, $options) {
+                $obsHandler->addDurabilityLevel(MutateInOptions::getDurabilityLevel($options));
+
+                $encoded = $obsHandler->withRequestEncodingSpan(
+                    function () use ($options, $specs) {
+                        return array_map(
+                            function (MutateInSpec $item) use ($options) {
+                                return $item->export($options);
+                            },
+                            $specs
+                        );
+                    }
+                );
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentMutateIn';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    $encoded,
+                    MutateInOptions::export($options)
+                );
+                return new MutateInResult($response);
+            }
         );
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentMutateIn';
-        $response = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $id,
-            $encoded,
-            MutateInOptions::export($options)
-        );
-        return new MutateInResult($response);
     }
 
     /**
@@ -609,20 +746,26 @@ class Collection implements CollectionInterface
      */
     public function getMulti(array $ids, ?GetOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetMulti';
-        $responses = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $ids,
-            GetOptions::export($options)
-        );
-        return array_map(
-            function (array $response) use ($options) {
-                return new GetResult($response, GetOptions::getTranscoder($options));
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_MULTI,
+            GetOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($ids, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetMulti';
+                $responses = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $ids,
+                    GetOptions::export($options)
+                );
+                return array_map(
+                    function (array $response) use ($options) {
+                        return new GetResult($response, GetOptions::getTranscoder($options));
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -642,23 +785,29 @@ class Collection implements CollectionInterface
      */
     public function scan(ScanType $scanType, ?ScanOptions $options = null): ScanResults
     {
-        if ($scanType instanceof RangeScan) {
-            $type = RangeScan::export($scanType);
-        } elseif ($scanType instanceof SamplingScan) {
-            $type = SamplingScan::export($scanType);
-        } elseif ($scanType instanceof PrefixScan) {
-            $type = PrefixScan::export($scanType);
-        } else {
-            throw new InvalidArgumentException("ScanType must be a RangeScan, SamplingScan, or PrefixScan");
-        }
-        return new ScanResults(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $type,
-            ScanOptions::export($options),
-            ScanOptions::getTranscoder($options)
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_SCAN,
+            ScanOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($scanType, $options) {
+                if ($scanType instanceof RangeScan) {
+                    $type = RangeScan::export($scanType);
+                } elseif ($scanType instanceof SamplingScan) {
+                    $type = SamplingScan::export($scanType);
+                } elseif ($scanType instanceof PrefixScan) {
+                    $type = PrefixScan::export($scanType);
+                } else {
+                    throw new InvalidArgumentException("ScanType must be a RangeScan, SamplingScan, or PrefixScan");
+                }
+                return new ScanResults(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $type,
+                    ScanOptions::export($options),
+                    ScanOptions::getTranscoder($options)
+                );
+            }
         );
     }
 
@@ -676,20 +825,26 @@ class Collection implements CollectionInterface
      */
     public function removeMulti(array $entries, ?RemoveOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemoveMulti';
-        $responses = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $entries,
-            RemoveOptions::export($options)
-        );
-        return array_map(
-            function (array $response) {
-                return new MutationResult($response);
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_REMOVE_MULTI,
+            RemoveOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($entries, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemoveMulti';
+                $responses = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $entries,
+                    RemoveOptions::export($options)
+                );
+                return array_map(
+                    function (array $response) {
+                        return new MutationResult($response);
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -706,37 +861,43 @@ class Collection implements CollectionInterface
      */
     public function upsertMulti(array $entries, ?UpsertOptions $options = null): array
     {
-        $encodedEntries = array_map(
-            function (array $entry) use ($options) {
-                if (count($entry) != 2) {
-                    throw new InvalidArgumentException("expected ID-VALUE tuple to have exactly 2 entries");
-                }
-                if (!is_string($entry[0])) {
-                    throw new InvalidArgumentException("expected first entry (ID) of ID-VALUE tuple to be a string");
-                }
-                $encoded = UpsertOptions::encodeDocument($options, $entry[1]);
-                return [
-                    $entry[0],   // id
-                    $encoded[0], // value
-                    $encoded[1], // flags
-                ];
-            },
-            $entries
-        );
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsertMulti';
-        $responses = $function(
-            $this->core,
-            $this->bucketName,
-            $this->scopeName,
-            $this->name,
-            $encodedEntries,
-            UpsertOptions::export($options)
-        );
-        return array_map(
-            function (array $response) {
-                return new MutationResult($response);
-            },
-            $responses
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_UPSERT_MULTI,
+            UpsertOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($entries, $options) {
+                $encodedEntries = array_map(
+                    function (array $entry) use ($options) {
+                        if (count($entry) != 2) {
+                            throw new InvalidArgumentException("expected ID-VALUE tuple to have exactly 2 entries");
+                        }
+                        if (!is_string($entry[0])) {
+                            throw new InvalidArgumentException("expected first entry (ID) of ID-VALUE tuple to be a string");
+                        }
+                        $encoded = UpsertOptions::encodeDocument($options, $entry[1]);
+                        return [
+                            $entry[0],   // id
+                            $encoded[0], // value
+                            $encoded[1], // flags
+                        ];
+                    },
+                    $entries
+                );
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsertMulti';
+                $responses = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $encodedEntries,
+                    UpsertOptions::export($options)
+                );
+                return array_map(
+                    function (array $response) {
+                        return new MutationResult($response);
+                    },
+                    $responses
+                );
+            }
         );
     }
 
@@ -748,7 +909,7 @@ class Collection implements CollectionInterface
      */
     public function binary(): BinaryCollection
     {
-        return new BinaryCollection($this->name, $this->scopeName, $this->bucketName, $this->core);
+        return new BinaryCollection($this->name, $this->scopeName, $this->bucketName, $this->core, $this->observability);
     }
 
     /**

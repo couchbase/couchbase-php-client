@@ -105,6 +105,16 @@ class TestEnvironment
         return $this->consistencyUtils;
     }
 
+    public function username(): string
+    {
+        return $this->username;
+    }
+
+    public function password(): string
+    {
+        return $this->password;
+    }
+
     public function useProtostellar(): bool
     {
         if ($this->useCaves()) {

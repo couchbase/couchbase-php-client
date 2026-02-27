@@ -23,6 +23,7 @@ namespace Couchbase;
 class ExistsOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -47,6 +48,28 @@ class ExistsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return ExistsOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): ExistsOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?ExistsOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

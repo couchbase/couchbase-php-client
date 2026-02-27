@@ -20,11 +20,14 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class WatchQueryIndexesOptions
 {
     private ?string $scopeName = null;
     private ?string $collectionName = null;
     private ?bool $watchPrimary = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -75,6 +78,28 @@ class WatchQueryIndexesOptions
     {
         $this->watchPrimary = $shouldWatch;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return WatchQueryIndexesOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): WatchQueryIndexesOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?WatchQueryIndexesOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

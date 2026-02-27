@@ -302,6 +302,24 @@ PHP_FUNCTION(clusterVersion)
   RETURN_STRINGL(version.data(), version.size());
 }
 
+PHP_FUNCTION(clusterLabels)
+{
+  zval* connection = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 1)
+  Z_PARAM_RESOURCE(connection)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+
+  handle->cluster_labels(return_value);
+}
+
 PHP_FUNCTION(replicasConfiguredForBucket)
 {
   zval* connection = nullptr;
@@ -3870,6 +3888,10 @@ ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_clusterLabels, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_replicasConfiguredForBucket, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -4769,6 +4791,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, allowEnterpriseAnalytics, ai_CouchbaseExtension_allowEnterpriseAnalytics)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, version, ai_CouchbaseExtension_version)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, clusterVersion, ai_CouchbaseExtension_clusterVersion)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, clusterLabels, ai_CouchbaseExtension_clusterLabels)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, replicasConfiguredForBucket, ai_CouchbaseExtension_replicasConfiguredForBucket)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, createConnection, ai_CouchbaseExtension_createConnection)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, openBucket, ai_CouchbaseExtension_openBucket)

@@ -20,10 +20,13 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class DropAnalyticsDataverseOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?bool $ignoreIfDoesNotExist = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -60,6 +63,28 @@ class DropAnalyticsDataverseOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return DropAnalyticsDataverseOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): DropAnalyticsDataverseOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?DropAnalyticsDataverseOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

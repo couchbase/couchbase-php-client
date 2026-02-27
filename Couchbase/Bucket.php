@@ -23,6 +23,9 @@ namespace Couchbase;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\CollectionManager;
 use Couchbase\Management\ViewIndexManager;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityHandler;
+use Couchbase\Observability\ObservabilityConstants;
 
 /**
  * Bucket is an object containing functionality for performing bucket level operations
@@ -38,6 +41,8 @@ class Bucket implements BucketInterface
      */
     private $core;
 
+    private ObservabilityContext $observability;
+
     /**
      * @param string $name
      * @param resource $core
@@ -46,10 +51,12 @@ class Bucket implements BucketInterface
      *
      * @since 4.0.0
      */
-    public function __construct(string $name, $core)
+    public function __construct(string $name, $core, ObservabilityContext $observability)
     {
         $this->name = $name;
         $this->core = $core;
+        $this->observability = ObservabilityContext::from($observability, bucketName: $name);
+
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\openBucket';
         $function($this->core, $this->name);
     }
@@ -62,7 +69,7 @@ class Bucket implements BucketInterface
      */
     public function defaultScope(): ScopeInterface
     {
-        return new Scope("_default", $this->name, $this->core);
+        return new Scope("_default", $this->name, $this->core, $this->observability);
     }
 
     /**
@@ -73,7 +80,7 @@ class Bucket implements BucketInterface
      */
     public function defaultCollection(): CollectionInterface
     {
-        return new Collection("_default", "_default", $this->name, $this->core);
+        return new Collection("_default", "_default", $this->name, $this->core, $this->observability);
     }
 
     /**
@@ -86,7 +93,7 @@ class Bucket implements BucketInterface
      */
     public function scope(string $name): ScopeInterface
     {
-        return new Scope($name, $this->name, $this->core);
+        return new Scope($name, $this->name, $this->core, $this->observability);
     }
 
     /**
@@ -130,14 +137,21 @@ class Bucket implements BucketInterface
      */
     public function viewQuery(string $designDoc, string $viewName, ?ViewOptions $options = null): ViewResult
     {
-        $opts = ViewOptions::export($options);
-        $namespace = $opts["namespace"];
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_VIEW_QUERY,
+            ViewOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($designDoc, $viewName, $options) {
+                $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_VIEWS);
 
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewQuery';
+                $opts = ViewOptions::export($options);
+                $namespace = $opts["namespace"];
 
-        $result = $function($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewQuery';
+                $result = $function($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
 
-        return new ViewResult($result);
+                return new ViewResult($result);
+            }
+        );
     }
 
     /**

@@ -34,6 +34,7 @@ class MutateInOptions
     private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
     private string $storeSemantics;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -172,6 +173,28 @@ class MutateInOptions
     }
 
     /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return MutateInOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): MutateInOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?MutateInOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
      * Delegates encoding of the value to associated transcoder
      *
      * @param MutateInOptions|null $options
@@ -186,6 +209,14 @@ class MutateInOptions
             return JsonTranscoder::getInstance()->encode($document)[0];
         }
         return $options->transcoder->encode($document)[0];
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?MutateInOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

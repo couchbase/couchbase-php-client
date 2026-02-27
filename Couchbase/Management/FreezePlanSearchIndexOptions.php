@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class FreezePlanSearchIndexOptions
 {
     private ?int $timeoutMilliseconds;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to make code more readable
@@ -47,6 +50,28 @@ class FreezePlanSearchIndexOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return FreezePlanSearchIndexOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): FreezePlanSearchIndexOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?FreezePlanSearchIndexOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

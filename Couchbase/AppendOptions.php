@@ -27,6 +27,7 @@ class AppendOptions
     private ?int $timeoutMilliseconds = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -50,6 +51,20 @@ class AppendOptions
     public function timeout(int $milliseconds): AppendOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return AppendOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): AppendOptions
+    {
+        $this->parentSpan = $parentSpan;
         return $this;
     }
 
@@ -85,6 +100,22 @@ class AppendOptions
     {
         $this->cas = $cas;
         return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?AppendOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getDurabilityLevel(?AppendOptions $options): ?string
+    {
+        return $options?->durabilityLevel;
     }
 
     /**

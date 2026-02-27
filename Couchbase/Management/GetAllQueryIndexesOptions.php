@@ -20,11 +20,14 @@ declare(strict_types=1);
 
 namespace Couchbase\Management;
 
+use Couchbase\RequestSpan;
+
 class GetAllQueryIndexesOptions
 {
     private ?int $timeoutMilliseconds = null;
     private ?string $scopeName = null;
     private ?string $collectionName = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * Static helper to keep code more readable
@@ -73,6 +76,28 @@ class GetAllQueryIndexesOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetAllQueryIndexesOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetAllQueryIndexesOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetAllQueryIndexesOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**

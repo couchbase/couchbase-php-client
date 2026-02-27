@@ -20,21 +20,30 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Observability\StatusCode;
+
 /**
  * Represents a span of time an event occurs over.
  */
 interface RequestSpan
 {
     /**
-     * Adds an tag to this span.
+     * Adds a tag to this span.
      *
      * @param string $key The key of the tag to add.
      * @param int|string $value The value to assign to the tag.
      */
-    public function addTag(string $key, $value): void;
+    public function addTag(string $key, int|string $value): void;
 
     /**
      * Ends this span.
      */
-    public function end(): void;
+    public function end(?int $endTimestampNanoseconds = null): void;
+
+    /**
+     * Sets the status for this span.
+     *
+     * @param \Couchbase\Observability\StatusCode $statusCode The status to set.
+     */
+    public function setStatus(StatusCode $statusCode): void;
 }

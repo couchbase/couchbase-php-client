@@ -29,7 +29,10 @@ interface RequestTracer
      * Creates a new request span.
      *
      * @param string $name The name of the span.
-     * @param string|null $parent The parent of the span, if one exists.
+     * @param RequestSpan|null $parent The parent of the span, if one exists.
+     * @param int|null $startTimestampNanoseconds The start timestamp of the span in nanoseconds.
      */
-    public function requestSpan(string $name, ?RequestSpan $parent = null);
+    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null);
+
+    public function close(): void;
 }

@@ -26,6 +26,7 @@ class GetOptions
     private ?int $timeoutMilliseconds = null;
     private bool $withExpiry = false;
     private ?array $projections = null;
+    private ?RequestSpan $parentSpan = null;
 
     /**
      * @since 4.0.0
@@ -109,6 +110,28 @@ class GetOptions
     {
         $this->transcoder = $transcoder;
         return $this;
+    }
+
+    /**
+     * Sets the parent span.
+     *
+     * @param RequestSpan $parentSpan the parent span
+     *
+     * @return GetOptions
+     * @since 4.5.0
+     */
+    public function parentSpan(RequestSpan $parentSpan): GetOptions
+    {
+        $this->parentSpan = $parentSpan;
+        return $this;
+    }
+
+    /**
+     * @internal
+     */
+    public static function getParentSpan(?GetOptions $options): ?RequestSpan
+    {
+        return $options?->parentSpan;
     }
 
     /**
