@@ -310,5 +310,4 @@ notify_fork(const zend_string* fork_event) -> core_error_info
 
   return {};
 }
-
 } // namespace couchbase::php
