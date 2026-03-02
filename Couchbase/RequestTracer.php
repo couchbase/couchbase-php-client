@@ -20,8 +20,11 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\TracerException;
+
 /**
  * Represents a tracer capable of creating trace spans.
+ *
  */
 interface RequestTracer
 {
@@ -31,8 +34,12 @@ interface RequestTracer
      * @param string $name The name of the span.
      * @param RequestSpan|null $parent The parent of the span, if one exists.
      * @param int|null $startTimestampNanoseconds The start timestamp of the span in nanoseconds.
+     *
+     * @return RequestSpan
+     *
+     * @throws TracerException
      */
-    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null);
+    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null): RequestSpan;
 
     public function close(): void;
 }

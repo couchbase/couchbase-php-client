@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Exception\UnsupportedOperationException;
+use Couchbase\Exception\TracerException;
 
 /**
  * This implements a basic default tracer which keeps track of operations
@@ -32,10 +32,35 @@ use Couchbase\Exception\UnsupportedOperationException;
 class ThresholdLoggingTracer implements RequestTracer
 {
     /**
-     * @throws UnsupportedOperationException
+     * @var resource
      */
-    public function requestSpan(string $name, ?RequestSpan $parent = null)
+    private $core;
+
+    /**
+     * @internal The ThresholdLoggingTracer is not intended to be directly instantiated. Use the Threshold Logging options in the ClusterOptions.
+     */
+    public function __construct($core)
     {
-        throw new UnsupportedOperationException();
+        $this->core = $core;
+    }
+
+    /**
+     * @throws TracerException
+     */
+    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null): RequestSpan
+    {
+        if (!is_null($parent) && !($parent instanceof ThresholdLoggingSpan)) {
+            throw new TracerException('ThresholdLoggingTracer only supports parent spans of type ThresholdLoggingSpan');
+        }
+        if (!is_null($startTimestampNanoseconds)) {
+            throw new TracerException('ThresholdLoggingTracer does not support custom start timestamps');
+        }
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreSpanCreate';
+        $coreSpan = $function($this->core, $name, $parent?->core());
+        return new ThresholdLoggingSpan($coreSpan);
+    }
+
+    public function close(): void
+    {
     }
 }
