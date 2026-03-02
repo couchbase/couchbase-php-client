@@ -15,6 +15,7 @@
  */
 
 #include "wrapper/common.hxx"
+#include "wrapper/core_span_resource.hxx"
 #include "wrapper/logger.hxx"
 #include "wrapper/persistent_connections_cache.hxx"
 #include "wrapper/scan_result_resource.hxx"
@@ -173,6 +174,9 @@ PHP_MINIT_FUNCTION(couchbase)
                                       module_number));
   couchbase::php::set_scan_result_destructor_id(zend_register_list_destructors_ex(
     couchbase_destroy_core_scan_result, nullptr, "couchbase_scan_result", module_number));
+
+  couchbase::php::set_core_span_destructor_id(zend_register_list_destructors_ex(
+    couchbase::php::destroy_core_span_resource, nullptr, "couchbase_core_span", module_number));
 
   return SUCCESS;
 }
@@ -3853,6 +3857,84 @@ PHP_FUNCTION(analyticsLinkGetAll)
   }
 }
 
+static inline couchbase::php::core_span_resource*
+fetch_couchbase_core_span_from_resource(zval* resource)
+{
+  return static_cast<couchbase::php::core_span_resource*>(zend_fetch_resource(
+    Z_RES_P(resource), "couchbase_core_span", couchbase::php::get_core_span_destructor_id()));
+}
+
+PHP_FUNCTION(coreSpanCreate)
+{
+  zval* connection = nullptr;
+  zend_string* name = nullptr;
+  zval* parent_span = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(2, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(name)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_RESOURCE_OR_NULL(parent_span)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  couchbase::php::connection_handle* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+
+  couchbase::php::core_span_resource* parent_span_resource = nullptr;
+  if (parent_span != nullptr) {
+    parent_span_resource = fetch_couchbase_core_span_from_resource(parent_span);
+  }
+
+  auto core_span_resource =
+    couchbase::php::create_core_span_resource(handle, name, parent_span_resource);
+
+  RETURN_RES(core_span_resource);
+}
+
+PHP_FUNCTION(coreSpanEnd)
+{
+  zval* span = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 1)
+  Z_PARAM_RESOURCE(span)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* span_resource = fetch_couchbase_core_span_from_resource(span);
+  if (span_resource == nullptr) {
+    RETURN_THROWS();
+  }
+
+  span_resource->end();
+}
+
+PHP_FUNCTION(coreSpanAddTag)
+{
+  zval* span = nullptr;
+  zend_string* key = nullptr;
+  zval* value = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(3, 3)
+  Z_PARAM_RESOURCE(span)
+  Z_PARAM_STR(key)
+  Z_PARAM_ZVAL(value)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* span_resource = fetch_couchbase_core_span_from_resource(span);
+  if (span_resource == nullptr) {
+    RETURN_THROWS();
+  }
+
+  span_resource->add_tag(key, value);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
   php_info_print_table_start();
@@ -4784,6 +4866,22 @@ ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_coreSpanCreate, 0, 0, 2)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, parentSpan, IS_MIXED, 1)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_coreSpanEnd, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, span, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_coreSpanAddTag, 0, 0, 3)
+ZEND_ARG_TYPE_INFO(0, span, IS_MIXED, 0)
+ZEND_ARG_TYPE_INFO(0, name, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, notifyFork, ai_CouchbaseExtension_notifyFork)
@@ -4920,6 +5018,10 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, analyticsLinkReplace, ai_CouchbaseExtension_analyticsLinkReplace)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, analyticsLinkDrop, ai_CouchbaseExtension_analyticsLinkDrop)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, analyticsLinkGetAll, ai_CouchbaseExtension_analyticsLinkGetAll)
+
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanCreate, ai_CouchbaseExtension_coreSpanCreate)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanEnd, ai_CouchbaseExtension_coreSpanEnd)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanAddTag, ai_CouchbaseExtension_coreSpanAddTag)
         PHP_FE_END
 };
 

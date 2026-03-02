@@ -67,7 +67,12 @@ class Cluster implements ClusterInterface
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
         $this->core = $function($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
-        $this->observability = new ObservabilityContext($this->core, ClusterOptions::getTracer($options), ClusterOptions::getMeter($options));
+
+        $tracer = ClusterOptions::getTracer($options);
+        if (is_null($tracer)) {
+            $tracer = new ThresholdLoggingTracer($this->core);
+        }
+        $this->observability = new ObservabilityContext($this->core, $tracer, ClusterOptions::getMeter($options));
     }
 
     /**
