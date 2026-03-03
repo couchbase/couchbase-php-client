@@ -686,14 +686,13 @@ class ClusterOptions
 
     /**
      * @param ClusterOptions|null $options
-     * @return RequestTracer
+     * @return ?RequestTracer
      * @internal
      */
-    public static function getTracer(?ClusterOptions $options): RequestTracer
+    public static function getTracer(?ClusterOptions $options): ?RequestTracer
     {
-        if ($options == null || $options->tracer == null) {
-            // TODO(DC): Change this to ThresholdLoggingTracer once implemented on the PHP side.
-            return NoopTracer::getInstance();
+        if (is_null($options) || is_null($options->tracer)) {
+            return null;
         }
         return $options->tracer;
     }

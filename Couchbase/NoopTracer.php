@@ -30,7 +30,7 @@ class NoopTracer implements RequestTracer
 {
     private static ?NoopTracer $instance = null;
 
-    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null)
+    public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null): RequestSpan
     {
         return NoopSpan::getInstance();
     }
