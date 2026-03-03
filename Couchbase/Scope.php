@@ -198,6 +198,6 @@ class Scope implements ScopeInterface
      */
     public function searchIndexes(): ScopeSearchIndexManagerInterface
     {
-        return new ScopeSearchIndexManager($this->core, $this->bucketName, $this->name);
+        return new ScopeSearchIndexManager($this->core, $this->bucketName, $this->name, $this->observability);
     }
 }

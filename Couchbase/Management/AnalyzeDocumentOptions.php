@@ -24,7 +24,7 @@ use Couchbase\RequestSpan;
 
 class AnalyzeDocumentOptions
 {
-    private ?int $timeoutMilliseconds;
+    private ?int $timeoutMilliseconds = null;
     private ?RequestSpan $parentSpan = null;
 
     /**
