@@ -691,7 +691,7 @@ class ClusterOptions
      */
     public static function getTracer(?ClusterOptions $options): ?RequestTracer
     {
-        if (is_null($options) || is_null($options->tracer)) {
+        if (is_null($options)) {
             return null;
         }
         return $options->tracer;
@@ -699,13 +699,13 @@ class ClusterOptions
 
     /**
      * @param ClusterOptions|null $options
-     * @return Meter
+     * @return ?Meter
      * @internal
      */
-    public static function getMeter(?ClusterOptions $options): Meter
+    public static function getMeter(?ClusterOptions $options): ?Meter
     {
-        if ($options == null || $options->meter == null) {
-            return NoopMeter::getInstance();
+        if (is_null($options)) {
+            return null;
         }
         return $options->meter;
     }
