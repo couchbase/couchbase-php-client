@@ -116,6 +116,9 @@ public:
   void cluster_labels(zval* return_value);
 
   COUCHBASE_API
+  void record_core_meter_operation_duration(std::int64_t duration_us, zval* tags);
+
+  COUCHBASE_API
   auto document_upsert(zval* return_value,
                        const zend_string* bucket,
                        const zend_string* scope,
