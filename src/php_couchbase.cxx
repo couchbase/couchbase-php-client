@@ -3940,6 +3940,28 @@ PHP_FUNCTION(coreSpanAddTag)
   span_resource->add_tag(key, value);
 }
 
+PHP_FUNCTION(coreMeterRecordOperationDuration)
+{
+  zval* connection = nullptr;
+  std::int64_t value = 0;
+  zval* tags = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(3, 3)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_LONG(value)
+  Z_PARAM_ARRAY(tags)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  couchbase::php::connection_handle* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+
+  handle->record_core_meter_operation_duration(value, tags);
+}
+
 static PHP_MINFO_FUNCTION(couchbase)
 {
   php_info_print_table_start();
@@ -4887,6 +4909,12 @@ ZEND_ARG_TYPE_INFO(0, key, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, value, IS_MIXED, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_coreMeterRecordOperationDuration, 0, 0, 3)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, duration_us, IS_LONG, 0)
+ZEND_ARG_TYPE_INFO(0, tags, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, notifyFork, ai_CouchbaseExtension_notifyFork)
@@ -5027,6 +5055,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanCreate, ai_CouchbaseExtension_coreSpanCreate)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanEnd, ai_CouchbaseExtension_coreSpanEnd)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreSpanAddTag, ai_CouchbaseExtension_coreSpanAddTag)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, coreMeterRecordOperationDuration, ai_CouchbaseExtension_coreMeterRecordOperationDuration)
         PHP_FE_END
 };
 
