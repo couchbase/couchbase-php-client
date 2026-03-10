@@ -24,7 +24,7 @@ use Couchbase\RequestSpan;
 
 class UpdateCollectionOptions
 {
-    private ?int $timeoutMilliseconds;
+    private ?int $timeoutMilliseconds = null;
     private ?RequestSpan $parentSpan = null;
 
     /**
