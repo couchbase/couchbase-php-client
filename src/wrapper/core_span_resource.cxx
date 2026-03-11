@@ -24,8 +24,6 @@
 #include <core/cluster.hxx>
 #include <core/tracing/tracer_wrapper.hxx>
 
-#include <thread>
-
 namespace couchbase::php
 {
 static int core_span_destructor_id_{ 0 };
@@ -42,7 +40,7 @@ get_core_span_destructor_id() -> int
   return core_span_destructor_id_;
 }
 
-class core_span_resource::impl : public std::enable_shared_from_this<core_span_resource::impl>
+class core_span_resource::impl
 {
 public:
   explicit impl(std::shared_ptr<couchbase::tracing::request_span> span)

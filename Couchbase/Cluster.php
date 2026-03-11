@@ -72,7 +72,11 @@ class Cluster implements ClusterInterface
         if (is_null($tracer)) {
             $tracer = new ThresholdLoggingTracer($this->core);
         }
-        $this->observability = new ObservabilityContext($this->core, $tracer, ClusterOptions::getMeter($options));
+        $meter = ClusterOptions::getMeter($options);
+        if (is_null($meter)) {
+            $meter = new LoggingMeter($this->core);
+        }
+        $this->observability = new ObservabilityContext($this->core, $tracer, $meter);
     }
 
     /**

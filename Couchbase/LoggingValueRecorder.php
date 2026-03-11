@@ -20,33 +20,23 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
-use Couchbase\Observability\ObservabilityConstants;
-
-class LoggingMeter implements Meter
+class LoggingValueRecorder implements ValueRecorder
 {
     /**
      * @var resource
      */
     private $core;
+    private array $tags;
 
-    /**
-     * @internal The LoggingMeter is not intended to be directly instantiated. Use the Logging Meter options in the ClusterOptions.
-     */
-    public function __construct($core)
+    public function __construct($core, array $tags)
     {
         $this->core = $core;
+        $this->tags = $tags;
     }
 
-    public function valueRecorder(string $name, array $tags): ValueRecorder
+    public function recordValue(int $value): void
     {
-        if ($name != ObservabilityConstants::METER_NAME_OPERATION_DURATION) {
-            // The logging meter only uses the db.client.operation.duration metric
-            return new NoopValueRecorder();
-        }
-        return new LoggingValueRecorder($this->core, $tags);
-    }
-
-    function close(): void
-    {
+        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreMeterRecordOperationDuration';
+        $function($this->core, $value, $this->tags);
     }
 }

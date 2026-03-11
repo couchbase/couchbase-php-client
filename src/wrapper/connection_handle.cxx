@@ -33,6 +33,7 @@
 #include <core/error_context/view.hxx>
 #include <core/logger/logger.hxx>
 #include <core/management/bucket_settings.hxx>
+#include <core/metrics/meter_wrapper.hxx>
 #include <core/operations.hxx>
 #include <core/operations/document_view.hxx>
 #include <core/operations/management/analytics.hxx>
@@ -819,6 +820,41 @@ connection_handle::cluster_labels(zval* return_value)
     add_assoc_stringl(
       return_value, "clusterUuid", cluster_uuid.value().data(), cluster_uuid.value().size());
   }
+}
+
+namespace
+{
+auto
+zval_to_value_recorder_tags(const zval* tags) -> std::map<std::string, std::string>
+{
+  std::map<std::string, std::string> result{};
+  if (tags == nullptr || Z_TYPE_P(tags) != IS_ARRAY) {
+    return result;
+  }
+  const zend_string* key = nullptr;
+  const zval* value = nullptr;
+
+  ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(tags), key, value)
+  {
+    if (Z_TYPE_P(value) == IS_STRING) {
+      result[cb_string_new(key)] = cb_string_new(Z_STR_P(value));
+    }
+    // We ignore other types. We can't forward them to the C++ SDK's meter.
+    // This is not an issue at present, as this is only used for the LoggingMeter, which only needs
+    // the service and operation name tags, which are both strings.
+  }
+  ZEND_HASH_FOREACH_END();
+
+  return result;
+}
+} // namespace
+
+COUCHBASE_API
+void
+connection_handle::record_core_meter_operation_duration(std::int64_t duration_us, zval* tags)
+{
+  auto tag_map = zval_to_value_recorder_tags(tags);
+  impl_->core_api().meter()->record_value(tag_map, std::chrono::microseconds(duration_us));
 }
 
 COUCHBASE_API
