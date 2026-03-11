@@ -24,7 +24,7 @@ use Couchbase\RequestSpan;
 
 class DisallowQueryingSearchIndexOptions
 {
-    private ?int $timeoutMilliseconds;
+    private ?int $timeoutMilliseconds = null;
     private ?RequestSpan $parentSpan = null;
 
     /**
