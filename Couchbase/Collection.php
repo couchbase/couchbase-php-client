@@ -920,6 +920,6 @@ class Collection implements CollectionInterface
      */
     public function queryIndexes(): CollectionQueryIndexManager
     {
-        return new CollectionQueryIndexManager($this->name, $this->scopeName, $this->bucketName, $this->core);
+        return new CollectionQueryIndexManager($this->name, $this->scopeName, $this->bucketName, $this->core, $this->observability);
     }
 }

@@ -21,6 +21,8 @@ declare(strict_types=1);
 namespace Couchbase\Management;
 
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Observability\ObservabilityContext;
+use Couchbase\Observability\ObservabilityConstants;
 use Couchbase\Extension;
 
 class CollectionManager implements CollectionManagerInterface
@@ -30,10 +32,17 @@ class CollectionManager implements CollectionManagerInterface
      */
     private $core;
     private string $bucketName;
-    public function __construct($core, string $bucketName)
+    private ObservabilityContext $observability;
+
+    public function __construct($core, string $bucketName, ObservabilityContext $observability)
     {
         $this->core = $core;
         $this->bucketName = $bucketName;
+        $this->observability = ObservabilityContext::from(
+            $observability,
+            bucketName: $bucketName,
+            service: ObservabilityConstants::ATTR_VALUE_SERVICE_MANAGEMENT
+        );
     }
 
     /**
@@ -46,14 +55,19 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function getAllScopes(?GetAllScopesOptions $options = null): array
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeGetAll';
-
-        $result = $function($this->core, $this->bucketName, GetAllScopesOptions::export($options));
-        $scopes = [];
-        foreach ($result['scopes'] as $scope) {
-            $scopes[] = ScopeSpec::import($scope);
-        }
-        return $scopes;
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_GET_ALL_SCOPES,
+            GetAllScopesOptions::getParentSpan($options),
+            function () use ($options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeGetAll';
+                $result = $function($this->core, $this->bucketName, GetAllScopesOptions::export($options));
+                $scopes = [];
+                foreach ($result['scopes'] as $scope) {
+                    $scopes[] = ScopeSpec::import($scope);
+                }
+                return $scopes;
+            }
+        );
     }
 
     /**
@@ -65,8 +79,16 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function createScope(string $name, ?CreateScopeOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeCreate';
-        $function($this->core, $this->bucketName, $name, CreateScopeOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_CREATE_SCOPE,
+            CreateScopeOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $obsHandler->addScopeName($name);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeCreate';
+                $function($this->core, $this->bucketName, $name, CreateScopeOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -78,8 +100,16 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function dropScope(string $name, ?DropScopeOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeDrop';
-        $function($this->core, $this->bucketName, $name, DropScopeOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_DROP_SCOPE,
+            DropScopeOptions::getParentSpan($options),
+            function ($obsHandler) use ($name, $options) {
+                $obsHandler->addScopeName($name);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeDrop';
+                $function($this->core, $this->bucketName, $name, DropScopeOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -108,8 +138,17 @@ class CollectionManager implements CollectionManagerInterface
             $scopeName = $scopeName->scopeName();
         }
 
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionCreate';
-        $function($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_CREATE_COLLECTION,
+            CreateCollectionOptions::getParentSpan($options),
+            function ($obsHandler) use ($scopeName, $collectionName, $settings, $options) {
+                $obsHandler->addScopeName($scopeName);
+                $obsHandler->addCollectionName($collectionName);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionCreate';
+                $function($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -135,8 +174,18 @@ class CollectionManager implements CollectionManagerInterface
             $collectionName = $scopeName->name();
             $scopeName = $scopeName->scopeName();
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionDrop';
-        $function($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options));
+
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_DROP_COLLECTION,
+            DropCollectionOptions::getParentSpan($options),
+            function ($obsHandler) use ($scopeName, $collectionName, $options) {
+                $obsHandler->addScopeName($scopeName);
+                $obsHandler->addCollectionName($collectionName);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionDrop';
+                $function($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options));
+            }
+        );
     }
 
     /**
@@ -150,7 +199,16 @@ class CollectionManager implements CollectionManagerInterface
      */
     public function updateCollection(string $scopeName, string $collectionName, UpdateCollectionSettings $settings, ?UpdateCollectionOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionUpdate';
-        $function($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateBucketOptions::export($options));
+        $this->observability->recordOperation(
+            ObservabilityConstants::OP_CM_UPDATE_COLLECTION,
+            UpdateCollectionOptions::getParentSpan($options),
+            function ($obsHandler) use ($scopeName, $collectionName, $settings, $options) {
+                $obsHandler->addScopeName($scopeName);
+                $obsHandler->addCollectionName($collectionName);
+
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionUpdate';
+                $function($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateCollectionOptions::export($options));
+            }
+        );
     }
 }
