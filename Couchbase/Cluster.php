@@ -192,7 +192,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addQueryStatement($statement, $options);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-                $result = $function($this->core, $statement, QueryOptions::export($options));
+                $result = $function($this->core, $statement, QueryOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new QueryResult($result, QueryOptions::getTranscoder($options));
             }
@@ -221,7 +221,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addQueryStatement($statement, $options);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-                $result = $function($this->core, $statement, AnalyticsOptions::export($options));
+                $result = $function($this->core, $statement, AnalyticsOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
             }
@@ -248,7 +248,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new SearchResult($result);
             }
@@ -283,13 +283,21 @@ class Cluster implements ClusterInterface
 
                 if (!$exportedRequest['vectorSearch']) {
                     $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
+                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions, $obsHandler->getCoreSpansArray());
                     return new SearchResult($result);
                 }
 
                 $vectorSearch = $exportedRequest['vectorSearch'];
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-                $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+                $result = $function(
+                    $this->core,
+                    $indexName,
+                    json_encode($query),
+                    json_encode($vectorSearch),
+                    $exportedOptions,
+                    VectorSearchOptions::export($vectorSearch->options()),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return new SearchResult($result);
             }
         );

@@ -144,7 +144,8 @@ class Collection implements CollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    GetOptions::export($options)
+                    GetOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new GetResult($response, GetOptions::getTranscoder($options));
             }
@@ -175,7 +176,8 @@ class Collection implements CollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    ExistsOptions::export($options)
+                    ExistsOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new ExistsResult($response);
             }
@@ -210,7 +212,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $lockTimeSeconds,
-                    GetAndLockOptions::export($options)
+                    GetAndLockOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new GetResult($response, GetAndLockOptions::getTranscoder($options));
             }
@@ -245,7 +248,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $expirySeconds,
-                    GetAndTouchOptions::export($options)
+                    GetAndTouchOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new GetResult($response, GetAndTouchOptions::getTranscoder($options));
             }
@@ -278,7 +282,8 @@ class Collection implements CollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    GetAnyReplicaOptions::export($options)
+                    GetAnyReplicaOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new GetReplicaResult($response, GetAnyReplicaOptions::getTranscoder($options));
             }
@@ -310,7 +315,8 @@ class Collection implements CollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    GetAllReplicasOptions::export($options)
+                    GetAllReplicasOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return array_map(
                     function (array $response) use ($options) {
@@ -355,7 +361,8 @@ class Collection implements CollectionInterface
                     $id,
                     $encoded[0],
                     $encoded[1],
-                    UpsertOptions::export($options)
+                    UpsertOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -396,7 +403,8 @@ class Collection implements CollectionInterface
                     $id,
                     $encoded[0],
                     $encoded[1],
-                    InsertOptions::export($options)
+                    InsertOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -438,7 +446,8 @@ class Collection implements CollectionInterface
                     $id,
                     $encoded[0],
                     $encoded[1],
-                    ReplaceOptions::export($options)
+                    ReplaceOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -473,7 +482,8 @@ class Collection implements CollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    RemoveOptions::export($options)
+                    RemoveOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -509,7 +519,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $cas,
-                    UnlockOptions::export($options)
+                    UnlockOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new Result($response);
             }
@@ -544,7 +555,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $expirySeconds,
-                    TouchOptions::export($options)
+                    TouchOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -587,7 +599,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $encoded,
-                    LookupInOptions::export($options)
+                    LookupInOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new LookupInResult($response, LookupInOptions::getTranscoder($options));
             }
@@ -630,7 +643,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $encoded,
-                    LookupInAnyReplicaOptions::export($options)
+                    LookupInAnyReplicaOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new LookupInReplicaResult($response, LookupInAnyReplicaOptions::getTranscoder($options));
             }
@@ -674,7 +688,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $encoded,
-                    LookupInAllReplicasOptions::export($options)
+                    LookupInAllReplicasOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return array_map(
                     function (array $response) use ($options) {
@@ -727,7 +742,8 @@ class Collection implements CollectionInterface
                     $this->name,
                     $id,
                     $encoded,
-                    MutateInOptions::export($options)
+                    MutateInOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutateInResult($response);
             }
