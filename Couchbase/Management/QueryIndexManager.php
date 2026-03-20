@@ -24,6 +24,7 @@ use Couchbase\Exception\UnambiguousTimeoutException;
 use Couchbase\Extension;
 use Couchbase\Observability\ObservabilityContext;
 use Couchbase\Observability\ObservabilityConstants;
+use Couchbase\Observability\ObservabilityHandler;
 
 class QueryIndexManager implements QueryIndexManagerInterface
 {
@@ -64,11 +65,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         return $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_GET_ALL_INDEXES,
             GetAllQueryIndexesOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexGetAll';
-                $responses = $function($this->core, $bucketName, GetAllQueryIndexesOptions::export($options));
+                $responses = $function($this->core, $bucketName, GetAllQueryIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
                 return array_map(
                     function (array $response) {
                         return new QueryIndex($response);
@@ -94,11 +95,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_CREATE_INDEX,
             CreateQueryIndexOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $indexName, $keys, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $indexName, $keys, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreate';
-                $function($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options));
+                $function($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -116,11 +117,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_CREATE_PRIMARY_INDEX,
             CreateQueryPrimaryIndexOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreatePrimary';
-                $function($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options));
+                $function($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -139,11 +140,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_DROP_INDEX,
             DropQueryIndexOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $indexName, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $indexName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDrop';
-                $function($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options));
+                $function($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -161,11 +162,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_DROP_PRIMARY_INDEX,
             DropQueryPrimaryIndexOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDropPrimary';
-                $function($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options));
+                $function($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -183,11 +184,11 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_BUILD_DEFERRED_INDEXES,
             BuildQueryIndexesOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexBuildDeferred';
-                $function($this->core, $bucketName, BuildQueryIndexesOptions::export($options));
+                $function($this->core, $bucketName, BuildQueryIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -208,7 +209,7 @@ class QueryIndexManager implements QueryIndexManagerInterface
         $this->observability->recordOperation(
             ObservabilityConstants::OP_QM_WATCH_INDEXES,
             WatchQueryIndexesOptions::getParentSpan($options),
-            function ($obsHandler) use ($bucketName, $indexNames, $timeoutMilliseconds, $options) {
+            function (ObservabilityHandler $obsHandler) use ($bucketName, $indexNames, $timeoutMilliseconds, $options) {
                 $obsHandler->addBucketName($bucketName);
 
                 $exported = WatchQueryIndexesOptions::export($options);

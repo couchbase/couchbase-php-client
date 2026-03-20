@@ -38,6 +38,7 @@ class ObservabilityHandler
     private ?string $clusterUuid = null;
     private array $meterAttributes;
     private float $startTime;
+    private array $coreSpans = [];
 
     public function __construct(
         $core,
@@ -57,6 +58,10 @@ class ObservabilityHandler
 
     private function populateClusterLabels($core): void
     {
+        if (is_null($core)) {
+            return;
+        }
+
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\clusterLabels';
         $clusterLabels = $function($core);
 
@@ -227,5 +232,33 @@ class ObservabilityHandler
         }
 
         return $span;
+    }
+
+    public function &getCoreSpansArray(): array
+    {
+        return $this->coreSpans;
+    }
+
+    public function createSpansFromCore(): void
+    {
+        foreach ($this->coreSpans as $coreSpan) {
+            $this->createSpanFromCore($coreSpan, $this->opSpan);
+        }
+    }
+
+    private function createSpanFromCore(array $coreSpan, RequestSpan $parentSpan): void
+    {
+        $span = $this->createSpan($coreSpan['name'], $parentSpan, $coreSpan['start_timestamp']);
+        if (array_key_exists('attributes', $coreSpan)) {
+            foreach ($coreSpan['attributes'] as $key => $value) {
+                $span->addTag($key, $value);
+            }
+        }
+        if (array_key_exists('children', $coreSpan)) {
+            foreach ($coreSpan['children'] as $childCoreSpan) {
+                $this->createSpanFromCore($childCoreSpan, $span);
+            }
+        }
+        $span->end($coreSpan['end_timestamp']);
     }
 }

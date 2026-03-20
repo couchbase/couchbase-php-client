@@ -120,6 +120,24 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
         }
     }
 
+    public function assertHasDispatchSpans(TestSpan $operationSpan, ?callable $additionalAttributeValidation = null): void
+    {
+        $dispatchSpans = $this->tracer()->getSpans("dispatch_to_server", $operationSpan);
+        $this->assertNotEmpty($dispatchSpans, "Expected at least one dispatch span under the operation span");
+        foreach ($dispatchSpans as $span) {
+            $this->assertSpan($span, "dispatch_to_server", $operationSpan);
+            $this->assertSpanHasTag($span, "network.transport", "tcp");
+            $this->assertSpanHasTag($span, "couchbase.operation_id");
+            $this->assertSpanHasTag($span, "network.peer.address");
+            $this->assertSpanHasTag($span, "network.peer.port");
+            $this->assertSpanHasTag($span, "server.address");
+            $this->assertSpanHasTag($span, "server.port");
+            if (!is_null($additionalAttributeValidation)) {
+                $additionalAttributeValidation($span);
+            }
+        }
+    }
+
     public function assertKvOperationSpan(
         TestSpan $span,
         string $name,
@@ -128,6 +146,7 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
         ?string $scope = null,
         ?string $collection = null,
         ?string $durability = null,
+        ?callable $subopSpanValidator = null
     )
     {
         if (is_null($bucket)) {
@@ -157,12 +176,28 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
                 }
             );
         }
+        if (is_null($subopSpanValidator)) {
+            // Not a compound operation. Should have dispatch spans directly under it.
+            $this->assertHasDispatchSpans(
+                $span,
+                function (TestSpan $dispatchSpan) {
+                    $this->assertSpanHasTag($dispatchSpan, "couchbase.operation_id");
+                    $this->assertSpanHasTag($dispatchSpan, "couchbase.server_duration");
+                }
+            );
+        } else {
+            $children = $this->tracer()->getSpans(null, $span);
+            $this->assertNotEmpty($children);
+            foreach ($children as $child) {
+                $subopSpanValidator($child);
+            }
+        }
     }
 
     public function assertHasRequestEncodingSpan(TestSpan $operationSpan)
     {
         $childSpans = $this->tracer()->getSpans(null, $operationSpan);
-        $this->assertGreaterThanOrEqual(1, count($childSpans), "Expected at least one child span under the operation span");
+        $this->assertNotEmpty($childSpans, "Expected at least one child span under the operation span");
 
         // The request_encoding span should be the first child of the operation span
         $requestEncodingSpan = $childSpans[0];
@@ -177,7 +212,8 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
         ?RequestSpan $expectedParent = null,
         ?string $expectedBucketName = null,
         ?string $expectedScopeName = null,
-        ?string $expectedCollectionName = null
+        ?string $expectedCollectionName = null,
+        ?callable $subopSpanValidator = null
     )
     {
         $this->assertSpan($span, $expectedName, $expectedParent);
@@ -187,6 +223,16 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
             $this->assertSpanNotHasTag($span, "couchbase.service");
         } else {
             $this->assertSpanHasTag($span, "couchbase.service", $expectedService);
+        }
+        if (is_null($subopSpanValidator)) {
+            // Not a compound operation. Should have dispatch spans directly under it.
+            $this->assertHasDispatchSpans($span);
+        } else {
+            $children = $this->tracer()->getSpans(null, $span);
+            $this->assertNotEmpty($children);
+            foreach ($children as $child) {
+                $subopSpanValidator($child);
+            }
         }
     }
 
@@ -216,7 +262,7 @@ class CouchbaseObservabilityTestCase extends CouchbaseTestCase
         }
     }
 
-    public function assertSpanHasTag(TestSpan $span, string $key, int|string|null $expectedValue): void
+    public function assertSpanHasTag(TestSpan $span, string $key, int|string|null $expectedValue = null): void
     {
         $tags = $span->getTags();
         $this->assertArrayHasKey($key, $tags);

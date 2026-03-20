@@ -681,7 +681,44 @@ class ClusterOptions
             'loggingMeterOptions' => $this->loggingMeterOptions == null ? null : $this->loggingMeterOptions->export(),
             'appTelemetryConfiguration' =>
                 $this->appTelemetryConfiguration == null ? null : $this->appTelemetryConfiguration->export(),
+            'enableCoreTracing' => $this->enableCoreTracing(),
+            'enableCoreMetrics' => $this->enableCoreMetrics(),
+            'bufferCoreSpans' => $this->bufferCoreSpans(),
         ];
+    }
+
+    private function enableCoreTracing(): bool
+    {
+        if (!is_null($this->enableTracing) && !$this->enableTracing) {
+            // enableTracing takes precedence over the tracer
+            return false;
+        }
+         // We don't need tracing in the C++ core if the PHP tracer is the NoopTracer.
+         // We _do_ need core tracing if the PHP tracer is an external tracing, to buffer the core spans.
+        return is_null($this->tracer) || !($this->tracer instanceof NoopTracer);
+    }
+
+    private function enableCoreMetrics(): bool
+    {
+        if (!is_null($this->enableMetrics) && !$this->enableMetrics) {
+            // enableMetrics take precedence over the meter
+            return false;
+        }
+        // We only need metrics in the core when using the LoggingMeter.
+        // The logic for all other metrics is entirely on the wrapper side.
+        // The default (null) - meter is the LoggingMeter)
+        return is_null($this->meter) || $this->meter instanceof LoggingMeter;
+    }
+
+    private function bufferCoreSpans(): bool
+    {
+        if (!is_null($this->enableTracing) && !$this->enableTracing) {
+            return true;
+        }
+        // We need to buffer core spans and return them alongside the result, if using an external tracer.
+        return !is_null($this->tracer)
+            && !($this->tracer instanceof NoopTracer)
+            && !($this->tracer instanceof ThresholdLoggingTracer);
     }
 
     /**
