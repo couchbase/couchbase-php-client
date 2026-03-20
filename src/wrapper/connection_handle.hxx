@@ -34,6 +34,10 @@ class cluster_options;
 namespace core
 {
 class cluster;
+namespace tracing
+{
+class wrapper_sdk_tracer;
+} // namespace tracing
 } // namespace core
 } // namespace couchbase
 
@@ -46,7 +50,8 @@ public:
   connection_handle(std::string connection_string,
                     std::string connection_hash,
                     couchbase::cluster_options cluster_options,
-                    std::chrono::system_clock::time_point idle_expiry);
+                    std::chrono::system_clock::time_point idle_expiry,
+                    std::shared_ptr<core::tracing::wrapper_sdk_tracer> external_tracer);
 
   COUCHBASE_API
   connection_handle(const connection_handle&) = delete;
@@ -120,6 +125,7 @@ public:
 
   COUCHBASE_API
   auto document_upsert(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -130,6 +136,7 @@ public:
 
   COUCHBASE_API
   auto document_insert(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -140,6 +147,7 @@ public:
 
   COUCHBASE_API
   auto document_replace(zval* return_value,
+                        zval* spans,
                         const zend_string* bucket,
                         const zend_string* scope,
                         const zend_string* collection,
@@ -150,6 +158,7 @@ public:
 
   COUCHBASE_API
   auto document_append(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -159,6 +168,7 @@ public:
 
   COUCHBASE_API
   auto document_prepend(zval* return_value,
+                        zval* spans,
                         const zend_string* bucket,
                         const zend_string* scope,
                         const zend_string* collection,
@@ -168,6 +178,7 @@ public:
 
   COUCHBASE_API
   auto document_increment(zval* return_value,
+                          zval* spans,
                           const zend_string* bucket,
                           const zend_string* scope,
                           const zend_string* collection,
@@ -176,6 +187,7 @@ public:
 
   COUCHBASE_API
   auto document_decrement(zval* return_value,
+                          zval* spans,
                           const zend_string* bucket,
                           const zend_string* scope,
                           const zend_string* collection,
@@ -184,6 +196,7 @@ public:
 
   COUCHBASE_API
   auto document_get(zval* return_value,
+                    zval* spans,
                     const zend_string* bucket,
                     const zend_string* scope,
                     const zend_string* collection,
@@ -192,6 +205,7 @@ public:
 
   COUCHBASE_API
   auto document_get_any_replica(zval* return_value,
+                                zval* spans,
                                 const zend_string* bucket,
                                 const zend_string* scope,
                                 const zend_string* collection,
@@ -200,6 +214,7 @@ public:
 
   COUCHBASE_API
   auto document_get_all_replicas(zval* return_value,
+                                 zval* spans,
                                  const zend_string* bucket,
                                  const zend_string* scope,
                                  const zend_string* collection,
@@ -208,6 +223,7 @@ public:
 
   COUCHBASE_API
   auto document_get_and_lock(zval* return_value,
+                             zval* spans,
                              const zend_string* bucket,
                              const zend_string* scope,
                              const zend_string* collection,
@@ -217,6 +233,7 @@ public:
 
   COUCHBASE_API
   auto document_get_and_touch(zval* return_value,
+                              zval* spans,
                               const zend_string* bucket,
                               const zend_string* scope,
                               const zend_string* collection,
@@ -226,6 +243,7 @@ public:
 
   COUCHBASE_API
   auto document_unlock(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -235,6 +253,7 @@ public:
 
   COUCHBASE_API
   auto document_remove(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -243,6 +262,7 @@ public:
 
   COUCHBASE_API
   auto document_touch(zval* return_value,
+                      zval* spans,
                       const zend_string* bucket,
                       const zend_string* scope,
                       const zend_string* collection,
@@ -252,6 +272,7 @@ public:
 
   COUCHBASE_API
   auto document_exists(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket,
                        const zend_string* scope,
                        const zend_string* collection,
@@ -260,6 +281,7 @@ public:
 
   COUCHBASE_API
   auto document_mutate_in(zval* return_value,
+                          zval* spans,
                           const zend_string* bucket,
                           const zend_string* scope,
                           const zend_string* collection,
@@ -269,6 +291,7 @@ public:
 
   COUCHBASE_API
   auto document_lookup_in(zval* return_value,
+                          zval* spans,
                           const zend_string* bucket,
                           const zend_string* scope,
                           const zend_string* collection,
@@ -278,6 +301,7 @@ public:
 
   COUCHBASE_API
   auto document_lookup_in_any_replica(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
@@ -287,6 +311,7 @@ public:
 
   COUCHBASE_API
   auto document_lookup_in_all_replicas(zval* return_value,
+                                       zval* spans,
                                        const zend_string* bucket,
                                        const zend_string* scope,
                                        const zend_string* collection,
@@ -319,15 +344,18 @@ public:
                              const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto query(zval* return_value, const zend_string* statement, const zval* options)
+  auto query(zval* return_value, zval* spans, const zend_string* statement, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto analytics_query(zval* return_value, const zend_string* statement, const zval* options)
-    -> core_error_info;
+  auto analytics_query(zval* return_value,
+                       zval* spans,
+                       const zend_string* statement,
+                       const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search(zval* return_value,
+              zval* spans,
               const zend_string* index_name,
               const zend_string* query,
               const zval* options,
@@ -336,12 +364,14 @@ public:
 
   COUCHBASE_API
   auto search_query(zval* return_value,
+                    zval* spans,
                     const zend_string* index_name,
                     const zend_string* query,
                     const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto view_query(zval* return_value,
+                  zval* spans,
                   const zend_string* bucket_name,
                   const zend_string* design_document_name,
                   const zend_string* view_name,
@@ -356,51 +386,62 @@ public:
     -> core_error_info;
 
   COUCHBASE_API
-  auto search_index_get(zval* return_value, const zend_string* index_name, const zval* options)
+  auto search_index_get(zval* return_value,
+                        zval* spans,
+                        const zend_string* index_name,
+                        const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto search_index_get_all(zval* return_value, zval* spans, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto search_index_get_all(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto search_index_upsert(zval* return_value, const zval* index, const zval* options)
+  auto search_index_upsert(zval* return_value, zval* spans, const zval* index, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto search_index_drop(zval* return_value, const zend_string* index_name, const zval* options)
-    -> core_error_info;
+  auto search_index_drop(zval* return_value,
+                         zval* spans,
+                         const zend_string* index_name,
+                         const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search_index_get_documents_count(zval* return_value,
+                                        zval* spans,
                                         const zend_string* index_name,
                                         const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search_index_control_ingest(zval* return_value,
+                                   zval* spans,
                                    const zend_string* index_name,
                                    bool pause,
                                    const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search_index_control_query(zval* return_value,
+                                  zval* spans,
                                   const zend_string* index_name,
                                   bool allow,
                                   const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search_index_control_plan_freeze(zval* return_value,
+                                        zval* spans,
                                         const zend_string* index_name,
                                         bool freeze,
                                         const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto search_index_analyze_document(zval* return_value,
+                                     zval* spans,
                                      const zend_string* index_name,
                                      const zend_string* document,
                                      const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto scope_search_index_get(zval* return_value,
+                              zval* spans,
                               const zend_string* bucket_name,
                               const zend_string* scope_name,
                               const zend_string* index_name,
@@ -408,12 +449,14 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_get_all(zval* return_value,
+                                  zval* spans,
                                   const zend_string* bucket_name,
                                   const zend_string* scope_name,
                                   const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto scope_search_index_upsert(zval* return_value,
+                                 zval* spans,
                                  const zend_string* bucket_name,
                                  const zend_string* scope_name,
                                  const zval* index,
@@ -421,6 +464,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_drop(zval* return_value,
+                               zval* spans,
                                const zend_string* bucket_name,
                                const zend_string* scope_name,
                                const zend_string* index_name,
@@ -428,6 +472,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_get_documents_count(zval* return_value,
+                                              zval* spans,
                                               const zend_string* bucket_name,
                                               const zend_string* scope_name,
                                               const zend_string* index_name,
@@ -435,6 +480,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_control_ingest(zval* return_value,
+                                         zval* spans,
                                          const zend_string* bucket_name,
                                          const zend_string* scope_name,
                                          const zend_string* index_name,
@@ -443,6 +489,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_control_query(zval* return_value,
+                                        zval* spans,
                                         const zend_string* bucket_name,
                                         const zend_string* scope_name,
                                         const zend_string* index_name,
@@ -451,6 +498,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_control_plan_freeze(zval* return_value,
+                                              zval* spans,
                                               const zend_string* bucket_name,
                                               const zend_string* scope_name,
                                               const zend_string* index_name,
@@ -459,6 +507,7 @@ public:
 
   COUCHBASE_API
   auto scope_search_index_analyze_document(zval* return_value,
+                                           zval* spans,
                                            const zend_string* bucket_name,
                                            const zend_string* scope_name,
                                            const zend_string* index_name,
@@ -467,52 +516,60 @@ public:
 
   COUCHBASE_API
   auto view_index_upsert(zval* return_value,
+                         zval* spans,
                          const zend_string* bucket_name,
                          const zval* design_document,
                          zend_long name_space,
                          const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto bucket_create(zval* return_value, const zval* bucket_settings, const zval* options)
+  auto bucket_create(zval* return_value,
+                     zval* spans,
+                     const zval* bucket_settings,
+                     const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto bucket_update(zval* return_value,
+                     zval* spans,
+                     const zval* bucket_settings,
+                     const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto bucket_get(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto bucket_update(zval* return_value, const zval* bucket_settings, const zval* options)
+  auto bucket_get_all(zval* return_value, zval* spans, const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto bucket_drop(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto bucket_get(zval* return_value, const zend_string* name, const zval* options)
+  auto bucket_flush(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto bucket_get_all(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto bucket_drop(zval* return_value, const zend_string* name, const zval* options)
-    -> core_error_info;
-
-  COUCHBASE_API
-  auto bucket_flush(zval* return_value, const zend_string* name, const zval* options)
-    -> core_error_info;
-
-  COUCHBASE_API
-  auto scope_get_all(zval* return_value, const zend_string* name, const zval* options)
+  auto scope_get_all(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
   auto scope_create(zval* return_value,
+                    zval* spans,
                     const zend_string* bucket_name,
                     const zend_string* scope_name,
                     const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto scope_drop(zval* return_value,
+                  zval* spans,
                   const zend_string* bucket_name,
                   const zend_string* scope_name,
                   const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto collection_create(zval* return_value,
+                         zval* spans,
                          const zend_string* bucket_name,
                          const zend_string* scope_name,
                          const zend_string* collection_name,
@@ -521,6 +578,7 @@ public:
 
   COUCHBASE_API
   auto collection_drop(zval* return_value,
+                       zval* spans,
                        const zend_string* bucket_name,
                        const zend_string* scope_name,
                        const zend_string* collection_name,
@@ -528,6 +586,7 @@ public:
 
   COUCHBASE_API
   auto collection_update(zval* return_value,
+                         zval* spans,
                          const zend_string* bucket_name,
                          const zend_string* scope_name,
                          const zend_string* collection_name,
@@ -535,77 +594,88 @@ public:
                          const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto user_upsert(zval* return_value, const zval* user, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto user_get(zval* return_value, const zend_string* name, const zval* options)
+  auto user_upsert(zval* return_value, zval* spans, const zval* user, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto user_get_all(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto user_drop(zval* return_value, const zend_string* name, const zval* options)
+  auto user_get(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto change_password(zval* return_value, const zend_string* new_password, const zval* options)
+  auto user_get_all(zval* return_value, zval* spans, const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto user_drop(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto group_upsert(zval* return_value, const zval* group, const zval* options) -> core_error_info;
+  auto change_password(zval* return_value,
+                       zval* spans,
+                       const zend_string* new_password,
+                       const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto group_get(zval* return_value, const zend_string* name, const zval* options)
+  auto group_upsert(zval* return_value, zval* spans, const zval* group, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto group_get_all(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto group_drop(zval* return_value, const zend_string* name, const zval* options)
+  auto group_get(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto role_get_all(zval* return_value, const zval* options) -> core_error_info;
+  auto group_get_all(zval* return_value, zval* spans, const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto query_index_get_all(zval* return_value, const zend_string* bucket_name, const zval* options)
+  auto group_drop(zval* return_value, zval* spans, const zend_string* name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto query_index_create(const zend_string* bucket_name,
+  auto role_get_all(zval* return_value, zval* spans, const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto query_index_get_all(zval* return_value,
+                           zval* spans,
+                           const zend_string* bucket_name,
+                           const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto query_index_create(zval* spans,
+                          const zend_string* bucket_name,
                           const zend_string* index_name,
                           const zval* keys,
                           const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto query_index_create_primary(const zend_string* bucket_name, const zval* options)
+  auto query_index_create_primary(zval* spans, const zend_string* bucket_name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto query_index_drop(const zend_string* bucket_name,
+  auto query_index_drop(zval* spans,
+                        const zend_string* bucket_name,
                         const zend_string* index_name,
                         const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto query_index_drop_primary(const zend_string* bucket_name, const zval* options)
+  auto query_index_drop_primary(zval* spans, const zend_string* bucket_name, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
   auto query_index_build_deferred(zval* return_value,
+                                  zval* spans,
                                   const zend_string* bucket_name,
                                   const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto collection_query_index_get_all(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket_name,
                                       const zend_string* scope_name,
                                       const zend_string* collection_name,
                                       const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto collection_query_index_create(const zend_string* bucket_name,
+  auto collection_query_index_create(zval* spans,
+                                     const zend_string* bucket_name,
                                      const zend_string* scope_name,
                                      const zend_string* collection_name,
                                      const zend_string* index_name,
@@ -613,26 +683,30 @@ public:
                                      const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto collection_query_index_create_primary(const zend_string* bucket_name,
+  auto collection_query_index_create_primary(zval* spans,
+                                             const zend_string* bucket_name,
                                              const zend_string* scope_name,
                                              const zend_string* collection_name,
                                              const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto collection_query_index_drop(const zend_string* bucket_name,
+  auto collection_query_index_drop(zval* spans,
+                                   const zend_string* bucket_name,
                                    const zend_string* scope_name,
                                    const zend_string* collection_name,
                                    const zend_string* index_name,
                                    const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto collection_query_index_drop_primary(const zend_string* bucket_name,
+  auto collection_query_index_drop_primary(zval* spans,
+                                           const zend_string* bucket_name,
                                            const zend_string* scope_name,
                                            const zend_string* collection_name,
                                            const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto collection_query_index_build_deferred(zval* return_value,
+                                             zval* spans,
                                              const zend_string* bucket_name,
                                              const zend_string* scope_name,
                                              const zend_string* collection_name,
@@ -640,30 +714,36 @@ public:
 
   COUCHBASE_API
   auto analytics_create_dataverse(zval* return_value,
+                                  zval* spans,
                                   const zend_string* dataverse_name,
                                   const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto analytics_drop_dataverse(zval* return_value,
+                                zval* spans,
                                 const zend_string* dataverse_name,
                                 const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto analytics_create_dataset(zval* return_value,
+                                zval* spans,
                                 const zend_string* dataset_name,
                                 const zend_string* bucket_name,
                                 const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto analytics_drop_dataset(zval* return_value,
+                              zval* spans,
                               const zend_string* dataset_name,
                               const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto analytics_get_all_datasets(zval* return_value, const zval* options) -> core_error_info;
+  auto analytics_get_all_datasets(zval* return_value, zval* spans, const zval* options)
+    -> core_error_info;
 
   COUCHBASE_API
   auto analytics_create_index(zval* return_value,
+                              zval* spans,
                               const zend_string* dataset_name,
                               const zend_string* index_name,
                               const zval* fields,
@@ -671,38 +751,49 @@ public:
 
   COUCHBASE_API
   auto analytics_drop_index(zval* return_value,
+                            zval* spans,
                             const zend_string* dataset_name,
                             const zend_string* index_name,
                             const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto analytics_get_all_indexes(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto analytics_connect_link(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto analytics_disconnect_link(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto analytics_get_pending_mutations(zval* return_value, const zval* options) -> core_error_info;
-
-  COUCHBASE_API
-  auto analytics_create_link(zval* return_value, const zval* analytics_link, const zval* options)
+  auto analytics_get_all_indexes(zval* return_value, zval* spans, const zval* options)
     -> core_error_info;
 
   COUCHBASE_API
-  auto analytics_replace_link(zval* return_value, const zval* analytics_link, const zval* options)
+  auto analytics_connect_link(zval* return_value, zval* spans, const zval* options)
     -> core_error_info;
+
+  COUCHBASE_API
+  auto analytics_disconnect_link(zval* return_value, zval* spans, const zval* options)
+    -> core_error_info;
+
+  COUCHBASE_API
+  auto analytics_get_pending_mutations(zval* return_value, zval* spans, const zval* options)
+    -> core_error_info;
+
+  COUCHBASE_API
+  auto analytics_create_link(zval* return_value,
+                             zval* spans,
+                             const zval* analytics_link,
+                             const zval* options) -> core_error_info;
+
+  COUCHBASE_API
+  auto analytics_replace_link(zval* return_value,
+                              zval* spans,
+                              const zval* analytics_link,
+                              const zval* options) -> core_error_info;
 
   COUCHBASE_API
   auto analytics_drop_link(zval* return_value,
+                           zval* spans,
                            const zend_string* link_name,
                            const zend_string* dataverse_name,
                            const zval* options) -> core_error_info;
 
   COUCHBASE_API
-  auto analytics_get_all_links(zval* return_value, const zval* options) -> core_error_info;
+  auto analytics_get_all_links(zval* return_value, zval* spans, const zval* options)
+    -> core_error_info;
 
 private:
   class impl;

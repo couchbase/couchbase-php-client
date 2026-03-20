@@ -112,6 +112,7 @@ class ObservabilityContext
             $handler->addError($e);
             throw $e;
         } finally {
+            $handler->createSpansFromCore();
             $handler->end();
         }
     }

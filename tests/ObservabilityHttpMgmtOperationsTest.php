@@ -148,7 +148,18 @@ class ObservabilityHttpMgmtOperationsTest extends Helpers\CouchbaseObservability
         );
 
         $watchIndexesSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
-        $this->assertHttpOperationSpan($watchIndexesSpan, "manager_query_watch_indexes", "query", $this->parentSpan(), self::env()->bucketName(), "_default", "_default");
+        $this->assertHttpOperationSpan(
+            $watchIndexesSpan,
+            "manager_query_watch_indexes",
+            "query",
+            $this->parentSpan(),
+            self::env()->bucketName(),
+            "_default",
+            "_default",
+            function ($childSpan) use ($watchIndexesSpan) {
+                $this->assertHttpOperationSpan($childSpan, "manager_query_get_all_indexes", "query", $watchIndexesSpan, self::env()->bucketName(), "_default", "_default");
+            }
+        );
         $this->assertOperationMetrics(1, "manager_query_watch_indexes", "query", self::env()->bucketName(), "_default", "_default", "UnambiguousTimeout");
 
         $getAllIndexesSpans = $this->tracer()->getSpans(null, $watchIndexesSpan);

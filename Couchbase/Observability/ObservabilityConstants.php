@@ -43,8 +43,8 @@ interface ObservabilityConstants
     public const OP_TOUCH = "touch";
     public const OP_UNLOCK = "unlock";
     public const OP_LOOKUP_IN = "lookup_in";
-    public const OP_LOOKUP_IN_ALL_REPLICAS = "lookup_all_replicas";
-    public const OP_LOOKUP_IN_ANY_REPLICA = "lookup_any_replica";
+    public const OP_LOOKUP_IN_ALL_REPLICAS = "lookup_in_all_replicas";
+    public const OP_LOOKUP_IN_ANY_REPLICA = "lookup_in_any_replica";
     public const OP_LOOKUP_IN_REPLICA = "lookup_in_replica";
     public const OP_MUTATE_IN = "mutate_in";
     public const OP_SCAN = "scan";
