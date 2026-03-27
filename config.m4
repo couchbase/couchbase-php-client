@@ -25,11 +25,26 @@ if test "$PHP_COUCHBASE" != "no"; then
   fi
   AC_MSG_NOTICE([Detected C++ compiler: $CXX_PATH])
 
+  # Similarly, CC may have flags concatenated into it (e.g. "cc -std=gnu23").
+  # Strip them so CMake receives a bare compiler path in CMAKE_C_COMPILER.
+  AC_CHECK_FILE([$CC], [CC_PATH=$CC], [CC_PATH=no])
+  if test "$CC_PATH" = "no"; then
+    AC_MSG_NOTICE([PHP suggested C compiler, which includes flags "$CC", trying to strip them])
+    CC_PATH=$(echo "$CC" | cut -d' ' -f1)
+    AC_CHECK_FILE([$CC_PATH], [], [CC_PATH=no])
+    if test "$CC_PATH" == "no"; then
+      AC_MSG_NOTICE([Unable to locate path to C compiler, falling back to "cc"])
+      AC_SUBST([CC_PATH], [cc])
+    fi
+  fi
+  AC_MSG_NOTICE([Detected C compiler: $CC_PATH])
+
   AC_PATH_PROG(CMAKE, cmake, no)
   if ! test -x "${CMAKE}"; then
     AC_MSG_ERROR(Please install cmake to build couchbase extension)
   fi
 
+  CC="${CC_PATH}"
   CXX="${CXX_PATH}"
   CXXFLAGS="${CXXFLAGS} -std=c++17"
   COUCHBASE_CMAKE_SOURCE_DIRECTORY="$srcdir/src"
@@ -41,6 +56,8 @@ if test "$PHP_COUCHBASE" != "no"; then
   fi
 
   PHP_SUBST([CMAKE])
+  PHP_SUBST([CC_PATH])
+  PHP_SUBST([CXX_PATH])
   PHP_SUBST([COUCHBASE_CMAKE_SOURCE_DIRECTORY])
   PHP_SUBST([COUCHBASE_CMAKE_BUILD_DIRECTORY])
   PHP_SUBST([COUCHBASE_DEFAULT_CMAKE_BUILD_TYPE])
