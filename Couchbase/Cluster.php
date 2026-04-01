@@ -63,7 +63,7 @@ class Cluster implements ClusterInterface
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
         ExtensionNamespaceResolver::defineExtensionNamespace();
-        // TODO: We should consider taking into account all the options that are passed to the backend for the connection hash
+        // TODO(PCBC-1056): We should consider taking into account all the options that are passed to the backend for the connection hash
         $this->connectionHash = hash(
             "sha256",
             sprintf(
