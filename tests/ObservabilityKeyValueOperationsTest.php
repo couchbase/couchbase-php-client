@@ -391,6 +391,9 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
 
     public function testLookupInAllReplicas()
     {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
         $collection = $this->defaultCollection();
         $results = $collection->lookupInAllReplicas(
             self::EXISTING_DOC_ID,
@@ -424,6 +427,9 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
 
     public function testLookupInAnyReplica()
     {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
         $collection = $this->defaultCollection();
         $result = $collection->lookupInAnyReplica(
             self::EXISTING_DOC_ID,
