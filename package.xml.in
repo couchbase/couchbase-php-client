@@ -13,10 +13,10 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2025-06-12</date>
+    <date>2026-04-01</date>
     <version>
-        <release>4.4.0</release>
-        <api>4.4.0</api>
+        <release>4.5.0</release>
+        <api>4.5.0</api>
     </version>
     <stability>
         <release>stable</release>
@@ -27,9 +27,39 @@
         New features and enhancements
         =============================
 
-        * PCBC-1026: Implement FTS vector search pre-filters
-        * PCBC-1030: Fix how SDK handles KV Expiry (#226)
-        * Install VS2019 tools for building on windows 2022 (#225)
+        * PCBC-1040: Tracing - include child spans created by the C++ core (#249)
+        * PCBC-1039: Add MeterException (#248)
+        * PCBC-1038, PCBC-1039: Add tracing and metrics instrumentation for management operations (#244)
+        * PCBC-1039: Add LoggingMeter implementation (#246)
+        * PCBC-1038: Add ThresholdLoggingTracer implementation (#245)
+        * PCBC-1038, PCBC-1039: Add tracing/metrics instrumentation for non-management operations (#241)
+        * PCBC-1050: Add missing manager accessors in Cluster/Bucket/Collection interfaces (#243)
+        * PCBC-1048: Update all KV operations to use C++ Core API (#239)
+        * PCBC-1033: JWT Based authentication in Operational SDKs (#236)
+        * PCBC-1032, PCBC-1041: Support mTLS Cert Refresh and Expose idleHttpConnectionTimeout (#233)
+        * PCBC-1035: Lazy connections with options (#235)
+        * PCBC-1015: SDK Telemetry Collection in Server
+        * Update core to 1.3.1 (#250)
+
+        Bug fixes
+        =========
+
+        * PCBC-1053: Fix CC compiler flags bleeding into CMAKE_C_COMPILER on macOS (#251)
+        * PCBC-1052: Initialize timeout to null in search/collection mgmt options blocks (#247)
+        * PCBC-1034: Binary CasMismatch tests occasionally fail
+
+        Build improvements
+        ===================
+
+        * PCBC-1054: Update CI matrix - bump PHP versions and Alpine images (#252)
+        * PCBC-1049: GHA - Add 8.0 to server version matrix (#242)
+        * PCBC-1047: GHA macos13 runners have been retired
+        * remove intl from setup php (#234)
+
+        Deprecations
+        =============
+
+        * PCBC-1043: Deprecate Support for MapReduce Views Since Server Deprecated
     </notes>
     <contents>
     </contents>
@@ -46,6 +76,26 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2025-06-12</date>
+            <version>
+                <release>4.4.0</release>
+                <api>4.4.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                New features and enhancements
+                =============================
+
+                * PCBC-1026: Implement FTS vector search pre-filters
+                * PCBC-1030: Fix how SDK handles KV Expiry (#226)
+                * Install VS2019 tools for building on windows 2022 (#225)
+            </notes>
+        </release>
         <release>
             <date>2025-06-12</date>
             <version>
