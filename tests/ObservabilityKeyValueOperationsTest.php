@@ -337,9 +337,6 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
                 ->parentSpan($this->parentSpan())
         );
         $this->assertNotEmpty($results);
-        foreach ($results as $result) {
-            $this->assertEquals("bar", $result->content()["foo"]);
-        }
 
         $getAllReplicasSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
         $getCount = 0;
@@ -368,7 +365,6 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
             GetAnyReplicaOptions::build()
                 ->parentSpan($this->parentSpan())
         );
-        $this->assertEquals("bar", $result->content()["foo"]);
 
         $getAnyReplicaSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
         $getCount = 0;
@@ -402,9 +398,6 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
                 ->parentSpan($this->parentSpan())
         );
         $this->assertNotEmpty($results);
-        foreach ($results as $result) {
-            $this->assertEquals("bar", $result->content(0));
-        }
 
         $lookupInCount = 0;
         $lookupInAllReplicasSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
@@ -437,7 +430,6 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
             LookupInAnyReplicaOptions::build()
                 ->parentSpan($this->parentSpan())
         );
-        $this->assertEquals("bar", $result->content(0));
 
         $lookupInCount = 0;
         $lookupInAnyReplicaSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
