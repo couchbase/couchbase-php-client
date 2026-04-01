@@ -687,7 +687,10 @@ class ClusterOptions
         ];
     }
 
-    private function enableCoreTracing(): bool
+    /**
+     * @internal
+     */
+    public function enableCoreTracing(): bool
     {
         if (!is_null($this->enableTracing) && !$this->enableTracing) {
             // enableTracing takes precedence over the tracer
@@ -698,7 +701,10 @@ class ClusterOptions
         return is_null($this->tracer) || !($this->tracer instanceof NoopTracer);
     }
 
-    private function enableCoreMetrics(): bool
+    /**
+     * @internal
+     */
+    public function enableCoreMetrics(): bool
     {
         if (!is_null($this->enableMetrics) && !$this->enableMetrics) {
             // enableMetrics take precedence over the meter
@@ -710,7 +716,10 @@ class ClusterOptions
         return is_null($this->meter) || $this->meter instanceof LoggingMeter;
     }
 
-    private function bufferCoreSpans(): bool
+    /**
+     * @internal
+     */
+    public function bufferCoreSpans(): bool
     {
         if (!is_null($this->enableTracing) && !$this->enableTracing) {
             return false;

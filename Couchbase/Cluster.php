@@ -63,7 +63,19 @@ class Cluster implements ClusterInterface
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
         ExtensionNamespaceResolver::defineExtensionNamespace();
-        $this->connectionHash = hash("sha256", sprintf("--%s--%s--%s--", $connectionString, $options->authenticatorHash(), COUCHBASE_EXTENSION_NAMESPACE));
+        // TODO: We should consider taking into account all the options that are passed to the backend for the connection hash
+        $this->connectionHash = hash(
+            "sha256",
+            sprintf(
+                "--%s--%s--%b--%b--%b--%s--",
+                $connectionString,
+                $options->authenticatorHash(),
+                $options->enableCoreTracing(),
+                $options->enableCoreMetrics(),
+                $options->bufferCoreSpans(),
+                COUCHBASE_EXTENSION_NAMESPACE
+            )
+        );
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
         $this->core = $function($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
