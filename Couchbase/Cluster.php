@@ -63,7 +63,19 @@ class Cluster implements ClusterInterface
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
         ExtensionNamespaceResolver::defineExtensionNamespace();
-        $this->connectionHash = hash("sha256", sprintf("--%s--%s--%s--", $connectionString, $options->authenticatorHash(), COUCHBASE_EXTENSION_NAMESPACE));
+        // TODO(PCBC-1056): We should consider taking into account all the options that are passed to the backend for the connection hash
+        $this->connectionHash = hash(
+            "sha256",
+            sprintf(
+                "--%s--%s--%b--%b--%b--%s--",
+                $connectionString,
+                $options->authenticatorHash(),
+                $options->enableCoreTracing(),
+                $options->enableCoreMetrics(),
+                $options->bufferCoreSpans(),
+                COUCHBASE_EXTENSION_NAMESPACE
+            )
+        );
         $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
         $this->core = $function($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
@@ -192,7 +204,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addQueryStatement($statement, $options);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-                $result = $function($this->core, $statement, QueryOptions::export($options));
+                $result = $function($this->core, $statement, QueryOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new QueryResult($result, QueryOptions::getTranscoder($options));
             }
@@ -221,7 +233,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addQueryStatement($statement, $options);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-                $result = $function($this->core, $statement, AnalyticsOptions::export($options));
+                $result = $function($this->core, $statement, AnalyticsOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
             }
@@ -248,7 +260,7 @@ class Cluster implements ClusterInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options));
+                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options), $obsHandler->getCoreSpansArray());
 
                 return new SearchResult($result);
             }
@@ -283,13 +295,21 @@ class Cluster implements ClusterInterface
 
                 if (!$exportedRequest['vectorSearch']) {
                     $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions);
+                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions, $obsHandler->getCoreSpansArray());
                     return new SearchResult($result);
                 }
 
                 $vectorSearch = $exportedRequest['vectorSearch'];
                 $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-                $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()));
+                $result = $function(
+                    $this->core,
+                    $indexName,
+                    json_encode($query),
+                    json_encode($vectorSearch),
+                    $exportedOptions,
+                    VectorSearchOptions::export($vectorSearch->options()),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return new SearchResult($result);
             }
         );

@@ -107,7 +107,8 @@ class BinaryCollection implements BinaryCollectionInterface
                     $this->name,
                     $id,
                     $value,
-                    AppendOptions::export($options)
+                    AppendOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -143,7 +144,8 @@ class BinaryCollection implements BinaryCollectionInterface
                     $this->name,
                     $id,
                     $value,
-                    PrependOptions::export($options)
+                    PrependOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new MutationResult($response);
             }
@@ -177,7 +179,8 @@ class BinaryCollection implements BinaryCollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    IncrementOptions::export($options)
+                    IncrementOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new CounterResult($response);
             }
@@ -211,7 +214,8 @@ class BinaryCollection implements BinaryCollectionInterface
                     $this->scopeName,
                     $this->name,
                     $id,
-                    DecrementOptions::export($options)
+                    DecrementOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
                 );
                 return new CounterResult($response);
             }

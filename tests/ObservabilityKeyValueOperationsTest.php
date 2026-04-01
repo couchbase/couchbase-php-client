@@ -35,8 +35,12 @@ use Couchbase\LookupGetSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateUpsertSpec;
 use Couchbase\DurabilityLevel;
+use Couchbase\GetAllReplicasOptions;
+use Couchbase\GetAnyReplicaOptions;
+use Couchbase\LookupInAllReplicasOptions;
+use Couchbase\LookupInAnyReplicaOptions;
 use Helpers\Tracing\ParentSpanRequirement;
-
+use Helpers\Tracing\TestSpan;
 
 class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservabilityTestCase
 {
@@ -322,5 +326,127 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
         $removeSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
         $this->assertKvOperationSpan($removeSpan, "remove", $this->parentSpan(), durability: DurabilityLevel::PERSIST_TO_MAJORITY);
         $this->assertKvOperationMetrics(1, "remove");
+    }
+
+    public function testGetAllReplicas()
+    {
+        $collection = $this->defaultCollection();
+        $results = $collection->getAllReplicas(
+            self::EXISTING_DOC_ID,
+            GetAllReplicasOptions::build()
+                ->parentSpan($this->parentSpan())
+        );
+        $this->assertNotEmpty($results);
+
+        $getAllReplicasSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
+        $getCount = 0;
+        $this->assertKvOperationSpan(
+            $getAllReplicasSpan,
+            "get_all_replicas",
+            $this->parentSpan(),
+            subopSpanValidator: function (TestSpan $childSpan) use ($getAllReplicasSpan, &$getCount) {
+                if ($childSpan->getName() == "get") {
+                    $this->assertKvOperationSpan($childSpan, "get", $getAllReplicasSpan);
+                    $getCount++;
+                } else {
+                    $this->assertKvOperationSpan($childSpan, "get_replica", $getAllReplicasSpan);
+                }
+            }
+        );
+        $this->assertKvOperationMetrics(1, "get_all_replicas");
+        $this->assertEquals(1, $getCount, "Expected exactly one 'get' operation span");
+    }
+
+    public function testGetAnyReplica()
+    {
+        $collection = $this->defaultCollection();
+        $result = $collection->getAnyReplica(
+            self::EXISTING_DOC_ID,
+            GetAnyReplicaOptions::build()
+                ->parentSpan($this->parentSpan())
+        );
+
+        $getAnyReplicaSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
+        $getCount = 0;
+        $this->assertKvOperationSpan(
+            $getAnyReplicaSpan,
+            "get_any_replica",
+            $this->parentSpan(),
+            subopSpanValidator: function (TestSpan $childSpan) use ($getAnyReplicaSpan, &$getCount) {
+                if ($childSpan->getName() == "get") {
+                    $this->assertKvOperationSpan($childSpan, "get", $getAnyReplicaSpan);
+                    $getCount++;
+                } else {
+                    $this->assertKvOperationSpan($childSpan, "get_replica", $getAnyReplicaSpan);
+                }
+            }
+        );
+        $this->assertKvOperationMetrics(1, "get_any_replica");
+        $this->assertEquals(1, $getCount, "Expected exactly one 'get' operation span");
+    }
+
+    public function testLookupInAllReplicas()
+    {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $collection = $this->defaultCollection();
+        $results = $collection->lookupInAllReplicas(
+            self::EXISTING_DOC_ID,
+            [LookupGetSpec::build("foo")],
+            LookupInAllReplicasOptions::build()
+                ->parentSpan($this->parentSpan())
+        );
+        $this->assertNotEmpty($results);
+
+        $lookupInCount = 0;
+        $lookupInAllReplicasSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
+        $this->assertKvOperationSpan(
+            $lookupInAllReplicasSpan,
+            "lookup_in_all_replicas",
+            $this->parentSpan(),
+            subopSpanValidator: function (TestSpan $childSpan) use ($lookupInAllReplicasSpan, &$lookupInCount) {
+                if ($childSpan->getName() == "lookup_in") {
+                    $lookupInCount++;
+                    $this->assertKvOperationSpan($childSpan, "lookup_in", $lookupInAllReplicasSpan);
+                } else {
+                    $this->assertKvOperationSpan($childSpan, "lookup_in_replica", $lookupInAllReplicasSpan);
+                }
+            }
+        );
+        $this->assertKvOperationMetrics(1, "lookup_in_all_replicas");
+        $this->assertEquals(1, $lookupInCount, "Expected exactly one 'lookup_in' operation span");
+    }
+
+    public function testLookupInAnyReplica()
+    {
+        $this->skipIfUnsupported($this->version()->supportsServerGroupReplicaReads());
+        $this->skipIfReplicasAreNotConfigured();
+
+        $collection = $this->defaultCollection();
+        $result = $collection->lookupInAnyReplica(
+            self::EXISTING_DOC_ID,
+            [LookupGetSpec::build("foo")],
+            LookupInAnyReplicaOptions::build()
+                ->parentSpan($this->parentSpan())
+        );
+
+        $lookupInCount = 0;
+        $lookupInAnyReplicaSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
+        $this->assertKvOperationSpan(
+            $lookupInAnyReplicaSpan,
+            "lookup_in_any_replica",
+            $this->parentSpan(),
+            subopSpanValidator: function (TestSpan $childSpan) use ($lookupInAnyReplicaSpan, &$lookupInCount) {
+                if ($childSpan->getName() == "lookup_in") {
+                    $lookupInCount++;
+                    $this->assertKvOperationSpan($childSpan, "lookup_in", $lookupInAnyReplicaSpan);
+                } else {
+                    $this->assertKvOperationSpan($childSpan, "lookup_in_replica", $lookupInAnyReplicaSpan);
+                }
+            }
+        );
+        $this->assertKvOperationMetrics(1, "lookup_in_any_replica");
+        $this->assertEquals(1, $lookupInCount, "Expected exactly one 'lookup_in' operation span");
     }
 }

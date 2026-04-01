@@ -34,6 +34,13 @@ class TestTracer implements RequestTracer
 
     public function requestSpan(string $name, ?RequestSpan $parent = null, ?int $startTimestampNanoseconds = null): RequestSpan
     {
+        fprintf(STDERR, "Creating span %s\n", $name);
+        if ($parent instanceof TestSpan) {
+            fprintf(STDERR, "  Parent: %s\n", $parent->getName());
+        } else {
+            fprintf(STDERR, "  Parent: No\n");
+        }
+
         $span = new TestSpan($name, $parent, $startTimestampNanoseconds);
         $this->spans[] = $span;
         return $span;

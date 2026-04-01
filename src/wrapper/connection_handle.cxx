@@ -44,6 +44,7 @@
 #include <core/operations/management/search.hxx>
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
+#include <core/tracing/wrapper_sdk_tracer.hxx>
 #include <core/utils/connection_string.hxx>
 #include <core/utils/json.hxx>
 
@@ -331,14 +332,80 @@ build_error_context(const core::error_context::http& ctx) -> http_error_context
 
   return out;
 }
+
+void
+core_span_to_zval(const std::shared_ptr<core::tracing::wrapper_sdk_span>& span, zval* result)
+{
+  array_init(result);
+
+  add_assoc_string(result, "name", span->name().c_str());
+
+  zval attributes;
+  array_init(&attributes);
+  for (const auto& [key, value] : span->uint_tags()) {
+    add_assoc_long(&attributes, key.c_str(), static_cast<zend_long>(value));
+  }
+  for (const auto& [key, value] : span->string_tags()) {
+    add_assoc_string(&attributes, key.c_str(), value.c_str());
+  }
+  add_assoc_zval(result, "attributes", &attributes);
+
+  auto start_ns =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(span->start_time().time_since_epoch())
+      .count();
+  add_assoc_long(result, "start_timestamp", static_cast<zend_long>(start_ns));
+
+  auto end_ns =
+    std::chrono::duration_cast<std::chrono::nanoseconds>(span->end_time().time_since_epoch())
+      .count();
+  add_assoc_long(result, "end_timestamp", static_cast<zend_long>(end_ns));
+
+  zval children;
+  auto child_spans = span->children();
+  array_init_size(&children, child_spans.size());
+  for (const auto& child : child_spans) {
+    zval child_zval;
+    core_span_to_zval(child, &child_zval);
+    add_next_index_zval(&children, &child_zval);
+  }
+  add_assoc_zval(result, "children", &children);
+}
+
+void
+populate_core_spans_array(const std::shared_ptr<core::tracing::wrapper_sdk_span>& parent_span,
+                          zval* spans_array)
+{
+  if (!parent_span) {
+    return;
+  }
+
+  ZVAL_DEREF(spans_array);
+
+  if (Z_TYPE_P(spans_array) == IS_NULL) {
+    return;
+  }
+
+  // Not having this causes sigbus...
+  SEPARATE_ARRAY(spans_array);
+
+  auto children = parent_span->children();
+  for (const auto& child : children) {
+    zval child_span_zval;
+    core_span_to_zval(child, &child_span_zval);
+    add_next_index_zval(spans_array, &child_span_zval);
+  }
+}
 } // namespace
 
 class connection_handle::impl : public std::enable_shared_from_this<connection_handle::impl>
 {
 public:
-  impl(std::string connection_string, couchbase::cluster_options cluster_options)
+  impl(std::string connection_string,
+       couchbase::cluster_options cluster_options,
+       std::shared_ptr<core::tracing::wrapper_sdk_tracer> external_tracer)
     : connection_string_{ std::move(connection_string) }
     , cluster_options_{ std::move(cluster_options) }
+    , external_tracer_{ std::move(external_tracer) }
   {
   }
 
@@ -455,15 +522,23 @@ public:
   }
 
   template<typename Request, typename Response = typename Request::response_type>
-  auto key_value_execute(const char* operation, Request request)
+  auto key_value_execute(const char* operation, Request request, zval* spans)
     -> std::pair<Response, core_error_info>
   {
+    std::shared_ptr<core::tracing::wrapper_sdk_span> parent_span{};
+    if (buffering_core_spans() && spans != nullptr) {
+      parent_span = std::make_shared<couchbase::core::tracing::wrapper_sdk_span>();
+      request.parent_span = parent_span;
+    }
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
     core_api().execute(std::move(request), [barrier](Response&& resp) {
       barrier->set_value(std::move(resp));
     });
     auto resp = f.get();
+    if (buffering_core_spans() && spans != nullptr) {
+      populate_core_spans_array(parent_span, spans);
+    }
     if (resp.ctx.ec()) {
       return { std::move(resp),
                { resp.ctx.ec(),
@@ -475,14 +550,23 @@ public:
   }
 
   template<typename Request, typename Response = typename Request::response_type>
-  auto http_execute(const char* operation, Request request) -> std::pair<Response, core_error_info>
+  auto http_execute(const char* operation, Request request, zval* spans)
+    -> std::pair<Response, core_error_info>
   {
+    std::shared_ptr<core::tracing::wrapper_sdk_span> parent_span{};
+    if (buffering_core_spans() && spans != nullptr) {
+      parent_span = std::make_shared<couchbase::core::tracing::wrapper_sdk_span>();
+      request.parent_span = parent_span;
+    }
     auto barrier = std::make_shared<std::promise<Response>>();
     auto f = barrier->get_future();
     core_api().execute(std::move(request), [barrier](Response&& resp) {
       barrier->set_value(std::move(resp));
     });
     auto resp = f.get();
+    if (buffering_core_spans() && spans != nullptr) {
+      populate_core_spans_array(parent_span, spans);
+    }
     if (resp.ctx.ec) {
       return { std::move(resp),
                { resp.ctx.ec,
@@ -559,6 +643,11 @@ public:
     return core::get_core_cluster(public_api());
   }
 
+  auto buffering_core_spans() -> bool
+  {
+    return external_tracer_ != nullptr;
+  }
+
   void notify_fork(fork_event event)
   {
     switch (event) {
@@ -586,18 +675,22 @@ private:
   std::string connection_string_;
   couchbase::cluster_options cluster_options_;
   std::unique_ptr<couchbase::cluster> cluster_{ nullptr };
+  std::shared_ptr<core::tracing::wrapper_sdk_tracer> external_tracer_{ nullptr };
 };
 
 COUCHBASE_API
-connection_handle::connection_handle(std::string connection_string,
-                                     std::string connection_hash,
-                                     couchbase::cluster_options cluster_options,
-                                     std::chrono::system_clock::time_point idle_expiry)
+connection_handle::connection_handle(
+  std::string connection_string,
+  std::string connection_hash,
+  couchbase::cluster_options cluster_options,
+  std::chrono::system_clock::time_point idle_expiry,
+  std::shared_ptr<core::tracing::wrapper_sdk_tracer> external_tracer)
   : idle_expiry_{ idle_expiry }
   , connection_string_(std::move(connection_string))
   , connection_hash_(std::move(connection_hash))
   , impl_{ std::make_shared<connection_handle::impl>(connection_string_,
-                                                     std::move(cluster_options)) }
+                                                     std::move(cluster_options),
+                                                     std::move(external_tracer)) }
 {
 }
 
@@ -860,6 +953,7 @@ connection_handle::record_core_meter_operation_duration(std::int64_t duration_us
 COUCHBASE_API
 auto
 connection_handle::document_upsert(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -905,13 +999,14 @@ connection_handle::document_upsert(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -925,6 +1020,7 @@ connection_handle::document_upsert(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_insert(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -967,13 +1063,14 @@ connection_handle::document_insert(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -987,6 +1084,7 @@ connection_handle::document_insert(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_replace(zval* return_value,
+                                    zval* spans,
                                     const zend_string* bucket,
                                     const zend_string* scope,
                                     const zend_string* collection,
@@ -1035,13 +1133,14 @@ connection_handle::document_replace(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1055,6 +1154,7 @@ connection_handle::document_replace(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_append(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -1093,13 +1193,14 @@ connection_handle::document_append(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1113,6 +1214,7 @@ connection_handle::document_append(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_prepend(zval* return_value,
+                                    zval* spans,
                                     const zend_string* bucket,
                                     const zend_string* scope,
                                     const zend_string* collection,
@@ -1151,13 +1253,14 @@ connection_handle::document_prepend(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1171,6 +1274,7 @@ connection_handle::document_prepend(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_increment(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
@@ -1211,13 +1315,14 @@ connection_handle::document_increment(zval* return_value,
         std::move(req),
         legacy_durability.value().first,
         legacy_durability.value().second,
-      });
+      },
+      spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1231,6 +1336,7 @@ connection_handle::document_increment(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_decrement(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
@@ -1271,13 +1377,14 @@ connection_handle::document_decrement(zval* return_value,
         std::move(req),
         legacy_durability.value().first,
         legacy_durability.value().second,
-      });
+      },
+      spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1291,6 +1398,7 @@ connection_handle::document_decrement(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_get(zval* return_value,
+                                zval* spans,
                                 const zend_string* bucket,
                                 const zend_string* scope,
                                 const zend_string* collection,
@@ -1319,7 +1427,7 @@ connection_handle::document_get(zval* return_value,
       return e;
     }
 
-    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
     if (err.ec) {
       return err;
     }
@@ -1333,7 +1441,7 @@ connection_handle::document_get(zval* return_value,
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -1347,6 +1455,7 @@ connection_handle::document_get(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_get_any_replica(zval* return_value,
+                                            zval* spans,
                                             const zend_string* bucket,
                                             const zend_string* scope,
                                             const zend_string* collection,
@@ -1368,7 +1477,7 @@ connection_handle::document_get_any_replica(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -1380,6 +1489,7 @@ connection_handle::document_get_any_replica(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_get_all_replicas(zval* return_value,
+                                             zval* spans,
                                              const zend_string* bucket,
                                              const zend_string* scope,
                                              const zend_string* collection,
@@ -1401,7 +1511,7 @@ connection_handle::document_get_all_replicas(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -1418,6 +1528,7 @@ connection_handle::document_get_all_replicas(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_get_and_lock(zval* return_value,
+                                         zval* spans,
                                          const zend_string* bucket,
                                          const zend_string* scope,
                                          const zend_string* collection,
@@ -1438,7 +1549,7 @@ connection_handle::document_get_and_lock(zval* return_value,
   }
   request.lock_time = static_cast<std::uint32_t>(lock_time);
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -1449,6 +1560,7 @@ connection_handle::document_get_and_lock(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_get_and_touch(zval* return_value,
+                                          zval* spans,
                                           const zend_string* bucket,
                                           const zend_string* scope,
                                           const zend_string* collection,
@@ -1469,7 +1581,7 @@ connection_handle::document_get_and_touch(zval* return_value,
   }
   request.expiry = static_cast<std::uint32_t>(expiry);
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -1480,6 +1592,7 @@ connection_handle::document_get_and_touch(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_touch(zval* return_value,
+                                  zval* spans,
                                   const zend_string* bucket,
                                   const zend_string* scope,
                                   const zend_string* collection,
@@ -1500,7 +1613,7 @@ connection_handle::document_touch(zval* return_value,
   }
   request.expiry = static_cast<std::uint32_t>(expiry);
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -1514,6 +1627,7 @@ connection_handle::document_touch(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_unlock(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -1538,7 +1652,7 @@ connection_handle::document_unlock(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -1552,6 +1666,7 @@ connection_handle::document_unlock(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_remove(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -1586,13 +1701,14 @@ connection_handle::document_remove(zval* return_value,
                                  std::move(req),
                                  legacy_durability.value().first,
                                  legacy_durability.value().second,
-                               });
+                               },
+                               spans);
     if (err.ec) {
       return err;
     }
     resp = std::move(r);
   } else {
-    auto [r, err] = impl_->key_value_execute(__func__, std::move(req));
+    auto [r, err] = impl_->key_value_execute(__func__, std::move(req), spans);
     if (err.ec) {
       return err;
     }
@@ -1606,6 +1722,7 @@ connection_handle::document_remove(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_exists(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket,
                                    const zend_string* scope,
                                    const zend_string* collection,
@@ -1623,7 +1740,7 @@ connection_handle::document_exists(zval* return_value,
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(request), spans);
   if (err.ec && resp.ctx.ec() != errc::key_value::document_not_found) {
     return err;
   }
@@ -1644,6 +1761,7 @@ connection_handle::document_exists(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_mutate_in(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
@@ -1790,7 +1908,7 @@ connection_handle::document_mutate_in(zval* return_value,
 
   req.specs = cxx_specs.specs();
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -1817,6 +1935,7 @@ connection_handle::document_mutate_in(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_lookup_in(zval* return_value,
+                                      zval* spans,
                                       const zend_string* bucket,
                                       const zend_string* scope,
                                       const zend_string* collection,
@@ -1842,7 +1961,7 @@ connection_handle::document_lookup_in(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -1853,6 +1972,7 @@ connection_handle::document_lookup_in(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_lookup_in_any_replica(zval* return_value,
+                                                  zval* spans,
                                                   const zend_string* bucket,
                                                   const zend_string* scope,
                                                   const zend_string* collection,
@@ -1878,7 +1998,7 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -1889,6 +2009,7 @@ connection_handle::document_lookup_in_any_replica(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::document_lookup_in_all_replicas(zval* return_value,
+                                                   zval* spans,
                                                    const zend_string* bucket,
                                                    const zend_string* scope,
                                                    const zend_string* collection,
@@ -1914,7 +2035,7 @@ connection_handle::document_lookup_in_all_replicas(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req));
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
   if (err.ec) {
     return err;
   }
@@ -2275,15 +2396,17 @@ connection_handle::document_upsert_multi(zval* return_value,
 
 COUCHBASE_API
 auto
-connection_handle::query(zval* return_value, const zend_string* statement, const zval* options)
-  -> core_error_info
+connection_handle::query(zval* return_value,
+                         zval* spans,
+                         const zend_string* statement,
+                         const zval* options) -> core_error_info
 {
   auto [request, e] = zval_to_query_request(statement, options);
   if (e.ec) {
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2328,6 +2451,7 @@ cb_analytics_status_str(core::operations::analytics_response::analytics_status s
 COUCHBASE_API
 auto
 connection_handle::analytics_query(zval* return_value,
+                                   zval* spans,
                                    const zend_string* statement,
                                    const zval* options) -> core_error_info
 {
@@ -2408,7 +2532,7 @@ connection_handle::analytics_query(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2480,6 +2604,7 @@ connection_handle::analytics_query(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search(zval* return_value,
+                          zval* spans,
                           const zend_string* index_name,
                           const zend_string* query,
                           const zval* options,
@@ -2510,7 +2635,7 @@ connection_handle::search(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2522,13 +2647,14 @@ connection_handle::search(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_query(zval* return_value,
+                                zval* spans,
                                 const zend_string* index_name,
                                 const zend_string* query,
                                 const zval* options) -> core_error_info
 {
   auto [request, e] = zval_to_common_search_request(index_name, query, options);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2539,6 +2665,7 @@ connection_handle::search_query(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::view_query(zval* return_value,
+                              zval* spans,
                               const zend_string* bucket_name,
                               const zend_string* design_document_name,
                               const zend_string* view_name,
@@ -2670,7 +2797,7 @@ connection_handle::view_query(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2969,6 +3096,7 @@ zval_to_search_index(couchbase::core::operations::management::search_index_upser
 COUCHBASE_API
 auto
 connection_handle::search_index_get(zval* return_value,
+                                    zval* spans,
                                     const zend_string* index_name,
                                     const zval* options) -> core_error_info
 {
@@ -2979,7 +3107,7 @@ connection_handle::search_index_get(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -2993,7 +3121,8 @@ connection_handle::search_index_get(zval* return_value,
 
 COUCHBASE_API
 auto
-connection_handle::search_index_get_all(zval* return_value, const zval* options) -> core_error_info
+connection_handle::search_index_get_all(zval* return_value, zval* spans, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::search_index_get_all_request request{};
 
@@ -3001,7 +3130,7 @@ connection_handle::search_index_get_all(zval* return_value, const zval* options)
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3020,8 +3149,10 @@ connection_handle::search_index_get_all(zval* return_value, const zval* options)
 
 COUCHBASE_API
 auto
-connection_handle::search_index_upsert(zval* return_value, const zval* index, const zval* options)
-  -> core_error_info
+connection_handle::search_index_upsert(zval* return_value,
+                                       zval* spans,
+                                       const zval* index,
+                                       const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::search_index_upsert_request request{};
 
@@ -3033,7 +3164,7 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3048,6 +3179,7 @@ connection_handle::search_index_upsert(zval* return_value, const zval* index, co
 COUCHBASE_API
 auto
 connection_handle::search_index_drop(zval* return_value,
+                                     zval* spans,
                                      const zend_string* index_name,
                                      const zval* options) -> core_error_info
 {
@@ -3058,7 +3190,7 @@ connection_handle::search_index_drop(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3070,6 +3202,7 @@ connection_handle::search_index_drop(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_index_get_documents_count(zval* return_value,
+                                                    zval* spans,
                                                     const zend_string* index_name,
                                                     const zval* options) -> core_error_info
 {
@@ -3081,7 +3214,7 @@ connection_handle::search_index_get_documents_count(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3095,6 +3228,7 @@ connection_handle::search_index_get_documents_count(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_index_control_ingest(zval* return_value,
+                                               zval* spans,
                                                const zend_string* index_name,
                                                bool pause,
                                                const zval* options) -> core_error_info
@@ -3107,7 +3241,7 @@ connection_handle::search_index_control_ingest(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3119,6 +3253,7 @@ connection_handle::search_index_control_ingest(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_index_control_query(zval* return_value,
+                                              zval* spans,
                                               const zend_string* index_name,
                                               bool allow,
                                               const zval* options) -> core_error_info
@@ -3131,7 +3266,7 @@ connection_handle::search_index_control_query(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3143,6 +3278,7 @@ connection_handle::search_index_control_query(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_index_control_plan_freeze(zval* return_value,
+                                                    zval* spans,
                                                     const zend_string* index_name,
                                                     bool freeze,
                                                     const zval* options) -> core_error_info
@@ -3155,7 +3291,7 @@ connection_handle::search_index_control_plan_freeze(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3167,6 +3303,7 @@ connection_handle::search_index_control_plan_freeze(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::search_index_analyze_document(zval* return_value,
+                                                 zval* spans,
                                                  const zend_string* index_name,
                                                  const zend_string* document,
                                                  const zval* options) -> core_error_info
@@ -3179,7 +3316,7 @@ connection_handle::search_index_analyze_document(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3193,6 +3330,7 @@ connection_handle::search_index_analyze_document(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_get(zval* return_value,
+                                          zval* spans,
                                           const zend_string* bucket_name,
                                           const zend_string* scope_name,
                                           const zend_string* index_name,
@@ -3208,7 +3346,7 @@ connection_handle::scope_search_index_get(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3223,6 +3361,7 @@ connection_handle::scope_search_index_get(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_get_all(zval* return_value,
+                                              zval* spans,
                                               const zend_string* bucket_name,
                                               const zend_string* scope_name,
                                               const zval* options) -> core_error_info
@@ -3236,7 +3375,7 @@ connection_handle::scope_search_index_get_all(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3256,6 +3395,7 @@ connection_handle::scope_search_index_get_all(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_upsert(zval* return_value,
+                                             zval* spans,
                                              const zend_string* bucket_name,
                                              const zend_string* scope_name,
                                              const zval* index,
@@ -3274,7 +3414,7 @@ connection_handle::scope_search_index_upsert(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3289,6 +3429,7 @@ connection_handle::scope_search_index_upsert(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_drop(zval* return_value,
+                                           zval* spans,
                                            const zend_string* bucket_name,
                                            const zend_string* scope_name,
                                            const zend_string* index_name,
@@ -3304,7 +3445,7 @@ connection_handle::scope_search_index_drop(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3316,6 +3457,7 @@ connection_handle::scope_search_index_drop(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_get_documents_count(zval* return_value,
+                                                          zval* spans,
                                                           const zend_string* bucket_name,
                                                           const zend_string* scope_name,
                                                           const zend_string* index_name,
@@ -3332,7 +3474,7 @@ connection_handle::scope_search_index_get_documents_count(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3346,6 +3488,7 @@ connection_handle::scope_search_index_get_documents_count(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_control_ingest(zval* return_value,
+                                                     zval* spans,
                                                      const zend_string* bucket_name,
                                                      const zend_string* scope_name,
                                                      const zend_string* index_name,
@@ -3364,7 +3507,7 @@ connection_handle::scope_search_index_control_ingest(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3376,6 +3519,7 @@ connection_handle::scope_search_index_control_ingest(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_control_query(zval* return_value,
+                                                    zval* spans,
                                                     const zend_string* bucket_name,
                                                     const zend_string* scope_name,
                                                     const zend_string* index_name,
@@ -3394,7 +3538,7 @@ connection_handle::scope_search_index_control_query(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3406,6 +3550,7 @@ connection_handle::scope_search_index_control_query(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
+                                                          zval* spans,
                                                           const zend_string* bucket_name,
                                                           const zend_string* scope_name,
                                                           const zend_string* index_name,
@@ -3424,7 +3569,7 @@ connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3436,6 +3581,7 @@ connection_handle::scope_search_index_control_plan_freeze(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_search_index_analyze_document(zval* return_value,
+                                                       zval* spans,
                                                        const zend_string* bucket_name,
                                                        const zend_string* scope_name,
                                                        const zend_string* index_name,
@@ -3454,7 +3600,7 @@ connection_handle::scope_search_index_analyze_document(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3468,6 +3614,7 @@ connection_handle::scope_search_index_analyze_document(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::view_index_upsert(zval* return_value,
+                                     zval* spans,
                                      const zend_string* bucket_name,
                                      const zval* design_document,
                                      zend_long name_space,
@@ -3529,7 +3676,7 @@ connection_handle::view_index_upsert(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3703,6 +3850,7 @@ zval_to_bucket_settings(const zval* bucket_settings)
 COUCHBASE_API
 auto
 connection_handle::bucket_create(zval* return_value,
+                                 zval* spans,
                                  const zval* bucket_settings,
                                  const zval* options) -> core_error_info
 {
@@ -3717,7 +3865,7 @@ connection_handle::bucket_create(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3729,6 +3877,7 @@ connection_handle::bucket_create(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::bucket_update(zval* return_value,
+                                 zval* spans,
                                  const zval* bucket_settings,
                                  const zval* options) -> core_error_info
 {
@@ -3743,7 +3892,7 @@ connection_handle::bucket_update(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3896,8 +4045,10 @@ cb_bucket_settings_to_zval(
 
 COUCHBASE_API
 auto
-connection_handle::bucket_get(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::bucket_get(zval* return_value,
+                              zval* spans,
+                              const zend_string* name,
+                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::bucket_get_request request{ cb_string_new(name) };
 
@@ -3905,7 +4056,7 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3919,7 +4070,8 @@ connection_handle::bucket_get(zval* return_value, const zend_string* name, const
 
 COUCHBASE_API
 auto
-connection_handle::bucket_get_all(zval* return_value, const zval* options) -> core_error_info
+connection_handle::bucket_get_all(zval* return_value, zval* spans, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::bucket_get_all_request request{};
 
@@ -3927,7 +4079,7 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options) -> co
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3947,8 +4099,10 @@ connection_handle::bucket_get_all(zval* return_value, const zval* options) -> co
 
 COUCHBASE_API
 auto
-connection_handle::bucket_drop(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::bucket_drop(zval* return_value,
+                               zval* spans,
+                               const zend_string* name,
+                               const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::bucket_drop_request request{ cb_string_new(name) };
 
@@ -3956,7 +4110,7 @@ connection_handle::bucket_drop(zval* return_value, const zend_string* name, cons
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3967,8 +4121,10 @@ connection_handle::bucket_drop(zval* return_value, const zend_string* name, cons
 
 COUCHBASE_API
 auto
-connection_handle::bucket_flush(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::bucket_flush(zval* return_value,
+                                zval* spans,
+                                const zend_string* name,
+                                const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::bucket_flush_request request{ cb_string_new(name) };
 
@@ -3976,7 +4132,7 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -3988,6 +4144,7 @@ connection_handle::bucket_flush(zval* return_value, const zend_string* name, con
 COUCHBASE_API
 auto
 connection_handle::scope_get_all(zval* return_value,
+                                 zval* spans,
                                  const zend_string* bucket_name,
                                  const zval* options) -> core_error_info
 {
@@ -3998,7 +4155,7 @@ connection_handle::scope_get_all(zval* return_value,
   }
   request.bucket_name = cb_string_new(bucket_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4034,6 +4191,7 @@ connection_handle::scope_get_all(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_create(zval* return_value,
+                                zval* spans,
                                 const zend_string* bucket_name,
                                 const zend_string* scope_name,
                                 const zval* options) -> core_error_info
@@ -4046,7 +4204,7 @@ connection_handle::scope_create(zval* return_value,
   request.bucket_name = cb_string_new(bucket_name);
   request.scope_name = cb_string_new(scope_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4058,6 +4216,7 @@ connection_handle::scope_create(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::scope_drop(zval* return_value,
+                              zval* spans,
                               const zend_string* bucket_name,
                               const zend_string* scope_name,
                               const zval* options) -> core_error_info
@@ -4070,7 +4229,7 @@ connection_handle::scope_drop(zval* return_value,
   request.bucket_name = cb_string_new(bucket_name);
   request.scope_name = cb_string_new(scope_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4082,6 +4241,7 @@ connection_handle::scope_drop(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::collection_create(zval* return_value,
+                                     zval* spans,
                                      const zend_string* bucket_name,
                                      const zend_string* scope_name,
                                      const zend_string* collection_name,
@@ -4106,7 +4266,7 @@ connection_handle::collection_create(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4118,6 +4278,7 @@ connection_handle::collection_create(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::collection_drop(zval* return_value,
+                                   zval* spans,
                                    const zend_string* bucket_name,
                                    const zend_string* scope_name,
                                    const zend_string* collection_name,
@@ -4133,7 +4294,7 @@ connection_handle::collection_drop(zval* return_value,
   request.scope_name = cb_string_new(scope_name);
   request.collection_name = cb_string_new(collection_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4145,6 +4306,7 @@ connection_handle::collection_drop(zval* return_value,
 COUCHBASE_API
 auto
 connection_handle::collection_update(zval* return_value,
+                                     zval* spans,
                                      const zend_string* bucket_name,
                                      const zend_string* scope_name,
                                      const zend_string* collection_name,
@@ -4169,7 +4331,7 @@ connection_handle::collection_update(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4314,8 +4476,10 @@ cb_group_to_zval(zval* return_value, const couchbase::core::management::rbac::gr
 
 COUCHBASE_API
 auto
-connection_handle::user_upsert(zval* return_value, const zval* user, const zval* options)
-  -> core_error_info
+connection_handle::user_upsert(zval* return_value,
+                               zval* spans,
+                               const zval* user,
+                               const zval* options) -> core_error_info
 {
   couchbase::core::management::rbac::user cuser{};
   if (auto e = cb_assign_string(cuser.username, user, "username"); e.ec) {
@@ -4377,7 +4541,7 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
   }
   request.user = cuser;
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4388,7 +4552,8 @@ connection_handle::user_upsert(zval* return_value, const zval* user, const zval*
 
 COUCHBASE_API
 auto
-connection_handle::user_get_all(zval* return_value, const zval* options) -> core_error_info
+connection_handle::user_get_all(zval* return_value, zval* spans, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::user_get_all_request request{};
 
@@ -4399,7 +4564,7 @@ connection_handle::user_get_all(zval* return_value, const zval* options) -> core
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4419,8 +4584,10 @@ connection_handle::user_get_all(zval* return_value, const zval* options) -> core
 
 COUCHBASE_API
 auto
-connection_handle::user_get(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::user_get(zval* return_value,
+                            zval* spans,
+                            const zend_string* name,
+                            const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::user_get_request request{ cb_string_new(name) };
 
@@ -4431,7 +4598,7 @@ connection_handle::user_get(zval* return_value, const zend_string* name, const z
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4445,8 +4612,10 @@ connection_handle::user_get(zval* return_value, const zend_string* name, const z
 
 COUCHBASE_API
 auto
-connection_handle::user_drop(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::user_drop(zval* return_value,
+                             zval* spans,
+                             const zend_string* name,
+                             const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::user_drop_request request{ cb_string_new(name) };
 
@@ -4457,7 +4626,7 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4469,6 +4638,7 @@ connection_handle::user_drop(zval* return_value, const zend_string* name, const 
 COUCHBASE_API
 auto
 connection_handle::change_password(zval* return_value,
+                                   zval* spans,
                                    const zend_string* new_password,
                                    const zval* options) -> core_error_info
 {
@@ -4479,7 +4649,7 @@ connection_handle::change_password(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4490,8 +4660,10 @@ connection_handle::change_password(zval* return_value,
 
 COUCHBASE_API
 auto
-connection_handle::group_upsert(zval* return_value, const zval* group, const zval* options)
-  -> core_error_info
+connection_handle::group_upsert(zval* return_value,
+                                zval* spans,
+                                const zval* group,
+                                const zval* options) -> core_error_info
 {
   couchbase::core::management::rbac::group cgroup{};
   if (auto e = cb_assign_string(cgroup.name, group, "name"); e.ec) {
@@ -4536,7 +4708,7 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4547,7 +4719,8 @@ connection_handle::group_upsert(zval* return_value, const zval* group, const zva
 
 COUCHBASE_API
 auto
-connection_handle::group_get_all(zval* return_value, const zval* options) -> core_error_info
+connection_handle::group_get_all(zval* return_value, zval* spans, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::group_get_all_request request{};
 
@@ -4555,7 +4728,7 @@ connection_handle::group_get_all(zval* return_value, const zval* options) -> cor
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4573,8 +4746,10 @@ connection_handle::group_get_all(zval* return_value, const zval* options) -> cor
 
 COUCHBASE_API
 auto
-connection_handle::group_get(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::group_get(zval* return_value,
+                             zval* spans,
+                             const zend_string* name,
+                             const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::group_get_request request{ cb_string_new(name) };
 
@@ -4582,7 +4757,7 @@ connection_handle::group_get(zval* return_value, const zend_string* name, const 
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4594,8 +4769,10 @@ connection_handle::group_get(zval* return_value, const zend_string* name, const 
 
 COUCHBASE_API
 auto
-connection_handle::group_drop(zval* return_value, const zend_string* name, const zval* options)
-  -> core_error_info
+connection_handle::group_drop(zval* return_value,
+                              zval* spans,
+                              const zend_string* name,
+                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::group_drop_request request{ cb_string_new(name) };
 
@@ -4603,7 +4780,7 @@ connection_handle::group_drop(zval* return_value, const zend_string* name, const
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4614,7 +4791,8 @@ connection_handle::group_drop(zval* return_value, const zend_string* name, const
 
 COUCHBASE_API
 auto
-connection_handle::role_get_all(zval* return_value, const zval* options) -> core_error_info
+connection_handle::role_get_all(zval* return_value, zval* spans, const zval* options)
+  -> core_error_info
 {
   couchbase::core::operations::management::role_get_all_request request{};
 
@@ -4622,7 +4800,7 @@ connection_handle::role_get_all(zval* return_value, const zval* options) -> core
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4644,6 +4822,7 @@ connection_handle::role_get_all(zval* return_value, const zval* options) -> core
 COUCHBASE_API
 auto
 connection_handle::query_index_get_all(zval* return_value,
+                                       zval* spans,
                                        const zend_string* bucket_name,
                                        const zval* options) -> core_error_info
 {
@@ -4660,7 +4839,7 @@ connection_handle::query_index_get_all(zval* return_value,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4700,7 +4879,8 @@ connection_handle::query_index_get_all(zval* return_value,
 
 COUCHBASE_API
 auto
-connection_handle::query_index_create(const zend_string* bucket_name,
+connection_handle::query_index_create(zval* spans,
+                                      const zend_string* bucket_name,
                                       const zend_string* index_name,
                                       const zval* fields,
                                       const zval* options) -> core_error_info
@@ -4748,7 +4928,7 @@ connection_handle::query_index_create(const zend_string* bucket_name,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4758,8 +4938,9 @@ connection_handle::query_index_create(const zend_string* bucket_name,
 
 COUCHBASE_API
 auto
-connection_handle::query_index_create_primary(const zend_string* bucket_name, const zval* options)
-  -> core_error_info
+connection_handle::query_index_create_primary(zval* spans,
+                                              const zend_string* bucket_name,
+                                              const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_create_request request{};
 
@@ -4788,7 +4969,7 @@ connection_handle::query_index_create_primary(const zend_string* bucket_name, co
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4798,7 +4979,8 @@ connection_handle::query_index_create_primary(const zend_string* bucket_name, co
 
 COUCHBASE_API
 auto
-connection_handle::query_index_drop(const zend_string* bucket_name,
+connection_handle::query_index_drop(zval* spans,
+                                    const zend_string* bucket_name,
                                     const zend_string* index_name,
                                     const zval* options) -> core_error_info
 {
@@ -4822,7 +5004,7 @@ connection_handle::query_index_drop(const zend_string* bucket_name,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4832,8 +5014,9 @@ connection_handle::query_index_drop(const zend_string* bucket_name,
 
 COUCHBASE_API
 auto
-connection_handle::query_index_drop_primary(const zend_string* bucket_name, const zval* options)
-  -> core_error_info
+connection_handle::query_index_drop_primary(zval* spans,
+                                            const zend_string* bucket_name,
+                                            const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::query_index_drop_request request{};
 
@@ -4857,7 +5040,7 @@ connection_handle::query_index_drop_primary(const zend_string* bucket_name, cons
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4868,6 +5051,7 @@ connection_handle::query_index_drop_primary(const zend_string* bucket_name, cons
 COUCHBASE_API
 auto
 connection_handle::query_index_build_deferred(zval* /*return_value*/,
+                                              zval* spans,
                                               const zend_string* bucket_name,
                                               const zval* options) -> core_error_info
 {
@@ -4885,7 +5069,7 @@ connection_handle::query_index_build_deferred(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4896,6 +5080,7 @@ connection_handle::query_index_build_deferred(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::collection_query_index_get_all(zval* return_value,
+                                                  zval* spans,
                                                   const zend_string* bucket_name,
                                                   const zend_string* scope_name,
                                                   const zend_string* collection_name,
@@ -4910,7 +5095,7 @@ connection_handle::collection_query_index_get_all(zval* return_value,
   request.scope_name = cb_string_new(scope_name);
   request.collection_name = cb_string_new(collection_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -4950,7 +5135,8 @@ connection_handle::collection_query_index_get_all(zval* return_value,
 
 COUCHBASE_API
 auto
-connection_handle::collection_query_index_create(const zend_string* bucket_name,
+connection_handle::collection_query_index_create(zval* spans,
+                                                 const zend_string* bucket_name,
                                                  const zend_string* scope_name,
                                                  const zend_string* collection_name,
                                                  const zend_string* index_name,
@@ -4996,7 +5182,7 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -5006,7 +5192,8 @@ connection_handle::collection_query_index_create(const zend_string* bucket_name,
 
 COUCHBASE_API
 auto
-connection_handle::collection_query_index_create_primary(const zend_string* bucket_name,
+connection_handle::collection_query_index_create_primary(zval* spans,
+                                                         const zend_string* bucket_name,
                                                          const zend_string* scope_name,
                                                          const zend_string* collection_name,
                                                          const zval* options) -> core_error_info
@@ -5034,7 +5221,7 @@ connection_handle::collection_query_index_create_primary(const zend_string* buck
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -5044,7 +5231,8 @@ connection_handle::collection_query_index_create_primary(const zend_string* buck
 
 COUCHBASE_API
 auto
-connection_handle::collection_query_index_drop(const zend_string* bucket_name,
+connection_handle::collection_query_index_drop(zval* spans,
+                                               const zend_string* bucket_name,
                                                const zend_string* scope_name,
                                                const zend_string* collection_name,
                                                const zend_string* index_name,
@@ -5066,7 +5254,7 @@ connection_handle::collection_query_index_drop(const zend_string* bucket_name,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -5076,7 +5264,8 @@ connection_handle::collection_query_index_drop(const zend_string* bucket_name,
 
 COUCHBASE_API
 auto
-connection_handle::collection_query_index_drop_primary(const zend_string* bucket_name,
+connection_handle::collection_query_index_drop_primary(zval* spans,
+                                                       const zend_string* bucket_name,
                                                        const zend_string* scope_name,
                                                        const zend_string* collection_name,
                                                        const zval* options) -> core_error_info
@@ -5099,7 +5288,7 @@ connection_handle::collection_query_index_drop_primary(const zend_string* bucket
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -5110,6 +5299,7 @@ connection_handle::collection_query_index_drop_primary(const zend_string* bucket
 COUCHBASE_API
 auto
 connection_handle::collection_query_index_build_deferred(zval* /*return_value*/,
+                                                         zval* spans,
                                                          const zend_string* bucket_name,
                                                          const zend_string* scope_name,
                                                          const zend_string* collection_name,
@@ -5124,7 +5314,7 @@ connection_handle::collection_query_index_build_deferred(zval* /*return_value*/,
   request.scope_name = cb_string_new(scope_name);
   request.collection_name = cb_string_new(collection_name);
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
   if (err.ec) {
     return err;
   }
@@ -5135,6 +5325,7 @@ connection_handle::collection_query_index_build_deferred(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_create_dataverse(zval* /*return_value*/,
+                                              zval* spans,
                                               const zend_string* dataverse_name,
                                               const zval* options) -> core_error_info
 {
@@ -5151,7 +5342,7 @@ connection_handle::analytics_create_dataverse(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5170,6 +5361,7 @@ connection_handle::analytics_create_dataverse(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_drop_dataverse(zval* /*return_value*/,
+                                            zval* spans,
                                             const zend_string* dataverse_name,
                                             const zval* options) -> core_error_info
 {
@@ -5186,7 +5378,7 @@ connection_handle::analytics_drop_dataverse(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5205,6 +5397,7 @@ connection_handle::analytics_drop_dataverse(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_create_dataset(zval* /*return_value*/,
+                                            zval* spans,
                                             const zend_string* dataset_name,
                                             const zend_string* bucket_name,
                                             const zval* options) -> core_error_info
@@ -5230,7 +5423,7 @@ connection_handle::analytics_create_dataset(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5249,6 +5442,7 @@ connection_handle::analytics_create_dataset(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_drop_dataset(zval* /*return_value*/,
+                                          zval* spans,
                                           const zend_string* dataset_name,
                                           const zval* options) -> core_error_info
 {
@@ -5269,7 +5463,7 @@ connection_handle::analytics_drop_dataset(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5287,7 +5481,7 @@ connection_handle::analytics_drop_dataset(zval* /*return_value*/,
 
 COUCHBASE_API
 auto
-connection_handle::analytics_get_all_datasets(zval* return_value, const zval* options)
+connection_handle::analytics_get_all_datasets(zval* return_value, zval* spans, const zval* options)
   -> core_error_info
 {
   couchbase::core::operations::management::analytics_dataset_get_all_request request{};
@@ -5296,7 +5490,7 @@ connection_handle::analytics_get_all_datasets(zval* return_value, const zval* op
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5326,6 +5520,7 @@ connection_handle::analytics_get_all_datasets(zval* return_value, const zval* op
 COUCHBASE_API
 auto
 connection_handle::analytics_create_index(zval* /*return_value*/,
+                                          zval* spans,
                                           const zend_string* dataset_name,
                                           const zend_string* index_name,
                                           const zval* fields,
@@ -5362,7 +5557,7 @@ connection_handle::analytics_create_index(zval* /*return_value*/,
     request.fields = req_fields;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5382,6 +5577,7 @@ connection_handle::analytics_create_index(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_drop_index(zval* /*return_value*/,
+                                        zval* spans,
                                         const zend_string* dataset_name,
                                         const zend_string* index_name,
                                         const zval* options) -> core_error_info
@@ -5404,7 +5600,7 @@ connection_handle::analytics_drop_index(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5422,7 +5618,7 @@ connection_handle::analytics_drop_index(zval* /*return_value*/,
 
 COUCHBASE_API
 auto
-connection_handle::analytics_get_all_indexes(zval* return_value, const zval* options)
+connection_handle::analytics_get_all_indexes(zval* return_value, zval* spans, const zval* options)
   -> core_error_info
 {
   couchbase::core::operations::management::analytics_index_get_all_request request{};
@@ -5431,7 +5627,7 @@ connection_handle::analytics_get_all_indexes(zval* return_value, const zval* opt
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5461,7 +5657,7 @@ connection_handle::analytics_get_all_indexes(zval* return_value, const zval* opt
 
 COUCHBASE_API
 auto
-connection_handle::analytics_connect_link(zval* /*return_value*/, const zval* options)
+connection_handle::analytics_connect_link(zval* /*return_value*/, zval* spans, const zval* options)
   -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_connect_request request{};
@@ -5482,7 +5678,7 @@ connection_handle::analytics_connect_link(zval* /*return_value*/, const zval* op
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5501,8 +5697,9 @@ connection_handle::analytics_connect_link(zval* /*return_value*/, const zval* op
 
 COUCHBASE_API
 auto
-connection_handle::analytics_disconnect_link(zval* /*return_value*/, const zval* options)
-  -> core_error_info
+connection_handle::analytics_disconnect_link(zval* /*return_value*/,
+                                             zval* spans,
+                                             const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_disconnect_request request{};
 
@@ -5518,7 +5715,7 @@ connection_handle::analytics_disconnect_link(zval* /*return_value*/, const zval*
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5537,8 +5734,9 @@ connection_handle::analytics_disconnect_link(zval* /*return_value*/, const zval*
 
 COUCHBASE_API
 auto
-connection_handle::analytics_get_pending_mutations(zval* return_value, const zval* options)
-  -> core_error_info
+connection_handle::analytics_get_pending_mutations(zval* return_value,
+                                                   zval* spans,
+                                                   const zval* options) -> core_error_info
 {
   couchbase::core::operations::management::analytics_get_pending_mutations_request request{};
 
@@ -5546,7 +5744,7 @@ connection_handle::analytics_get_pending_mutations(zval* return_value, const zva
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5577,6 +5775,7 @@ connection_handle::analytics_get_pending_mutations(zval* return_value, const zva
 COUCHBASE_API
 auto
 connection_handle::analytics_create_link(zval* /*return_value*/,
+                                         zval* spans,
                                          const zval* analytics_link,
                                          const zval* options) -> core_error_info
 {
@@ -5604,7 +5803,7 @@ connection_handle::analytics_create_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5630,7 +5829,7 @@ connection_handle::analytics_create_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5656,7 +5855,7 @@ connection_handle::analytics_create_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5681,6 +5880,7 @@ connection_handle::analytics_create_link(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_replace_link(zval* /*return_value*/,
+                                          zval* spans,
                                           const zval* analytics_link,
                                           const zval* options) -> core_error_info
 {
@@ -5708,7 +5908,7 @@ connection_handle::analytics_replace_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5734,7 +5934,7 @@ connection_handle::analytics_replace_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5760,7 +5960,7 @@ connection_handle::analytics_replace_link(zval* /*return_value*/,
       return e;
     }
 
-    auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+    auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
     if (err.ec) {
       if (resp.errors.empty()) {
@@ -5785,6 +5985,7 @@ connection_handle::analytics_replace_link(zval* /*return_value*/,
 COUCHBASE_API
 auto
 connection_handle::analytics_drop_link(zval* /*return_value*/,
+                                       zval* spans,
                                        const zend_string* link_name,
                                        const zend_string* dataverse_name,
                                        const zval* options) -> core_error_info
@@ -5798,7 +5999,7 @@ connection_handle::analytics_drop_link(zval* /*return_value*/,
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -5815,7 +6016,7 @@ connection_handle::analytics_drop_link(zval* /*return_value*/,
 
 COUCHBASE_API
 auto
-connection_handle::analytics_get_all_links(zval* return_value, const zval* options)
+connection_handle::analytics_get_all_links(zval* return_value, zval* spans, const zval* options)
   -> core_error_info
 {
   couchbase::core::operations::management::analytics_link_get_all_request request{};
@@ -5836,7 +6037,7 @@ connection_handle::analytics_get_all_links(zval* return_value, const zval* optio
     return e;
   }
 
-  auto [resp, err] = impl_->http_execute(__func__, std::move(request));
+  auto [resp, err] = impl_->http_execute(__func__, std::move(request), spans);
 
   if (err.ec) {
     if (resp.errors.empty()) {
@@ -6135,12 +6336,6 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
       options::assign_boolean(ZEND_STRL("showQueries"), key, value, [&](auto v) {
         cluster_options.behavior().show_queries(v);
       });
-      options::assign_boolean(ZEND_STRL("enableMetrics"), key, value, [&](auto v) {
-        cluster_options.metrics().enable(v);
-      });
-      options::assign_boolean(ZEND_STRL("enableTracing"), key, value, [&](auto v) {
-        cluster_options.tracing().enable(v);
-      });
 
       options::assign_number(ZEND_STRL("maxHttpConnections"), key, value, [&](auto v) {
         cluster_options.network().max_http_connections(v);
@@ -6318,6 +6513,12 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
         ZEND_HASH_FOREACH_END();
       }
 
+      options::assign_boolean(ZEND_STRL("enableCoreTracing"), key, value, [&](auto v) {
+        cluster_options.tracing().enable(v);
+      });
+      options::assign_boolean(ZEND_STRL("enableCoreMetrics"), key, value, [&](auto v) {
+        cluster_options.metrics().enable(v);
+      });
     } catch (const core_error_info& e) {
       return e;
     }
@@ -6336,6 +6537,38 @@ apply_options(couchbase::cluster_options& cluster_options, zval* options) -> cor
   }
 
   return {};
+}
+
+auto
+maybe_set_external_tracer(couchbase::cluster_options& cluster_opts, zval* options)
+  -> std::pair<core_error_info, std::shared_ptr<core::tracing::wrapper_sdk_tracer>>
+{
+  if (options == nullptr || Z_TYPE_P(options) != IS_ARRAY) {
+    return {
+      { errc::common::invalid_argument, ERROR_LOCATION, "expected array for cluster options" },
+      nullptr
+    };
+  }
+
+  const zval* bufferCoreSpans =
+    zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("bufferCoreSpans"));
+  if (bufferCoreSpans == nullptr) {
+    return { {}, nullptr };
+  }
+  switch (Z_TYPE_P(bufferCoreSpans)) {
+    case IS_TRUE: {
+      auto tracer = std::make_shared<core::tracing::wrapper_sdk_tracer>();
+      cluster_opts.tracing().tracer(tracer);
+      return { {}, tracer };
+    }
+    case IS_FALSE:
+      return { {}, nullptr };
+    default:
+      return { { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected boolean for bufferCoreSpans option" },
+               nullptr };
+  }
 }
 
 auto
@@ -6476,10 +6709,15 @@ create_connection_handle(const zend_string* connection_string,
   if (auto e2 = options::apply_options(cluster_options.value(), options); e2.ec) {
     return { nullptr, e2 };
   }
+  auto [e3, external_tracer] = options::maybe_set_external_tracer(cluster_options.value(), options);
+  if (e3.ec) {
+    return { nullptr, e3 };
+  }
   return { new connection_handle(std::move(connection_str),
                                  std::string(ZSTR_VAL(connection_hash), ZSTR_LEN(connection_hash)),
                                  std::move(cluster_options.value()),
-                                 idle_expiry),
+                                 idle_expiry,
+                                 std::move(external_tracer)),
            {} };
 }
 } // namespace couchbase::php
