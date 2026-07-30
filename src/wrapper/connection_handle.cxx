@@ -44,6 +44,7 @@
 #include <core/operations/management/search.hxx>
 #include <core/operations/management/user.hxx>
 #include <core/operations/management/view.hxx>
+#include <core/tracing/constants.hxx>
 #include <core/tracing/wrapper_sdk_tracer.hxx>
 #include <core/utils/connection_string.hxx>
 #include <core/utils/json.hxx>
@@ -918,27 +919,50 @@ connection_handle::cluster_labels(zval* return_value)
 namespace
 {
 auto
-zval_to_value_recorder_tags(const zval* tags) -> std::map<std::string, std::string>
+zval_to_metric_attributes(const zval* tags) -> core::metrics::metric_attributes
 {
-  std::map<std::string, std::string> result{};
+  namespace attributes = core::tracing::attributes;
+
+  core::metrics::metric_attributes attrs{};
   if (tags == nullptr || Z_TYPE_P(tags) != IS_ARRAY) {
-    return result;
+    return attrs;
   }
   const zend_string* key = nullptr;
   const zval* value = nullptr;
 
   ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(tags), key, value)
   {
-    if (Z_TYPE_P(value) == IS_STRING) {
-      result[cb_string_new(key)] = cb_string_new(Z_STR_P(value));
+    if (key == nullptr || Z_TYPE_P(value) != IS_STRING) {
+      // We ignore other types. We can't forward them to the C++ SDK's meter.
+      // This is not an issue at present, as this is only used for the LoggingMeter, which only needs
+      // the service and operation name tags, which are both strings.
+      continue;
     }
-    // We ignore other types. We can't forward them to the C++ SDK's meter.
-    // This is not an issue at present, as this is only used for the LoggingMeter, which only needs
-    // the service and operation name tags, which are both strings.
+    auto name = cb_string_new(key);
+    auto text = cb_string_new(Z_STR_P(value));
+    if (name == attributes::op::service) {
+      attrs.service = std::move(text);
+    } else if (name == attributes::op::operation_name) {
+      attrs.operation = std::move(text);
+    } else if (name == attributes::op::bucket_name) {
+      attrs.bucket_name = std::move(text);
+    } else if (name == attributes::op::scope_name) {
+      attrs.scope_name = std::move(text);
+    } else if (name == attributes::op::collection_name) {
+      attrs.collection_name = std::move(text);
+    } else if (name == attributes::op::error_type) {
+      attrs.error_type = std::move(text);
+    } else if (name == attributes::common::cluster_name) {
+      attrs.internal.cluster_name = std::move(text);
+    } else if (name == attributes::common::cluster_uuid) {
+      attrs.internal.cluster_uuid = std::move(text);
+    }
+    // Other tags (e.g. the reserved unit and system name) are fixed by
+    // metric_attributes::encode() and don't need to be forwarded.
   }
   ZEND_HASH_FOREACH_END();
 
-  return result;
+  return attrs;
 }
 } // namespace
 
@@ -946,8 +970,9 @@ COUCHBASE_API
 void
 connection_handle::record_core_meter_operation_duration(std::int64_t duration_us, zval* tags)
 {
-  auto tag_map = zval_to_value_recorder_tags(tags);
-  impl_->core_api().meter()->record_value(tag_map, std::chrono::microseconds(duration_us));
+  auto attrs = zval_to_metric_attributes(tags);
+  impl_->core_api().meter()->record_value(
+    std::move(attrs), std::chrono::steady_clock::now() - std::chrono::microseconds(duration_us));
 }
 
 COUCHBASE_API
