@@ -302,6 +302,11 @@ class ServerVersion
         return $this->major < 8;
     }
 
+    public function supportsScoreFusion(): bool
+    {
+        return $this->major > 8 || ($this->major == 8 && $this->minor >= 1);
+    }
+
     /**
      * @return int
      */

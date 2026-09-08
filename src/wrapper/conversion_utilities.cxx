@@ -717,6 +717,42 @@ zval_to_common_search_request(const zend_string* index_name,
   if (auto e = cb_assign_boolean(request.disable_scoring, options, "disableScoring"); e.ec) {
     return { {}, e };
   }
+  if (const zval* scoring = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("scoring"));
+      scoring != nullptr && Z_TYPE_P(scoring) == IS_ARRAY) {
+    if (auto [e, strategy] = cb_get_string(scoring, "strategy"); strategy) {
+      if (strategy == "none") {
+        request.scoring = core::search_scoring_none{};
+      } else if (strategy == "rrf") {
+        core::search_scoring_reciprocal_rank_fusion rrf{};
+        if (auto [e, val] = cb_get_integer<std::uint32_t>(scoring, "rankConstant"); val) {
+          rrf.rank_constant = val.value();
+        } else if (e.ec) {
+          return { {}, e };
+        }
+        if (auto [e, val] = cb_get_integer<std::uint32_t>(scoring, "windowSize"); val) {
+          rrf.window_size = val.value();
+        } else if (e.ec) {
+          return { {}, e };
+        }
+        request.scoring = rrf;
+      } else if (strategy == "rsf") {
+        core::search_scoring_relative_score_fusion rsf{};
+        if (auto [e, val] = cb_get_integer<std::uint32_t>(scoring, "windowSize"); val) {
+          rsf.window_size = val.value();
+        } else if (e.ec) {
+          return { {}, e };
+        }
+        request.scoring = rsf;
+      } else {
+        return { {},
+                 { errc::common::invalid_argument,
+                   ERROR_LOCATION,
+                   fmt::format("invalid value used for scoring strategy: {}", *strategy) } };
+      }
+    } else if (e.ec) {
+      return { {}, e };
+    }
+  }
   if (auto e = cb_assign_boolean(request.include_locations, options, "includeLocations"); e.ec) {
     return { {}, e };
   }
