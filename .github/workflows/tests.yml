@@ -581,14 +581,69 @@ jobs:
           - default
           - locked
     steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      # setup-php dropped support for Intel macOS runners once Homebrew did, so we
+      # build the PHP version ourselves from php-src, the same way the Windows jobs
+      # further down build PHP from source.
+      # See https://github.com/shivammathur/setup-php/issues/1112
+      - name: Resolve PHP version
+        id: php_tag
+        run: |
+          case "${{ matrix.php }}" in
+            8.2) echo "tag=php-8.2.30" >> "$GITHUB_OUTPUT" ;;
+            8.3) echo "tag=php-8.3.30" >> "$GITHUB_OUTPUT" ;;
+            8.4) echo "tag=php-8.4.19" >> "$GITHUB_OUTPUT" ;;
+            8.5) echo "tag=php-8.5.4" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unknown PHP version: ${{ matrix.php }}" >&2; exit 1 ;;
+          esac
+      # These aren't only needed to build PHP: it also dynamically links against the
+      # keg-only ones (icu4c, oniguruma, libxml2, libiconv, zlib) at runtime, so they
+      # must be installed on every runner, even when the PHP build itself is cached.
+      - name: Install PHP dependencies
+        run: brew install bison re2c pkg-config autoconf icu4c oniguruma libxml2 libiconv zlib
+      # The cache key must reflect the installed library versions: PHP dynamically
+      # links against the keg-only ones at their versioned Cellar paths, so a
+      # Homebrew upgrade between runs would otherwise restore a PHP binary that
+      # references a path that no longer exists.
+      - name: Resolve Homebrew library versions
+        id: brew_versions
+        run: |
+          echo "hash=$(brew list --versions icu4c oniguruma libxml2 libiconv zlib | shasum -a 256 | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Cache built PHP
+        id: cache_php
+        uses: actions/cache@v4
         with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-78.1
-        env:
-          phpts: ${{ matrix.ts }}
+          path: ~/phpbuild/${{ matrix.php }}-${{ matrix.ts }}
+          key: macos-x86_64-php-${{ matrix.php }}-${{ matrix.ts }}-${{ steps.php_tag.outputs.tag }}-${{ steps.brew_versions.outputs.hash }}-v1
+      - name: Build PHP
+        if: steps.cache_php.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          PHP_PREFIX="$HOME/phpbuild/${{ matrix.php }}-${{ matrix.ts }}"
+          git clone --no-progress --depth 1 --branch "${{ steps.php_tag.outputs.tag }}" https://github.com/php/php-src.git php-src
+          cd php-src
+          export PATH="$(brew --prefix bison)/bin:$(brew --prefix re2c)/bin:$PATH"
+          export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:$(brew --prefix oniguruma)/lib/pkgconfig:$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          ./buildconf --force
+          ZTS_FLAG=""
+          if [ "${{ matrix.ts }}" = "zts" ]; then
+            ZTS_FLAG="--enable-zts"
+          fi
+          ./configure \
+            --prefix="$PHP_PREFIX" \
+            --with-config-file-path="$PHP_PREFIX/etc" \
+            $ZTS_FLAG \
+            --enable-mbstring \
+            --enable-intl \
+            --enable-sockets \
+            --with-iconv="$(brew --prefix libiconv)" \
+            --with-zlib \
+            --with-pear
+          make -j"$(sysctl -n hw.ncpu)"
+          make install
+      - name: Add PHP to PATH
+        run: echo "$HOME/phpbuild/${{ matrix.php }}-${{ matrix.ts }}/bin" >> "$GITHUB_PATH"
+      - name: Verify PHP
+        run: php --version
       - uses: actions/download-artifact@v4
         with:
           name: couchbase-${{ needs.source.outputs.extension_version }}
@@ -646,14 +701,69 @@ jobs:
           - nts
           - zts
     steps:
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+      # setup-php dropped support for Intel macOS runners once Homebrew did, so we
+      # build the PHP version ourselves from php-src, the same way the Windows jobs
+      # further down build PHP from source.
+      # See https://github.com/shivammathur/setup-php/issues/1112
+      - name: Resolve PHP version
+        id: php_tag
+        run: |
+          case "${{ matrix.php }}" in
+            8.2) echo "tag=php-8.2.30" >> "$GITHUB_OUTPUT" ;;
+            8.3) echo "tag=php-8.3.30" >> "$GITHUB_OUTPUT" ;;
+            8.4) echo "tag=php-8.4.19" >> "$GITHUB_OUTPUT" ;;
+            8.5) echo "tag=php-8.5.4" >> "$GITHUB_OUTPUT" ;;
+            *) echo "Unknown PHP version: ${{ matrix.php }}" >&2; exit 1 ;;
+          esac
+      # These aren't only needed to build PHP: it also dynamically links against the
+      # keg-only ones (icu4c, oniguruma, libxml2, libiconv, zlib) at runtime, so they
+      # must be installed on every runner, even when the PHP build itself is cached.
+      - name: Install PHP dependencies
+        run: brew install bison re2c pkg-config autoconf icu4c oniguruma libxml2 libiconv zlib
+      # The cache key must reflect the installed library versions: PHP dynamically
+      # links against the keg-only ones at their versioned Cellar paths, so a
+      # Homebrew upgrade between runs would otherwise restore a PHP binary that
+      # references a path that no longer exists.
+      - name: Resolve Homebrew library versions
+        id: brew_versions
+        run: |
+          echo "hash=$(brew list --versions icu4c oniguruma libxml2 libiconv zlib | shasum -a 256 | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Cache built PHP
+        id: cache_php
+        uses: actions/cache@v4
         with:
-          php-version: ${{ matrix.php }}
-          # https://github.com/shivammathur/icu-intl#icu4c-builds
-          extensions: json, mbstring, intl-74.1
-        env:
-          phpts: ${{ matrix.ts }}
+          path: ~/phpbuild/${{ matrix.php }}-${{ matrix.ts }}
+          key: macos-x86_64-php-${{ matrix.php }}-${{ matrix.ts }}-${{ steps.php_tag.outputs.tag }}-${{ steps.brew_versions.outputs.hash }}-v1
+      - name: Build PHP
+        if: steps.cache_php.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          PHP_PREFIX="$HOME/phpbuild/${{ matrix.php }}-${{ matrix.ts }}"
+          git clone --no-progress --depth 1 --branch "${{ steps.php_tag.outputs.tag }}" https://github.com/php/php-src.git php-src
+          cd php-src
+          export PATH="$(brew --prefix bison)/bin:$(brew --prefix re2c)/bin:$PATH"
+          export PKG_CONFIG_PATH="$(brew --prefix icu4c)/lib/pkgconfig:$(brew --prefix oniguruma)/lib/pkgconfig:$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix zlib)/lib/pkgconfig:${PKG_CONFIG_PATH:-}"
+          ./buildconf --force
+          ZTS_FLAG=""
+          if [ "${{ matrix.ts }}" = "zts" ]; then
+            ZTS_FLAG="--enable-zts"
+          fi
+          ./configure \
+            --prefix="$PHP_PREFIX" \
+            --with-config-file-path="$PHP_PREFIX/etc" \
+            $ZTS_FLAG \
+            --enable-mbstring \
+            --enable-intl \
+            --enable-sockets \
+            --with-iconv="$(brew --prefix libiconv)" \
+            --with-zlib \
+            --with-pear
+          make -j"$(sysctl -n hw.ncpu)"
+          make install
+      - name: Add PHP to PATH
+        run: echo "$HOME/phpbuild/${{ matrix.php }}-${{ matrix.ts }}/bin" >> "$GITHUB_PATH"
+      - name: Verify PHP
+        run: php --version
       - uses: actions/download-artifact@v4
         with:
           name: couchbase-${{ needs.source.outputs.extension_version }}
