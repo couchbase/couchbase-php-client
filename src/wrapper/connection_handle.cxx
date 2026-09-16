@@ -2794,7 +2794,7 @@ connection_handle::view_query(zval* return_value,
   if (auto e = cb_assign_integer(request.limit, options, "limit"); e.ec) {
     return e;
   }
-  if (auto e = cb_assign_boolean(request.skip, options, "skip"); e.ec) {
+  if (auto e = cb_assign_integer(request.skip, options, "skip"); e.ec) {
     return e;
   }
   if (auto e = cb_assign_string(request.key, options, "key"); e.ec) {
