@@ -29,6 +29,7 @@ use Couchbase\DocIdSearchQuery;
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\IndexNotFoundException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
 use Couchbase\Management\BucketSettings;
@@ -48,6 +49,9 @@ use Couchbase\RegexpSearchQuery;
 use Couchbase\SearchHighlightMode;
 use Couchbase\SearchOptions;
 use Couchbase\SearchRequest;
+use Couchbase\SearchScoringNone;
+use Couchbase\SearchScoringReciprocalRankFusion;
+use Couchbase\SearchScoringRelativeScoreFusion;
 use Couchbase\SearchSortField;
 use Couchbase\SearchSortGeoDistance;
 use Couchbase\SearchSortId;
@@ -669,6 +673,88 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $encodedVectorQuery = json_encode($searchRequest['vectorSearch']);
         $this->assertEquals(JSON_ERROR_NONE, json_last_error());
         $this->assertEquals(sprintf('[{"field":"foo","boost":0.5,"vector_base64":"%s","k":4},{"field":"bar","vector":[-0.00810353,0.6433,0.52364],"k":3}]', $base64EncodedVector), $encodedVectorQuery);
+    }
+
+    public function testSearchScoringNoneExport()
+    {
+        $options = SearchOptions::build()->scoring(new SearchScoringNone());
+        $exported = SearchOptions::export($options);
+        $this->assertEquals(['strategy' => 'none'], $exported['scoring']);
+    }
+
+    public function testSearchScoringReciprocalRankFusionExport()
+    {
+        $options = SearchOptions::build()->scoring(
+            SearchScoringReciprocalRankFusion::build()->rankConstant(30)->windowSize(100)
+        );
+        $exported = SearchOptions::export($options);
+        $this->assertEquals(
+            ['strategy' => 'rrf', 'rankConstant' => 30, 'windowSize' => 100],
+            $exported['scoring']
+        );
+    }
+
+    public function testSearchScoringRelativeScoreFusionExport()
+    {
+        $options = SearchOptions::build()->scoring(
+            SearchScoringRelativeScoreFusion::build()->windowSize(50)
+        );
+        $exported = SearchOptions::export($options);
+        $this->assertEquals(['strategy' => 'rsf', 'windowSize' => 50], $exported['scoring']);
+    }
+
+    public function testSearchScoringAfterDisableScoringThrowsInvalidArgument()
+    {
+        $options = SearchOptions::build()->disableScoring(true);
+        $this->expectException(InvalidArgumentException::class);
+        $options->scoring(new SearchScoringNone());
+    }
+
+    public function testDisableScoringAfterScoringThrowsInvalidArgument()
+    {
+        $options = SearchOptions::build()->scoring(new SearchScoringNone());
+        $this->expectException(InvalidArgumentException::class);
+        $options->disableScoring(true);
+    }
+
+    public function testScoringAfterDisableScoringFalseDoesNotThrow()
+    {
+        $options = SearchOptions::build()->disableScoring(false)->scoring(new SearchScoringNone());
+        $exported = SearchOptions::export($options);
+        $this->assertEquals(['strategy' => 'none'], $exported['scoring']);
+    }
+
+    public function testDisableScoringFalseAfterScoringDoesNotThrow()
+    {
+        $options = SearchOptions::build()->scoring(new SearchScoringNone())->disableScoring(false);
+        $exported = SearchOptions::export($options);
+        $this->assertEquals(['strategy' => 'none'], $exported['scoring']);
+    }
+
+    public function testSearchWithScoreFusion()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsScoreFusion());
+
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options = SearchOptions::build()->scoring(SearchScoringReciprocalRankFusion::build()->windowSize(50));
+
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
+
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->rows());
+    }
+
+    public function testSearchWithScoreFusionThrowsFeatureNotAvailable()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported(!$this->version()->supportsScoreFusion());
+
+        $query = new MatchPhraseSearchQuery("hop beer");
+        $options = SearchOptions::build()->scoring(SearchScoringReciprocalRankFusion::build());
+
+        $this->expectException(FeatureNotAvailableException::class);
+        $this->cluster->searchQuery($this->indexName, $query, $options);
     }
 
     public function testScopeSearch()

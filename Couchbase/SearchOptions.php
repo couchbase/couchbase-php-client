@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
 use JsonSerializable;
 
 class SearchOptions implements JsonSerializable
@@ -29,6 +30,7 @@ class SearchOptions implements JsonSerializable
     private ?int $skip = null;
     private ?bool $explain = null;
     private ?bool $disableScoring = null;
+    private ?SearchScoring $scoring = null;
     private ?MutationState $consistentWith = null;
     private ?array $fields = null;
     private ?array $facets = null;
@@ -113,10 +115,43 @@ class SearchOptions implements JsonSerializable
      *
      * @return SearchOptions
      * @since 4.0.0
+     *
+     * @deprecated Use scoring(new SearchScoringNone()) instead.
+     *
+     * @throws InvalidArgumentException if $disabled is true and scoring() has already been set:
+     *   both would write the same field, so they cannot be used together.
      */
     public function disableScoring(bool $disabled): SearchOptions
     {
+        if ($disabled && $this->scoring !== null) {
+            throw new InvalidArgumentException("disableScoring(true) cannot be used together with scoring()");
+        }
         $this->disableScoring = $disabled;
+        return $this;
+    }
+
+    /**
+     * Selects how the server scores the hits, and how it merges the FTS and vector result sets
+     * of a hybrid request into a single ranked list.
+     *
+     * @param SearchScoring $scoring the scoring mode
+     *
+     * @return SearchOptions
+     * @since 4.6.0
+     *
+     * @see \SearchScoringNone
+     * @see \SearchScoringReciprocalRankFusion
+     * @see \SearchScoringRelativeScoreFusion
+     *
+     * @throws InvalidArgumentException if disableScoring(true) has already been set: both would
+     *   write the same field, so they cannot be used together.
+     */
+    public function scoring(SearchScoring $scoring): SearchOptions
+    {
+        if ($this->disableScoring === true) {
+            throw new InvalidArgumentException("scoring() cannot be used together with disableScoring(true)");
+        }
+        $this->scoring = $scoring;
         return $this;
     }
 
@@ -334,6 +369,7 @@ class SearchOptions implements JsonSerializable
             'skip' => $options->skip,
             'explain' => $options->explain,
             'disableScoring' => $options->disableScoring,
+            'scoring' => $options->scoring?->export(),
             'fields' => $options->fields,
             'sortSpecs' => $sort,
             'consistentWith' => $options->consistentWith == null ? null : $options->consistentWith->export(),
