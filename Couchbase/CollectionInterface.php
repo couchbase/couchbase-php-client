@@ -40,6 +40,8 @@ interface CollectionInterface
 
     public function getAnyReplica(string $id, ?GetAnyReplicaOptions $options = null): GetReplicaResult;
 
+    public function getReplica(string $id, GetReplicaStrategy $strategy, ?GetReplicaOptions $options = null): GetReplicaResult;
+
     public function getAllReplicas(string $id, ?GetAllReplicasOptions $options = null): array;
 
     public function upsert(string $id, $value, ?UpsertOptions $options = null): MutationResult;

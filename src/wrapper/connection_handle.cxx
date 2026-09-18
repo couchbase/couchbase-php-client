@@ -1552,6 +1552,49 @@ connection_handle::document_get_all_replicas(zval* return_value,
 
 COUCHBASE_API
 auto
+connection_handle::document_get_replica(zval* return_value,
+                                        zval* spans,
+                                        const zend_string* bucket,
+                                        const zend_string* scope,
+                                        const zend_string* collection,
+                                        const zend_string* id,
+                                        const zval* strategy,
+                                        const zval* options) -> core_error_info
+{
+  couchbase::core::operations::get_replica_request req{
+    couchbase::core::document_id{
+      cb_string_new(bucket),
+      cb_string_new(scope),
+      cb_string_new(collection),
+      cb_string_new(id),
+    },
+  };
+  if (auto e = cb_assign_timeout(req, options); e.ec) {
+    return e;
+  }
+
+  couchbase::core::impl::replica_selection selection{};
+  if (auto e = cb_assign_integer(selection.replica_index, strategy, "replicaIndex"); e.ec) {
+    return e;
+  }
+  if (auto e = cb_assign_boolean(selection.wrap, strategy, "wrap"); e.ec) {
+    return e;
+  }
+  req.selection = selection;
+
+  auto [resp, err] = impl_->key_value_execute(__func__, std::move(req), spans);
+  if (err.ec) {
+    err.ec = couchbase::core::impl::make_get_replica_error(resp.ctx).ec();
+    return err;
+  }
+
+  cb_create_get_result(return_value, resp, id);
+  add_assoc_bool(return_value, "isReplica", true);
+  return {};
+}
+
+COUCHBASE_API
+auto
 connection_handle::document_get_and_lock(zval* return_value,
                                          zval* spans,
                                          const zend_string* bucket,
