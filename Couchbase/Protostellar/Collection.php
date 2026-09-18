@@ -26,6 +26,7 @@ use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\ExistsOptions;
 use Couchbase\ExistsResult;
 use Couchbase\GetAllReplicasOptions;
@@ -33,7 +34,9 @@ use Couchbase\GetAndLockOptions;
 use Couchbase\GetAndTouchOptions;
 use Couchbase\GetAnyReplicaOptions;
 use Couchbase\GetOptions;
+use Couchbase\GetReplicaOptions;
 use Couchbase\GetReplicaResult;
+use Couchbase\GetReplicaStrategy;
 use Couchbase\GetResult;
 use Couchbase\InsertOptions;
 use Couchbase\LookupInOptions;
@@ -299,6 +302,14 @@ class Collection implements CollectionInterface
             [$this->client->kv(), 'GetAllReplicas']
         );
         return KVResponseConverter::convertGetAnyReplicaResult($key, $response, $options)[0];
+    }
+
+    /**
+     * @throws UnsupportedOperationException
+     */
+    public function getReplica(string $key, GetReplicaStrategy $strategy, ?GetReplicaOptions $options = null): GetReplicaResult
+    {
+        throw new UnsupportedOperationException("getReplica is not supported with the couchbase2 scheme yet");
     }
 
     /**

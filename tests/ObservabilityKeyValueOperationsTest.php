@@ -37,6 +37,9 @@ use Couchbase\MutateUpsertSpec;
 use Couchbase\DurabilityLevel;
 use Couchbase\GetAllReplicasOptions;
 use Couchbase\GetAnyReplicaOptions;
+use Couchbase\GetReplicaOptions;
+use Couchbase\GetReplicaStrategy;
+use Couchbase\ReplicaIndex;
 use Couchbase\LookupInAllReplicasOptions;
 use Couchbase\LookupInAnyReplicaOptions;
 use Helpers\Tracing\ParentSpanRequirement;
@@ -383,6 +386,33 @@ class ObservabilityKeyValueOperationsTest extends Helpers\CouchbaseObservability
         );
         $this->assertKvOperationMetrics(1, "get_any_replica");
         $this->assertEquals(1, $getCount, "Expected exactly one 'get' operation span");
+    }
+
+    public function testGetReplica()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfReplicasAreNotConfigured();
+
+        $collection = $this->defaultCollection();
+        $collection->upsert(
+            self::EXISTING_DOC_ID,
+            ["foo" => "bar"],
+            UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE)
+        );
+        sleep(1);
+        $this->tracer()->reset();
+        $this->meter()->reset();
+
+        $collection->getReplica(
+            self::EXISTING_DOC_ID,
+            GetReplicaStrategy::fromIndex(ReplicaIndex::FIRST),
+            GetReplicaOptions::build()
+                ->parentSpan($this->parentSpan())
+        );
+
+        $getReplicaSpan = $this->tracer()->getSpans(null, $this->parentSpan())[0];
+        $this->assertKvOperationSpan($getReplicaSpan, "get_replica", $this->parentSpan());
+        $this->assertKvOperationMetrics(1, "get_replica");
     }
 
     public function testLookupInAllReplicas()
