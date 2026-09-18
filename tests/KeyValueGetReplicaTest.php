@@ -20,9 +20,13 @@ declare(strict_types=1);
 
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\DocumentNotFoundOnReplicaException;
+use Couchbase\Exception\ReplicaIndexOutOfBoundsException;
 use Couchbase\GetAllReplicasOptions;
 use Couchbase\GetAnyReplicaOptions;
+use Couchbase\GetReplicaStrategy;
 use Couchbase\ReadPreference;
+use Couchbase\ReplicaIndex;
 use Couchbase\UpsertOptions;
 use Couchbase\DurabilityLevel;
 
@@ -64,6 +68,65 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
             }
         }
         $this->assertTrue($seenActiveVersion);
+    }
+
+    public function testGetReplicaReturnsCorrectValue()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $opts = UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->upsert($id, ["answer" => 42], $opts);
+        $cas = $res->cas();
+        $this->assertNotNull($cas);
+        sleep(1);
+        $res = $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::FIRST));
+        $this->assertEquals(["answer" => 42], $res->content());
+        $this->assertTrue($res->isReplica());
+    }
+
+    public function testGetReplicaWithWrapReturnsCorrectValue()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $opts = UpsertOptions::build()->durabilityLevel(DurabilityLevel::MAJORITY_AND_PERSIST_TO_ACTIVE);
+        $res = $collection->upsert($id, ["answer" => 42], $opts);
+        $cas = $res->cas();
+        $this->assertNotNull($cas);
+        sleep(1);
+        $res = $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::FIRST)->wrap(true));
+        $this->assertEquals(["answer" => 42], $res->content());
+        $this->assertTrue($res->isReplica());
+    }
+
+    public function testGetReplicaThrowsDocumentNotFoundOnReplicaExceptionForMissingId()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfReplicasAreNotConfigured();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $this->expectException(DocumentNotFoundOnReplicaException::class);
+        $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::FIRST));
+    }
+
+    public function testGetReplicaThrowsReplicaIndexOutOfBoundsExceptionForIndexBeyondReplicaCount()
+    {
+        $this->skipIfProtostellar();
+
+        $id = $this->uniqueId();
+        $collection = $this->defaultCollection();
+        $collection->upsert($id, ["answer" => 42]);
+        $this->expectException(ReplicaIndexOutOfBoundsException::class);
+        // One past ReplicaIndex::THIRD, the highest index the strategy supports: a bucket can be
+        // configured with at most 3 replicas, so this index is out of bounds regardless of how
+        // many replicas this environment's bucket actually has.
+        $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::THIRD + 1));
     }
 
     public function testGetAllReplicasThrowsDocumentNotFoundExceptionForMissingId()

@@ -222,6 +222,16 @@ public:
                                  const zval* options) -> core_error_info;
 
   COUCHBASE_API
+  auto document_get_replica(zval* return_value,
+                            zval* spans,
+                            const zend_string* bucket,
+                            const zend_string* scope,
+                            const zend_string* collection,
+                            const zend_string* id,
+                            const zval* strategy,
+                            const zval* options) -> core_error_info;
+
+  COUCHBASE_API
   auto document_get_and_lock(zval* return_value,
                              zval* spans,
                              const zend_string* bucket,
