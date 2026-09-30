@@ -784,7 +784,7 @@ jobs:
 
   build_macos_arm64:
     needs: source
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
@@ -852,7 +852,7 @@ jobs:
     needs:
       - source
       - build_macos_arm64
-    runs-on: macos-14
+    runs-on: macos-15
     strategy:
       fail-fast: false
       matrix:
