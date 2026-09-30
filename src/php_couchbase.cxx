@@ -794,6 +794,44 @@ PHP_FUNCTION(documentGetAllReplicas)
   }
 }
 
+PHP_FUNCTION(documentGetReplica)
+{
+  zval* connection = nullptr;
+  zend_string* bucket = nullptr;
+  zend_string* scope = nullptr;
+  zend_string* collection = nullptr;
+  zend_string* id = nullptr;
+  zval* strategy = nullptr;
+  zval* options = nullptr;
+  zval* spans = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(6, 8)
+  Z_PARAM_RESOURCE(connection)
+  Z_PARAM_STR(bucket)
+  Z_PARAM_STR(scope)
+  Z_PARAM_STR(collection)
+  Z_PARAM_STR(id)
+  Z_PARAM_ARRAY(strategy)
+  Z_PARAM_OPTIONAL
+  Z_PARAM_ARRAY_OR_NULL(options)
+  Z_PARAM_ZVAL_OR_NULL(spans)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  auto* handle = fetch_couchbase_connection_from_resource(connection);
+  if (handle == nullptr) {
+    RETURN_THROWS();
+  }
+
+  if (auto e = handle->document_get_replica(
+        return_value, spans, bucket, scope, collection, id, strategy, options);
+      e.ec) {
+    couchbase_throw_exception(e);
+    RETURN_THROWS();
+  }
+}
+
 PHP_FUNCTION(documentGetAndLock)
 {
   zval* connection = nullptr;
@@ -4347,6 +4385,17 @@ ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
 ZEND_ARG_TYPE_INFO(1, spans, IS_ARRAY, 1)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentGetReplica, 0, 0, 6)
+ZEND_ARG_INFO(0, connection)
+ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, scope, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, collection, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, id, IS_STRING, 0)
+ZEND_ARG_TYPE_INFO(0, strategy, IS_ARRAY, 0)
+ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 1)
+ZEND_ARG_TYPE_INFO(1, spans, IS_ARRAY, 1)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_documentGetAndLock, 0, 0, 6)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucket, IS_STRING, 0)
@@ -5249,6 +5298,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGet, ai_CouchbaseExtension_documentGet)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGetAnyReplica, ai_CouchbaseExtension_documentGetAnyReplica)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGetAllReplicas, ai_CouchbaseExtension_documentGetAllReplicas)
+        ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGetReplica, ai_CouchbaseExtension_documentGetReplica)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGetAndTouch, ai_CouchbaseExtension_documentGetAndTouch)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentGetAndLock, ai_CouchbaseExtension_documentGetAndLock)
         ZEND_NS_FE("Couchbase\\Extension" COUCHBASE_NAMESPACE_ABI_SUFFIX, documentUnlock, ai_CouchbaseExtension_documentUnlock)

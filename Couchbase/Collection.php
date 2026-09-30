@@ -24,8 +24,11 @@ use Couchbase\Exception\CasMismatchException;
 use Couchbase\Exception\DocumentExistsException;
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
+use Couchbase\Exception\DocumentNotFoundOnReplicaException;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\InvalidArgumentException;
+use Couchbase\Exception\ReplicaIndexCurrentlyUnavailableException;
+use Couchbase\Exception\ReplicaIndexOutOfBoundsException;
 use Couchbase\Exception\TimeoutException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\CollectionQueryIndexManager;
@@ -286,6 +289,44 @@ class Collection implements CollectionInterface
                     $obsHandler->getCoreSpansArray()
                 );
                 return new GetReplicaResult($response, GetAnyReplicaOptions::getTranscoder($options));
+            }
+        );
+    }
+
+    /**
+     * Reads from the replica the strategy selects.
+     *
+     * @param string $id the key of the document
+     * @param GetReplicaStrategy $strategy selects the replica to read from
+     * @param GetReplicaOptions|null $options the options to use for the operation
+     *
+     * @return GetReplicaResult
+     *
+     * @throws DocumentNotFoundOnReplicaException
+     * @throws ReplicaIndexOutOfBoundsException
+     * @throws ReplicaIndexCurrentlyUnavailableException
+     * @throws TimeoutException
+     * @throws CouchbaseException
+     * @since 4.5.0
+     */
+    public function getReplica(string $id, GetReplicaStrategy $strategy, ?GetReplicaOptions $options = null): GetReplicaResult
+    {
+        return $this->observability->recordOperation(
+            ObservabilityConstants::OP_GET_REPLICA,
+            GetReplicaOptions::getParentSpan($options),
+            function (ObservabilityHandler $obsHandler) use ($id, $strategy, $options) {
+                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetReplica';
+                $response = $function(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->name,
+                    $id,
+                    GetReplicaStrategy::export($strategy),
+                    GetReplicaOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
+                return new GetReplicaResult($response, GetReplicaOptions::getTranscoder($options));
             }
         );
     }

@@ -56,6 +56,7 @@ zend_class_entry* document_exists_exception_ce;
 zend_class_entry* document_irretrievable_exception_ce;
 zend_class_entry* document_locked_exception_ce;
 zend_class_entry* document_not_found_exception_ce;
+zend_class_entry* document_not_found_on_replica_exception_ce;
 zend_class_entry* document_not_locked_exception_ce;
 zend_class_entry* document_not_json_exception_ce;
 zend_class_entry* durability_ambiguous_exception_ce;
@@ -86,6 +87,8 @@ zend_class_entry* path_too_deep_exception_ce;
 zend_class_entry* permission_denied_exception_ce;
 zend_class_entry* planning_failure_exception_ce;
 zend_class_entry* prepared_statement_failure_exception_ce;
+zend_class_entry* replica_index_currently_unavailable_exception_ce;
+zend_class_entry* replica_index_out_of_bounds_exception_ce;
 zend_class_entry* request_canceled_exception_ce;
 zend_class_entry* scope_exists_exception_ce;
 zend_class_entry* scope_not_found_exception_ce;
@@ -228,6 +231,12 @@ initialize_exceptions(const zend_function_entry* exception_functions)
   document_not_found_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
   INIT_NS_CLASS_ENTRY(ce,
                       "Couchbase\\Exception" COUCHBASE_NAMESPACE_ABI_SUFFIX,
+                      "DocumentNotFoundOnReplicaException",
+                      nullptr);
+  document_not_found_on_replica_exception_ce =
+    zend_register_internal_class_ex(&ce, document_not_found_exception_ce);
+  INIT_NS_CLASS_ENTRY(ce,
+                      "Couchbase\\Exception" COUCHBASE_NAMESPACE_ABI_SUFFIX,
                       "DocumentNotLockedException",
                       nullptr);
   document_not_locked_exception_ce = zend_register_internal_class_ex(&ce, couchbase_exception_ce);
@@ -340,6 +349,18 @@ initialize_exceptions(const zend_function_entry* exception_functions)
                       "PreparedStatementFailureException",
                       nullptr);
   prepared_statement_failure_exception_ce =
+    zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+  INIT_NS_CLASS_ENTRY(ce,
+                      "Couchbase\\Exception" COUCHBASE_NAMESPACE_ABI_SUFFIX,
+                      "ReplicaIndexCurrentlyUnavailableException",
+                      nullptr);
+  replica_index_currently_unavailable_exception_ce =
+    zend_register_internal_class_ex(&ce, couchbase_exception_ce);
+  INIT_NS_CLASS_ENTRY(ce,
+                      "Couchbase\\Exception" COUCHBASE_NAMESPACE_ABI_SUFFIX,
+                      "ReplicaIndexOutOfBoundsException",
+                      nullptr);
+  replica_index_out_of_bounds_exception_ce =
     zend_register_internal_class_ex(&ce, couchbase_exception_ce);
   INIT_NS_CLASS_ENTRY(
     ce, "Couchbase\\Exception" COUCHBASE_NAMESPACE_ABI_SUFFIX, "RequestCanceledException", nullptr);
@@ -484,6 +505,8 @@ initialize_exception_aliases()
                             document_locked_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\DocumentNotFoundException",
                             document_not_found_exception_ce);
+  zend_register_class_alias("Couchbase\\Exception\\DocumentNotFoundOnReplicaException",
+                            document_not_found_on_replica_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\DocumentNotLockedException",
                             document_not_locked_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\DocumentNotJsonException",
@@ -541,6 +564,10 @@ initialize_exception_aliases()
                             planning_failure_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\PreparedStatementFailureException",
                             prepared_statement_failure_exception_ce);
+  zend_register_class_alias("Couchbase\\Exception\\ReplicaIndexCurrentlyUnavailableException",
+                            replica_index_currently_unavailable_exception_ce);
+  zend_register_class_alias("Couchbase\\Exception\\ReplicaIndexOutOfBoundsException",
+                            replica_index_out_of_bounds_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\RequestCanceledException",
                             request_canceled_exception_ce);
   zend_register_class_alias("Couchbase\\Exception\\ScopeExistsException",
@@ -655,10 +682,16 @@ map_error_to_exception(const core_error_info& info)
     switch (static_cast<couchbase::errc::key_value>(info.ec.value())) {
       case couchbase::errc::key_value::document_not_found:
         return document_not_found_exception_ce;
+      case couchbase::errc::key_value::document_not_found_on_replica:
+        return document_not_found_on_replica_exception_ce;
       case couchbase::errc::key_value::document_not_locked:
         return document_not_locked_exception_ce;
       case couchbase::errc::key_value::document_irretrievable:
         return document_irretrievable_exception_ce;
+      case couchbase::errc::key_value::replica_index_out_of_bounds:
+        return replica_index_out_of_bounds_exception_ce;
+      case couchbase::errc::key_value::replica_index_currently_unavailable:
+        return replica_index_currently_unavailable_exception_ce;
       case couchbase::errc::key_value::document_locked:
         return document_locked_exception_ce;
       case couchbase::errc::key_value::document_exists:
