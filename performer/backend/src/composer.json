@@ -1,0 +1,12 @@
+{
+    "description": "PHP backend of the FIT performer. The Couchbase classes are autoloaded straight from this repository's Couchbase/ directory, so the performer always runs the SDK it is checked in with.",
+    "require": {
+        "ext-couchbase": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Couchbase\\": "../../../Couchbase/"
+        }
+    }
+}
