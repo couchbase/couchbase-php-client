@@ -4,3 +4,4 @@
 /compile_commands.json export-ignore
 /src export-ignore
 /tests export-ignore
+/performer export-ignore
