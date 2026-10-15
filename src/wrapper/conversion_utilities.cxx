@@ -1208,7 +1208,11 @@ cb_get_legacy_durability_persist_to(const zval* options)
   if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("four")) == 0) {
     return { {}, couchbase::persist_to::four };
   }
-  return {};
+  return { { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unknown persistTo: {}",
+                         std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) },
+           {} };
 }
 
 std::pair<core_error_info, std::optional<couchbase::replicate_to>>
@@ -1241,7 +1245,11 @@ cb_get_legacy_durability_replicate_to(const zval* options)
   if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("three")) == 0) {
     return { {}, couchbase::replicate_to::three };
   }
-  return {};
+  return { { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unknown replicateTo: {}",
+                         std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) },
+           {} };
 }
 
 auto
@@ -1276,10 +1284,6 @@ cb_get_legacy_durability_constraints(const zval* options)
   if (e2.ec) {
     return { e2, {} };
   }
-  if (!persist_to && !replicate_to) {
-    return {};
-  }
-
   return { {},
            std::make_pair(persist_to.value_or(couchbase::persist_to::none),
                           replicate_to.value_or(couchbase::replicate_to::none)) };
