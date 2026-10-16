@@ -20,6 +20,11 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+/**
+ * Options for Collection::getReplica().
+ *
+ * @since 4.6.0
+ */
 class GetReplicaOptions
 {
     private Transcoder $transcoder;
@@ -35,6 +40,7 @@ class GetReplicaOptions
      * Static helper to keep code more readable
      *
      * @return GetReplicaOptions
+     * @since 4.6.0
      */
     public static function build(): GetReplicaOptions
     {
@@ -47,6 +53,7 @@ class GetReplicaOptions
      * @param int $milliseconds the operation timeout to apply
      *
      * @return GetReplicaOptions
+     * @since 4.6.0
      */
     public function timeout(int $milliseconds): GetReplicaOptions
     {
@@ -60,6 +67,7 @@ class GetReplicaOptions
      * @param Transcoder $transcoder
      *
      * @return GetReplicaOptions
+     * @since 4.6.0
      */
     public function transcoder(Transcoder $transcoder): GetReplicaOptions
     {
@@ -73,6 +81,7 @@ class GetReplicaOptions
      * @param RequestSpan $parentSpan the parent span
      *
      * @return GetReplicaOptions
+     * @since 4.6.0
      */
     public function parentSpan(RequestSpan $parentSpan): GetReplicaOptions
     {
@@ -94,6 +103,7 @@ class GetReplicaOptions
      * @param GetReplicaOptions|null $options
      *
      * @return Transcoder
+     * @since 4.6.0
      */
     public static function getTranscoder(?GetReplicaOptions $options): Transcoder
     {

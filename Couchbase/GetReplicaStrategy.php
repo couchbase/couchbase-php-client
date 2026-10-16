@@ -20,53 +20,55 @@ declare(strict_types=1);
 
 namespace Couchbase;
 
+use Couchbase\Exception\InvalidArgumentException;
+
 /**
  * Selects the replica that Collection::getReplica() reads from.
  *
+ * Strategies are created through the static factories on this class.
+ *
  * @see Collection::getReplica()
+ *
+ * @since 4.6.0
  */
-class GetReplicaStrategy
+abstract class GetReplicaStrategy
 {
-    private int $replicaIndex;
-    private bool $wrap = false;
-
-    private function __construct(int $replicaIndex)
-    {
-        $this->replicaIndex = $replicaIndex;
-    }
-
     /**
      * Read from the replica at the given index.
      *
-     * @param int $replicaIndex the replica to read from
+     * @param int $replicaIndex the replica to read from, one of the ReplicaIndex constants
+     * @param GetReplicaStrategyFromIndexOptions|null $options the options for the strategy
      *
      * @see ReplicaIndex
      *
      * @return GetReplicaStrategy
+     * @throws InvalidArgumentException if the index is not one of the ReplicaIndex constants
+     * @since 4.6.0
      */
-    public static function fromIndex(int $replicaIndex): GetReplicaStrategy
-    {
-        return new GetReplicaStrategy($replicaIndex);
+    public static function fromIndex(
+        int $replicaIndex,
+        ?GetReplicaStrategyFromIndexOptions $options = null
+    ): GetReplicaStrategy {
+        if (
+            $replicaIndex !== ReplicaIndex::FIRST &&
+            $replicaIndex !== ReplicaIndex::SECOND &&
+            $replicaIndex !== ReplicaIndex::THIRD
+        ) {
+            throw new InvalidArgumentException(
+                sprintf("replica index must be ReplicaIndex::FIRST, SECOND or THIRD, got %d", $replicaIndex)
+            );
+        }
+        return new FromIndexGetReplicaStrategy(
+            $replicaIndex,
+            GetReplicaStrategyFromIndexOptions::getWrap($options)
+        );
     }
 
     /**
-     * Resolve an index that cannot be read as requested to the next one that can, instead of
-     * failing with ReplicaIndexOutOfBoundsException or ReplicaIndexCurrentlyUnavailableException.
-     *
-     * The search walks the bucket's configured replica count, starting at the requested index
-     * modulo that count. Two failures remain: a bucket configured for no replicas still throws
-     * ReplicaIndexOutOfBoundsException, and a full lap that finds nothing readable throws
-     * ReplicaIndexCurrentlyUnavailableException.
-     *
-     * @param bool $wrap whether to wrap around the available replicas
-     *
-     * @return GetReplicaStrategy
+     * @return array
+     * @internal
      */
-    public function wrap(bool $wrap): GetReplicaStrategy
-    {
-        $this->wrap = $wrap;
-        return $this;
-    }
+    abstract protected function exportStrategy(): array;
 
     /**
      * @param GetReplicaStrategy $strategy
@@ -76,9 +78,6 @@ class GetReplicaStrategy
      */
     public static function export(GetReplicaStrategy $strategy): array
     {
-        return [
-            'replicaIndex' => $strategy->replicaIndex,
-            'wrap' => $strategy->wrap,
-        ];
+        return $strategy->exportStrategy();
     }
 }

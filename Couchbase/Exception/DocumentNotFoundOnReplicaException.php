@@ -22,6 +22,8 @@ namespace Couchbase\Exception;
 
 /**
  * Indicates that Collection::getReplica() reached the requested replica, but it does not hold the document.
+ *
+ * @since 4.6.0
  */
 class DocumentNotFoundOnReplicaException extends DocumentNotFoundException
 {

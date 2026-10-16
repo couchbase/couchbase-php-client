@@ -25,6 +25,8 @@ namespace Couchbase;
  * first replica of the vbucket. The active copy cannot be selected this way.
  *
  * @see Collection::getReplica()
+ *
+ * @since 4.6.0
  */
 interface ReplicaIndex
 {

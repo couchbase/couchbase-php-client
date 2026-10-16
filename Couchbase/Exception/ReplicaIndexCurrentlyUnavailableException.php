@@ -24,6 +24,8 @@ namespace Couchbase\Exception;
  * Indicates that Collection::getReplica() was asked for a replica index the bucket has, but that
  * replica cannot be read right now. A rebalance resolves this; @see GetReplicaStrategy::wrap() to
  * read a different replica instead.
+ *
+ * @since 4.6.0
  */
 class ReplicaIndexCurrentlyUnavailableException extends CouchbaseException
 {
