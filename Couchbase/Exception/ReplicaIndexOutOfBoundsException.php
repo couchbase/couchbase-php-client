@@ -23,6 +23,8 @@ namespace Couchbase\Exception;
 /**
  * Indicates that Collection::getReplica() was asked for a replica index the bucket does not have:
  * the index is at or beyond the bucket's configured replica count, or that count is zero.
+ *
+ * @since 4.6.0
  */
 class ReplicaIndexOutOfBoundsException extends CouchbaseException
 {

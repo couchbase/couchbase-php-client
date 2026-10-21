@@ -21,10 +21,12 @@ declare(strict_types=1);
 use Couchbase\Exception\DocumentIrretrievableException;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\DocumentNotFoundOnReplicaException;
+use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\ReplicaIndexOutOfBoundsException;
 use Couchbase\GetAllReplicasOptions;
 use Couchbase\GetAnyReplicaOptions;
 use Couchbase\GetReplicaStrategy;
+use Couchbase\GetReplicaStrategyFromIndexOptions;
 use Couchbase\ReadPreference;
 use Couchbase\ReplicaIndex;
 use Couchbase\UpsertOptions;
@@ -99,7 +101,12 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
         $cas = $res->cas();
         $this->assertNotNull($cas);
         sleep(1);
-        $res = $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::THIRD + 1)->wrap(true));
+        // On a bucket with fewer than 3 replicas, wrap resolves THIRD to a replica the bucket has.
+        $strategy = GetReplicaStrategy::fromIndex(
+            ReplicaIndex::THIRD,
+            GetReplicaStrategyFromIndexOptions::build()->wrap(true)
+        );
+        $res = $collection->getReplica($id, $strategy);
         $this->assertEquals(["answer" => 42], $res->content());
         $this->assertTrue($res->isReplica());
     }
@@ -118,15 +125,31 @@ class KeyValueGetReplicaTest extends Helpers\CouchbaseTestCase
     public function testGetReplicaThrowsReplicaIndexOutOfBoundsExceptionForIndexBeyondReplicaCount()
     {
         $this->skipIfProtostellar();
+        $this->skipIfCaves();
+
+        $bucketName = $this->env()->bucketName();
+        $numReplicas = $this->connectCluster()->buckets()->getBucket($bucketName)->numReplicas() ?? 0;
+        if ($numReplicas > ReplicaIndex::THIRD) {
+            $this->markTestSkipped("bucket $bucketName has $numReplicas replicas, so ReplicaIndex::THIRD is in bounds");
+        }
 
         $id = $this->uniqueId();
         $collection = $this->defaultCollection();
         $collection->upsert($id, ["answer" => 42]);
         $this->expectException(ReplicaIndexOutOfBoundsException::class);
-        // One past ReplicaIndex::THIRD, the highest index the strategy supports: a bucket can be
-        // configured with at most 3 replicas, so this index is out of bounds regardless of how
-        // many replicas this environment's bucket actually has.
-        $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::THIRD + 1));
+        $collection->getReplica($id, GetReplicaStrategy::fromIndex(ReplicaIndex::THIRD));
+    }
+
+    public function testGetReplicaStrategyRejectsIndexBelowFirst()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        GetReplicaStrategy::fromIndex(ReplicaIndex::FIRST - 1);
+    }
+
+    public function testGetReplicaStrategyRejectsIndexBeyondThird()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        GetReplicaStrategy::fromIndex(ReplicaIndex::THIRD + 1);
     }
 
     public function testGetAllReplicasThrowsDocumentNotFoundExceptionForMissingId()
