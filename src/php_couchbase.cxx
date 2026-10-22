@@ -4193,7 +4193,7 @@ PHP_FUNCTION(coreSpanAddTag)
 PHP_FUNCTION(coreMeterRecordOperationDuration)
 {
   zval* connection = nullptr;
-  std::int64_t value = 0;
+  zend_long value = 0;
   zval* tags = nullptr;
 
   ZEND_PARSE_PARAMETERS_START(3, 3)
