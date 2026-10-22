@@ -436,6 +436,7 @@ jobs:
           echo nmake >> task.bat
           dir
           call c:\php\php-sdk\phpsdk-vs16-x64.bat -t task.bat
+          if not exist "C:\php\php-src\x64\Release\php_couchbase.dll" exit /b 1
           dir
           if defined CB_ABI_VERSION (
            echo Renaming so file to php_couchbase_%CB_ABI_VERSION%.dll
