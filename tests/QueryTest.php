@@ -2,7 +2,7 @@
 
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
-use Couchbase\Exception\InternalServerFailureException;
+use Couchbase\Exception\AuthenticationFailureException;
 use Couchbase\GetOptions;
 use Couchbase\JsonTranscoder;
 use Couchbase\MutationState;
@@ -296,7 +296,7 @@ class QueryTest extends Helpers\CouchbaseTestCase
 
         $cluster->setAuthenticator($wrongPasswordAuth);
 
-        $this->expectException(InternalServerFailureException::class);
+        $this->expectException(AuthenticationFailureException::class);
         $cluster->query("SELECT 1=1");
     }
 }
