@@ -954,6 +954,7 @@ jobs:
           echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
           echo nmake >> task.bat
           call c:\php\php-sdk\phpsdk-vs16-${{ matrix.arch }}.bat -t task.bat
+          if not exist "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}\php_couchbase.dll" exit /b 1
 
           if "${{ matrix.abi }}"=="locked" (
             cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
@@ -1039,6 +1040,7 @@ jobs:
           echo call configure.bat --disable-all --enable-cli ${{ matrix.ts == 'nts' && '--disable-zts' || '' }} --enable-couchbase >> task.bat
           echo nmake >> task.bat
           call c:\php\php-sdk\phpsdk-vs17-${{ matrix.arch }}.bat -t task.bat
+          if not exist "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}\php_couchbase.dll" exit /b 1
 
           if "${{ matrix.abi }}"=="locked" (
             cd "C:\php\php-src\${{ matrix.arch == 'x64' && 'x64\' || '' }}Release${{ matrix.ts == 'zts' && '_TS' || '' }}"
