@@ -4,8 +4,16 @@ permissions: {}
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'performer/**'
+      - '.github/workflows/fit-performer-*.yml'
+      - '.github/workflows/prune-stale-images.yml'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'performer/**'
+      - '.github/workflows/fit-performer-*.yml'
+      - '.github/workflows/prune-stale-images.yml'
 
 jobs:
   source_abi:
