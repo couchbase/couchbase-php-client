@@ -543,6 +543,41 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertGreaterThanOrEqual(15, $result->facets()['baz']->numericRanges()[0]->count());
     }
 
+    public function testNumericRangeFacetKeepsFractionalBounds()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+
+        $query = (new TermSearchQuery("beer"))->field("type");
+        $options = SearchOptions::build()
+            ->facets(
+                [
+                    // Each range matches a document in beer-data.json; the engine returns only matched ranges.
+                    "abv" => (new NumericRangeSearchFacet("abv", 3))
+                        ->addRange("fractional", -1.5, 2.5)
+                        ->addRange("whole", 5, 10)
+                        ->addRange("open", null, 4.89),
+                ]
+            );
+
+        $result = $this->cluster->searchQuery($this->indexName, $query, $options);
+
+        $ranges = [];
+        foreach ($result->facets()['abv']->numericRanges() as $range) {
+            $ranges[$range->name()] = $range;
+        }
+        $this->assertCount(3, $ranges);
+
+        $this->assertSame(-1.5, $ranges['fractional']->min());
+        $this->assertSame(2.5, $ranges['fractional']->max());
+
+        $this->assertSame(5, $ranges['whole']->min());
+        $this->assertSame(10, $ranges['whole']->max());
+
+        $this->assertNull($ranges['open']->min());
+        $this->assertSame(4.89, $ranges['open']->max());
+    }
+
     public function testNullInNumericRangeFacet()
     {
         $facet = (new NumericRangeSearchFacet("abv", 2))->addRange("light", null, 4.89)->addRange("staut", null, 7.89);

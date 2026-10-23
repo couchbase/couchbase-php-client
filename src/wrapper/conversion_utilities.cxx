@@ -673,12 +673,12 @@ search_query_response_to_zval(zval* return_value, const core::operations::search
       if (std::holds_alternative<std::uint64_t>(range.min)) {
         add_assoc_long(&z_range, "min", std::get<std::uint64_t>(range.min));
       } else if (std::holds_alternative<double>(range.min)) {
-        add_assoc_long(&z_range, "min", std::get<double>(range.min));
+        add_assoc_double(&z_range, "min", std::get<double>(range.min));
       }
       if (std::holds_alternative<std::uint64_t>(range.max)) {
         add_assoc_long(&z_range, "max", std::get<std::uint64_t>(range.max));
       } else if (std::holds_alternative<double>(range.max)) {
-        add_assoc_long(&z_range, "max", std::get<double>(range.max));
+        add_assoc_double(&z_range, "max", std::get<double>(range.max));
       }
       add_next_index_zval(&numeric_ranges, &z_range);
     }
