@@ -36,7 +36,6 @@ class LoggingValueRecorder implements ValueRecorder
 
     public function recordValue(int $value): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreMeterRecordOperationDuration';
-        $function($this->core, $value, $this->tags);
+        \Couchbase\Extension\coreMeterRecordOperationDuration($this->core, $value, $this->tags);
     }
 }

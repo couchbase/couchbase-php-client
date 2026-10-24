@@ -120,11 +120,6 @@ target_link_libraries(
           asio
           Microsoft.GSL::GSL)
 
-message("COUCHBASE_ABI_VERSION=${COUCHBASE_ABI_VERSION}")
-if(COUCHBASE_ABI_VERSION)
-  target_compile_definitions(couchbase PRIVATE COUCHBASE_ABI_VERSION=${COUCHBASE_ABI_VERSION})
-endif()
-
 if(APPLE)
   target_link_libraries(couchbase PRIVATE -Wl,-undefined,dynamic_lookup)
 endif()

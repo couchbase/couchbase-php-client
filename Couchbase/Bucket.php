@@ -57,8 +57,7 @@ class Bucket implements BucketInterface
         $this->core = $core;
         $this->observability = ObservabilityContext::from($observability, bucketName: $name);
 
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\openBucket';
-        $function($this->core, $this->name);
+        \Couchbase\Extension\openBucket($this->core, $this->name);
     }
 
     /**
@@ -146,8 +145,7 @@ class Bucket implements BucketInterface
                 $opts = ViewOptions::export($options);
                 $namespace = $opts["namespace"];
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\viewQuery';
-                $result = $function($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
+                $result = \Couchbase\Extension\viewQuery($this->core, $this->name, $designDoc, $viewName, $namespace, $opts);
 
                 return new ViewResult($result);
             }
@@ -207,9 +205,8 @@ class Bucket implements BucketInterface
         if ($reportId != null) {
             $options['reportId'] = $reportId;
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\ping';
 
-        return $function($this->core, $options);
+        return \Couchbase\Extension\ping($this->core, $options);
     }
 
     /**
@@ -226,7 +223,6 @@ class Bucket implements BucketInterface
         if ($reportId == null) {
             $reportId = uniqid();
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\diagnostics';
-        return $function($this->core, $reportId);
+        return \Couchbase\Extension\diagnostics($this->core, $reportId);
     }
 }

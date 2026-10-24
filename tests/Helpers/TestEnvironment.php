@@ -24,7 +24,6 @@ include_once __DIR__ . "/Caves.php";
 include_once __DIR__ . "/ServerVersion.php";
 include_once __DIR__ . "/ConsistencyUtils.php";
 
-use Couchbase\ExtensionNamespaceResolver;
 use Couchbase\PasswordAuthenticator;
 use Exception;
 use RuntimeException;
@@ -42,13 +41,6 @@ class TestEnvironment
 
     private static function checkExtension(string $name)
     {
-        if ($name == "couchbase") {
-            $versionedExtension = "couchbase_" . ExtensionNamespaceResolver::COUCHBASE_EXTENSION_VERSION;
-            if (extension_loaded($versionedExtension)) {
-                return;
-            }
-        }
-
         if (!extension_loaded($name)) {
             $extension = "couchbase";
             $moduleDirectory = realpath(__DIR__ . '/../../modules');

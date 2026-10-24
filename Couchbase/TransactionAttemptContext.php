@@ -52,8 +52,7 @@ class TransactionAttemptContext
      */
     public function get(Collection $collection, string $id, TransactionGetOptions $options = null): TransactionGetResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGet';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionGet(
             $this->transaction,
             $collection->bucketName(),
             $collection->scopeName(),
@@ -81,8 +80,7 @@ class TransactionAttemptContext
      */
     public function getReplicaFromPreferredServerGroup(Collection $collection, string $id, TransactionGetReplicaOptions $options = null): TransactionGetResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetReplicaFromPreferredServerGroup';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionGetReplicaFromPreferredServerGroup(
             $this->transaction,
             $collection->bucketName(),
             $collection->scopeName(),
@@ -104,8 +102,7 @@ class TransactionAttemptContext
      */
     public function getMulti(array $specs, TransactionGetMultiOptions $options = null): TransactionGetMultiResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetMulti';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionGetMulti(
             $this->transaction,
             array_map(
                 function ($spec) {
@@ -147,8 +144,7 @@ class TransactionAttemptContext
      */
     public function getMultiReplicasFromPreferredServerGroup(array $specs, TransactionGetMultiReplicasFromPreferredServerGroupOptions $options = null): TransactionGetMultiReplicasFromPreferredServerGroupResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionGetMultiReplicasFromPreferredServerGroup';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionGetMultiReplicasFromPreferredServerGroup(
             $this->transaction,
             array_map(
                 function ($spec) {
@@ -194,8 +190,7 @@ class TransactionAttemptContext
     public function insert(Collection $collection, string $id, $value, TransactionInsertOptions $options = null): TransactionGetResult
     {
         $encoded = TransactionInsertOptions::encodeDocument($options, $value);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionInsert';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionInsert(
             $this->transaction,
             $collection->bucketName(),
             $collection->scopeName(),
@@ -221,8 +216,7 @@ class TransactionAttemptContext
     public function replace(TransactionGetResult $document, $value, TransactionReplaceOptions $options = null): TransactionGetResult
     {
         $encoded = TransactionReplaceOptions::encodeDocument($options, $value);
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionReplace';
-        $response = $function(
+        $response = \Couchbase\Extension\transactionReplace(
             $this->transaction,
             $document->export(),
             $encoded[0],
@@ -242,8 +236,7 @@ class TransactionAttemptContext
      */
     public function remove(TransactionGetResult $document)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionRemove';
-        $function(
+        \Couchbase\Extension\transactionRemove(
             $this->transaction,
             $document->export(),
         );
@@ -260,8 +253,7 @@ class TransactionAttemptContext
      */
     public function query(string $statement, ?TransactionQueryOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionQuery';
-        $result = $function($this->transaction, $statement, TransactionQueryOptions::export($options));
+        $result = \Couchbase\Extension\transactionQuery($this->transaction, $statement, TransactionQueryOptions::export($options));
 
         return new QueryResult($result, TransactionQueryOptions::getTranscoder($options));
     }

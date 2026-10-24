@@ -19,7 +19,6 @@ require "English"
 require "fileutils"
 require "rbconfig"
 require "shellwords"
-require "optparse"
 
 DEFAULT_PHP_NAME = "php"
 CB_PHP_NAME = ENV.fetch("CB_PHP_NAME", DEFAULT_PHP_NAME)
@@ -136,30 +135,11 @@ unless File.file?(php_unit_phar)
   run("curl -L -o #{php_unit_phar.shellescape} #{php_unit_url}")
 end
 
-abi_versions = []
-
-OptionParser.new do |opt|
-  opt.on("-v abi", "--version abi", "Add abi") do |abi|
-    abi_versions.push(abi)
-  end
-end.parse!
-
-abi_versions = ["unversioned"] if abi_versions.empty?
-
 module_location_candidates = []
-extra_php_args = []
+ext = find_extension("couchbase", project_root, module_location_candidates)
+abort "Unable to find the module. Candidates: #{module_location_candidates.inspect}" unless ext
 
-abi_versions.each do |v|
-  if v == "unversioned"
-    ext = find_extension("couchbase", project_root, module_location_candidates)
-    extra_php_args << "-d" << "extension=#{ext}"
-  else
-    ext = find_extension("couchbase_" + v, project_root, module_location_candidates)
-    extra_php_args << "-d" << "extension=#{ext}"
-  end
-end
-
-abort "Unable to find the module. Candidates: #{module_location_candidates.inspect}" if extra_php_args.empty?
+extra_php_args = ["-d", "extension=#{ext}"]
 
 tests = ARGV.to_a
 tests << File.join(project_root, "tests") if tests.empty?

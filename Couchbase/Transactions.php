@@ -40,8 +40,7 @@ class Transactions
      */
     public function __construct($core, ?TransactionsConfiguration $configuration = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createTransactions';
-        $this->transactions = $function($core, TransactionsConfiguration::export($configuration));
+        $this->transactions = \Couchbase\Extension\createTransactions($core, TransactionsConfiguration::export($configuration));
     }
 
     /**

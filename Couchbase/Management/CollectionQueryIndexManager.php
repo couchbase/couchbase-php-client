@@ -79,8 +79,14 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($options) {
                 $exported = GetAllQueryIndexesOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexGetAll';
-                $responses = $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported, $obsHandler->getCoreSpansArray());
+                $responses = \Couchbase\Extension\collectionQueryIndexGetAll(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
                 return array_map(
                     function (array $response) {
                         return new QueryIndex($response);
@@ -109,8 +115,16 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($indexName, $keys, $options) {
                 $exported = CreateQueryIndexOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreate';
-                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $keys, $exported, $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionQueryIndexCreate(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $indexName,
+                    $keys,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -131,8 +145,14 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($options) {
                 $exported = CreateQueryPrimaryIndexOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexCreatePrimary';
-                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported, $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionQueryIndexCreatePrimary(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -154,8 +174,15 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
                 $exported = DropQueryIndexOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDrop';
-                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $indexName, $exported, $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionQueryIndexDrop(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $indexName,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -176,8 +203,14 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($options) {
                 $exported = DropQueryPrimaryIndexOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexDropPrimary';
-                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported, $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionQueryIndexDropPrimary(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -198,8 +231,14 @@ class CollectionQueryIndexManager implements CollectionQueryIndexManagerInterfac
             function (ObservabilityHandler $obsHandler) use ($options) {
                 $exported = BuildQueryIndexesOptions::export($options);
                 $this->checkOptions($exported);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionQueryIndexBuildDeferred';
-                $function($this->core, $this->bucketName, $this->scopeName, $this->collectionName, $exported, $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionQueryIndexBuildDeferred(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $this->collectionName,
+                    $exported,
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }

@@ -99,8 +99,7 @@ class BinaryCollection implements BinaryCollectionInterface
             function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
                 $obsHandler->addDurabilityLevel(AppendOptions::getDurabilityLevel($options));
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentAppend';
-                $response = $function(
+                $response = \Couchbase\Extension\documentAppend(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -136,8 +135,7 @@ class BinaryCollection implements BinaryCollectionInterface
             function (ObservabilityHandler $obsHandler) use ($id, $value, $options) {
                 $obsHandler->addDurabilityLevel(PrependOptions::getDurabilityLevel($options));
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentPrepend';
-                $response = $function(
+                $response = \Couchbase\Extension\documentPrepend(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -172,8 +170,7 @@ class BinaryCollection implements BinaryCollectionInterface
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
                 $obsHandler->addDurabilityLevel(IncrementOptions::getDurabilityLevel($options));
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentIncrement';
-                $response = $function(
+                $response = \Couchbase\Extension\documentIncrement(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -207,8 +204,7 @@ class BinaryCollection implements BinaryCollectionInterface
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
                 $obsHandler->addDurabilityLevel(DecrementOptions::getDurabilityLevel($options));
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentDecrement';
-                $response = $function(
+                $response = \Couchbase\Extension\documentDecrement(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,

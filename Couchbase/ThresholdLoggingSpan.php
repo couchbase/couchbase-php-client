@@ -41,8 +41,7 @@ class ThresholdLoggingSpan implements RequestSpan
 
     public function addTag(string $key, int|string $value): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreSpanAddTag';
-        $function($this->coreSpan, $key, $value);
+        \Couchbase\Extension\coreSpanAddTag($this->coreSpan, $key, $value);
     }
 
     public function setStatus(StatusCode $statusCode): void
@@ -54,8 +53,7 @@ class ThresholdLoggingSpan implements RequestSpan
         if (!is_null($endTimestampNanoseconds)) {
             throw new TracerException('ThresholdLoggingSpan does not support custom end timestamps');
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreSpanEnd';
-        $function($this->coreSpan);
+        \Couchbase\Extension\coreSpanEnd($this->coreSpan);
     }
 
     /**

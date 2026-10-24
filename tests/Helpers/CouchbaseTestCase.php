@@ -144,14 +144,6 @@ class CouchbaseTestCase extends TestCase
         }
     }
 
-    public function skipIfNotABI(): void
-    {
-        $ABI = getenv('TEST_ABI');
-        if (!$ABI) {
-            $this->markTestSkipped("Test is only ran when testing ABI extensioned versions");
-        }
-    }
-
     public function isProtostellar(): bool
     {
         if (

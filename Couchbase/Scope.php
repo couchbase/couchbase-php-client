@@ -109,8 +109,12 @@ class Scope implements ScopeInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_QUERY);
                 $obsHandler->addQueryStatement($statement, $options);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-                $result = $function($this->core, $statement, QueryOptions::export($options, $this->name, $this->bucketName), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\query(
+                    $this->core,
+                    $statement,
+                    QueryOptions::export($options, $this->name, $this->bucketName),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return new QueryResult($result, QueryOptions::getTranscoder($options));
             }
@@ -137,8 +141,12 @@ class Scope implements ScopeInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_ANALYTICS);
                 $obsHandler->addQueryStatement($statement, $options);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-                $result = $function($this->core, $statement, AnalyticsOptions::export($options, $this->name, $this->bucketName), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\analyticsQuery(
+                    $this->core,
+                    $statement,
+                    AnalyticsOptions::export($options, $this->name, $this->bucketName),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
             }
@@ -176,14 +184,26 @@ class Scope implements ScopeInterface
                 $query = $exportedRequest['searchQuery'];
 
                 if (!$exportedRequest['vectorSearch']) {
-                    $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions, $obsHandler->getCoreSpansArray());
+                    $result = \Couchbase\Extension\searchQuery(
+                        $this->core,
+                        $indexName,
+                        json_encode($query),
+                        $exportedOptions,
+                        $obsHandler->getCoreSpansArray()
+                    );
                     return new SearchResult($result);
                 }
 
                 $vectorSearch = $exportedRequest['vectorSearch'];
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-                $result = $function($this->core, $indexName, json_encode($query), json_encode($vectorSearch), $exportedOptions, VectorSearchOptions::export($vectorSearch->options()), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\vectorSearch(
+                    $this->core,
+                    $indexName,
+                    json_encode($query),
+                    json_encode($vectorSearch),
+                    $exportedOptions,
+                    VectorSearchOptions::export($vectorSearch->options()),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return new SearchResult($result);
             }
         );
