@@ -55,8 +55,7 @@ class ThresholdLoggingTracer implements RequestTracer
         if (!is_null($startTimestampNanoseconds)) {
             throw new TracerException('ThresholdLoggingTracer does not support custom start timestamps');
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\coreSpanCreate';
-        $coreSpan = $function($this->core, $name, $parent?->core());
+        $coreSpan = \Couchbase\Extension\coreSpanCreate($this->core, $name, $parent?->core());
         return new ThresholdLoggingSpan($coreSpan);
     }
 

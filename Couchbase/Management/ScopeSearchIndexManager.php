@@ -60,8 +60,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_INDEX,
             GetSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGet';
-                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\scopeSearchIndexGet(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    GetSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return SearchIndex::import($result);
             }
@@ -82,8 +88,13 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_ALL_INDEXES,
             GetAllSearchIndexesOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetAll';
-                $result = $function($this->core, $this->bucketName, $this->scopeName, GetAllSearchIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\scopeSearchIndexGetAll(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    GetAllSearchIndexesOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $indexes = [];
                 foreach ($result as $index) {
                     $indexes[] = SearchIndex::import($index);
@@ -107,8 +118,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_UPSERT_INDEX,
             UpsertSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexDefinition, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexUpsert';
-                $function($this->core, $this->bucketName, $this->scopeName, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexUpsert(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    SearchIndex::export($indexDefinition),
+                    UpsertSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -127,8 +144,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_DROP_INDEX,
             DropSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDrop';
-                $function($this->core, $this->bucketName, $this->scopeName, $name, DropSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexDrop(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $name,
+                    DropSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -148,8 +171,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_INDEXED_DOCUMENTS_COUNT,
             GetIndexedSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexGetDocumentsCount';
-                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, GetIndexedSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\scopeSearchIndexGetDocumentsCount(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    GetIndexedSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return $result['count'];
             }
         );
@@ -169,8 +198,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_PAUSE_INGEST,
             PauseIngestSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestPause';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, PauseIngestSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexIngestPause(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    PauseIngestSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -189,8 +224,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_RESUME_INGEST,
             ResumeIngestSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexIngestResume';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, ResumeIngestSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexIngestResume(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    ResumeIngestSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -209,8 +250,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_ALLOW_QUERYING,
             AllowQueryingSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingAllow';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, AllowQueryingSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexQueryingAllow(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    AllowQueryingSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -229,8 +276,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_DISALLOW_QUERYING,
             DisallowQueryingSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexQueryingDisallow';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, DisallowQueryingSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexQueryingDisallow(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    DisallowQueryingSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -249,8 +302,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_FREEZE_PLAN,
             FreezePlanSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanFreeze';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, FreezePlanSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexPlanFreeze(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    FreezePlanSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -269,8 +328,14 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_UNFREEZE_PLAN,
             UnfreezePlanSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexPlanUnfreeze';
-                $function($this->core, $this->bucketName, $this->scopeName, $indexName, UnfreezePlanSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeSearchIndexPlanUnfreeze(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    UnfreezePlanSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -291,8 +356,15 @@ class ScopeSearchIndexManager implements ScopeSearchIndexManagerInterface
             ObservabilityConstants::OP_SM_ANALYZE_DOCUMENT,
             AnalyzeDocumentOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $document, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeSearchIndexDocumentAnalyze';
-                $result = $function($this->core, $this->bucketName, $this->scopeName, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\scopeSearchIndexDocumentAnalyze(
+                    $this->core,
+                    $this->bucketName,
+                    $this->scopeName,
+                    $indexName,
+                    json_encode($document),
+                    AnalyzeDocumentOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return json_decode($result["analysis"], true);
             }
         );

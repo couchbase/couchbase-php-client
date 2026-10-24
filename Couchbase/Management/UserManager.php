@@ -63,8 +63,12 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_GET_USER,
             GetUserOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGet';
-                $result = $function($this->core, $name, GetUserOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\userGet(
+                    $this->core,
+                    $name,
+                    GetUserOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return UserAndMetadata::import($result);
             }
         );
@@ -83,8 +87,11 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_GET_ALL_USERS,
             GetAllUsersOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userGetAll';
-                $result = $function($this->core, GetAllUsersOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\userGetAll(
+                    $this->core,
+                    GetAllUsersOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $users = [];
                 foreach ($result as $user) {
                     $users[] = UserAndMetadata::import($user);
@@ -108,8 +115,12 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_UPSERT_USER,
             UpsertUserOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($user, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userUpsert';
-                $function($this->core, User::export($user), UpsertUserOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\userUpsert(
+                    $this->core,
+                    User::export($user),
+                    UpsertUserOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -127,8 +138,7 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_DROP_USER,
             DropUserOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\userDrop';
-                $function($this->core, $name, DropUserOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\userDrop($this->core, $name, DropUserOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -147,8 +157,7 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_GET_ROLES,
             GetRolesOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\roleGetAll';
-                $result = $function($this->core, GetRolesOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\roleGetAll($this->core, GetRolesOptions::export($options), $obsHandler->getCoreSpansArray());
                 foreach ($result as $role) {
                     $roles[] = RoleAndDescription::import($role);
                 }
@@ -172,8 +181,12 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_GET_GROUP,
             GetGroupOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGet';
-                $result = $function($this->core, $name, GetGroupOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\groupGet(
+                    $this->core,
+                    $name,
+                    GetGroupOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return Group::import($result);
             }
         );
@@ -193,8 +206,11 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_GET_ALL_GROUPS,
             GetAllGroupsOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupGetAll';
-                $result = $function($this->core, GetAllGroupsOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\groupGetAll(
+                    $this->core,
+                    GetAllGroupsOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $groups = [];
                 foreach ($result as $group) {
                     $groups[] = Group::import($group);
@@ -218,8 +234,12 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_UPSERT_GROUP,
             UpsertGroupOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($group, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupUpsert';
-                $function($this->core, Group::export($group), UpsertGroupOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\groupUpsert(
+                    $this->core,
+                    Group::export($group),
+                    UpsertGroupOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -237,8 +257,7 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_DROP_GROUP,
             DropGroupOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\groupDrop';
-                $function($this->core, $name, DropGroupOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\groupDrop($this->core, $name, DropGroupOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -255,8 +274,12 @@ class UserManager implements UserManagerInterface
             ObservabilityConstants::OP_UM_CHANGE_PASSWORD,
             ChangePasswordOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($newPassword, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\passwordChange';
-                $function($this->core, $newPassword, ChangePasswordOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\passwordChange(
+                    $this->core,
+                    $newPassword,
+                    ChangePasswordOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }

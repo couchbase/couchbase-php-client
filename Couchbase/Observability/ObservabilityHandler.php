@@ -62,8 +62,7 @@ class ObservabilityHandler
             return;
         }
 
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\clusterLabels';
-        $clusterLabels = $function($core);
+        $clusterLabels = \Couchbase\Extension\clusterLabels($core);
 
         if (array_key_exists('clusterName', $clusterLabels)) {
             $this->clusterName = $clusterLabels['clusterName'];

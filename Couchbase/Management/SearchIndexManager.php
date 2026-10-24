@@ -67,8 +67,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_INDEX,
             GetSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGet';
-                $result = $function($this->core, $indexName, GetSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\searchIndexGet(
+                    $this->core,
+                    $indexName,
+                    GetSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return SearchIndex::import($result);
             }
@@ -89,8 +93,11 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_ALL_INDEXES,
             GetAllSearchIndexesOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGetAll';
-                $result = $function($this->core, GetAllSearchIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\searchIndexGetAll(
+                    $this->core,
+                    GetAllSearchIndexesOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $indexes = [];
                 foreach ($result as $index) {
                     $indexes[] = SearchIndex::import($index);
@@ -114,8 +121,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_UPSERT_INDEX,
             UpsertSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexDefinition, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexUpsert';
-                $function($this->core, SearchIndex::export($indexDefinition), UpsertSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexUpsert(
+                    $this->core,
+                    SearchIndex::export($indexDefinition),
+                    UpsertSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -134,8 +145,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_DROP_INDEX,
             DropSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexDrop';
-                $function($this->core, $name, DropSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexDrop(
+                    $this->core,
+                    $name,
+                    DropSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -155,8 +170,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_GET_INDEXED_DOCUMENTS_COUNT,
             GetIndexedSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexGetDocumentsCount';
-                $result = $function($this->core, $indexName, GetIndexedSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\searchIndexGetDocumentsCount(
+                    $this->core,
+                    $indexName,
+                    GetIndexedSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return $result['count'];
             }
         );
@@ -176,8 +195,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_PAUSE_INGEST,
             PauseIngestSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexIngestPause';
-                $function($this->core, $indexName, PauseIngestSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexIngestPause(
+                    $this->core,
+                    $indexName,
+                    PauseIngestSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -196,8 +219,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_RESUME_INGEST,
             ResumeIngestSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexIngestResume';
-                $function($this->core, $indexName, ResumeIngestSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexIngestResume(
+                    $this->core,
+                    $indexName,
+                    ResumeIngestSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -216,8 +243,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_ALLOW_QUERYING,
             AllowQueryingSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexQueryingAllow';
-                $function($this->core, $indexName, AllowQueryingSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexQueryingAllow(
+                    $this->core,
+                    $indexName,
+                    AllowQueryingSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -236,8 +267,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_DISALLOW_QUERYING,
             DisallowQueryingSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexQueryingDisallow';
-                $function($this->core, $indexName, DisallowQueryingSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexQueryingDisallow(
+                    $this->core,
+                    $indexName,
+                    DisallowQueryingSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -256,8 +291,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_FREEZE_PLAN,
             FreezePlanSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexPlanFreeze';
-                $function($this->core, $indexName, FreezePlanSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexPlanFreeze(
+                    $this->core,
+                    $indexName,
+                    FreezePlanSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -275,8 +314,12 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_UNFREEZE_PLAN,
             UnfreezePlanSearchIndexOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexPlanUnfreeze';
-                $function($this->core, $indexName, UnfreezePlanSearchIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\searchIndexPlanUnfreeze(
+                    $this->core,
+                    $indexName,
+                    UnfreezePlanSearchIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -297,8 +340,13 @@ class SearchIndexManager implements SearchIndexManagerInterface
             ObservabilityConstants::OP_SM_ANALYZE_DOCUMENT,
             AnalyzeDocumentOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($indexName, $document, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchIndexDocumentAnalyze';
-                $result = $function($this->core, $indexName, json_encode($document), AnalyzeDocumentOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\searchIndexDocumentAnalyze(
+                    $this->core,
+                    $indexName,
+                    json_encode($document),
+                    AnalyzeDocumentOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return json_decode($result["analysis"], true);
             }
         );

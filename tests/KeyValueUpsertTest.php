@@ -67,8 +67,7 @@ class KeyValueUpsertTest extends Helpers\CouchbaseTestCase
     {
         $this->skipIfProtostellar();
         $core = $this->connectCluster()->core();
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsert';
-        $function(
+        \Couchbase\Extension\documentUpsert(
             $core,
             self::env()->bucketName(),
             "_default",

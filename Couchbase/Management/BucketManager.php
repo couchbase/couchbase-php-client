@@ -66,8 +66,12 @@ class BucketManager implements BucketManagerInterface
             function (ObservabilityHandler $obsHandler) use ($settings, $options) {
                 $obsHandler->addBucketName($settings->name());
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketCreate';
-                $function($this->core, BucketSettings::export($settings), CreateBucketOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\bucketCreate(
+                    $this->core,
+                    BucketSettings::export($settings),
+                    CreateBucketOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -87,8 +91,12 @@ class BucketManager implements BucketManagerInterface
             function (ObservabilityHandler $obsHandler) use ($settings, $options) {
                 $obsHandler->addBucketName($settings->name());
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketUpdate';
-                $function($this->core, BucketSettings::export($settings), UpdateBucketOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\bucketUpdate(
+                    $this->core,
+                    BucketSettings::export($settings),
+                    UpdateBucketOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -120,8 +128,7 @@ class BucketManager implements BucketManagerInterface
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
                 $obsHandler->addBucketName($name);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketDrop';
-                $function($this->core, $name, DropBucketOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\bucketDrop($this->core, $name, DropBucketOptions::export($options), $obsHandler->getCoreSpansArray());
             }
         );
     }
@@ -141,8 +148,12 @@ class BucketManager implements BucketManagerInterface
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
                 $obsHandler->addBucketName($name);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGet';
-                $result = $function($this->core, $name, GetBucketOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\bucketGet(
+                    $this->core,
+                    $name,
+                    GetBucketOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return BucketSettings::import($result);
             }
         );
@@ -161,8 +172,11 @@ class BucketManager implements BucketManagerInterface
             ObservabilityConstants::OP_BM_GET_ALL_BUCKETS,
             GetAllBucketsOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketGetAll';
-                $result = $function($this->core, GetAllBucketsOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\bucketGetAll(
+                    $this->core,
+                    GetAllBucketsOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $buckets = [];
                 foreach ($result as $bucket) {
                     $buckets[] = BucketSettings::import($bucket);
@@ -187,8 +201,12 @@ class BucketManager implements BucketManagerInterface
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
                 $obsHandler->addBucketName($name);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\bucketFlush';
-                $function($this->core, $name, FlushBucketOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\bucketFlush(
+                    $this->core,
+                    $name,
+                    FlushBucketOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }

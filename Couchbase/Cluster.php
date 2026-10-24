@@ -62,22 +62,20 @@ class Cluster implements ClusterInterface
         ) {
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
-        ExtensionNamespaceResolver::defineExtensionNamespace();
+        self::requireExtension();
         // TODO(PCBC-1056): We should consider taking into account all the options that are passed to the backend for the connection hash
         $this->connectionHash = hash(
             "sha256",
             sprintf(
-                "--%s--%s--%b--%b--%b--%s--",
+                "--%s--%s--%b--%b--%b--",
                 $connectionString,
                 $options->authenticatorHash(),
                 $options->enableCoreTracing(),
                 $options->enableCoreMetrics(),
-                $options->bufferCoreSpans(),
-                COUCHBASE_EXTENSION_NAMESPACE
+                $options->bufferCoreSpans()
             )
         );
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createConnection';
-        $this->core = $function($this->connectionHash, $connectionString, $options->export());
+        $this->core = \Couchbase\Extension\createConnection($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
 
         $tracer = ClusterOptions::getTracer($options);
@@ -110,6 +108,16 @@ class Cluster implements ClusterInterface
             Cluster::enableProtostellar();
         }
         return ClusterRegistry::connect($connectionString, $options);
+    }
+
+    /**
+     * @throws CouchbaseException if the couchbase extension is not loaded
+     */
+    private static function requireExtension(): void
+    {
+        if (!extension_loaded("couchbase")) {
+            throw new CouchbaseException("Couchbase extension is not loaded");
+        }
     }
 
     /**
@@ -163,9 +171,8 @@ class Cluster implements ClusterInterface
      */
     public static function notifyFork(string $event)
     {
-        ExtensionNamespaceResolver::defineExtensionNamespace();
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\notifyFork';
-        return $function($event);
+        self::requireExtension();
+        return \Couchbase\Extension\notifyFork($event);
     }
 
     /**
@@ -203,8 +210,12 @@ class Cluster implements ClusterInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_QUERY);
                 $obsHandler->addQueryStatement($statement, $options);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\query';
-                $result = $function($this->core, $statement, QueryOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\query(
+                    $this->core,
+                    $statement,
+                    QueryOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return new QueryResult($result, QueryOptions::getTranscoder($options));
             }
@@ -232,8 +243,12 @@ class Cluster implements ClusterInterface
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_ANALYTICS);
                 $obsHandler->addQueryStatement($statement, $options);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\analyticsQuery';
-                $result = $function($this->core, $statement, AnalyticsOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\analyticsQuery(
+                    $this->core,
+                    $statement,
+                    AnalyticsOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return new AnalyticsResult($result, AnalyticsOptions::getTranscoder($options));
             }
@@ -259,8 +274,13 @@ class Cluster implements ClusterInterface
             function (ObservabilityHandler $obsHandler) use ($indexName, $query, $options) {
                 $obsHandler->addService(ObservabilityConstants::ATTR_VALUE_SERVICE_SEARCH);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                $result = $function($this->core, $indexName, json_encode($query), SearchOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\searchQuery(
+                    $this->core,
+                    $indexName,
+                    json_encode($query),
+                    SearchOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
 
                 return new SearchResult($result);
             }
@@ -294,14 +314,18 @@ class Cluster implements ClusterInterface
                 $query = $exportedRequest['searchQuery'];
 
                 if (!$exportedRequest['vectorSearch']) {
-                    $function = COUCHBASE_EXTENSION_NAMESPACE . '\\searchQuery';
-                    $result = $function($this->core, $indexName, json_encode($query), $exportedOptions, $obsHandler->getCoreSpansArray());
+                    $result = \Couchbase\Extension\searchQuery(
+                        $this->core,
+                        $indexName,
+                        json_encode($query),
+                        $exportedOptions,
+                        $obsHandler->getCoreSpansArray()
+                    );
                     return new SearchResult($result);
                 }
 
                 $vectorSearch = $exportedRequest['vectorSearch'];
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\vectorSearch';
-                $result = $function(
+                $result = \Couchbase\Extension\vectorSearch(
                     $this->core,
                     $indexName,
                     json_encode($query),
@@ -328,8 +352,7 @@ class Cluster implements ClusterInterface
      */
     public function setAuthenticator(Authenticator $authenticator): void
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\authenticatorSet';
-        $function($this->core, $authenticator->export());
+        \Couchbase\Extension\authenticatorSet($this->core, $authenticator->export());
     }
 
     /**
@@ -411,8 +434,7 @@ class Cluster implements ClusterInterface
         if ($reportId != null) {
             $options['reportId'] = $reportId;
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\ping';
-        return $function($this->core, $options);
+        return \Couchbase\Extension\ping($this->core, $options);
     }
 
     /**
@@ -428,8 +450,7 @@ class Cluster implements ClusterInterface
         if ($reportId == null) {
             $reportId = uniqid();
         }
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\diagnostics';
-        return $function($this->core, $reportId);
+        return \Couchbase\Extension\diagnostics($this->core, $reportId);
     }
 
     /**
@@ -454,8 +475,7 @@ class Cluster implements ClusterInterface
      */
     public function version(string $bucketName): ?string
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . "\\clusterVersion";
-        return $function($this->core, $bucketName);
+        return \Couchbase\Extension\clusterVersion($this->core, $bucketName);
     }
 
     /**
@@ -467,8 +487,7 @@ class Cluster implements ClusterInterface
      */
     public function replicasConfiguredFor(string $bucketName): bool
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\replicasConfiguredForBucket';
-        return $function($this->core, $bucketName);
+        return \Couchbase\Extension\replicasConfiguredForBucket($this->core, $bucketName);
     }
 
     /**

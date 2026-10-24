@@ -140,8 +140,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET,
             GetOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . "\\documentGet";
-                $response = $function(
+                $response = \Couchbase\Extension\documentGet(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -172,8 +171,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_EXISTS,
             ExistsOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentExists';
-                $response = $function(
+                $response = \Couchbase\Extension\documentExists(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -207,8 +205,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET_AND_LOCK,
             GetAndLockOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $lockTimeSeconds, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndLock';
-                $response = $function(
+                $response = \Couchbase\Extension\documentGetAndLock(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -243,8 +240,7 @@ class Collection implements CollectionInterface
             GetAndTouchOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $expiry, $options) {
                 $expirySeconds = ExpiryHelper::parseExpiry($expiry);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAndTouch';
-                $response = $function(
+                $response = \Couchbase\Extension\documentGetAndTouch(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -278,8 +274,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET_ANY_REPLICA,
             GetAnyReplicaOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAnyReplica';
-                $response = $function(
+                $response = \Couchbase\Extension\documentGetAnyReplica(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -315,8 +310,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET_REPLICA,
             GetReplicaOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $strategy, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetReplica';
-                $response = $function(
+                $response = \Couchbase\Extension\documentGetReplica(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -349,8 +343,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET_ALL_REPLICAS,
             GetAllReplicasOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetAllReplicas';
-                $responses = $function(
+                $responses = \Couchbase\Extension\documentGetAllReplicas(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -393,8 +386,7 @@ class Collection implements CollectionInterface
                         return UpsertOptions::encodeDocument($options, $value);
                     }
                 );
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsert';
-                $response = $function(
+                $response = \Couchbase\Extension\documentUpsert(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -435,8 +427,7 @@ class Collection implements CollectionInterface
                         return InsertOptions::encodeDocument($options, $value);
                     }
                 );
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentInsert';
-                $response = $function(
+                $response = \Couchbase\Extension\documentInsert(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -478,8 +469,7 @@ class Collection implements CollectionInterface
                         return ReplaceOptions::encodeDocument($options, $value);
                     }
                 );
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentReplace';
-                $response = $function(
+                $response = \Couchbase\Extension\documentReplace(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -516,8 +506,7 @@ class Collection implements CollectionInterface
             function (ObservabilityHandler $obsHandler) use ($id, $options) {
                 $obsHandler->addDurabilityLevel(RemoveOptions::getDurabilityLevel($options));
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemove';
-                $response = $function(
+                $response = \Couchbase\Extension\documentRemove(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -552,8 +541,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_UNLOCK,
             UnlockOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $cas, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUnlock';
-                $response = $function(
+                $response = \Couchbase\Extension\documentUnlock(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -588,8 +576,7 @@ class Collection implements CollectionInterface
             TouchOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($id, $expiry, $options) {
                 $expirySeconds = ExpiryHelper::parseExpiry($expiry);
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentTouch';
-                $response = $function(
+                $response = \Couchbase\Extension\documentTouch(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -632,8 +619,7 @@ class Collection implements CollectionInterface
                 if ($options != null && $options->needToFetchExpiry()) {
                     $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
                 }
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupIn';
-                $response = $function(
+                $response = \Couchbase\Extension\documentLookupIn(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -676,8 +662,7 @@ class Collection implements CollectionInterface
                 if ($options != null && $options->needToFetchExpiry()) {
                     $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
                 }
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAnyReplica';
-                $response = $function(
+                $response = \Couchbase\Extension\documentLookupInAnyReplica(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -721,8 +706,7 @@ class Collection implements CollectionInterface
                 if ($options != null && $options->needToFetchExpiry()) {
                     $encoded[] = ['opcode' => 'get', 'isXattr' => true, 'path' => LookupInMacro::EXPIRY_TIME];
                 }
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentLookupInAllReplicas';
-                $responses = $function(
+                $responses = \Couchbase\Extension\documentLookupInAllReplicas(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -775,8 +759,7 @@ class Collection implements CollectionInterface
                     }
                 );
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentMutateIn';
-                $response = $function(
+                $response = \Couchbase\Extension\documentMutateIn(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -807,8 +790,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_GET_MULTI,
             GetOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($ids, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentGetMulti';
-                $responses = $function(
+                $responses = \Couchbase\Extension\documentGetMulti(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -886,8 +868,7 @@ class Collection implements CollectionInterface
             ObservabilityConstants::OP_REMOVE_MULTI,
             RemoveOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($entries, $options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentRemoveMulti';
-                $responses = $function(
+                $responses = \Couchbase\Extension\documentRemoveMulti(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,
@@ -939,8 +920,7 @@ class Collection implements CollectionInterface
                     },
                     $entries
                 );
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\documentUpsertMulti';
-                $responses = $function(
+                $responses = \Couchbase\Extension\documentUpsertMulti(
                     $this->core,
                     $this->bucketName,
                     $this->scopeName,

@@ -99,14 +99,7 @@ run("#{CB_PHP_PREFIX}/bin/php -d extension=#{COUCHBASE_EXT} -i | grep couchbase"
 File.write("#{PROJECT_ROOT}/build/try_to_load.php", <<~EOF)
   <?php
 
-  $versionABI = getenv("CB_ABI_VERSION");
-  if (!$versionABI) {
-      $function = "\\\\Couchbase\\\\Extension\\\\version";
-  } else {
-      $function = "Couchbase\\\\Extension_" . $versionABI . "\\\\version";
-  }
-
-  print_r($function());
+  print_r(\\Couchbase\\Extension\\version());
 
   require_once 'Couchbase/autoload.php';
   var_dump((new ReflectionClass('\\\\Couchbase\\\\Cluster'))->getFileName());

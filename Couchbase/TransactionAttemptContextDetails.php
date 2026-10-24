@@ -41,8 +41,7 @@ class TransactionAttemptContextDetails
      */
     public function __construct($transactions, ?TransactionOptions $options = null)
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\createTransactionContext';
-        $this->transaction = $function($transactions, TransactionOptions::export($options));
+        $this->transaction = \Couchbase\Extension\createTransactionContext($transactions, TransactionOptions::export($options));
     }
 
     /**
@@ -62,8 +61,7 @@ class TransactionAttemptContextDetails
      */
     public function newAttempt()
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionNewAttempt';
-        return $function($this->transaction);
+        return \Couchbase\Extension\transactionNewAttempt($this->transaction);
     }
 
     /**
@@ -73,8 +71,7 @@ class TransactionAttemptContextDetails
      */
     public function rollback()
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionRollback';
-        return $function($this->transaction);
+        return \Couchbase\Extension\transactionRollback($this->transaction);
     }
 
     /**
@@ -84,8 +81,7 @@ class TransactionAttemptContextDetails
      */
     public function commit(): ?TransactionResult
     {
-        $function = COUCHBASE_EXTENSION_NAMESPACE . '\\transactionCommit';
-        $response = $function($this->transaction);
+        $response = \Couchbase\Extension\transactionCommit($this->transaction);
         if ($response) {
             return new TransactionResult($response);
         }

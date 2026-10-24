@@ -68,8 +68,12 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexGetAll';
-                $responses = $function($this->core, $bucketName, GetAllQueryIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
+                $responses = \Couchbase\Extension\queryIndexGetAll(
+                    $this->core,
+                    $bucketName,
+                    GetAllQueryIndexesOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 return array_map(
                     function (array $response) {
                         return new QueryIndex($response);
@@ -98,8 +102,14 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $indexName, $keys, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreate';
-                $function($this->core, $bucketName, $indexName, $keys, CreateQueryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\queryIndexCreate(
+                    $this->core,
+                    $bucketName,
+                    $indexName,
+                    $keys,
+                    CreateQueryIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -120,8 +130,12 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexCreatePrimary';
-                $function($this->core, $bucketName, CreateQueryPrimaryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\queryIndexCreatePrimary(
+                    $this->core,
+                    $bucketName,
+                    CreateQueryPrimaryIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -143,8 +157,13 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $indexName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDrop';
-                $function($this->core, $bucketName, $indexName, DropQueryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\queryIndexDrop(
+                    $this->core,
+                    $bucketName,
+                    $indexName,
+                    DropQueryIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -165,8 +184,12 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexDropPrimary';
-                $function($this->core, $bucketName, DropQueryPrimaryIndexOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\queryIndexDropPrimary(
+                    $this->core,
+                    $bucketName,
+                    DropQueryPrimaryIndexOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -187,8 +210,12 @@ class QueryIndexManager implements QueryIndexManagerInterface
             function (ObservabilityHandler $obsHandler) use ($bucketName, $options) {
                 $obsHandler->addBucketName($bucketName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\queryIndexBuildDeferred';
-                $function($this->core, $bucketName, BuildQueryIndexesOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\queryIndexBuildDeferred(
+                    $this->core,
+                    $bucketName,
+                    BuildQueryIndexesOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }

@@ -60,8 +60,12 @@ class CollectionManager implements CollectionManagerInterface
             ObservabilityConstants::OP_CM_GET_ALL_SCOPES,
             GetAllScopesOptions::getParentSpan($options),
             function (ObservabilityHandler $obsHandler) use ($options) {
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeGetAll';
-                $result = $function($this->core, $this->bucketName, GetAllScopesOptions::export($options), $obsHandler->getCoreSpansArray());
+                $result = \Couchbase\Extension\scopeGetAll(
+                    $this->core,
+                    $this->bucketName,
+                    GetAllScopesOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
                 $scopes = [];
                 foreach ($result['scopes'] as $scope) {
                     $scopes[] = ScopeSpec::import($scope);
@@ -86,8 +90,13 @@ class CollectionManager implements CollectionManagerInterface
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
                 $obsHandler->addScopeName($name);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeCreate';
-                $function($this->core, $this->bucketName, $name, CreateScopeOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeCreate(
+                    $this->core,
+                    $this->bucketName,
+                    $name,
+                    CreateScopeOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -107,8 +116,13 @@ class CollectionManager implements CollectionManagerInterface
             function (ObservabilityHandler $obsHandler) use ($name, $options) {
                 $obsHandler->addScopeName($name);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\scopeDrop';
-                $function($this->core, $this->bucketName, $name, DropScopeOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\scopeDrop(
+                    $this->core,
+                    $this->bucketName,
+                    $name,
+                    DropScopeOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -146,8 +160,15 @@ class CollectionManager implements CollectionManagerInterface
                 $obsHandler->addScopeName($scopeName);
                 $obsHandler->addCollectionName($collectionName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionCreate';
-                $function($this->core, $this->bucketName, $scopeName, $collectionName, CreateCollectionSettings::export($settings), CreateCollectionOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionCreate(
+                    $this->core,
+                    $this->bucketName,
+                    $scopeName,
+                    $collectionName,
+                    CreateCollectionSettings::export($settings),
+                    CreateCollectionOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -183,8 +204,14 @@ class CollectionManager implements CollectionManagerInterface
                 $obsHandler->addScopeName($scopeName);
                 $obsHandler->addCollectionName($collectionName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionDrop';
-                $function($this->core, $this->bucketName, $scopeName, $collectionName, DropCollectionOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionDrop(
+                    $this->core,
+                    $this->bucketName,
+                    $scopeName,
+                    $collectionName,
+                    DropCollectionOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
@@ -207,8 +234,15 @@ class CollectionManager implements CollectionManagerInterface
                 $obsHandler->addScopeName($scopeName);
                 $obsHandler->addCollectionName($collectionName);
 
-                $function = COUCHBASE_EXTENSION_NAMESPACE . '\\collectionUpdate';
-                $function($this->core, $this->bucketName, $scopeName, $collectionName, UpdateCollectionSettings::export($settings), UpdateCollectionOptions::export($options), $obsHandler->getCoreSpansArray());
+                \Couchbase\Extension\collectionUpdate(
+                    $this->core,
+                    $this->bucketName,
+                    $scopeName,
+                    $collectionName,
+                    UpdateCollectionSettings::export($settings),
+                    UpdateCollectionOptions::export($options),
+                    $obsHandler->getCoreSpansArray()
+                );
             }
         );
     }
