@@ -2,7 +2,8 @@
 
 [![license](https://img.shields.io/github/license/couchbaselabs/couchbase-php-client?color=brightgreen)](https://opensource.org/licenses/Apache-2.0)
 
-This repository contains source code of the Couchbase PHP SDK.
+This repository contains source code of the Couchbase PHP SDK. [CONTAINERS.md](CONTAINERS.md) shows how to
+run it in containers, one SDK version per PHP process.
 
 ## Support and Feedback
 
