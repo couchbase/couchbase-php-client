@@ -57,6 +57,7 @@ jobs:
           name: scripts-${{ steps.build_extension.outputs.extension_version }}
           path: |
             bin/**/*
+            docker/**/*
             90-couchbase.ini
             phpcs.xml
       - uses: actions/upload-artifact@v4
@@ -432,6 +433,59 @@ jobs:
         run: |
           tar xf couchbase-*-linux-x86_64.tgz
           ruby ./bin/test.rb
+
+  docker_linux_x86_64:
+    needs:
+      - source
+      - build_alpine_prev
+      - build_alpine
+      - build_linux_x86_64
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: php:8.2-cli
+            archive: php8.2-nts-linux-x86_64
+          - image: php:8.3-cli
+            archive: php8.3-nts-linux-x86_64
+          - image: php:8.4-cli
+            archive: php8.4-nts-linux-x86_64
+          - image: php:8.5-cli
+            archive: php8.5-nts-linux-x86_64
+          - image: php:8.2-cli-alpine
+            archive: php82-nts-linux-musl-x86_64
+          - image: php:8.3-cli-alpine
+            archive: php83-nts-linux-musl-x86_64
+          - image: php:8.4-cli-alpine
+            archive: php84-nts-linux-musl-x86_64
+          - image: php:8.5-cli-alpine
+            archive: php85-nts-linux-musl-x86_64
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: scripts-${{ needs.source.outputs.extension_version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: couchbase-${{ needs.source.outputs.extension_version }}-${{ matrix.archive }}
+      - name: Build image
+        run: |
+          cp couchbase-*.tgz docker/
+          docker build --build-arg PHP_IMAGE=${{ matrix.image }} --tag couchbase-smoke docker
+      - name: Test
+        run: |
+          curl -L -o gocaves https://github.com/couchbaselabs/gocaves/releases/download/v0.0.1-78/gocaves-linux-amd64
+          chmod a+x gocaves
+          ./gocaves --mock-only > caves.log 2>&1 &
+          for _ in $(seq 1 60); do grep -q connstr caves.log && break; sleep 1; done
+          CB_CONNSTR=$(grep -o '"connstr":"[^"]*"' caves.log | cut -d '"' -f 4)
+          [ -n "${CB_CONNSTR}" ] || { cat caves.log; exit 1; }
+          tar xf couchbase-*.tgz
+          docker run --rm --network host \
+            --env CB_CONNSTR="${CB_CONNSTR}" \
+            --volume "$(realpath couchbase-*/):/sdk:ro" \
+            --volume "$(realpath docker/smoke.php):/smoke.php:ro" \
+            couchbase-smoke php /smoke.php /sdk
 
   server_linux_x86_64:
     needs:
