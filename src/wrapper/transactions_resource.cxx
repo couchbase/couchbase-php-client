@@ -50,7 +50,8 @@ class transactions_resource::impl : public std::enable_shared_from_this<transact
 {
 public:
   impl(connection_handle* connection, const couchbase::transactions::transactions_config& config)
-    : cluster_{ connection->cluster() }
+    : dependency_{ connection->dependency() }
+    , cluster_{ connection->cluster() }
     , transactions_(cluster_, config)
   {
   }
@@ -76,6 +77,8 @@ public:
   }
 
 private:
+  /* declared first, so the connection counts this object as a dependent until it is destroyed */
+  std::shared_ptr<void> dependency_;
   couchbase::core::cluster cluster_;
   couchbase::core::transactions::transactions transactions_;
 };

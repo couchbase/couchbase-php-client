@@ -45,7 +45,6 @@ class Cluster implements ClusterInterface
 {
     private ClusterOptions $options;
     private ObservabilityContext $observability;
-    private string $connectionHash;
     /**
      * @var resource
      */
@@ -63,19 +62,12 @@ class Cluster implements ClusterInterface
             throw new InvalidArgumentException("Please use Cluster::connect() to connect to CNG.");
         }
         self::requireExtension();
-        // TODO(PCBC-1056): We should consider taking into account all the options that are passed to the backend for the connection hash
-        $this->connectionHash = hash(
-            "sha256",
-            sprintf(
-                "--%s--%s--%b--%b--%b--",
-                $connectionString,
-                $options->authenticatorHash(),
-                $options->enableCoreTracing(),
-                $options->enableCoreMetrics(),
-                $options->bufferCoreSpans()
-            )
+        $exported = $options->export();
+        $this->core = \Couchbase\Extension\createConnection(
+            self::connectionHash($connectionString, $exported),
+            $connectionString,
+            $exported
         );
-        $this->core = \Couchbase\Extension\createConnection($this->connectionHash, $connectionString, $options->export());
         $this->options = $options;
 
         $tracer = ClusterOptions::getTracer($options);
@@ -108,6 +100,16 @@ class Cluster implements ClusterInterface
             Cluster::enableProtostellar();
         }
         return ClusterRegistry::connect($connectionString, $options);
+    }
+
+    /**
+     * The key of the persistent connection cache. Two clusters share a connection only if their
+     * connection strings and all exported options, the authenticator included, are equal.
+     * serialize() is used because json_encode() fails on strings that are not valid UTF-8.
+     */
+    private static function connectionHash(string $connectionString, array $exportedOptions): string
+    {
+        return hash("sha256", $connectionString . "\0" . serialize($exportedOptions));
     }
 
     /**
@@ -344,6 +346,9 @@ class Cluster implements ClusterInterface
      *
      * NOTE: Setting a new authenticator does not change the authentication status of existing connections.
      *
+     * The connection is removed from the persistent connection cache, so clusters connected later bootstrap
+     * their own, whichever credentials they use.
+     *
      * @param Authenticator $authenticator The authenticator to replace
      *
      * @return void
@@ -353,6 +358,21 @@ class Cluster implements ClusterInterface
     public function setAuthenticator(Authenticator $authenticator): void
     {
         \Couchbase\Extension\authenticatorSet($this->core, $authenticator->export());
+    }
+
+    /**
+     * Closes the connection and removes it from the persistent connection cache.
+     *
+     * The next operation through this cluster, its buckets and collections, or another cluster sharing
+     * the connection throws CouchbaseException. A cluster created afterwards bootstraps a new
+     * connection. Calling it again has no effect.
+     *
+     * @return void
+     * @since 4.6.0
+     */
+    public function disconnect(): void
+    {
+        \Couchbase\Extension\closeConnection($this->core);
     }
 
     /**

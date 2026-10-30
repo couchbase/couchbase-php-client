@@ -26,12 +26,23 @@
 
 #include <spdlog/fmt/bundled/chrono.h>
 
+#include <vector>
+
 namespace couchbase::php
 {
 
 namespace
 {
 int persistent_connection_destructor_id_{ 0 };
+
+/* the persistent list is per thread, and so are the detached entries in it */
+thread_local std::vector<zend_resource*> detached_connections_{};
+
+auto
+detached_key(const zend_resource* res) -> std::string
+{
+  return fmt::format("couchbase_detached_connection:{}", static_cast<const void*>(res));
+}
 } // namespace
 
 COUCHBASE_API
@@ -50,37 +61,67 @@ get_persistent_connection_destructor_id() -> int
 
 COUCHBASE_API
 auto
-check_persistent_connection(zval* zv) -> int
+check_persistent_connection(zval* zv, void* expire_ptr) -> int
 {
   zend_resource* res = Z_RES_P(zv);
 
+  if (res->type != persistent_connection_destructor_id_) {
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
+  const auto* handle = static_cast<connection_handle*>(res->ptr);
+  if (handle == nullptr || handle->detached()) {
+    /* freed by sweep_detached_connections() */
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
+  if (!*static_cast<const bool*>(expire_ptr)) {
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
   auto now = std::chrono::system_clock::now();
-
-  if (res->type == persistent_connection_destructor_id_) {
-    const auto* handle = static_cast<connection_handle*>(res->ptr);
-    if (handle->is_expired(now)) {
-      if (GC_REFCOUNT(res) == 0) {
-        /* connection has timed out */
-        return ZEND_HASH_APPLY_REMOVE;
-      }
-
-      const std::string connection_string = handle->connection_string();
-      const std::string connection_hash = handle->connection_hash();
-      const auto expires_at = handle->expires_at();
-      CB_LOG_DEBUG("persistent connection expired, but the application still uses it: handle={}, "
-                   "connection_hash={}, connection_string=\"{}\", expires_at=\"{}\" ({}), "
-                   "destructor_id={}, refcount={}, num_persistent={}",
-                   static_cast<const void*>(handle),
-                   connection_hash,
-                   connection_string,
-                   expires_at,
-                   (expires_at - now),
-                   res->type,
-                   GC_REFCOUNT(res),
-                   COUCHBASE_G(num_persistent));
+  if (handle->is_expired(now)) {
+    if (GC_REFCOUNT(res) == 0 && !handle->has_dependents()) {
+      /* connection has timed out */
+      return ZEND_HASH_APPLY_REMOVE;
     }
+
+    const std::string connection_string = handle->connection_string();
+    const std::string connection_hash = handle->connection_hash();
+    const auto expires_at = handle->expires_at();
+    CB_LOG_DEBUG("persistent connection expired, but the application still uses it: handle={}, "
+                 "connection_hash={}, connection_string=\"{}\", expires_at=\"{}\" ({}), "
+                 "destructor_id={}, refcount={}, num_persistent={}",
+                 static_cast<const void*>(handle),
+                 connection_hash,
+                 connection_string,
+                 expires_at,
+                 (expires_at - now),
+                 res->type,
+                 GC_REFCOUNT(res),
+                 COUCHBASE_G(num_persistent));
   }
   return ZEND_HASH_APPLY_KEEP;
+}
+
+/*
+ * The last PHP value releasing a persistent resource does not destroy it, so without this a
+ * detached connection would keep its sockets open until request shutdown.
+ */
+COUCHBASE_API
+void
+sweep_detached_connections()
+{
+  for (auto it = detached_connections_.begin(); it != detached_connections_.end();) {
+    if (const auto* handle = static_cast<connection_handle*>((*it)->ptr);
+        GC_REFCOUNT(*it) > 0 || (handle != nullptr && handle->has_dependents())) {
+      ++it;
+      continue;
+    }
+    auto key = detached_key(*it);
+    it = detached_connections_.erase(it);
+    zend_hash_str_del(&EG(persistent_list), key.data(), key.size());
+  }
 }
 
 COUCHBASE_API
@@ -89,6 +130,8 @@ create_persistent_connection(zend_string* connection_hash,
                              zend_string* connection_string,
                              zval* options) -> std::pair<zend_resource*, core_error_info>
 {
+  sweep_detached_connections();
+
   connection_handle* handle = nullptr;
   zend_resource* res = nullptr;
   bool found = false;
@@ -219,6 +262,67 @@ destroy_persistent_connection(zend_resource* res)
   }
 }
 
+/*
+ * Moves the entry of res in EG(persistent_list) to a key no lookup produces. Deleting the old
+ * bucket must not run plist_entry_destructor: it frees res, which PHP values may still reference.
+ * The new key carries the flag zend_register_persistent_resource_ex() sets on its keys; an engine
+ * built with ZEND_RC_DEBUG asserts on reference counting a persistent key without it during a
+ * request. GC_MAKE_PERSISTENT_LOCAL would expand to nothing here, as this file is built without
+ * that macro.
+ */
+COUCHBASE_API
+void
+detach_persistent_connection(zend_resource* res)
+{
+  sweep_detached_connections();
+
+  auto key = detached_key(res);
+  zval entry;
+  ZVAL_UNDEF(&entry);
+
+  Bucket* bucket = nullptr;
+  ZEND_HASH_FOREACH_BUCKET(&EG(persistent_list), bucket)
+  {
+    if (Z_TYPE(bucket->val) == IS_RESOURCE && Z_RES(bucket->val) == res) {
+      if (bucket->key != nullptr &&
+          std::string_view(ZSTR_VAL(bucket->key), ZSTR_LEN(bucket->key)) == key) {
+        return;
+      }
+      ZVAL_COPY_VALUE(&entry, &bucket->val);
+      auto* destructor = EG(persistent_list).pDestructor;
+      EG(persistent_list).pDestructor = nullptr;
+      zend_hash_del_bucket(&EG(persistent_list), bucket);
+      EG(persistent_list).pDestructor = destructor;
+      break;
+    }
+  }
+  ZEND_HASH_FOREACH_END();
+
+  if (Z_ISUNDEF(entry)) {
+    return;
+  }
+
+  zend_string* persistent_key = zend_string_init(key.data(), key.size(), true);
+  GC_ADD_FLAGS(persistent_key, GC_PERSISTENT_LOCAL);
+  zend_hash_update(&EG(persistent_list), persistent_key, &entry);
+  zend_string_release_ex(persistent_key, true);
+  detached_connections_.push_back(res);
+
+  if (auto* handle = static_cast<connection_handle*>(res->ptr); handle != nullptr) {
+    handle->detached(true);
+  }
+}
+
+COUCHBASE_API
+void
+close_persistent_connection(zend_resource* res)
+{
+  detach_persistent_connection(res);
+  if (auto* handle = static_cast<connection_handle*>(res->ptr); handle != nullptr) {
+    handle->close();
+  }
+}
+
 namespace
 {
 auto
@@ -248,8 +352,9 @@ notify_connection(zval* zv, void* event_ptr) -> int
   zend_resource* res = Z_RES_P(zv);
   const fork_event event = *(static_cast<fork_event*>(event_ptr));
 
-  if (res->type == persistent_connection_destructor_id_) {
+  if (res->type == persistent_connection_destructor_id_ && res->ptr != nullptr) {
     const auto* connection = static_cast<connection_handle*>(res->ptr);
+    /* a closed handle still runs its io_context, which must be quiesced and restarted too */
     connection->notify_fork(event);
   }
   return ZEND_HASH_APPLY_KEEP;

@@ -39,8 +39,17 @@ create_persistent_connection(zend_string* connection_hash,
 COUCHBASE_API void
 destroy_persistent_connection(zend_resource* res);
 
+COUCHBASE_API void
+detach_persistent_connection(zend_resource* res);
+
+COUCHBASE_API void
+sweep_detached_connections();
+
+COUCHBASE_API void
+close_persistent_connection(zend_resource* res);
+
 COUCHBASE_API int
-check_persistent_connection(zval* zv);
+check_persistent_connection(zval* zv, void* expire_ptr);
 
 COUCHBASE_API
 core_error_info

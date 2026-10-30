@@ -51,7 +51,8 @@ class scan_result_resource::impl : public std::enable_shared_from_this<scan_resu
 {
 public:
   impl(connection_handle* connection, std::unique_ptr<couchbase::core::scan_result> scan_result)
-    : cluster_{ connection->cluster() }
+    : dependency_{ connection->dependency() }
+    , cluster_{ connection->cluster() }
     , scan_result_{ std::move(scan_result) }
   {
   }
@@ -67,6 +68,10 @@ public:
   [[nodiscard]] std::pair<std::optional<couchbase::core::range_scan_item>, core_error_info>
   next_item()
   {
+    /* closing the cluster cancels the scan, which then reports range_scan_completed */
+    if (auto [ec, origin] = cluster_.origin(); ec == couchbase::errc::network::cluster_closed) {
+      return { {}, { ec, ERROR_LOCATION, "Unable to fetch scan item" } };
+    }
     auto barrier = std::make_shared<
       std::promise<tl::expected<couchbase::core::range_scan_item, std::error_code>>>();
     auto f = barrier->get_future();
@@ -87,6 +92,8 @@ public:
   }
 
 private:
+  /* declared first, so the connection counts this object as a dependent until it is destroyed */
+  std::shared_ptr<void> dependency_;
   couchbase::core::cluster cluster_;
   std::unique_ptr<couchbase::core::scan_result> scan_result_;
 };

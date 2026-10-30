@@ -38,6 +38,8 @@ interface ClusterInterface
 
     public function setAuthenticator(Authenticator $authenticator): void;
 
+    public function disconnect(): void;
+
     public function buckets(): BucketManagerInterface;
 
     public function users(): UserManagerInterface;
