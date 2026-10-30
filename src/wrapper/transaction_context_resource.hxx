@@ -40,6 +40,9 @@ public:
 
   COUCHBASE_API
   auto new_attempt() -> core_error_info;
+  /* true once Cluster::disconnect() has closed the cluster this transaction runs on */
+  COUCHBASE_API
+  auto closed() const -> bool;
   COUCHBASE_API
   auto commit(zval* return_value) -> core_error_info;
   COUCHBASE_API

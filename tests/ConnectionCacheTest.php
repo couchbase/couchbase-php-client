@@ -22,6 +22,8 @@ use Couchbase\Cluster;
 use Couchbase\ClusterOptions;
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\AuthenticationFailureException;
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\ForkEvent;
 use Couchbase\Management\Role;
 use Couchbase\Management\User;
 use Couchbase\PasswordAuthenticator;
@@ -625,5 +627,175 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
         new Cluster($connstr, $this->options());
 
         $this->assertCount(1, iterator_to_array($scan));
+    }
+
+    public function testDisconnectClosesConnectionForEveryHolder()
+    {
+        $this->skipIfProtostellar();
+
+        $connstr = $this->uniqueConnectionString();
+        $cluster = new Cluster($connstr, $this->options());
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $sharing = new Cluster($connstr, $this->options());
+        $id = $this->uniqueId();
+        $collection->upsert($id, ["answer" => 42]);
+
+        $cluster->disconnect();
+
+        foreach ([fn() => $collection->get($id), fn() => $sharing->ping(), fn() => $cluster->ping()] as $operation) {
+            try {
+                $operation();
+                $this->fail("operation on a disconnected cluster must throw");
+            } catch (CouchbaseException $e) {
+                $this->assertStringContainsString("Cluster::disconnect()", $e->getMessage());
+            }
+        }
+
+        $cluster->disconnect();
+        Cluster::notifyFork(ForkEvent::PREPARE);
+        Cluster::notifyFork(ForkEvent::PARENT);
+
+        $reconnected = new Cluster($connstr, $this->options());
+        $this->assertNotSame(self::core($cluster), self::core($reconnected));
+        $this->assertEquals(
+            ["answer" => 42],
+            $reconnected->bucket(self::env()->bucketName())->defaultCollection()->get($id)->content()
+        );
+    }
+
+    public function testDisconnectAfterSetAuthenticatorKeepsCachedConnection()
+    {
+        $this->skipIfProtostellar();
+
+        $connstr = $this->uniqueConnectionString();
+        $detached = new Cluster($connstr, $this->options());
+        $collection = $detached->bucket(self::env()->bucketName())->defaultCollection();
+        $detached->setAuthenticator(self::env()->buildPasswordAuthenticator());
+        $cached = new Cluster($connstr, $this->options());
+        $this->assertNotSame(self::core($detached), self::core($cached));
+
+        $detached->disconnect();
+
+        try {
+            $collection->upsert($this->uniqueId(), ["answer" => 42]);
+            $this->fail("operation on a disconnected cluster must throw");
+        } catch (CouchbaseException $e) {
+            $this->assertStringContainsString("Cluster::disconnect()", $e->getMessage());
+        }
+        $id = $this->uniqueId();
+        $cached->bucket(self::env()->bucketName())->defaultCollection()->upsert($id, ["answer" => 42]);
+        $this->assertSame(self::core($cached), self::core(new Cluster($connstr, $this->options())));
+    }
+
+    public function testDisconnectFailsScanStartedBefore()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsRangeScan());
+
+        $cluster = new Cluster($this->uniqueConnectionString(), $this->options());
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $prefix = $this->uniqueId();
+        $collection->upsert($prefix . "-0", ["answer" => 42]);
+        $scan = $collection->scan(new PrefixScan($prefix));
+
+        $cluster->disconnect();
+
+        $this->expectException(CouchbaseException::class);
+        $this->expectExceptionMessage("cluster_closed");
+        iterator_to_array($scan);
+    }
+
+    public function testDisconnectFailsTransactionsCreatedBefore()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $cluster = new Cluster($this->uniqueConnectionString(), $this->options());
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $id = $this->uniqueId();
+        $collection->upsert($id, ["answer" => 42]);
+        $transactions = $cluster->transactions();
+
+        $cluster->disconnect();
+        /* lets the io_context stop, so a call that posted work there would hang */
+        usleep(500_000);
+
+        $this->expectException(CouchbaseException::class);
+        $this->expectExceptionMessage("cluster_closed");
+        $transactions->run(fn($context) => $context->get($collection, $id));
+    }
+
+    public function testDisconnectInsideTransactionFailsRun()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $cluster = new Cluster($this->uniqueConnectionString(), $this->options());
+        $collection = $cluster->bucket(self::env()->bucketName())->defaultCollection();
+        $id = $this->uniqueId();
+        $collection->upsert($id, ["answer" => 42]);
+
+        $this->expectException(CouchbaseException::class);
+        $this->expectExceptionMessage("cluster_closed");
+        $cluster->transactions()->run(
+            function ($context) use ($cluster, $collection, $id) {
+                $context->get($collection, $id);
+                $cluster->disconnect();
+            }
+        );
+    }
+
+    public function testForkAfterDisconnect()
+    {
+        $this->skipIfProtostellar();
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+
+        $cluster = new Cluster($this->uniqueConnectionString(), $this->options());
+        $cluster->disconnect();
+        $connstr = $this->uniqueConnectionString();
+        $id = $this->uniqueId();
+
+        Cluster::notifyFork(ForkEvent::PREPARE);
+        $pid = pcntl_fork();
+        if ($pid == 0) {
+            Cluster::notifyFork(ForkEvent::CHILD);
+            /* the disconnected cluster stays closed in the child, and a new one works there */
+            try {
+                $cluster->ping();
+                exit(2);
+            } catch (CouchbaseException $e) {
+                if (strpos($e->getMessage(), "Cluster::disconnect()") === false) {
+                    exit(3);
+                }
+            }
+            try {
+                (new Cluster($connstr, $this->options()))
+                    ->bucket(self::env()->bucketName())
+                    ->defaultCollection()
+                    ->upsert($id, ["answer" => 42]);
+            } catch (Throwable $e) {
+                exit(4);
+            }
+            exit(0);
+        }
+        Cluster::notifyFork(ForkEvent::PARENT);
+        $this->assertGreaterThan(0, $pid);
+
+        $deadline = time() + 30;
+        while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+            usleep(100_000);
+        }
+        if ($exited == 0) {
+            exec("kill -9 " . $pid);
+            pcntl_waitpid($pid, $status);
+        }
+        $this->assertSame($pid, $exited, "the child did not exit within 30 seconds");
+        $this->assertTrue(pcntl_wifexited($status));
+        $this->assertSame(0, pcntl_wexitstatus($status));
     }
 }
