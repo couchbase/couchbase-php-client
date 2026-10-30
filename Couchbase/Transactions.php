@@ -29,6 +29,10 @@ class Transactions
      * @var resource
      */
     private $transactions;
+    /**
+     * @var resource keeps the connection from being freed while transactions can still use it
+     */
+    private $core;
 
     /**
      * @param ?TransactionsConfiguration $configuration
@@ -40,6 +44,7 @@ class Transactions
      */
     public function __construct($core, ?TransactionsConfiguration $configuration = null)
     {
+        $this->core = $core;
         $this->transactions = \Couchbase\Extension\createTransactions($core, TransactionsConfiguration::export($configuration));
     }
 

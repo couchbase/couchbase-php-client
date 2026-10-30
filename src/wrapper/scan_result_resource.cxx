@@ -51,7 +51,8 @@ class scan_result_resource::impl : public std::enable_shared_from_this<scan_resu
 {
 public:
   impl(connection_handle* connection, std::unique_ptr<couchbase::core::scan_result> scan_result)
-    : cluster_{ connection->cluster() }
+    : dependency_{ connection->dependency() }
+    , cluster_{ connection->cluster() }
     , scan_result_{ std::move(scan_result) }
   {
   }
@@ -87,6 +88,8 @@ public:
   }
 
 private:
+  /* declared first, so the connection counts this object as a dependent until it is destroyed */
+  std::shared_ptr<void> dependency_;
   couchbase::core::cluster cluster_;
   std::unique_ptr<couchbase::core::scan_result> scan_result_;
 };
