@@ -361,6 +361,21 @@ class Cluster implements ClusterInterface
     }
 
     /**
+     * Closes the connection and removes it from the persistent connection cache.
+     *
+     * The next operation through this cluster, its buckets and collections, or another cluster sharing
+     * the connection throws CouchbaseException. A cluster created afterwards bootstraps a new
+     * connection. Calling it again has no effect.
+     *
+     * @return void
+     * @since 4.6.0
+     */
+    public function disconnect(): void
+    {
+        \Couchbase\Extension\closeConnection($this->core);
+    }
+
+    /**
      * Creates a new bucket manager object for managing buckets.
      *
      * @return BucketManager

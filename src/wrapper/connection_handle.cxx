@@ -6199,6 +6199,19 @@ connection_handle::cluster() const -> couchbase::core::cluster
   return impl_->core_api();
 }
 
+COUCHBASE_API
+void
+connection_handle::close()
+{
+  auto barrier = std::make_shared<std::promise<void>>();
+  auto f = barrier->get_future();
+  impl_->core_api().close([barrier]() {
+    barrier->set_value();
+  });
+  f.wait();
+  closed_ = true;
+}
+
 namespace options
 {
 template<typename Setter>

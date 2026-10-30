@@ -45,6 +45,9 @@ detach_persistent_connection(zend_resource* res);
 COUCHBASE_API void
 sweep_detached_connections();
 
+COUCHBASE_API void
+close_persistent_connection(zend_resource* res);
+
 COUCHBASE_API int
 check_persistent_connection(zval* zv, void* expire_ptr);
 

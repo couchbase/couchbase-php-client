@@ -68,6 +68,10 @@ public:
   [[nodiscard]] std::pair<std::optional<couchbase::core::range_scan_item>, core_error_info>
   next_item()
   {
+    /* closing the cluster cancels the scan, which then reports range_scan_completed */
+    if (auto [ec, origin] = cluster_.origin(); ec == couchbase::errc::network::cluster_closed) {
+      return { {}, { ec, ERROR_LOCATION, "Unable to fetch scan item" } };
+    }
     auto barrier = std::make_shared<
       std::promise<tl::expected<couchbase::core::range_scan_item, std::error_code>>>();
     auto f = barrier->get_future();

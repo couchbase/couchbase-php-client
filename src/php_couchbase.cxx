@@ -25,6 +25,9 @@
 
 #include "php_couchbase.hxx"
 
+#include <couchbase/error_codes.hxx>
+
+
 #include <php.h>
 
 #include <Zend/zend_exceptions.h>
@@ -281,13 +284,36 @@ PHP_FUNCTION(createConnection)
   RETURN_RES(resource);
 }
 
+PHP_FUNCTION(closeConnection)
+{
+  zval* connection = nullptr;
+
+  ZEND_PARSE_PARAMETERS_START(1, 1)
+  Z_PARAM_RESOURCE(connection)
+  ZEND_PARSE_PARAMETERS_END();
+
+  logger_flusher guard;
+
+  if (Z_RES_P(connection)->type == couchbase::php::get_persistent_connection_destructor_id()) {
+    couchbase::php::close_persistent_connection(Z_RES_P(connection));
+  }
+  RETURN_NULL();
+}
+
 inline auto
 fetch_couchbase_connection_from_resource(zval* resource) -> couchbase::php::connection_handle*
 {
-  return static_cast<couchbase::php::connection_handle*>(
+  auto* handle = static_cast<couchbase::php::connection_handle*>(
     zend_fetch_resource(Z_RES_P(resource),
                         "couchbase_persistent_connection",
                         couchbase::php::get_persistent_connection_destructor_id()));
+  if (handle != nullptr && handle->closed()) {
+    couchbase_throw_exception({ couchbase::errc::network::cluster_closed,
+                                ERROR_LOCATION,
+                                "the connection has been closed by Cluster::disconnect()" });
+    return nullptr;
+  }
+  return handle;
 }
 
 PHP_FUNCTION(clusterVersion)
@@ -4262,6 +4288,10 @@ ZEND_ARG_TYPE_INFO(0, connectionString, IS_STRING, 0)
 ZEND_ARG_TYPE_INFO(0, options, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_closeConnection, 0, 0, 1)
+ZEND_ARG_INFO(0, connection)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_openBucket, 0, 0, 2)
 ZEND_ARG_INFO(0, connection)
 ZEND_ARG_TYPE_INFO(0, bucketName, IS_STRING, 0)
@@ -5284,6 +5314,7 @@ static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", clusterLabels, ai_CouchbaseExtension_clusterLabels)
         ZEND_NS_FE("Couchbase\\Extension", replicasConfiguredForBucket, ai_CouchbaseExtension_replicasConfiguredForBucket)
         ZEND_NS_FE("Couchbase\\Extension", createConnection, ai_CouchbaseExtension_createConnection)
+        ZEND_NS_FE("Couchbase\\Extension", closeConnection, ai_CouchbaseExtension_closeConnection)
         ZEND_NS_FE("Couchbase\\Extension", openBucket, ai_CouchbaseExtension_openBucket)
         ZEND_NS_FE("Couchbase\\Extension", closeBucket, ai_CouchbaseExtension_closeBucket)
         ZEND_NS_FE("Couchbase\\Extension", authenticatorSet, ai_CouchbaseExtension_authenticatorSet)

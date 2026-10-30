@@ -68,6 +68,15 @@ public:
   COUCHBASE_API
   auto cluster() const -> couchbase::core::cluster;
 
+  /* closes the core cluster; the io_context keeps running until the handle is destroyed */
+  COUCHBASE_API
+  void close();
+
+  [[nodiscard]] auto closed() const -> bool
+  {
+    return closed_;
+  }
+
   COUCHBASE_API
   auto is_expired(std::chrono::system_clock::time_point now) const -> bool;
 
@@ -833,6 +842,7 @@ private:
   std::chrono::system_clock::time_point
     idle_expiry_; /* time when the connection will be considered as expired */
   bool detached_{ false };
+  bool closed_{ false };
   std::shared_ptr<void> dependency_{ std::make_shared<char>() };
 
   std::string connection_string_;
