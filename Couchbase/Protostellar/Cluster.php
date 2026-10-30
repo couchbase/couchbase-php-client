@@ -140,6 +140,11 @@ class Cluster implements ClusterInterface
         throw new UnsupportedOperationException("setAuthenticator is not supported with the couchbase2 scheme yet");
     }
 
+    public function disconnect(): void
+    {
+        throw new UnsupportedOperationException("disconnect is not supported with the couchbase2 scheme yet");
+    }
+
     public function users(): UserManagerInterface
     {
         throw new UnsupportedOperationException("User management is not supported with the couchbase2 scheme yet");

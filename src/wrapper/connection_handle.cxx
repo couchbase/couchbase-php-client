@@ -26,6 +26,7 @@
 #include "version.hxx"
 
 #define COUCHBASE_CXX_CLIENT_IGNORE_CORE_DEPRECATIONS
+#include <asio/io_context.hpp>
 #include <core/cluster.hxx>
 #include <core/cluster_label_listener.hxx>
 #include <core/error_context/analytics.hxx>
@@ -649,7 +650,7 @@ public:
     return external_tracer_ != nullptr;
   }
 
-  void notify_fork(fork_event event)
+  void notify_fork(fork_event event, bool closed)
   {
     switch (event) {
       case fork_event::prepare:
@@ -667,7 +668,12 @@ public:
       case fork_event::child:
         initialize_logger();
         CB_LOG_INFO("Resume child after fork()");
-        cluster_->notify_fork(couchbase::fork_event::child);
+        if (closed) {
+          /* couchbase::cluster::notify_fork() would bootstrap a new connection in the child */
+          core_api().io_context().notify_fork(asio::execution_context::fork_child);
+        } else {
+          cluster_->notify_fork(couchbase::fork_event::child);
+        }
         break;
     }
   }
@@ -724,7 +730,7 @@ connection_handle::replicas_configured_for_bucket(const zend_string* bucket_name
 void
 connection_handle::notify_fork(fork_event event) const
 {
-  return impl_->notify_fork(event);
+  return impl_->notify_fork(event, closed_);
 }
 
 COUCHBASE_API
@@ -6197,6 +6203,19 @@ auto
 connection_handle::cluster() const -> couchbase::core::cluster
 {
   return impl_->core_api();
+}
+
+COUCHBASE_API
+void
+connection_handle::close()
+{
+  auto barrier = std::make_shared<std::promise<void>>();
+  auto f = barrier->get_future();
+  impl_->core_api().close([barrier]() {
+    barrier->set_value();
+  });
+  f.wait();
+  closed_ = true;
 }
 
 namespace options

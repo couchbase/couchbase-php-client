@@ -61,6 +61,9 @@ destroy_in_background(std::function<void()> destroy);
 COUCHBASE_API void
 wait_for_teardowns();
 
+COUCHBASE_API void
+close_persistent_connection(zend_resource* res);
+
 COUCHBASE_API int
 check_persistent_connection(zval* zv, void* cutoff_ptr);
 

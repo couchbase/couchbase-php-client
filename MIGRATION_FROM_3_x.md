@@ -613,9 +613,10 @@ instances, controlled by two independent settings.
 `couchbase.max_persistent` limits the number of instances. When the library has
 opened a new connection and the limit has been reached, it destroys idle
 instances until the new one fits: first the instances left behind by
-`setAuthenticator()`, then cached ones, least recently used first. An instance
-is idle when nothing uses it: no `\Couchbase\Cluster` object, no `Bucket`,
-`Scope` or `Collection` obtained from one, and no transaction or range scan.
+`setAuthenticator()` or `disconnect()`, then cached ones, least recently used
+first. An instance is idle when nothing uses it: no `\Couchbase\Cluster`
+object, no `Bucket`, `Scope` or `Collection` obtained from one, and no
+transaction or range scan.
 
 The limit is soft. When every instance is in use, the new one is kept over the
 limit. Later connections opened over the limit destroy the instances released

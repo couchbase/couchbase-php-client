@@ -580,6 +580,16 @@ detach_persistent_connection(zend_resource* res)
   handle->detached(true);
 }
 
+COUCHBASE_API
+void
+close_persistent_connection(zend_resource* res)
+{
+  detach_persistent_connection(res);
+  if (auto* handle = static_cast<connection_handle*>(res->ptr); handle != nullptr) {
+    handle->close();
+  }
+}
+
 namespace
 {
 auto
@@ -609,8 +619,9 @@ notify_connection(zval* zv, void* event_ptr) -> int
   zend_resource* res = Z_RES_P(zv);
   const fork_event event = *(static_cast<fork_event*>(event_ptr));
 
-  if (res->type == persistent_connection_destructor_id_) {
+  if (res->type == persistent_connection_destructor_id_ && res->ptr != nullptr) {
     const auto* connection = static_cast<connection_handle*>(res->ptr);
+    /* a closed handle still owns an io_context, which needs the fork fixup too */
     connection->notify_fork(event);
   }
   return ZEND_HASH_APPLY_KEEP;

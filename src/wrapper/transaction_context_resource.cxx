@@ -24,6 +24,7 @@
 #include "transactions_resource.hxx"
 #include "zend_API.h"
 
+#include <core/cluster.hxx>
 #include <core/document_id.hxx>
 #include <core/document_id_fmt.hxx>
 #include <core/transactions.hxx>
@@ -615,6 +616,12 @@ public:
     return { {}, {} };
   }
 
+  [[nodiscard]] auto closed() const -> bool
+  {
+    return transaction_context_->cluster_ref().origin().first ==
+           couchbase::errc::network::cluster_closed;
+  }
+
 private:
   std::shared_ptr<core::transactions::transaction_context> transaction_context_;
 };
@@ -626,6 +633,13 @@ transaction_context_resource::transaction_context_resource(
   : impl_{ std::make_shared<transaction_context_resource::impl>(transactions->transactions(),
                                                                 configuration) }
 {
+}
+
+COUCHBASE_API
+auto
+transaction_context_resource::closed() const -> bool
+{
+  return impl_->closed();
 }
 
 COUCHBASE_API
