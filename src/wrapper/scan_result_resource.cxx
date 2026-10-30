@@ -18,6 +18,7 @@
 
 #include "common.hxx"
 #include "conversion_utilities.hxx"
+#include "persistent_connections_cache.hxx"
 #include "scan_result_resource.hxx"
 
 #include <core/agent_group.hxx>
@@ -29,7 +30,6 @@
 #include <spdlog/fmt/bundled/core.h>
 
 #include <array>
-#include <thread>
 
 namespace couchbase::php
 {
@@ -51,7 +51,8 @@ class scan_result_resource::impl : public std::enable_shared_from_this<scan_resu
 {
 public:
   impl(connection_handle* connection, std::unique_ptr<couchbase::core::scan_result> scan_result)
-    : cluster_{ connection->cluster() }
+    : dependency_{ connection->dependency() }
+    , cluster_{ connection->cluster() }
     , scan_result_{ std::move(scan_result) }
   {
   }
@@ -87,6 +88,8 @@ public:
   }
 
 private:
+  /* declared first, so the connection counts this object as a dependent until it is destroyed */
+  std::shared_ptr<void> dependency_;
   couchbase::core::cluster cluster_;
   std::unique_ptr<couchbase::core::scan_result> scan_result_;
 };
@@ -311,9 +314,9 @@ destroy_scan_result_resource(zend_resource* res)
   if (res->type == scan_result_destructor_id_ && res->ptr != nullptr) {
     auto* handle = static_cast<scan_result_resource*>(res->ptr);
     res->ptr = nullptr;
-    std::thread([handle]() {
+    destroy_in_background([handle]() {
       delete handle;
-    }).detach();
+    });
   }
 }
 } // namespace couchbase::php

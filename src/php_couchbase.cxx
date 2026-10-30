@@ -59,11 +59,29 @@ ZEND_RSRC_DTOR_FUNC(couchbase_destroy_core_span_resource)
 
 PHP_RSHUTDOWN_FUNCTION(couchbase)
 {
-  if (COUCHBASE_G(persistent_timeout) >= 0 ||
-      (COUCHBASE_G(max_persistent) >= 0 &&
-       COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent))) {
-    /* Check persistent connections and do the necessary actions if needed. */
-    zend_hash_apply(&EG(persistent_list), couchbase::php::check_persistent_connection);
+  couchbase::php::flush_logger();
+  return SUCCESS;
+}
+
+/* runs after the request's variables are released, so their connections count as unused */
+ZEND_MODULE_POST_ZEND_DEACTIVATE_D(couchbase)
+{
+  /*
+   * Released transactions and scans keep their connection until their native teardown ends. Only
+   * a pass that can free connections waits for that.
+   */
+  if (couchbase::php::has_detached_connections() || COUCHBASE_G(persistent_timeout) >= 0 ||
+      COUCHBASE_G(max_persistent) >= 0) {
+    couchbase::php::wait_for_teardowns();
+  }
+  couchbase::php::sweep_detached_connections();
+  /* evaluated once, because removing an expired connection decrements num_persistent */
+  bool expire = COUCHBASE_G(persistent_timeout) >= 0 ||
+                (COUCHBASE_G(max_persistent) >= 0 &&
+                 COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent));
+  if (expire) {
+    zend_hash_apply_with_argument(
+      &EG(persistent_list), couchbase::php::check_persistent_connection, &expire);
   }
 
   couchbase::php::flush_logger();
@@ -423,6 +441,8 @@ PHP_FUNCTION(authenticatorSet)
     couchbase_throw_exception(e);
     RETURN_THROWS();
   }
+  /* sockets opened before the change stay authenticated with the previous credentials */
+  couchbase::php::detach_persistent_connection(Z_RES_P(connection));
 }
 
 PHP_FUNCTION(documentUpsert)
@@ -4220,6 +4240,8 @@ static PHP_MINFO_FUNCTION(couchbase)
   php_info_print_table_row(2, "couchbase_extension_version", PHP_COUCHBASE_VERSION);
   php_info_print_table_row(2, "couchbase_extension_revision", couchbase::php::extension_revision());
   php_info_print_table_row(2, "couchbase_client_revision", couchbase::php::cxx_client_revision());
+  php_info_print_table_row(
+    2, "couchbase_persistent_connections", std::to_string(COUCHBASE_G(num_persistent)).c_str());
   php_info_print_table_end();
   DISPLAY_INI_ENTRIES();
 }
@@ -5430,10 +5452,10 @@ zend_module_entry couchbase_module_entry = {
   PHP_RSHUTDOWN(couchbase), /* per-request shutdown function */
   PHP_MINFO(couchbase),     /* information function */
   PHP_COUCHBASE_VERSION,
-  PHP_MODULE_GLOBALS(couchbase), /* globals descriptor */
-  PHP_GINIT(couchbase),          /* globals ctor */
-  nullptr,                       /* globals dtor */
-  nullptr,                       /* post deactivate */
+  PHP_MODULE_GLOBALS(couchbase),                 /* globals descriptor */
+  PHP_GINIT(couchbase),                          /* globals ctor */
+  nullptr,                                       /* globals dtor */
+  ZEND_MODULE_POST_ZEND_DEACTIVATE_N(couchbase), /* post deactivate */
   STANDARD_MODULE_PROPERTIES_EX,
 };
 

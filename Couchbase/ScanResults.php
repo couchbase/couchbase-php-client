@@ -32,6 +32,10 @@ class ScanResults implements IteratorAggregate
      * @var resource
      */
     private $coreScanResult;
+    /**
+     * @var resource keeps the connection from being freed while the scan can still use it
+     */
+    private $core;
     private Transcoder $transcoder;
 
     /**
@@ -49,6 +53,7 @@ class ScanResults implements IteratorAggregate
      */
     public function __construct($core, string $bucketName, string $scopeName, string $collectionName, array $type, array $options, Transcoder $transcoder)
     {
+        $this->core = $core;
         $this->coreScanResult = \Couchbase\Extension\createDocumentScanResult(
             $core,
             $bucketName,
