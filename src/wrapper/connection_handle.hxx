@@ -81,6 +81,28 @@ public:
     idle_expiry_ = at;
   }
 
+  /* held by transactions and scans, whose native teardown can outlive their PHP values */
+  [[nodiscard]] auto dependency() const -> std::shared_ptr<void>
+  {
+    return dependency_;
+  }
+
+  [[nodiscard]] auto has_dependents() const -> bool
+  {
+    return dependency_.use_count() > 1;
+  }
+
+  /* true when the cache entry has been moved to a key no lookup produces */
+  [[nodiscard]] auto detached() const -> bool
+  {
+    return detached_;
+  }
+
+  void detached(bool detached)
+  {
+    detached_ = detached;
+  }
+
   COUCHBASE_API
   auto connection_string() const -> const std::string&
   {
@@ -810,6 +832,8 @@ private:
 
   std::chrono::system_clock::time_point
     idle_expiry_; /* time when the connection will be considered as expired */
+  bool detached_{ false };
+  std::shared_ptr<void> dependency_{ std::make_shared<char>() };
 
   std::string connection_string_;
   std::string connection_hash_;
