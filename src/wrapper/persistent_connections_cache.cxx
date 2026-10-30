@@ -26,12 +26,39 @@
 
 #include <spdlog/fmt/bundled/chrono.h>
 
+#include <condition_variable>
+#include <functional>
+#include <mutex>
+#include <thread>
+#include <vector>
+
 namespace couchbase::php
 {
 
 namespace
 {
 int persistent_connection_destructor_id_{ 0 };
+
+/* the persistent list is per thread, and so are the detached entries in it */
+thread_local std::vector<zend_resource*> detached_connections_{};
+/* number of entries the last sweep left in detached_connections_, all of them in use */
+thread_local std::size_t detached_after_sweep_{ 0 };
+/* the entry sweep_detached_connections_if_grown() checks next */
+thread_local std::size_t detached_cursor_{ 0 };
+
+struct teardowns {
+  std::mutex mutex{};
+  std::condition_variable finished{};
+  std::size_t pending{ 0 };
+};
+/* shared with the teardown threads, which can outlive the PHP thread that started them */
+thread_local std::shared_ptr<teardowns> teardowns_{ std::make_shared<teardowns>() };
+
+auto
+detached_key(const zend_resource* res) -> std::string
+{
+  return fmt::format("couchbase_detached_connection:{}", static_cast<const void*>(res));
+}
 } // namespace
 
 COUCHBASE_API
@@ -50,37 +77,143 @@ get_persistent_connection_destructor_id() -> int
 
 COUCHBASE_API
 auto
-check_persistent_connection(zval* zv) -> int
+check_persistent_connection(zval* zv, void* expire_ptr) -> int
 {
   zend_resource* res = Z_RES_P(zv);
 
+  if (res->type != persistent_connection_destructor_id_) {
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
+  const auto* handle = static_cast<connection_handle*>(res->ptr);
+  if (handle == nullptr || handle->detached()) {
+    /* freed by sweep_detached_connections() */
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
+  if (!*static_cast<const bool*>(expire_ptr)) {
+    return ZEND_HASH_APPLY_KEEP;
+  }
+
   auto now = std::chrono::system_clock::now();
-
-  if (res->type == persistent_connection_destructor_id_) {
-    const auto* handle = static_cast<connection_handle*>(res->ptr);
-    if (handle->is_expired(now)) {
-      if (GC_REFCOUNT(res) == 0) {
-        /* connection has timed out */
-        return ZEND_HASH_APPLY_REMOVE;
-      }
-
-      const std::string connection_string = handle->connection_string();
-      const std::string connection_hash = handle->connection_hash();
-      const auto expires_at = handle->expires_at();
-      CB_LOG_DEBUG("persistent connection expired, but the application still uses it: handle={}, "
-                   "connection_hash={}, connection_string=\"{}\", expires_at=\"{}\" ({}), "
-                   "destructor_id={}, refcount={}, num_persistent={}",
-                   static_cast<const void*>(handle),
-                   connection_hash,
-                   connection_string,
-                   expires_at,
-                   (expires_at - now),
-                   res->type,
-                   GC_REFCOUNT(res),
-                   COUCHBASE_G(num_persistent));
+  if (handle->is_expired(now)) {
+    if (GC_REFCOUNT(res) == 0 && !handle->has_dependents()) {
+      /* connection has timed out */
+      return ZEND_HASH_APPLY_REMOVE;
     }
+
+    const std::string connection_string = handle->connection_string();
+    const std::string connection_hash = handle->connection_hash();
+    const auto expires_at = handle->expires_at();
+    CB_LOG_DEBUG("persistent connection expired, but the application still uses it: handle={}, "
+                 "connection_hash={}, connection_string=\"{}\", expires_at=\"{}\" ({}), "
+                 "destructor_id={}, refcount={}, num_persistent={}",
+                 static_cast<const void*>(handle),
+                 connection_hash,
+                 connection_string,
+                 expires_at,
+                 (expires_at - now),
+                 res->type,
+                 GC_REFCOUNT(res),
+                 COUCHBASE_G(num_persistent));
   }
   return ZEND_HASH_APPLY_KEEP;
+}
+
+namespace
+{
+/*
+ * Frees the entry at index i when nothing uses it, and returns whether it did. The order of the
+ * list does not matter, so the freed entry is replaced by the last one.
+ */
+auto
+free_detached_connection_if_unused(std::size_t i) -> bool
+{
+  zend_resource* res = detached_connections_[i];
+  if (const auto* handle = static_cast<connection_handle*>(res->ptr);
+      GC_REFCOUNT(res) > 0 || (handle != nullptr && handle->has_dependents())) {
+    return false;
+  }
+  detached_connections_[i] = detached_connections_.back();
+  detached_connections_.pop_back();
+  auto key = detached_key(res);
+  zend_hash_str_del(&EG(persistent_list), key.data(), key.size());
+  return true;
+}
+} // namespace
+
+COUCHBASE_API
+auto
+has_detached_connections() -> bool
+{
+  return !detached_connections_.empty();
+}
+
+/*
+ * Frees the detached connections nothing uses. Releasing the last PHP value of a persistent
+ * resource does not destroy it.
+ */
+COUCHBASE_API
+void
+sweep_detached_connections()
+{
+  for (std::size_t i = 0; i < detached_connections_.size();) {
+    if (!free_detached_connection_if_unused(i)) {
+      ++i;
+    }
+  }
+  detached_after_sweep_ = detached_connections_.size();
+}
+
+namespace
+{
+/*
+ * Sweeps once the list has doubled since the last sweep, and otherwise checks one entry in turn,
+ * so a connection released after the last sweep is still freed during the request. Detached
+ * connections still in use thus cost O(1) amortized per lookup and per detach.
+ */
+void
+sweep_detached_connections_if_grown()
+{
+  if (detached_connections_.size() > 2 * detached_after_sweep_) {
+    sweep_detached_connections();
+    return;
+  }
+  if (detached_connections_.empty()) {
+    return;
+  }
+  detached_cursor_ %= detached_connections_.size();
+  if (!free_detached_connection_if_unused(detached_cursor_)) {
+    ++detached_cursor_;
+  }
+}
+} // namespace
+
+COUCHBASE_API
+void
+destroy_in_background(std::function<void()> destroy)
+{
+  {
+    const std::scoped_lock lock(teardowns_->mutex);
+    ++teardowns_->pending;
+  }
+  std::thread([destroy = std::move(destroy), state = teardowns_]() {
+    destroy();
+    const std::scoped_lock lock(state->mutex);
+    if (--state->pending == 0) {
+      state->finished.notify_all();
+    }
+  }).detach();
+}
+
+COUCHBASE_API
+void
+wait_for_teardowns()
+{
+  std::unique_lock lock(teardowns_->mutex);
+  teardowns_->finished.wait(lock, [] {
+    return teardowns_->pending == 0;
+  });
 }
 
 COUCHBASE_API
@@ -89,6 +222,8 @@ create_persistent_connection(zend_string* connection_hash,
                              zend_string* connection_string,
                              zval* options) -> std::pair<zend_resource*, core_error_info>
 {
+  sweep_detached_connections_if_grown();
+
   connection_handle* handle = nullptr;
   zend_resource* res = nullptr;
   bool found = false;
@@ -202,6 +337,10 @@ destroy_persistent_connection(zend_resource* res)
     const std::string connection_hash = handle->connection_hash();
     const auto expires_at = handle->expires_at();
     auto now = std::chrono::system_clock::now();
+    /* only shutdown frees a connection with dependents, whose teardown still uses its cluster */
+    if (handle->has_dependents()) {
+      wait_for_teardowns();
+    }
     delete handle;
     res->ptr = nullptr;
     auto current_persistent = --COUCHBASE_G(num_persistent);
@@ -217,6 +356,46 @@ destroy_persistent_connection(zend_resource* res)
       GC_REFCOUNT(res),
       current_persistent);
   }
+}
+
+/*
+ * Moves the entry of res in EG(persistent_list) to a key no lookup produces. Deleting the old
+ * bucket must not run plist_entry_destructor: it frees res, which PHP values may still reference.
+ * The new key carries the flag zend_register_persistent_resource_ex() sets on its keys; an engine
+ * built with ZEND_RC_DEBUG asserts on reference counting a persistent key without it during a
+ * request. GC_MAKE_PERSISTENT_LOCAL would expand to nothing here, as this file is built without
+ * that macro.
+ */
+COUCHBASE_API
+void
+detach_persistent_connection(zend_resource* res)
+{
+  sweep_detached_connections_if_grown();
+
+  auto* handle = static_cast<connection_handle*>(res->ptr);
+  if (handle == nullptr || handle->detached()) {
+    return;
+  }
+  /* an attached connection is registered under its connection hash */
+  const auto& hash = handle->connection_hash();
+  const zval* registered = zend_hash_str_find(&EG(persistent_list), hash.data(), hash.size());
+  if (registered == nullptr || Z_TYPE_P(registered) != IS_RESOURCE || Z_RES_P(registered) != res) {
+    return;
+  }
+  zval entry;
+  ZVAL_COPY_VALUE(&entry, registered);
+  auto* destructor = EG(persistent_list).pDestructor;
+  EG(persistent_list).pDestructor = nullptr;
+  zend_hash_str_del(&EG(persistent_list), hash.data(), hash.size());
+  EG(persistent_list).pDestructor = destructor;
+
+  auto key = detached_key(res);
+  zend_string* persistent_key = zend_string_init(key.data(), key.size(), true);
+  GC_ADD_FLAGS(persistent_key, GC_PERSISTENT_LOCAL);
+  zend_hash_update(&EG(persistent_list), persistent_key, &entry);
+  zend_string_release_ex(persistent_key, true);
+  detached_connections_.push_back(res);
+  handle->detached(true);
 }
 
 namespace
@@ -298,6 +477,8 @@ notify_fork(const zend_string* fork_event) -> core_error_info
 
   /* transactions must be first to stop */
   if (event == fork_event::prepare) {
+    /* the child inherits the dependency tokens of teardown threads, but not the threads */
+    wait_for_teardowns();
     zend_hash_apply_with_argument(&EG(persistent_list), notify_transaction, &event);
   }
 

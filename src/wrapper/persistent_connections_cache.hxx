@@ -22,6 +22,8 @@
 
 #include <Zend/zend_API.h>
 
+#include <functional>
+
 namespace couchbase::php
 {
 
@@ -39,8 +41,24 @@ create_persistent_connection(zend_string* connection_hash,
 COUCHBASE_API void
 destroy_persistent_connection(zend_resource* res);
 
+COUCHBASE_API void
+detach_persistent_connection(zend_resource* res);
+
+COUCHBASE_API void
+sweep_detached_connections();
+
+COUCHBASE_API auto
+has_detached_connections() -> bool;
+
+/* runs destroy on a separate thread that wait_for_teardowns() waits for */
+COUCHBASE_API void
+destroy_in_background(std::function<void()> destroy);
+
+COUCHBASE_API void
+wait_for_teardowns();
+
 COUCHBASE_API int
-check_persistent_connection(zval* zv);
+check_persistent_connection(zval* zv, void* expire_ptr);
 
 COUCHBASE_API
 core_error_info

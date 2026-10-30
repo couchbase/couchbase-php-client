@@ -346,6 +346,9 @@ class Cluster implements ClusterInterface
      *
      * NOTE: Setting a new authenticator does not change the authentication status of existing connections.
      *
+     * The connection is removed from the persistent connection cache, so clusters connected later never reuse
+     * it: they share another cached connection with matching options, or bootstrap a new one.
+     *
      * @param Authenticator $authenticator The authenticator to replace
      *
      * @return void
