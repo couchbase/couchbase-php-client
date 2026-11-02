@@ -601,28 +601,6 @@ class ClusterOptions
     }
 
     /**
-     * @return string the string that uniquely identifies particular authenticator layout
-     * @throws InvalidArgumentException
-     * @internal
-     */
-    public function authenticatorHash(): string
-    {
-        if ($this->authenticator == null) {
-            throw new InvalidArgumentException("missing authenticator");
-        }
-        $exported = $this->authenticator->export();
-        if ($exported['type'] == 'password') {
-            return hash("sha256", sprintf("--%s--%s--", $exported['username'], $exported['password']));
-        } elseif ($exported['type'] == 'certificate') {
-            return hash("sha256", sprintf("--%s--%s--", $exported['certificatePath'], $exported['keyPath']));
-        } elseif ($exported['type'] == 'jwt') {
-            return hash("sha256", sprintf("--%s--", $exported['token']));
-        } else {
-            throw new InvalidArgumentException("unknown type of the authenticator: " . $exported['type']);
-        }
-    }
-
-    /**
      * @return array
      * @throws InvalidArgumentException
      * @internal
