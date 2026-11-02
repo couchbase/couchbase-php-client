@@ -22,6 +22,7 @@
 
 #include <Zend/zend_API.h>
 
+#include <chrono>
 #include <functional>
 
 namespace couchbase::php
@@ -47,8 +48,11 @@ detach_persistent_connection(zend_resource* res);
 COUCHBASE_API void
 sweep_detached_connections();
 
-COUCHBASE_API auto
-has_detached_connections() -> bool;
+COUCHBASE_API void
+forget_busy_connections();
+
+COUCHBASE_API void
+wait_for_teardowns_of_freeable_connections(std::chrono::system_clock::time_point cutoff);
 
 /* runs destroy on a separate thread that wait_for_teardowns() waits for */
 COUCHBASE_API void
@@ -58,7 +62,7 @@ COUCHBASE_API void
 wait_for_teardowns();
 
 COUCHBASE_API int
-check_persistent_connection(zval* zv, void* expire_ptr);
+check_persistent_connection(zval* zv, void* cutoff_ptr);
 
 COUCHBASE_API
 core_error_info

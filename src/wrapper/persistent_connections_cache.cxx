@@ -26,10 +26,15 @@
 
 #include <spdlog/fmt/bundled/chrono.h>
 
+#include <algorithm>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace couchbase::php
@@ -45,6 +50,12 @@ thread_local std::vector<zend_resource*> detached_connections_{};
 thread_local std::size_t detached_after_sweep_{ 0 };
 /* the entry sweep_detached_connections_if_grown() checks next */
 thread_local std::size_t detached_cursor_{ 0 };
+/* num_persistent after a scan for the limit that found every connection in use, otherwise 0 */
+thread_local zend_long busy_at_limit_{ 0 };
+/* the bucket of EG(persistent_list) that free_idle_connections_from_cursor() checks next */
+thread_local std::uint32_t persistent_list_cursor_{ 0 };
+/* detached connections seen in use in a row by free_idle_connections_from_cursor() */
+thread_local std::size_t detached_seen_busy_{ 0 };
 
 struct teardowns {
   std::mutex mutex{};
@@ -77,7 +88,7 @@ get_persistent_connection_destructor_id() -> int
 
 COUCHBASE_API
 auto
-check_persistent_connection(zval* zv, void* expire_ptr) -> int
+check_persistent_connection(zval* zv, void* cutoff_ptr) -> int
 {
   zend_resource* res = Z_RES_P(zv);
 
@@ -91,11 +102,7 @@ check_persistent_connection(zval* zv, void* expire_ptr) -> int
     return ZEND_HASH_APPLY_KEEP;
   }
 
-  if (!*static_cast<const bool*>(expire_ptr)) {
-    return ZEND_HASH_APPLY_KEEP;
-  }
-
-  auto now = std::chrono::system_clock::now();
+  const auto now = *static_cast<const std::chrono::system_clock::time_point*>(cutoff_ptr);
   if (handle->is_expired(now)) {
     if (GC_REFCOUNT(res) == 0 && !handle->has_dependents()) {
       /* connection has timed out */
@@ -142,11 +149,59 @@ free_detached_connection_if_unused(std::size_t i) -> bool
 }
 } // namespace
 
+/*
+ * Waits for the native teardowns that keep a connection the pass after a request would free:
+ * detached, or expired with couchbase.persistent_timeout enabled. Teardowns on connections that
+ * stay cached go on in the background.
+ */
 COUCHBASE_API
-auto
-has_detached_connections() -> bool
+void
+wait_for_teardowns_of_freeable_connections(std::chrono::system_clock::time_point cutoff)
 {
-  return !detached_connections_.empty();
+  const auto held = [](const zend_resource* res) {
+    const auto* handle = static_cast<connection_handle*>(res->ptr);
+    return handle != nullptr && GC_REFCOUNT(res) == 0 && handle->has_dependents();
+  };
+  std::vector<const connection_handle*> waited{};
+  for (const auto* res : detached_connections_) {
+    if (held(res)) {
+      waited.push_back(static_cast<const connection_handle*>(res->ptr));
+    }
+  }
+  if (COUCHBASE_G(persistent_timeout) >= 0) {
+    zval* entry = nullptr;
+    ZEND_HASH_FOREACH_VAL(&EG(persistent_list), entry)
+    {
+      if (Z_TYPE_P(entry) != IS_RESOURCE ||
+          Z_RES_P(entry)->type != persistent_connection_destructor_id_) {
+        continue;
+      }
+      const zend_resource* res = Z_RES_P(entry);
+      const auto* handle = static_cast<connection_handle*>(res->ptr);
+      if (handle != nullptr && !handle->detached() && handle->is_expired(cutoff) && held(res)) {
+        waited.push_back(handle);
+      }
+    }
+    ZEND_HASH_FOREACH_END();
+  }
+  if (waited.empty()) {
+    return;
+  }
+  std::unique_lock lock(teardowns_->mutex);
+  teardowns_->finished.wait(lock, [&waited] {
+    return std::none_of(waited.begin(), waited.end(), [](const connection_handle* handle) {
+      return handle->has_dependents();
+    });
+  });
+}
+
+/* request shutdown releases the connections, so the next miss at the limit scans them all again */
+COUCHBASE_API
+void
+forget_busy_connections()
+{
+  busy_at_limit_ = 0;
+  detached_seen_busy_ = 0;
 }
 
 /*
@@ -197,12 +252,19 @@ destroy_in_background(std::function<void()> destroy)
     const std::scoped_lock lock(teardowns_->mutex);
     ++teardowns_->pending;
   }
+  /* lets tests keep a teardown in progress */
+  static const auto delay = std::chrono::milliseconds([] {
+    const char* value = std::getenv("COUCHBASE_TEST_TEARDOWN_DELAY_MS");
+    return value == nullptr ? 0 : std::atol(value);
+  }());
   std::thread([destroy = std::move(destroy), state = teardowns_]() {
+    if (delay.count() > 0) {
+      std::this_thread::sleep_for(delay);
+    }
     destroy();
     const std::scoped_lock lock(state->mutex);
-    if (--state->pending == 0) {
-      state->finished.notify_all();
-    }
+    --state->pending;
+    state->finished.notify_all();
   }).detach();
 }
 
@@ -215,6 +277,133 @@ wait_for_teardowns()
     return teardowns_->pending == 0;
   });
 }
+
+namespace
+{
+/* an attached connection that no PHP value, transaction or scan uses */
+auto
+is_idle_connection(const zend_resource* res) -> bool
+{
+  if (res->type != persistent_connection_destructor_id_) {
+    return false;
+  }
+  const auto* handle = static_cast<connection_handle*>(res->ptr);
+  return handle != nullptr && !handle->detached() && GC_REFCOUNT(res) == 0 &&
+         !handle->has_dependents();
+}
+
+/*
+ * Frees idle connections bucket by bucket from the cursor until a new one fits under
+ * couchbase.max_persistent or a bucket holds none, so a call costs O(1) plus the connections it
+ * frees. The cursor is a position in the bucket array, so a rehash only changes the order in which
+ * the buckets are visited.
+ */
+void
+free_idle_connections_from_cursor()
+{
+  /*
+   * Detached connections go first, from their own cursor. Attached ones are freed only once every
+   * detached connection has been seen in use since one was last freed, one check per call.
+   */
+  while (!detached_connections_.empty() &&
+         COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
+    detached_cursor_ %= detached_connections_.size();
+    if (free_detached_connection_if_unused(detached_cursor_)) {
+      detached_seen_busy_ = 0;
+      continue;
+    }
+    ++detached_cursor_;
+    if (++detached_seen_busy_ < detached_connections_.size()) {
+      return;
+    }
+    break;
+  }
+  HashTable* list = &EG(persistent_list);
+  if (HT_IS_PACKED(list)) {
+    return;
+  }
+  while (list->nNumUsed > 0 && COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
+    persistent_list_cursor_ %= list->nNumUsed;
+    Bucket* bucket = list->arData + persistent_list_cursor_++;
+    if (bucket->key == nullptr || Z_TYPE(bucket->val) != IS_RESOURCE ||
+        !is_idle_connection(Z_RES(bucket->val))) {
+      return;
+    }
+    zend_hash_del_bucket(list, bucket);
+  }
+}
+
+/*
+ * Frees the least recently used idle connections until a new one fits under
+ * couchbase.max_persistent. A connection that PHP values or native dependents still use is never
+ * freed, so the limit can be exceeded while all of them are in use.
+ */
+void
+make_room_for_connection()
+{
+  if (COUCHBASE_G(max_persistent) < 0 ||
+      COUCHBASE_G(num_persistent) < COUCHBASE_G(max_persistent)) {
+    busy_at_limit_ = 0;
+    return;
+  }
+  /*
+   * Every connection was in use at the last scan. Until their number has doubled, a miss frees
+   * the connections released since from a rotating position instead of scanning them all, so a
+   * run of misses over the limit costs O(1) amortized each, and least recently used order applies
+   * to full scans only. Request shutdown clears this, as it releases the connections.
+   */
+  if (busy_at_limit_ > 0 && COUCHBASE_G(num_persistent) < 2 * busy_at_limit_) {
+    free_idle_connections_from_cursor();
+    if (COUCHBASE_G(num_persistent) < COUCHBASE_G(max_persistent)) {
+      busy_at_limit_ = 0;
+    }
+    return;
+  }
+  busy_at_limit_ = 0;
+  /* unused detached connections count toward the limit, and go before any attached one */
+  sweep_detached_connections();
+  detached_seen_busy_ = 0;
+  if (COUCHBASE_G(num_persistent) < COUCHBASE_G(max_persistent)) {
+    return;
+  }
+
+  /*
+   * expires_at is refreshed on every cache hit, so the earliest one was used least recently. The
+   * scan is O(N) per miss, against a bootstrap that each miss pays anyway. Deleting a bucket does
+   * not move the others, so the collected pointers stay valid.
+   */
+  HashTable* list = &EG(persistent_list);
+  std::vector<std::pair<std::chrono::system_clock::time_point, Bucket*>> idle{};
+  for (uint32_t i = 0; !HT_IS_PACKED(list) && i < list->nNumUsed; ++i) {
+    Bucket* bucket = list->arData + i;
+    if (bucket->key == nullptr || Z_TYPE(bucket->val) != IS_RESOURCE ||
+        !is_idle_connection(Z_RES(bucket->val))) {
+      continue;
+    }
+    const auto* handle = static_cast<connection_handle*>(Z_RES(bucket->val)->ptr);
+    idle.emplace_back(handle->expires_at(), bucket);
+  }
+
+  /* selects only as many of the least recently used as must go, in O(N) */
+  const auto needed = std::min(
+    idle.size(),
+    static_cast<std::size_t>(COUCHBASE_G(num_persistent) - COUCHBASE_G(max_persistent) + 1));
+  std::nth_element(idle.begin(), idle.begin() + static_cast<std::ptrdiff_t>(needed), idle.end());
+  idle.resize(needed);
+  for (const auto& [expires_at, bucket] : idle) {
+    CB_LOG_DEBUG("evict idle persistent connection: connection_hash={}, expires_at=\"{}\", "
+                 "max_persistent={}, num_persistent={}",
+                 std::string_view(ZSTR_VAL(bucket->key), ZSTR_LEN(bucket->key)),
+                 expires_at,
+                 COUCHBASE_G(max_persistent),
+                 COUCHBASE_G(num_persistent));
+    zend_hash_del_bucket(list, bucket);
+  }
+  if (COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
+    busy_at_limit_ = COUCHBASE_G(num_persistent);
+  }
+}
+} // namespace
 
 COUCHBASE_API
 auto
@@ -268,21 +457,6 @@ create_persistent_connection(zend_string* connection_hash,
     zend_hash_del(&EG(persistent_list), connection_hash);
   }
 
-  if (COUCHBASE_G(persistent_timeout) >= 0 && COUCHBASE_G(max_persistent) >= 0 &&
-      COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent)) {
-    /* try to find an idle connection and kill it */
-    CB_LOG_DEBUG(
-      "cleanup idle connections. max_persistent({}) != -1, num_persistent({}) >= max_persistent",
-      COUCHBASE_G(max_persistent),
-      COUCHBASE_G(num_persistent));
-  } else {
-    CB_LOG_DEBUG("don't cleanup idle connections. couchbase.persistent_timeout={}, "
-                 "couchbase.max_persistent={}, num_persistent={}",
-                 COUCHBASE_G(persistent_timeout),
-                 COUCHBASE_G(max_persistent),
-                 COUCHBASE_G(num_persistent));
-  }
-
   core_error_info rc;
   std::tie(handle, rc) =
     create_connection_handle(connection_string, connection_hash, options, expires_at);
@@ -310,6 +484,14 @@ create_persistent_connection(zend_string* connection_hash,
     delete handle;
     return { nullptr, rc };
   }
+  /* only after open() succeeds, so a failed attempt does not cost an idle connection */
+  make_room_for_connection();
+  /* bootstrap can outlast couchbase.persistent_timeout, so the idle time starts when it ends */
+  now = std::chrono::system_clock::now();
+  expires_at = COUCHBASE_G(persistent_timeout) > 0
+                 ? now + std::chrono::milliseconds(COUCHBASE_G(persistent_timeout))
+                 : now;
+  handle->expires_at(expires_at);
   res = zend_register_persistent_resource_ex(
     zend_string_dup(connection_hash, true), handle, persistent_connection_destructor_id_);
   auto current_persistent = ++COUCHBASE_G(num_persistent);

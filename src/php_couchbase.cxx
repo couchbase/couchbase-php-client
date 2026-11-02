@@ -67,21 +67,18 @@ PHP_RSHUTDOWN_FUNCTION(couchbase)
 ZEND_MODULE_POST_ZEND_DEACTIVATE_D(couchbase)
 {
   /*
-   * Released transactions and scans keep their connection until their native teardown ends. Only
-   * a pass that can free connections waits for that.
+   * Released transactions and scans keep their connection until their native teardown ends. The
+   * wait and the expiry pass share one cutoff, so the expiry pass frees only connections the wait
+   * covered.
    */
-  if (couchbase::php::has_detached_connections() || COUCHBASE_G(persistent_timeout) >= 0 ||
-      COUCHBASE_G(max_persistent) >= 0) {
-    couchbase::php::wait_for_teardowns();
-  }
+  auto cutoff = std::chrono::system_clock::now();
+  couchbase::php::wait_for_teardowns_of_freeable_connections(cutoff);
   couchbase::php::sweep_detached_connections();
-  /* evaluated once, because removing an expired connection decrements num_persistent */
-  bool expire = COUCHBASE_G(persistent_timeout) >= 0 ||
-                (COUCHBASE_G(max_persistent) >= 0 &&
-                 COUCHBASE_G(num_persistent) >= COUCHBASE_G(max_persistent));
-  if (expire) {
+  couchbase::php::forget_busy_connections();
+  /* a negative timeout keeps idle connections until couchbase.max_persistent needs room */
+  if (COUCHBASE_G(persistent_timeout) >= 0) {
     zend_hash_apply_with_argument(
-      &EG(persistent_list), couchbase::php::check_persistent_connection, &expire);
+      &EG(persistent_list), couchbase::php::check_persistent_connection, &cutoff);
   }
 
   couchbase::php::flush_logger();
