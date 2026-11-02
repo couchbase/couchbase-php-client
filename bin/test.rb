@@ -17,6 +17,7 @@
 
 require "English"
 require "fileutils"
+require "json"
 require "rbconfig"
 require "shellwords"
 
@@ -166,6 +167,9 @@ if windows?
   extra_php_args << "-d" << "extension=sockets"
   extra_php_args << "-d" << "extension=mbstring"
 end
+
+# tests that start php-cgi workers pass these on to them
+ENV["TEST_PHP_ARGS"] = JSON.generate([*extra_php_args, "-d", "couchbase.log_php_log_err=0", *log_args])
 
 Dir.chdir(project_root) do
   run(CB_PHP_EXECUTABLE, *extra_php_args, "-m")

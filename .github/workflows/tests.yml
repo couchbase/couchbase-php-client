@@ -181,6 +181,7 @@ jobs:
             php${{ matrix.php }}-xml \
             php${{ matrix.php }}-xmlwriter \
             php${{ matrix.php }}-ctype \
+            php${{ matrix.php }}-cgi \
             openssl \
             ruby \
             tar \
@@ -312,6 +313,7 @@ jobs:
             php${{ matrix.php }}-xml \
             php${{ matrix.php }}-xmlwriter \
             php${{ matrix.php }}-ctype \
+            php${{ matrix.php }}-cgi \
             openssl \
             ruby \
             tar \

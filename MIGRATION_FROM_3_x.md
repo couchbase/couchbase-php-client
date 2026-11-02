@@ -608,9 +608,32 @@ bucket and credentials.
 `couchbase.persistent_timeout`
 
 SDKv4 is based on C++SDK. It has similar behavior when it comes to persistent
-instances. But instead of running cleanup at the end of each request, it does
-cleanup only when the library needs to create a new connection and the number of
-existing connection have reached `couchbase.max_persistent`.
+instances, controlled by two independent settings.
+
+`couchbase.max_persistent` limits the number of instances. When the library has
+opened a new connection and the limit has been reached, it destroys idle
+instances until the new one fits: first the instances left behind by
+`setAuthenticator()`, then cached ones, least recently used first. An instance
+is idle when nothing uses it: no `\Couchbase\Cluster` object, no `Bucket`,
+`Scope` or `Collection` obtained from one, and no transaction or range scan.
+
+The limit is soft. When every instance is in use, the new one is kept over the
+limit. Later connections opened over the limit destroy the instances released
+since. They check a few cached instances at a time, in cache order, so this
+can take several connections. The first connection opened after the request
+has ended checks all of them again, least recently used first.
+
+A new connection is opened before any idle instance is destroyed, so a failed
+attempt costs no cached instance. Its sockets have to fit next to those of the
+instances already cached, so `couchbase.max_persistent` should stay well below
+the file descriptor limit of the worker process (`ulimit -n`). A connection
+that cannot open its sockets fails with `UnambiguousTimeoutException`, the same
+as an unreachable cluster.
+
+`couchbase.persistent_timeout` is the time in milliseconds an instance may stay
+idle. After each request, the extension destroys idle instances that have not
+been used for longer than that. An instance counts as used when it has finished
+connecting or is pulled from the cache.
 
 By default both `couchbase.persistent_timeout` and `couchbase.max_persistent`
 are set to `-1`, which means that the instances will be destroyed naturally
@@ -619,14 +642,6 @@ when the PHP process will exit.
 This behavior was not possible in SDKv3 because libcouchbase does not have any
 background threads that can perform service tasks (like tracking configuration
 changes).
-
-So if `couchbase.max_persistent` is set to a positive (or zero) value, the
-extension will run the cleanup tasks if the number of existing instances
-exceeds the max, and will destroy all instances that have expired.
-
-The expiration time for the instance is recorded when the instance is created
-or pulled from the cache, and is set to the current time plus
-`couchbase.persistent_timeout`.
 
 Note that by setting both `couchbase.persistent_timeout` and
 `couchbase.max_persistent` to zero, this will force the extension to destroy

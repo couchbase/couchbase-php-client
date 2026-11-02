@@ -120,31 +120,49 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
     }
 
     /**
-     * Each request leaves a detached connection referenced by a request global and by a released
-     * Transactions object. Only the sweep after request shutdown can free it, so the count at the
-     * start of every request served by the same worker must not grow.
+     * Runs $body as $requests requests served by one php-cgi worker, with the ini settings of this
+     * process plus $ini. The settings are the JSON array of PHP arguments in TEST_PHP_ARGS, which
+     * bin/test.rb exports, or else the -d arguments of this process. $body sees $options and
+     * connections(), the count of open persistent connections. Every request must complete and the
+     * worker must exit with status 0. Returns every line of output that is a number.
+     *
+     * @param array<string, string> $ini
+     * @param array<string, string> $env
+     * @return string[]
      */
-    public function testWorkerFreesDetachedConnectionsBetweenRequests()
+    private function runWorkerRequests(string $body, array $ini = [], int $requests = 3, array $env = []): array
     {
-        $this->skipIfProtostellar();
-        $this->skipIfCaves();
-        $this->skipIfUnsupported($this->version()->supportsTransactions());
-
-        $cgi = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . "php-cgi";
-        $cmdline = @file_get_contents("/proc/self/cmdline");
-        if (!is_executable($cgi) || $cmdline === false) {
-            $this->markTestSkipped("Requires php-cgi next to " . PHP_BINARY . " and /proc/self/cmdline");
+        /* Alpine names the binaries php85 and php-cgi85 */
+        $cgi = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . (PHP_OS_FAMILY === "Windows" ? "php-cgi.exe" : "php-cgi");
+        $versioned = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . "php-cgi" . substr(basename(PHP_BINARY), 3);
+        if (!is_executable($cgi) && is_executable($versioned)) {
+            $cgi = $versioned;
         }
-        $args = explode("\0", rtrim($cmdline, "\0"));
+        $args = json_decode((string)getenv("TEST_PHP_ARGS"), true);
+        if (!is_array($args)) {
+            $cmdline = @file_get_contents("/proc/self/cmdline");
+            $args = $cmdline === false ? null : array_slice(explode("\0", rtrim($cmdline, "\0")), 1);
+        }
+        if (!is_executable($cgi) || $args === null) {
+            $this->markTestSkipped("Requires php-cgi next to " . PHP_BINARY . " and TEST_PHP_ARGS or /proc/self/cmdline");
+        }
         $defines = php_ini_loaded_file() === false ? [] : ["-c", php_ini_loaded_file()];
-        for ($i = 1; $i < count($args) - 1; $i++) {
-            if ($args[$i] === "-d") {
+        for ($i = 0; $i < count($args); $i++) {
+            if ($args[$i] === "-d" && $i + 1 < count($args)) {
                 $defines[] = "-d";
                 $defines[] = $args[++$i];
+            } elseif (strncmp($args[$i], "-d", 2) === 0 && strlen($args[$i]) > 2) {
+                $defines[] = "-d";
+                $defines[] = substr($args[$i], 2);
             }
+        }
+        foreach ($ini as $name => $value) {
+            $defines[] = "-d";
+            $defines[] = "$name=$value";
         }
 
         $script = tempnam(sys_get_temp_dir(), "couchbase-cgi");
+        $log = tempnam(sys_get_temp_dir(), "couchbase-cgi-output");
         file_put_contents(
             $script,
             sprintf(
@@ -155,40 +173,342 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
                     return;
                 }
                 require_once %s;
-                ob_start();
-                phpinfo(INFO_MODULES);
-                preg_match('/couchbase_persistent_connections\D*(\d+)/', ob_get_clean(), $matches);
-                echo $matches[1], "\n";
-                $authenticator = new Couchbase\PasswordAuthenticator(%s, %s);
-                $options = (new Couchbase\ClusterOptions())->authenticator($authenticator);
-                $kept = new Couchbase\Cluster(%s, $options);
-                $transactions = $kept->transactions();
-                $kept->setAuthenticator($authenticator);
-                unset($transactions);
-                echo "request-done\n";
+                function connections(): int
+                {
+                    ob_start();
+                    phpinfo(INFO_MODULES);
+                    preg_match('/couchbase_persistent_connections\D*(\d+)/', ob_get_clean(), $matches);
+                    return (int)$matches[1];
+                }
+                $options = (new Couchbase\ClusterOptions())->authenticator(new Couchbase\PasswordAuthenticator(%s, %s));
+
                 PHP,
                 var_export(dirname((new ReflectionClass(Cluster::class))->getFileName()) . "/autoload.php", true),
                 var_export(self::env()->username(), true),
-                var_export(self::env()->password(), true),
-                var_export($this->uniqueConnectionString(), true)
-            )
+                var_export(self::env()->password(), true)
+            ) . $body . "\necho \"request-done\\n\";\n"
         );
         try {
-            $command = array_merge([$cgi, "-q", "-T", "3"], $defines, [$script]);
-            exec(implode(" ", array_map("escapeshellarg", $command)) . " 2>&1", $lines, $status);
+            $command = array_merge([$cgi, "-q", "-T", (string)$requests], $defines, [$script]);
+            /* output goes to a file, as proc_open() pipes cannot be polled on Windows */
+            $worker = proc_open($command, [1 => ["file", $log, "w"], 2 => ["redirect", 1]], $pipes, null, array_merge(getenv(), $env));
+            /* a worker hung in request shutdown or fork preparation fails the test instead of stalling it */
+            $deadline = microtime(true) + 120;
+            while (($info = proc_get_status($worker))["running"] && microtime(true) < $deadline) {
+                usleep(100_000);
+            }
+            if ($info["running"]) {
+                proc_terminate($worker, 9);
+            }
+            proc_close($worker);
+            $output = (string)file_get_contents($log);
+            $this->assertFalse($info["running"], "php-cgi worker did not exit within 120 seconds:\n" . $output);
+            /* only the first proc_get_status() call after the exit reports the exit code */
+            $status = $info["exitcode"];
         } finally {
             unlink($script);
+            unlink($log);
         }
 
-        $output = implode("\n", $lines);
         if (strpos($output, "no-couchbase") !== false) {
             $this->markTestSkipped("php-cgi does not load the couchbase extension with this configuration");
         }
         /* a request that fails after printing its count, or a crash at shutdown, must not pass */
         $this->assertSame(0, $status, $output);
-        $this->assertSame(3, substr_count($output, "request-done"), $output);
+        $this->assertSame($requests, substr_count($output, "request-done"), $output);
         preg_match_all('/^\d+$/m', $output, $counts);
-        $this->assertSame(["0", "0", "0"], $counts[0], $output);
+        return $counts[0];
+    }
+
+    /**
+     * Each request leaves a detached connection referenced by a request global and by a released
+     * Transactions object. Only the sweep after request shutdown can free it, so the count at the
+     * start of every request served by the same worker must not grow.
+     */
+    public function testWorkerFreesDetachedConnectionsBetweenRequests()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $body = sprintf(
+            <<<'PHP'
+            echo connections(), "\n";
+            $kept = new Couchbase\Cluster(%s, $options);
+            $transactions = $kept->transactions();
+            $kept->setAuthenticator(new Couchbase\PasswordAuthenticator(%s, %s));
+            unset($transactions);
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export(self::env()->username(), true),
+            var_export(self::env()->password(), true)
+        );
+
+        $this->assertSame(["0", "0", "0"], $this->runWorkerRequests($body));
+    }
+
+    /**
+     * Connections created over couchbase.max_persistent while every other one is in use must be
+     * reclaimed once those are released, at the next miss rather than at the end of the request.
+     */
+    public function testMaxPersistentReclaimsConnectionsReleasedOverLimit()
+    {
+        $this->skipIfProtostellar();
+
+        $body = sprintf(
+            <<<'PHP'
+            $first = new Couchbase\Cluster(%s, $options);
+            $second = new Couchbase\Cluster(%s, $options);
+            $third = new Couchbase\Cluster(%s, $options);
+            echo connections(), "\n";
+            unset($first, $second);
+            $fourth = new Couchbase\Cluster(%s, $options);
+            echo connections(), "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["3", "2"],
+            $this->runWorkerRequests($body, ["couchbase.max_persistent" => "2", "couchbase.persistent_timeout" => "-1"], 1)
+        );
+    }
+
+    /**
+     * An idle connection is kept across requests while it has been unused for less than
+     * couchbase.persistent_timeout.
+     */
+    public function testPersistentTimeoutKeepsRecentlyUsedConnection()
+    {
+        $this->skipIfProtostellar();
+
+        $body = sprintf(
+            <<<'PHP'
+            echo connections(), "\n";
+            $cluster = new Couchbase\Cluster(%s, $options);
+            PHP,
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["0", "1", "1"],
+            $this->runWorkerRequests($body, ["couchbase.max_persistent" => "-1", "couchbase.persistent_timeout" => "600000"])
+        );
+    }
+
+    /**
+     * With both settings at 0, as MIGRATION_FROM_3_x.md documents, every request starts without
+     * cached connections and bootstraps a new one that works.
+     */
+    public function testZeroLimitAndTimeoutBootstrapEveryRequest()
+    {
+        $this->skipIfProtostellar();
+
+        $body = sprintf(
+            <<<'PHP'
+            echo connections(), "\n";
+            $cluster = new Couchbase\Cluster(%s, $options);
+            $cluster->bucket(%s)->defaultCollection()->upsert(%s, ["answer" => 42]);
+            echo connections(), "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export(self::env()->bucketName(), true),
+            var_export($this->uniqueId(), true)
+        );
+
+        $this->assertSame(
+            ["0", "1", "0", "1", "0", "1"],
+            $this->runWorkerRequests($body, ["couchbase.max_persistent" => "0", "couchbase.persistent_timeout" => "0"])
+        );
+    }
+
+    /**
+     * A detached connection whose transactions are still being torn down on a background thread
+     * must survive a sweep during the request, although no PHP value references it any more.
+     */
+    public function testSweepKeepsDetachedConnectionDuringNativeTeardown()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $body = sprintf(
+            <<<'PHP'
+            $detached = new Couchbase\Cluster(%s, $options);
+            $transactions = $detached->transactions();
+            $detached->setAuthenticator(new Couchbase\PasswordAuthenticator(%s, %s));
+            unset($detached, $transactions);
+            $probe = new Couchbase\Cluster(%s, $options);
+            echo connections(), "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export(self::env()->username(), true),
+            var_export(self::env()->password(), true),
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["2"],
+            $this->runWorkerRequests($body, [], 1, ["COUCHBASE_TEST_TEARDOWN_DELAY_MS" => "2000"])
+        );
+    }
+
+    /**
+     * An attached connection past couchbase.persistent_timeout whose transactions are still being
+     * torn down at request end must be freed by the pass after the request, not left to the next.
+     */
+    public function testRequestEndFreesExpiredConnectionAfterTeardown()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $body = sprintf(
+            <<<'PHP'
+            echo connections(), "\n";
+            $cluster = new Couchbase\Cluster(%s, $options);
+            $transactions = $cluster->transactions();
+            unset($transactions);
+            PHP,
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["0", "0"],
+            $this->runWorkerRequests(
+                $body,
+                ["couchbase.max_persistent" => "-1", "couchbase.persistent_timeout" => "0"],
+                2,
+                ["COUCHBASE_TEST_TEARDOWN_DELAY_MS" => "2000"]
+            )
+        );
+    }
+
+    /**
+     * A child inherits the dependency tokens of teardown threads, but not the threads, so fork
+     * preparation must not return while a teardown is in progress.
+     */
+    public function testForkPreparationWaitsForTeardown()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $body = sprintf(
+            <<<'PHP'
+            $cluster = new Couchbase\Cluster(%s, $options);
+            $transactions = $cluster->transactions();
+            unset($transactions);
+            $start = microtime(true);
+            Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PREPARE);
+            echo (int)((microtime(true) - $start) * 1000), "\n";
+            Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PARENT);
+            PHP,
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        [$elapsed] = $this->runWorkerRequests($body, [], 1, ["COUCHBASE_TEST_TEARDOWN_DELAY_MS" => "2000"]);
+        $this->assertGreaterThanOrEqual(1500, (int)$elapsed);
+    }
+
+    /**
+     * Of two idle connections at couchbase.max_persistent, the one used least recently is freed,
+     * not the one created first or used last.
+     */
+    public function testMaxPersistentEvictsTheConnectionUsedLongestAgo()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+
+        $body = sprintf(
+            <<<'PHP'
+            /* the KV session a connection bootstraps with identifies it for as long as it lives */
+            $id = fn($cluster) => $cluster->diagnostics()["services"]["kv"][0]["id"] ?? "";
+            $first = new Couchbase\Cluster(%1$s, $options);
+            $firstId = $id($first);
+            unset($first);
+            $second = new Couchbase\Cluster(%2$s, $options);
+            unset($second);
+            $first = new Couchbase\Cluster(%1$s, $options);
+            unset($first);
+            $third = new Couchbase\Cluster(%3$s, $options);
+            echo connections(), "\n";
+            echo $firstId !== "" && $id(new Couchbase\Cluster(%1$s, $options)) === $firstId ? 1 : 0, "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["2", "1"],
+            $this->runWorkerRequests($body, ["couchbase.max_persistent" => "2", "couchbase.persistent_timeout" => "-1"], 1)
+        );
+    }
+
+    /**
+     * The pass after a request frees neither an attached connection with the default settings nor
+     * one used less than couchbase.persistent_timeout ago, so a teardown still in progress on it
+     * must not keep the worker from serving the next request.
+     */
+    public function testRequestEndDoesNotWaitForTeardownWithNothingToFree()
+    {
+        $this->skipIfProtostellar();
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsTransactions());
+
+        $body = sprintf(
+            <<<'PHP'
+            echo (int)(microtime(true) * 1000), "\n";
+            $cluster = new Couchbase\Cluster(%s, $options);
+            $transactions = $cluster->transactions();
+            unset($transactions);
+            echo connections(), "\n";
+            echo (int)(microtime(true) * 1000), "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        foreach (["-1", "600000"] as $timeout) {
+            [, $firstCount, $firstEnd, $secondStart, $secondCount] = $this->runWorkerRequests(
+                $body,
+                ["couchbase.max_persistent" => "-1", "couchbase.persistent_timeout" => $timeout],
+                2,
+                ["COUCHBASE_TEST_TEARDOWN_DELAY_MS" => "5000"]
+            );
+            $this->assertSame(["1", "1"], [$firstCount, $secondCount]);
+            /* only the gap between the requests includes the pass after the first one */
+            $this->assertLessThan(2500, (int)$secondStart - (int)$firstEnd, "persistent_timeout=$timeout");
+        }
+    }
+
+    /**
+     * With couchbase.max_persistent=1 and no timeout, the connection used last stays cached
+     * across requests, and connecting elsewhere frees the idle one to make room.
+     */
+    public function testMaxPersistentOfOneKeepsOneConnectionAcrossRequests()
+    {
+        $this->skipIfProtostellar();
+
+        $body = sprintf(
+            <<<'PHP'
+            echo connections(), "\n";
+            $first = new Couchbase\Cluster(%s, $options);
+            unset($first);
+            $second = new Couchbase\Cluster(%s, $options);
+            echo connections(), "\n";
+            PHP,
+            var_export($this->uniqueConnectionString(), true),
+            var_export($this->uniqueConnectionString(), true)
+        );
+
+        $this->assertSame(
+            ["0", "1", "1", "1", "1", "1"],
+            $this->runWorkerRequests($body, ["couchbase.max_persistent" => "1", "couchbase.persistent_timeout" => "-1"])
+        );
     }
 
     /**
