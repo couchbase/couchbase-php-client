@@ -130,6 +130,13 @@ PHP_METHOD(CouchbaseException, __construct)
   }
 }
 
+/* thread-safe builds allocate the globals without running their default member initializers */
+PHP_GINIT_FUNCTION(couchbase)
+{
+  couchbase_globals->initialized = false;
+  couchbase_globals->num_persistent = 0;
+}
+
 PHP_RINIT_FUNCTION(couchbase)
 {
   if (!COUCHBASE_G(initialized)) {
@@ -5424,7 +5431,7 @@ zend_module_entry couchbase_module_entry = {
   PHP_MINFO(couchbase),     /* information function */
   PHP_COUCHBASE_VERSION,
   PHP_MODULE_GLOBALS(couchbase), /* globals descriptor */
-  nullptr,                       /* globals ctor */
+  PHP_GINIT(couchbase),          /* globals ctor */
   nullptr,                       /* globals dtor */
   nullptr,                       /* post deactivate */
   STANDARD_MODULE_PROPERTIES_EX,
