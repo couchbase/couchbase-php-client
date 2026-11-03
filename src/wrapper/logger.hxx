@@ -47,7 +47,8 @@ shutdown_logger();
 
 /**
  * Keeps a fork() child, whether or not the application calls Cluster::notifyFork(), from inheriting
- * the logger's periodic flusher thread. Called once per process.
+ * the logger's periodic flusher thread, and gives a child forked by PHP code a log file of its own.
+ * Called once per process.
  */
 COUCHBASE_API
 void

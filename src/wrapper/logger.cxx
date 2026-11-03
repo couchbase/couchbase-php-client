@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <chrono>
 #include <mutex>
+#include <optional>
 #include <queue>
 
 #ifndef _WIN32
@@ -147,6 +148,28 @@ shutdown_logger()
   couchbase::core::logger::shutdown();
 }
 
+namespace
+{
+/* the configuration of the running logger, its filename being couchbase.log_path without the pid */
+std::optional<couchbase::core::logger::configuration> logger_configuration{};
+
+void
+create_logger_for_this_process(couchbase::core::logger::configuration configuration)
+{
+  if (!configuration.filename.empty()) {
+    configuration.filename += fmt::format(".{}", spdlog::details::os::pid());
+  }
+  auto error = couchbase::core::logger::create_file_logger(configuration);
+  if (error && !configuration.filename.empty()) {
+    /* otherwise a forked child keeps the inherited logger, which writes to the parent's file */
+    const auto filename = configuration.filename;
+    configuration.filename.clear();
+    couchbase::core::logger::create_file_logger(configuration);
+    CB_LOG_WARNING("logging without couchbase.log_path: {}: {}", filename, *error);
+  }
+}
+} // namespace
+
 #ifndef _WIN32
 namespace
 {
@@ -191,7 +214,11 @@ restart_logger_in_forked_child()
   if (restart_logger_in_child) {
     restart_logger_in_child = false;
     std::scoped_lock lock(logger_fork_mutex);
-    spdlog::flush_every(logger_flush_interval);
+    if (logger_configuration && !logger_configuration->filename.empty()) {
+      create_logger_for_this_process(*logger_configuration);
+    } else {
+      spdlog::flush_every(logger_flush_interval);
+    }
   }
 #endif
 }
@@ -204,7 +231,9 @@ void (*previous_interrupt_function)(zend_execute_data* execute_data){ nullptr };
 /*
  * Runs when the VM next checks for interrupts. A child forked by PHP code reaches it as soon as the
  * fork returns. A child that PHP forks only to exec() another program never does, and starts no
- * thread before the exec().
+ * thread and opens no log file before the exec(). A logger that writes to couchbase.log_path is
+ * created again, so the child writes to a file named after its own pid; creating it starts the
+ * flusher.
  */
 void
 restart_logger_on_interrupt(zend_execute_data* execute_data)
@@ -300,7 +329,6 @@ initialize_logger()
     if (const char* ini_val = COUCHBASE_G(log_path);
         ini_val != nullptr && std::strlen(ini_val) > 0) {
       configuration.filename = ini_val;
-      configuration.filename += fmt::format(".{}", spdlog::details::os::pid());
     }
     configuration.unit_test = true;
     configuration.console = COUCHBASE_G(log_stderr);
@@ -310,7 +338,10 @@ initialize_logger()
       global_php_log_err_sink->include_source_info(cbpp_log_level ==
                                                    couchbase::core::logger::level::trace);
     }
-    couchbase::core::logger::create_file_logger(configuration);
+    logger_configuration = configuration;
+    create_logger_for_this_process(configuration);
+  } else {
+    logger_configuration.reset();
   }
 
   spdlog::set_level(spd_log_level);

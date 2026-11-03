@@ -789,6 +789,63 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
         $this->assertSame(["0"], $counts, "254 is a failed fork, 255 a child still running after 30 seconds");
     }
 
+    /**
+     * The log file name carries the pid of the process that created the logger. A child forked
+     * without notifyFork() would otherwise write to the parent's file. A process that PHP forks only
+     * to run another program must not get a file.
+     */
+    public function testForkedChildLogsToItsOwnFile()
+    {
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+        $logPath = tempnam(sys_get_temp_dir(), "couchbase-fork-log");
+        $body = <<<'PHP'
+            if (!function_exists("pcntl_fork")) {
+                echo "no-pcntl\n";
+            } elseif (($pid = pcntl_fork()) < 0) {
+                echo "0\n";
+            } else {
+                if ($pid == 0) {
+                    exit(0);
+                }
+                $deadline = time() + 30;
+                while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+                    usleep(100_000);
+                }
+                if ($exited == 0) {
+                    posix_kill($pid, SIGKILL);
+                    pcntl_waitpid($pid, $status);
+                }
+                exec("true");
+                shell_exec("true");
+                proc_close(proc_open(["true"], [], $pipes));
+                $exitStatus = $exited == $pid && pcntl_wifexited($status) ? pcntl_wexitstatus($status) : 255;
+                echo getmypid(), "\n", $pid, "\n", $exitStatus, "\n";
+            }
+            PHP;
+        $ini = [
+            "couchbase.log_level" => "warning",
+            "couchbase.log_php_log_err" => "0",
+            "couchbase.log_stderr" => "0",
+            "couchbase.log_path" => $logPath,
+        ];
+        try {
+            $pids = $this->runWorkerRequests($body, $ini, 1, [], true);
+            if ($pids === []) {
+                $this->markTestSkipped("the CLI does not provide pcntl_fork()");
+            }
+            $this->assertCount(3, $pids);
+            [$parent, $child, $exitStatus] = $pids;
+            $this->assertSame("0", $exitStatus, "255 is a child still running after 30 seconds");
+            $this->assertNotEmpty(glob("$logPath.$parent.*"), "no log file for the parent $parent");
+            $this->assertNotEmpty(glob("$logPath.$child.*"), "no log file for the child $child");
+            $this->assertCount(2, glob("$logPath.*"), implode(", ", glob("$logPath.*")));
+        } finally {
+            array_map("unlink", array_merge([$logPath], glob("$logPath.*") ?: []));
+        }
+    }
+
     public function testForkAfterDisconnect()
     {
         $this->skipIfProtostellar();
