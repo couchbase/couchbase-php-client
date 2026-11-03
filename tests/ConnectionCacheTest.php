@@ -840,7 +840,68 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
             $this->assertSame("0", $exitStatus, "255 is a child still running after 30 seconds");
             $this->assertNotEmpty(glob("$logPath.$parent.*"), "no log file for the parent $parent");
             $this->assertNotEmpty(glob("$logPath.$child.*"), "no log file for the child $child");
+            /* every line carries [pid,thread], and the child must write none to the parent's file */
+            $parentLog = implode("", array_map("file_get_contents", glob("$logPath.$parent.*")));
+            $this->assertStringNotContainsString("[$child,", $parentLog);
             $this->assertCount(2, glob("$logPath.*"), implode(", ", glob("$logPath.*")));
+        } finally {
+            array_map("unlink", array_merge([$logPath], glob("$logPath.*") ?: []));
+        }
+    }
+
+    /**
+     * A connected cluster and notifyFork(). The core caches the logger per thread, so a logger
+     * replaced around the fork is destroyed in the child on its next log call, and its closing line
+     * goes to the parent's file.
+     */
+    public function testNotifiedChildOfConnectedProcessLogsToItsOwnFile()
+    {
+        $this->skipIfProtostellar();
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+        $logPath = tempnam(sys_get_temp_dir(), "couchbase-fork-log");
+        $body = '$connstr = ' . var_export($this->uniqueConnectionString(), true) . ";\n" . <<<'PHP'
+            if (!function_exists("pcntl_fork")) {
+                echo "no-pcntl\n";
+            } else {
+                $cluster = new Couchbase\Cluster($connstr, $options);
+                Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PREPARE);
+                $pid = pcntl_fork();
+                if ($pid == 0) {
+                    Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::CHILD);
+                    exit(0);
+                }
+                Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PARENT);
+                $deadline = time() + 30;
+                while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+                    usleep(100_000);
+                }
+                if ($exited == 0) {
+                    posix_kill($pid, SIGKILL);
+                    pcntl_waitpid($pid, $status);
+                }
+                $exitStatus = $exited == $pid && pcntl_wifexited($status) ? pcntl_wexitstatus($status) : 255;
+                echo getmypid(), "\n", $pid, "\n", $exitStatus, "\n";
+            }
+            PHP;
+        $ini = [
+            "couchbase.log_level" => "trace",
+            "couchbase.log_php_log_err" => "0",
+            "couchbase.log_stderr" => "0",
+            "couchbase.log_path" => $logPath,
+        ];
+        try {
+            $pids = $this->runWorkerRequests($body, $ini, 1, [], true);
+            if ($pids === []) {
+                $this->markTestSkipped("the CLI does not provide pcntl_fork()");
+            }
+            $this->assertCount(3, $pids);
+            [$parent, $child, $exitStatus] = $pids;
+            $this->assertSame("0", $exitStatus, "255 is a child still running after 30 seconds");
+            $this->assertNotEmpty(glob("$logPath.$child.*"), "no log file for the child $child");
+            $parentLog = implode("", array_map("file_get_contents", glob("$logPath.$parent.*")));
+            $this->assertStringNotContainsString("[$child,", $parentLog);
         } finally {
             array_map("unlink", array_merge([$logPath], glob("$logPath.*") ?: []));
         }
