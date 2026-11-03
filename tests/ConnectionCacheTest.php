@@ -122,17 +122,19 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
     }
 
     /**
-     * Runs $body as $requests requests served by one php-cgi worker, with the ini settings of this
-     * process plus $ini. The settings are the JSON array of PHP arguments in TEST_PHP_ARGS, which
-     * bin/test.rb exports, or else the -d arguments of this process. $body sees $options and
-     * connections(), the count of open persistent connections. Every request must complete and the
-     * worker must exit with status 0. Returns every line of output that is a number.
+     * Runs $body as $requests requests served by one php-cgi worker, or once in a CLI process when
+     * $cli is set, as standard builds compile pcntl into the CLI only. The worker gets the ini
+     * settings of this process plus $ini. The settings are the JSON array of PHP arguments in
+     * TEST_PHP_ARGS, which bin/test.rb exports, or else the -d arguments of this process. $body
+     * sees $options and connections(), the count of open persistent connections. Every request must
+     * complete and the worker must exit with status 0. Returns every line of output that is a
+     * number.
      *
      * @param array<string, string> $ini
      * @param array<string, string> $env
      * @return string[]
      */
-    private function runWorkerRequests(string $body, array $ini = [], int $requests = 3, array $env = []): array
+    private function runWorkerRequests(string $body, array $ini = [], int $requests = 3, array $env = [], bool $cli = false): array
     {
         /* Alpine names the binaries php85 and php-cgi85 */
         $cgi = dirname(PHP_BINARY) . DIRECTORY_SEPARATOR . (PHP_OS_FAMILY === "Windows" ? "php-cgi.exe" : "php-cgi");
@@ -145,7 +147,7 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
             $cmdline = @file_get_contents("/proc/self/cmdline");
             $args = $cmdline === false ? null : array_slice(explode("\0", rtrim($cmdline, "\0")), 1);
         }
-        if (!is_executable($cgi) || $args === null) {
+        if ((!$cli && !is_executable($cgi)) || $args === null) {
             $this->markTestSkipped("Requires php-cgi next to " . PHP_BINARY . " and TEST_PHP_ARGS or /proc/self/cmdline");
         }
         $defines = php_ini_loaded_file() === false ? [] : ["-c", php_ini_loaded_file()];
@@ -191,7 +193,9 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
             ) . $body . "\necho \"request-done\\n\";\n"
         );
         try {
-            $command = array_merge([$cgi, "-q", "-T", (string)$requests], $defines, [$script]);
+            $command = $cli
+                ? array_merge([PHP_BINARY], $defines, [$script])
+                : array_merge([$cgi, "-q", "-T", (string)$requests], $defines, [$script]);
             /* output goes to a file, as proc_open() pipes cannot be polled on Windows */
             $worker = proc_open($command, [1 => ["file", $log, "w"], 2 => ["redirect", 1]], $pipes, null, array_merge(getenv(), $env));
             /* a worker hung in request shutdown or fork preparation fails the test instead of stalling it */
@@ -204,7 +208,7 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
             }
             proc_close($worker);
             $output = (string)file_get_contents($log);
-            $this->assertFalse($info["running"], "php-cgi worker did not exit within 120 seconds:\n" . $output);
+            $this->assertFalse($info["running"], "the worker did not exit within 120 seconds:\n" . $output);
             /* only the first proc_get_status() call after the exit reports the exit code */
             $status = $info["exitcode"];
         } finally {
@@ -213,7 +217,7 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
         }
 
         if (strpos($output, "no-couchbase") !== false) {
-            $this->markTestSkipped("php-cgi does not load the couchbase extension with this configuration");
+            $this->markTestSkipped("the worker does not load the couchbase extension with this configuration");
         }
         /* a request that fails after printing its count, or a crash at shutdown, must not pass */
         $this->assertSame(0, $status, $output);
@@ -746,6 +750,43 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
                 $cluster->disconnect();
             }
         );
+    }
+
+    /**
+     * A fork with logging on, no cluster and no notifyFork() call. A child that inherits the
+     * logger's periodic flusher hangs in module shutdown, joining a thread the fork did not copy.
+     */
+    public function testForkedChildExitsWithLoggingAndNoCluster()
+    {
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+        $body = <<<'PHP'
+            if (!function_exists("pcntl_fork")) {
+                echo "no-pcntl\n";
+            } elseif (($pid = pcntl_fork()) < 0) {
+                echo "254\n";
+            } else {
+                if ($pid == 0) {
+                    exit(0);
+                }
+                $deadline = time() + 30;
+                while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+                    usleep(100_000);
+                }
+                if ($exited == 0) {
+                    posix_kill($pid, SIGKILL);
+                    pcntl_waitpid($pid, $status);
+                }
+                echo $exited == $pid && pcntl_wifexited($status) ? pcntl_wexitstatus($status) : 255, "\n";
+            }
+            PHP;
+        $ini = ["couchbase.log_level" => "warning", "couchbase.log_php_log_err" => "0"];
+        $counts = $this->runWorkerRequests($body, $ini, 1, [], true);
+        if ($counts === []) {
+            $this->markTestSkipped("the CLI does not provide pcntl_fork()");
+        }
+        $this->assertSame(["0"], $counts, "254 is a failed fork, 255 a child still running after 30 seconds");
     }
 
     public function testForkAfterDisconnect()

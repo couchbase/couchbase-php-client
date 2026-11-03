@@ -188,6 +188,7 @@ PHP_MINIT_FUNCTION(couchbase)
   REGISTER_INI_ENTRIES();
 
   couchbase::php::initialize_exceptions(exception_functions);
+  couchbase::php::register_logger_fork_handlers();
 
   couchbase::php::set_persistent_connection_destructor_id(
     zend_register_list_destructors_ex(nullptr,
@@ -235,6 +236,7 @@ namespace
 PHP_MSHUTDOWN_FUNCTION(couchbase)
 {
   couchbase::php::shutdown_logger();
+  couchbase::php::unregister_logger_fork_handlers();
 
   (void)type;
   (void)module_number;

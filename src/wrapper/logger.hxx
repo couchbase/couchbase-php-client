@@ -44,4 +44,29 @@ flush_logger();
 COUCHBASE_API
 void
 shutdown_logger();
+
+/**
+ * Keeps a fork() child, whether or not the application calls Cluster::notifyFork(), from inheriting
+ * the logger's periodic flusher thread. Called once per process.
+ */
+COUCHBASE_API
+void
+register_logger_fork_handlers();
+
+/**
+ * Restarts the logger of a child forked by PHP code, if the VM interrupt has not done it yet. Code
+ * that starts threads which log in the child calls it first, so that they do not depend on when the
+ * VM checks the interrupt.
+ */
+COUCHBASE_API
+void
+restart_logger_in_forked_child();
+
+/**
+ * Removes the hook register_logger_fork_handlers() installs on zend_interrupt_function. Called at
+ * module shutdown.
+ */
+COUCHBASE_API
+void
+unregister_logger_fork_handlers();
 } // namespace couchbase::php

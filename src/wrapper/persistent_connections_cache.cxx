@@ -18,6 +18,7 @@
 
 #include "common.hxx"
 #include "connection_handle.hxx"
+#include "logger.hxx"
 #include "transactions_resource.hxx"
 
 #include <core/logger/logger.hxx>
@@ -666,6 +667,11 @@ notify_fork(const zend_string* fork_event) -> core_error_info
   auto [e, event] = get_fork_event(fork_event);
   if (e.ec) {
     return e;
+  }
+
+  /* the io threads started below log, so they must find the child's logger restarted */
+  if (event == fork_event::child) {
+    restart_logger_in_forked_child();
   }
 
   /* transactions must be first to stop */

@@ -35,7 +35,13 @@
 #include <tao/json/value.hpp>
 
 #include <algorithm>
+#include <chrono>
+#include <mutex>
 #include <queue>
+
+#ifndef _WIN32
+#include <pthread.h>
+#endif
 
 namespace couchbase::php
 {
@@ -121,18 +127,148 @@ flush_logger()
   }
 }
 
+namespace
+{
+/*
+ * Held from the prepare handler to the parent or child handler of one fork(), and while a thread
+ * creates or shuts down the logger, which starts or joins the flusher. The C library may run the
+ * handlers of concurrent forks in parallel, and a fork in the middle of either would copy a running
+ * flusher. The child is a copy of the thread that locked it, and unlocks it.
+ */
+std::mutex logger_fork_mutex;
+} // namespace
+
 COUCHBASE_API
 void
 shutdown_logger()
 {
+  std::scoped_lock lock(logger_fork_mutex);
   flush_logger();
   couchbase::core::logger::shutdown();
+}
+
+#ifndef _WIN32
+namespace
+{
+/* the interval couchbase::core::logger::create_file_logger() passes to spdlog::flush_every() */
+constexpr std::chrono::seconds logger_flush_interval{ 1 };
+bool restart_logger_flusher{ false };
+
+/*
+ * fork() copies only the calling thread, so a child that inherits spdlog's periodic flusher joins a
+ * thread it does not have when the logger shuts down, and never exits. A zero interval joins the
+ * flusher before the fork and leaves the registry without one.
+ */
+void
+stop_logger_flusher()
+{
+  logger_fork_mutex.lock();
+  restart_logger_flusher = couchbase::core::logger::is_initialized();
+  if (restart_logger_flusher) {
+    couchbase::core::logger::flush();
+    spdlog::flush_every(std::chrono::seconds::zero());
+  }
+}
+
+void
+restart_logger_flusher_in_parent()
+{
+  if (restart_logger_flusher) {
+    spdlog::flush_every(logger_flush_interval);
+  }
+  logger_fork_mutex.unlock();
+}
+
+bool restart_logger_in_child{ false };
+} // namespace
+#endif
+
+COUCHBASE_API
+void
+restart_logger_in_forked_child()
+{
+#ifndef _WIN32
+  if (restart_logger_in_child) {
+    restart_logger_in_child = false;
+    std::scoped_lock lock(logger_fork_mutex);
+    spdlog::flush_every(logger_flush_interval);
+  }
+#endif
+}
+
+#ifndef _WIN32
+namespace
+{
+void (*previous_interrupt_function)(zend_execute_data* execute_data){ nullptr };
+
+/*
+ * Runs when the VM next checks for interrupts. A child forked by PHP code reaches it as soon as the
+ * fork returns. A child that PHP forks only to exec() another program never does, and starts no
+ * thread before the exec().
+ */
+void
+restart_logger_on_interrupt(zend_execute_data* execute_data)
+{
+  restart_logger_in_forked_child();
+  if (previous_interrupt_function != nullptr) {
+    previous_interrupt_function(execute_data);
+  }
+}
+
+/* the child of a multithreaded fork() starts threads only in restart_logger_in_forked_child() */
+void
+restart_logger_flusher_in_child()
+{
+  if (restart_logger_flusher) {
+    restart_logger_in_child = true;
+#if PHP_VERSION_ID >= 80200
+    zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
+#else
+    EG(vm_interrupt) = 1;
+#endif
+  }
+  logger_fork_mutex.unlock();
+}
+} // namespace
+#endif
+
+COUCHBASE_API
+void
+register_logger_fork_handlers()
+{
+#ifndef _WIN32
+  /*
+   * Fork handlers cannot be removed. Where dlclose() does not unload the module (musl), another
+   * module startup would add a second set, and fork() would lock logger_fork_mutex twice.
+   */
+  static bool fork_handlers_registered{ false };
+  if (!fork_handlers_registered) {
+    fork_handlers_registered = true;
+    pthread_atfork(
+      stop_logger_flusher, restart_logger_flusher_in_parent, restart_logger_flusher_in_child);
+  }
+  previous_interrupt_function = zend_interrupt_function;
+  zend_interrupt_function = restart_logger_on_interrupt;
+#endif
+}
+
+COUCHBASE_API
+void
+unregister_logger_fork_handlers()
+{
+#ifndef _WIN32
+  /* a module loaded again must not chain to the hook of the unloaded one */
+  if (zend_interrupt_function == restart_logger_on_interrupt) {
+    zend_interrupt_function = previous_interrupt_function;
+  }
+#endif
 }
 
 COUCHBASE_API
 void
 initialize_logger()
 {
+  std::scoped_lock lock(logger_fork_mutex);
   auto spd_log_level = spdlog::level::off;
   auto cbpp_log_level = couchbase::core::logger::level::off;
   if (auto env_val = spdlog::details::os::getenv("COUCHBASE_LOG_LEVEL"); !env_val.empty()) {
