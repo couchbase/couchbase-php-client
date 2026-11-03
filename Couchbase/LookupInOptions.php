@@ -24,6 +24,7 @@ class LookupInOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?bool $withExpiry = null;
     private ?RequestSpan $parentSpan = null;
 
@@ -57,6 +58,22 @@ class LookupInOptions
     public function timeout(int $milliseconds): LookupInOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return LookupInOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): LookupInOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -159,6 +176,7 @@ class LookupInOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
         ];
     }
 }

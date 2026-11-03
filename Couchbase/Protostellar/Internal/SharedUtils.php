@@ -26,6 +26,7 @@ use Couchbase\Exception\DecodingFailureException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\Retries\BestEffortRetryStrategy;
+use Couchbase\Protostellar\Retries\FailFastRetryStrategy;
 use Exception;
 
 class SharedUtils
@@ -69,11 +70,26 @@ class SharedUtils
         return $arr[$PSStatus];
     }
 
-    public static function createProtostellarRequest(mixed $grpcRequest, bool $idempotent, float $timeout): ProtostellarRequest
+    /**
+     * @param string|null $retryStrategy one of the {@link \Couchbase\RetryStrategy} constants, or null for best effort
+     *
+     * @throws InvalidArgumentException
+     */
+    public static function createProtostellarRequest(
+        mixed $grpcRequest,
+        bool $idempotent,
+        float $timeout,
+        ?string $retryStrategy = null
+    ): ProtostellarRequest
     {
+        $strategy = match ($retryStrategy) {
+            null, \Couchbase\RetryStrategy::BEST_EFFORT => BestEffortRetryStrategy::build(),
+            \Couchbase\RetryStrategy::FAIL_FAST => new FailFastRetryStrategy(),
+            default => throw new InvalidArgumentException("unknown retryStrategy: $retryStrategy"),
+        };
         return new ProtostellarRequest(
             $idempotent,
-            BestEffortRetryStrategy::build(),
+            $strategy,
             (microtime(true) * 1e6) + $timeout,
             $grpcRequest
         );

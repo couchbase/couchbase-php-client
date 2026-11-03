@@ -25,6 +25,7 @@ use Couchbase\Utilities\Deprecations;
 class RemoveOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
     private ?RequestSpan $parentSpan = null;
@@ -51,6 +52,22 @@ class RemoveOptions
     public function timeout(int $milliseconds): RemoveOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return RemoveOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): RemoveOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -133,6 +150,7 @@ class RemoveOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'durabilityLevel' => $options->durabilityLevel,
             'cas' => $options->cas,
         ];

@@ -27,6 +27,7 @@ class ReplaceOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?int $expirySeconds = null;
     private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
@@ -64,6 +65,22 @@ class ReplaceOptions
     public function timeout(int $milliseconds): ReplaceOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return ReplaceOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): ReplaceOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -212,6 +229,7 @@ class ReplaceOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'expirySeconds' => $options->expirySeconds,
             'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,

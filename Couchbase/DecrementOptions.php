@@ -26,6 +26,7 @@ use DateTimeInterface;
 class DecrementOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?string $durabilityLevel = null;
     private ?int $expirySeconds = null;
     private ?int $expiryTimestamp = null;
@@ -84,6 +85,22 @@ class DecrementOptions
     public function timeout(int $milliseconds): DecrementOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return DecrementOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): DecrementOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -172,6 +189,7 @@ class DecrementOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'durabilityLevel' => $options->durabilityLevel,
             'expirySeconds' => $options->expirySeconds,
             'expiryTimestamp' => $options->expiryTimestamp,

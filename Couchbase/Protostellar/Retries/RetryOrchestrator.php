@@ -21,8 +21,9 @@ declare(strict_types=1);
 namespace Couchbase\Protostellar\Retries;
 
 use Couchbase\Exception\AmbiguousTimeoutException;
+use Couchbase\Exception\DocumentLockedException;
 use Couchbase\Exception\UnambiguousTimeoutException;
-use Couchbase\Exception\RequestcanceledException;
+use Couchbase\Exception\RequestCanceledException;
 use Couchbase\Protostellar\ProtostellarRequest;
 use Couchbase\Protostellar\RequestBehaviour;
 
@@ -43,6 +44,11 @@ class RetryOrchestrator
         $duration = $retryAction->duration();
         if (!is_null($duration)) {
             return self::retryWithDuration($request, $reason, $duration);
+        } elseif ($reason->reason() == RetryReason::KV_LOCKED) {
+            /* as over couchbase://, a lock that is not retried is reported as the lock itself */
+            return RequestBehaviour::fail(
+                new DocumentLockedException(message: "Document is locked", context: $request->context())
+            );
         } else {
             return RequestBehaviour::fail(new RequestCanceledException(message: "No more retries allowed based on the retry strategy", context: $request->context()));
         }

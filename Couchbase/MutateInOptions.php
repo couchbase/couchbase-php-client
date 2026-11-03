@@ -28,6 +28,7 @@ class MutateInOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
     private ?int $expirySeconds = null;
@@ -67,6 +68,22 @@ class MutateInOptions
     public function timeout(int $milliseconds): MutateInOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return MutateInOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): MutateInOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -234,6 +251,7 @@ class MutateInOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'expirySeconds' => $options->expirySeconds,
             'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,
