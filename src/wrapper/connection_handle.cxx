@@ -21,7 +21,6 @@
 #include "common.hxx"
 #include "connection_handle.hxx"
 #include "conversion_utilities.hxx"
-#include "logger.hxx"
 #include "passthrough_transcoder.hxx"
 #include "version.hxx"
 
@@ -656,17 +655,14 @@ public:
       case fork_event::prepare:
         cluster_->notify_fork(couchbase::fork_event::prepare);
         CB_LOG_INFO("Prepare for fork()");
-        shutdown_logger();
         break;
 
       case fork_event::parent:
-        initialize_logger();
         CB_LOG_INFO("Resume parent after fork()");
         cluster_->notify_fork(couchbase::fork_event::parent);
         break;
 
       case fork_event::child:
-        initialize_logger();
         CB_LOG_INFO("Resume child after fork()");
         if (closed) {
           /* couchbase::cluster::notify_fork() would bootstrap a new connection in the child */

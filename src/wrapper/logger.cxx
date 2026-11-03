@@ -40,6 +40,7 @@
 #include <mutex>
 #include <optional>
 #include <queue>
+#include <vector>
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -158,15 +159,6 @@ namespace
 std::mutex logger_fork_mutex;
 } // namespace
 
-COUCHBASE_API
-void
-shutdown_logger()
-{
-  std::scoped_lock lock(logger_fork_mutex);
-  flush_logger();
-  couchbase::core::logger::shutdown();
-}
-
 namespace
 {
 /* the configuration of the running logger, its filename being couchbase.log_path without the pid */
@@ -236,8 +228,42 @@ restart_logger_flusher_in_parent()
 }
 
 bool restart_logger_in_child{ false };
+
+/*
+ * Destroying an inherited file sink writes a closing line to the parent's log file, so the child
+ * keeps every logger it inherited referenced until it exits. Workaround until the core logger
+ * handles fork() (CXXCBC-1121); PCBC-1090 drops it.
+ */
+void
+keep_inherited_loggers()
+{
+  static auto* inherited = new std::vector<std::shared_ptr<spdlog::logger>>();
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
+    inherited->push_back(logger);
+  });
+}
 } // namespace
 #endif
+
+COUCHBASE_API
+void
+shutdown_logger()
+{
+  std::scoped_lock lock(logger_fork_mutex);
+#ifndef _WIN32
+  if (restart_logger_in_child) {
+    /*
+     * The logger is the parent's. Flushing would repeat the PHP error log messages the parent
+     * queued, and shutting it down would write to the parent's file.
+     */
+    restart_logger_in_child = false;
+    keep_inherited_loggers();
+    return;
+  }
+#endif
+  flush_logger();
+  couchbase::core::logger::shutdown();
+}
 
 COUCHBASE_API
 void
@@ -249,6 +275,7 @@ restart_logger_in_forked_child()
     std::scoped_lock lock(logger_fork_mutex);
     global_php_log_err_sink->discard_deferred_messages();
     if (logger_configuration) {
+      keep_inherited_loggers();
       create_logger_for_this_process(*logger_configuration);
     } else {
       spdlog::flush_every(logger_flush_interval);
