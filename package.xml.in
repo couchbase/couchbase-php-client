@@ -13,10 +13,10 @@
         <email>sergey@couchbase.com</email>
         <active>yes</active>
     </lead>
-    <date>2026-04-01</date>
+    <date>2026-11-06</date>
     <version>
-        <release>4.5.0</release>
-        <api>4.5.0</api>
+        <release>4.6.0</release>
+        <api>4.6.0</api>
     </version>
     <stability>
         <release>stable</release>
@@ -24,49 +24,59 @@
     </stability>
     <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
     <notes>
+        Behaviour changes
+        =================
+
+        * PCBC-1088: Ship one extension module, couchbase; drop the -abi archives (#266)
+        * Require PHP 8.2 or later
+        * PCBC-1056: Include all exported cluster options in the connection cache key (#267)
+        * PCBC-1057: Enforce couchbase.max_persistent when creating a connection (#268)
+        * PCBC-1087: Raise AuthenticationFailureException for query error 2120 (#265)
+        * Add disconnect() to ClusterInterface and getReplica() to CollectionInterface
+        * CXXCBC-838: Verify the TLS server hostname against the certificate
+        * CXXCBC-1049: Raise InvalidArgumentException for an unrecognised HTTP 400
+        * CXXCBC-1059: Raise IndexNotFoundException when dropping a query index that does not exist
+
         New features and enhancements
         =============================
 
-        * PCBC-1040: Tracing - include child spans created by the C++ core (#249)
-        * PCBC-1039: Add MeterException (#248)
-        * PCBC-1038, PCBC-1039: Add tracing and metrics instrumentation for management operations (#244)
-        * PCBC-1039: Add LoggingMeter implementation (#246)
-        * PCBC-1038: Add ThresholdLoggingTracer implementation (#245)
-        * PCBC-1038, PCBC-1039: Add tracing/metrics instrumentation for non-management operations (#241)
-        * PCBC-1050: Add missing manager accessors in Cluster/Bucket/Collection interfaces (#243)
-        * PCBC-1048: Update all KV operations to use C++ Core API (#239)
-        * PCBC-1033: JWT Based authentication in Operational SDKs (#236)
-        * PCBC-1032, PCBC-1041: Support mTLS Cert Refresh and Expose idleHttpConnectionTimeout (#233)
-        * PCBC-1035: Lazy connections with options (#235)
-        * PCBC-1015: SDK Telemetry Collection in Server
-        * Update core to 1.3.1 (#250)
+        * PCBC-1074, PCBC-1085: Read from a specific replica with Collection::getReplica() (#259, #264)
+        * PCBC-1070: Support hybrid search score fusion (#257)
+        * PCBC-974: Add retryStrategy to key/value options (#271)
+        * PCBC-1058: Add Cluster::disconnect() (#269)
+        * Update core to 1.5.1 (#265)
 
         Bug fixes
         =========
 
-        * PCBC-1053: Fix CC compiler flags bleeding into CMAKE_C_COMPILER on macOS (#251)
-        * PCBC-1052: Initialize timeout to null in search/collection mgmt options blocks (#247)
-        * PCBC-1034: Binary CasMismatch tests occasionally fail
+        * PCBC-1089: Fix a forked child hanging at exit or writing to the parent's log file (#270)
+        * PCBC-1057: Detach the cached connection in setAuthenticator() (#268)
+        * PCBC-1057: Initialise module globals in thread-safe builds (#268)
+        * PCBC-1083: Keep fractional numeric range facet bounds as floats (#263)
+        * PCBC-1081: Reject unknown persistTo and replicateTo strings (#262)
+        * Fix view queries with ViewOptions::skip() (#255)
+        * Fix the x86 Windows build of the meter wrapper (#265)
+        * PCBC-1071: Fix build break in meter wrapper after core metric_attributes API change (#256)
 
         Build improvements
-        ===================
+        ==================
 
-        * PCBC-1054: Update CI matrix - bump PHP versions and Alpine images (#252)
-        * PCBC-1049: GHA - Add 8.0 to server version matrix (#242)
-        * PCBC-1047: GHA macos13 runners have been retired
-        * remove intl from setup php (#234)
+        * PCBC-1073: PHP FIT Performer (#261)
+        * PCBC-1088: Test release archives on the official PHP Docker images (#266)
+        * PCBC-1075, PCBC-1077: Fix macOS x86_64 and arm64 CI builds (#258, #260)
+        * GHA: fail a Windows build that produces no php_couchbase.dll (#265)
 
         Deprecations
-        =============
+        ============
 
-        * PCBC-1043: Deprecate Support for MapReduce Views Since Server Deprecated
+        * PCBC-1070: Deprecate SearchOptions::disableScoring() in favour of scoring()
     </notes>
     <contents>
     </contents>
     <dependencies>
         <required>
             <php>
-                <min>8.1.0</min>
+                <min>8.2.0</min>
             </php>
             <pearinstaller>
                 <min>1.10.1</min>
@@ -76,6 +86,56 @@
     <providesextension>couchbase</providesextension>
     <extsrcrelease/>
     <changelog>
+        <release>
+            <date>2026-04-01</date>
+            <version>
+                <release>4.5.0</release>
+                <api>4.5.0</api>
+            </version>
+            <stability>
+                <release>stable</release>
+                <api>stable</api>
+            </stability>
+            <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache V2</license>
+            <notes>
+                New features and enhancements
+                =============================
+
+                * PCBC-1040: Tracing - include child spans created by the C++ core (#249)
+                * PCBC-1039: Add MeterException (#248)
+                * PCBC-1038, PCBC-1039: Add tracing and metrics instrumentation for management operations (#244)
+                * PCBC-1039: Add LoggingMeter implementation (#246)
+                * PCBC-1038: Add ThresholdLoggingTracer implementation (#245)
+                * PCBC-1038, PCBC-1039: Add tracing/metrics instrumentation for non-management operations (#241)
+                * PCBC-1050: Add missing manager accessors in Cluster/Bucket/Collection interfaces (#243)
+                * PCBC-1048: Update all KV operations to use C++ Core API (#239)
+                * PCBC-1033: JWT Based authentication in Operational SDKs (#236)
+                * PCBC-1032, PCBC-1041: Support mTLS Cert Refresh and Expose idleHttpConnectionTimeout (#233)
+                * PCBC-1035: Lazy connections with options (#235)
+                * PCBC-1015: SDK Telemetry Collection in Server
+                * Update core to 1.3.1 (#250)
+
+                Bug fixes
+                =========
+
+                * PCBC-1053: Fix CC compiler flags bleeding into CMAKE_C_COMPILER on macOS (#251)
+                * PCBC-1052: Initialize timeout to null in search/collection mgmt options blocks (#247)
+                * PCBC-1034: Binary CasMismatch tests occasionally fail
+
+                Build improvements
+                ===================
+
+                * PCBC-1054: Update CI matrix - bump PHP versions and Alpine images (#252)
+                * PCBC-1049: GHA - Add 8.0 to server version matrix (#242)
+                * PCBC-1047: GHA macos13 runners have been retired
+                * remove intl from setup php (#234)
+
+                Deprecations
+                =============
+
+                * PCBC-1043: Deprecate Support for MapReduce Views Since Server Deprecated
+            </notes>
+        </release>
         <release>
             <date>2025-06-12</date>
             <version>
@@ -388,7 +448,7 @@
 
                 ## Fixes
 
-                * CXXCBC-345: Range scan improvements & resolve concurrency issues (#525).
+                * CXXCBC-345: Range scan improvements &amp; resolve concurrency issues (#525).
                 * CXXCBC-284: Do not use session that is not bootstrapped to poll for config (#528)
                 * CXXCBC-447: Use addresses from the config to bootstrap bucket (#516)
                 * CXXCBC-450: Reset bootstrap handler before re-bootstrap (#524).
