@@ -993,6 +993,10 @@ connection_handle::document_upsert(zval* return_value,
                                    zend_long flags,
                                    const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::upsert_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1000,6 +1004,14 @@ connection_handle::document_upsert(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    {},
+    0,
+    0,
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_content(req, value); e.ec) {
     return e;
@@ -1060,6 +1072,10 @@ connection_handle::document_insert(zval* return_value,
                                    zend_long flags,
                                    const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::insert_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1067,6 +1083,14 @@ connection_handle::document_insert(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    {},
+    0,
+    0,
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_content(req, value); e.ec) {
     return e;
@@ -1124,6 +1148,10 @@ connection_handle::document_replace(zval* return_value,
                                     zend_long flags,
                                     const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::replace_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1131,6 +1159,15 @@ connection_handle::document_replace(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    {},
+    0,
+    0,
+    couchbase::cas{ 0 },
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_content(req, value); e.ec) {
     return e;
@@ -1193,6 +1230,10 @@ connection_handle::document_append(zval* return_value,
                                    const zend_string* value,
                                    const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::append_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1200,6 +1241,13 @@ connection_handle::document_append(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    {},
+    couchbase::cas{ 0 },
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_content(req, value); e.ec) {
     return e;
@@ -1253,6 +1301,10 @@ connection_handle::document_prepend(zval* return_value,
                                     const zend_string* value,
                                     const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::prepend_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1260,6 +1312,13 @@ connection_handle::document_prepend(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    {},
+    couchbase::cas{ 0 },
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_content(req, value); e.ec) {
     return e;
@@ -1312,6 +1371,10 @@ connection_handle::document_increment(zval* return_value,
                                       const zend_string* id,
                                       const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::increment_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1319,6 +1382,14 @@ connection_handle::document_increment(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    0,
+    1,
+    {},
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_timeout(req, options); e.ec) {
     return e;
@@ -1374,6 +1445,10 @@ connection_handle::document_decrement(zval* return_value,
                                       const zend_string* id,
                                       const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::decrement_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1381,6 +1456,14 @@ connection_handle::document_decrement(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    0,
+    1,
+    {},
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_timeout(req, options); e.ec) {
     return e;
@@ -1443,6 +1526,11 @@ connection_handle::document_get(zval* return_value,
     cb_string_new(id),
   };
 
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
   bool with_expiry = false;
   if (auto e = cb_assign_boolean(with_expiry, options, "withExpiry"); e.ec) {
     return e;
@@ -1453,7 +1541,9 @@ connection_handle::document_get(zval* return_value,
   }
 
   if (!with_expiry && projections.empty()) {
-    couchbase::core::operations::get_request request{ doc_id };
+    couchbase::core::operations::get_request request{
+      doc_id, {}, {}, {}, { retry_strategy },
+    };
     if (auto e = cb_assign_timeout(request, options); e.ec) {
       return e;
     }
@@ -1466,7 +1556,9 @@ connection_handle::document_get(zval* return_value,
     return {};
   }
 
-  couchbase::core::operations::get_projected_request request{ doc_id };
+  couchbase::core::operations::get_projected_request request{
+    doc_id, {}, {}, {}, false, {}, false, {}, { retry_strategy },
+  };
   request.with_expiry = with_expiry;
   request.projections = projections;
   if (auto e = cb_assign_timeout(request, options); e.ec) {
@@ -1619,7 +1711,14 @@ connection_handle::document_get_and_lock(zval* return_value,
     cb_string_new(id),
   };
 
-  couchbase::core::operations::get_and_lock_request request{ doc_id };
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
+  couchbase::core::operations::get_and_lock_request request{
+    doc_id, {}, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
@@ -1651,7 +1750,14 @@ connection_handle::document_get_and_touch(zval* return_value,
     cb_string_new(id),
   };
 
-  couchbase::core::operations::get_and_touch_request request{ doc_id };
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
+  couchbase::core::operations::get_and_touch_request request{
+    doc_id, {}, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
@@ -1683,7 +1789,14 @@ connection_handle::document_touch(zval* return_value,
     cb_string_new(id),
   };
 
-  couchbase::core::operations::touch_request request{ doc_id };
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
+  couchbase::core::operations::touch_request request{
+    doc_id, {}, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
@@ -1718,7 +1831,14 @@ connection_handle::document_unlock(zval* return_value,
     cb_string_new(id),
   };
 
-  couchbase::core::operations::unlock_request request{ doc_id };
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
+  couchbase::core::operations::unlock_request request{
+    doc_id, {}, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
@@ -1749,6 +1869,10 @@ connection_handle::document_remove(zval* return_value,
                                    const zend_string* id,
                                    const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::remove_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1756,6 +1880,12 @@ connection_handle::document_remove(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    couchbase::cas{ 0 },
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_timeout(req, options); e.ec) {
     return e;
@@ -1812,7 +1942,14 @@ connection_handle::document_exists(zval* return_value,
     cb_string_new(id),
   };
 
-  couchbase::core::operations::exists_request request{ doc_id };
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+
+  couchbase::core::operations::exists_request request{
+    doc_id, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(request, options); e.ec) {
     return e;
   }
@@ -1845,6 +1982,10 @@ connection_handle::document_mutate_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::mutate_in_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -1852,6 +1993,18 @@ connection_handle::document_mutate_in(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    couchbase::cas{ 0 },
+    false,
+    false,
+    false,
+    {},
+    couchbase::store_semantics::replace,
+    {},
+    couchbase::durability_level::none,
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_timeout(req, options); e.ec) {
     return e;
@@ -2019,6 +2172,10 @@ connection_handle::document_lookup_in(zval* return_value,
                                       const zval* specs,
                                       const zval* options) -> core_error_info
 {
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
   couchbase::core::operations::lookup_in_request req{
     couchbase::core::document_id{
       cb_string_new(bucket),
@@ -2026,6 +2183,12 @@ connection_handle::document_lookup_in(zval* return_value,
       cb_string_new(collection),
       cb_string_new(id),
     },
+    {},
+    {},
+    false,
+    {},
+    {},
+    { retry_strategy },
   };
   if (auto e = cb_assign_timeout(req, options); e.ec) {
     return e;
@@ -2142,7 +2305,13 @@ connection_handle::document_get_multi(zval* return_value,
   std::string collection_str = cb_string_new(collection);
 
   // Base for each get request. Must be copied and the document ID set for each individual request.
-  couchbase::core::operations::get_request base_req{};
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+  couchbase::core::operations::get_request base_req{
+    {}, {}, {}, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(base_req, options); e.ec) {
     return e;
   }
@@ -2207,7 +2376,13 @@ connection_handle::document_remove_multi(zval* return_value,
   std::string collection_str = cb_string_new(collection);
 
   // Base for each get request. Must be copied and the document ID set for each individual request.
-  couchbase::core::operations::remove_request base_req{};
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+  couchbase::core::operations::remove_request base_req{
+    {}, {}, {}, couchbase::cas{ 0 }, couchbase::durability_level::none, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(base_req, options); e.ec) {
     return e;
   }
@@ -2348,7 +2523,13 @@ connection_handle::document_upsert_multi(zval* return_value,
   std::string collection_str = cb_string_new(collection);
 
   // Base for each get request. Must be copied and the document ID set for each individual request.
-  couchbase::core::operations::upsert_request base_req{};
+  auto [retry_error, retry_strategy] = cb_get_retry_strategy(options);
+  if (retry_error.ec) {
+    return retry_error;
+  }
+  couchbase::core::operations::upsert_request base_req{
+    {}, {}, {}, {}, 0, 0, couchbase::durability_level::none, {}, { retry_strategy },
+  };
   if (auto e = cb_assign_timeout(base_req, options); e.ec) {
     return e;
   }

@@ -74,7 +74,7 @@ class BinaryCollection implements BinaryCollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Append']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -92,7 +92,7 @@ class BinaryCollection implements BinaryCollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Prepend']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -110,7 +110,7 @@ class BinaryCollection implements BinaryCollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Increment']
         );
         return KVResponseConverter::convertCounterResult($key, $res);
@@ -128,7 +128,7 @@ class BinaryCollection implements BinaryCollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Decrement']
         );
         return KVResponseConverter::convertCounterResult($key, $res);

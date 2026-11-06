@@ -27,6 +27,7 @@ class InsertOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?int $expirySeconds = null;
     private ?int $expiryTimestamp = null;
     private ?string $durabilityLevel = null;
@@ -63,6 +64,22 @@ class InsertOptions
     public function timeout(int $milliseconds): InsertOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return InsertOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): InsertOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -184,6 +201,7 @@ class InsertOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'expirySeconds' => $options->expirySeconds,
             'expiryTimestamp' => $options->expiryTimestamp,
             'durabilityLevel' => $options->durabilityLevel,

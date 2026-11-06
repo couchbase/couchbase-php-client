@@ -33,6 +33,7 @@
 #include <couchbase/lookup_in_specs.hxx>
 #include <couchbase/persist_to.hxx>
 #include <couchbase/replicate_to.hxx>
+#include <couchbase/retry_strategy.hxx>
 
 #include <Zend/zend_API.h>
 
@@ -236,6 +237,11 @@ cb_assign_binary(Binary& field, const zval* options, std::string_view name) -> c
 auto
 cb_get_timeout(const zval* options)
   -> std::pair<core_error_info, std::optional<std::chrono::milliseconds>>;
+
+/* nullptr when the options name no strategy, which leaves the cluster's default */
+auto
+cb_get_retry_strategy(const zval* options)
+  -> std::pair<core_error_info, std::shared_ptr<couchbase::retry_strategy>>;
 
 template<typename Request>
 auto

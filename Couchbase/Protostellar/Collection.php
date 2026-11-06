@@ -92,7 +92,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Upsert']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -110,7 +110,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Insert']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -128,7 +128,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Replace']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -146,7 +146,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Remove']
         );
         return KVResponseConverter::convertMutationResult($key, $res);
@@ -161,7 +161,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Get']
         );
         return KVResponseConverter::convertGetResult($key, $res, $options);
@@ -176,7 +176,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Exists']
         );
         return KVResponseConverter::convertExistsResult($key, $res);
@@ -195,7 +195,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'GetAndTouch']
         );
         return KVResponseConverter::convertGetAndTouchResult($key, $res, $options);
@@ -214,7 +214,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'GetAndLock']
         );
         return KVResponseConverter::convertGetAndLockResult($key, $res, $options);
@@ -232,7 +232,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Unlock']
         );
         return KVResponseConverter::convertUnlockResult($key, $cas);
@@ -247,7 +247,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'Touch']
         );
         return KVResponseConverter::convertTouchResult($key, $res);
@@ -262,7 +262,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, true, $timeout),
+            SharedUtils::createProtostellarRequest($request, true, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'LookupIn']
         );
         return KVResponseConverter::convertLookupInResult($key, $res, SharedUtils::toArray($request->getSpecs()), $order, $options);
@@ -280,7 +280,7 @@ class Collection implements CollectionInterface
         );
         $timeout = $this->client->timeoutHandler()->getTimeout(TimeoutHandler::KV, $exportedOptions);
         $res = ProtostellarOperationRunner::runUnary(
-            SharedUtils::createProtostellarRequest($request, false, $timeout),
+            SharedUtils::createProtostellarRequest($request, false, $timeout, $exportedOptions['retryStrategy'] ?? null),
             [$this->client->kv(), 'MutateIn']
         );
         return KVResponseConverter::convertMutateInResult($key, $res, SharedUtils::toArray($request->getSpecs()), $order);

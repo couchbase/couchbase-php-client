@@ -21,6 +21,8 @@
 #include <core/utils/binary.hxx>
 #include <core/utils/json.hxx>
 
+#include <couchbase/best_effort_retry_strategy.hxx>
+#include <couchbase/fail_fast_retry_strategy.hxx>
 #include <couchbase/transactions/transaction_query_options.hxx>
 
 #include <chrono>
@@ -1168,6 +1170,46 @@ cb_get_durability_level(const zval* options)
   return { { errc::common::invalid_argument,
              ERROR_LOCATION,
              fmt::format("unknown durabilityLevel: {}",
+                         std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) },
+           {} };
+}
+
+std::pair<core_error_info, std::shared_ptr<couchbase::retry_strategy>>
+cb_get_retry_strategy(const zval* options)
+{
+  if (options == nullptr || Z_TYPE_P(options) == IS_NULL) {
+    return {};
+  }
+  if (Z_TYPE_P(options) != IS_ARRAY) {
+    return {
+      { errc::common::invalid_argument, ERROR_LOCATION, "expected array for options argument" }, {}
+    };
+  }
+
+  const zval* value = zend_symtable_str_find(Z_ARRVAL_P(options), ZEND_STRL("retryStrategy"));
+  if (value == nullptr) {
+    return {};
+  }
+  switch (Z_TYPE_P(value)) {
+    case IS_NULL:
+      return {};
+    case IS_STRING:
+      break;
+    default:
+      return { { errc::common::invalid_argument,
+                 ERROR_LOCATION,
+                 "expected retryStrategy to be a string in the options" },
+               {} };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("bestEffort")) == 0) {
+    return { {}, couchbase::make_best_effort_retry_strategy() };
+  }
+  if (zend_binary_strcmp(Z_STRVAL_P(value), Z_STRLEN_P(value), ZEND_STRL("failFast")) == 0) {
+    return { {}, couchbase::make_fail_fast_retry_strategy() };
+  }
+  return { { errc::common::invalid_argument,
+             ERROR_LOCATION,
+             fmt::format("unknown retryStrategy: {}",
                          std::string_view(Z_STRVAL_P(value), Z_STRLEN_P(value))) },
            {} };
 }

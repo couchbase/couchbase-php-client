@@ -24,6 +24,7 @@ class GetOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private bool $withExpiry = false;
     private ?array $projections = null;
     private ?RequestSpan $parentSpan = null;
@@ -58,6 +59,22 @@ class GetOptions
     public function timeout(int $milliseconds): GetOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return GetOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): GetOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -165,6 +182,7 @@ class GetOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'withExpiry' => $options->withExpiry,
             'projections' => $options->projections,
         ];

@@ -25,6 +25,7 @@ use Couchbase\Utilities\Deprecations;
 class PrependOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?string $durabilityLevel = null;
     private ?string $cas = null;
     private ?RequestSpan $parentSpan = null;
@@ -51,6 +52,22 @@ class PrependOptions
     public function timeout(int $milliseconds): PrependOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return PrependOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): PrependOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -133,6 +150,7 @@ class PrependOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'durabilityLevel' => $options->durabilityLevel,
             'cas' => $options->cas,
         ];

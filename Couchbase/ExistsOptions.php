@@ -23,6 +23,7 @@ namespace Couchbase;
 class ExistsOptions
 {
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?RequestSpan $parentSpan = null;
 
     /**
@@ -47,6 +48,22 @@ class ExistsOptions
     public function timeout(int $milliseconds): ExistsOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return ExistsOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): ExistsOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -87,6 +104,7 @@ class ExistsOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
         ];
     }
 }

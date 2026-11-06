@@ -24,6 +24,7 @@ class GetAndLockOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?RequestSpan $parentSpan = null;
 
     /**
@@ -56,6 +57,22 @@ class GetAndLockOptions
     public function timeout(int $milliseconds): GetAndLockOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return GetAndLockOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): GetAndLockOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -126,6 +143,7 @@ class GetAndLockOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
         ];
     }
 }

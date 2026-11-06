@@ -27,6 +27,7 @@ class UpsertOptions
 {
     private Transcoder $transcoder;
     private ?int $timeoutMilliseconds = null;
+    private ?string $retryStrategy = null;
     private ?int $expirySeconds = null;
     private ?int $expiryTimestamp = null;
     private ?bool $preserveExpiry = null;
@@ -63,6 +64,22 @@ class UpsertOptions
     public function timeout(int $milliseconds): UpsertOptions
     {
         $this->timeoutMilliseconds = $milliseconds;
+        return $this;
+    }
+
+    /**
+     * Selects how the operation retries, for example on a locked document. An unknown value makes
+     * the operation throw InvalidArgumentException.
+     *
+     * @param string $strategy one of the {@link RetryStrategy} constants
+     *
+     * @return UpsertOptions
+     * @see RetryStrategy
+     * @since 4.6.0
+     */
+    public function retryStrategy(string $strategy): UpsertOptions
+    {
+        $this->retryStrategy = $strategy;
         return $this;
     }
 
@@ -196,6 +213,7 @@ class UpsertOptions
         }
         return [
             'timeoutMilliseconds' => $options->timeoutMilliseconds,
+            'retryStrategy' => $options->retryStrategy,
             'expirySeconds' => $options->expirySeconds,
             'expiryTimestamp' => $options->expiryTimestamp,
             'preserveExpiry' => $options->preserveExpiry,
