@@ -405,11 +405,14 @@ jobs:
     needs:
       - source
       - build_linux_x86_64
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-22.04
+          - ubuntu-24.04
         php:
           - '8.2'
           - '8.3'
@@ -503,11 +506,13 @@ jobs:
     needs:
       - source
       - build_linux_x86_64
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-22.04
         php:
           - '8.5'
         ts:
@@ -518,6 +523,11 @@ jobs:
           - 7.6.10
           - 7.2.9
           - 7.1.6
+        include:
+          - os: ubuntu-24.04
+            php: '8.5'
+            ts: nts
+            server: 8.0.1
     steps:
       - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
@@ -598,7 +608,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ${{ matrix.php }}-${{ matrix.ts }}-${{ matrix.server }}-logs
+          name: ${{ matrix.os }}-${{ matrix.php }}-${{ matrix.ts }}-${{ matrix.server }}-logs
           path: |
             logs/*
 
