@@ -224,7 +224,8 @@ class Collection implements CollectionInterface
      * Gets a document from the server and simultaneously updates its expiry time.
      *
      * @param string $id the key of the document
-     * @param int|DateTimeInterface $expiry the length of time to update the expiry to in seconds, or epoch timestamp
+     * @param int|DateTimeInterface $expiry the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
      * @param GetAndTouchOptions|null $options the options to use for the operation
      *
      * @return GetResult
@@ -560,7 +561,8 @@ class Collection implements CollectionInterface
      * Touches a document, setting a new expiry time.
      *
      * @param string $id the key of the document
-     * @param int|DateTimeInterface $expiry the expiry time for the document in ms
+     * @param int|DateTimeInterface $expiry the relative expiry time in seconds or DateTimeInterface object for
+     *     absolute point in time
      * @param TouchOptions|null $options the options to use for the operation
      *
      * @return MutationResult
