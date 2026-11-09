@@ -33,6 +33,18 @@
 
 #include <php.h>
 
+#ifdef ZTS
+namespace couchbase::php::zend_c
+{
+/* zend_virtual_cwd.h declares this without C linkage, which names a symbol PHP does not export */
+#if PHP_VERSION_ID < 80400
+extern "C" CWD_API int virtual_cwd_activate();
+#else
+extern "C" CWD_API void virtual_cwd_activate();
+#endif
+} // namespace couchbase::php::zend_c
+#endif
+
 #include <tao/json/value.hpp>
 
 #include <algorithm>
@@ -260,6 +272,13 @@ shutdown_logger()
     keep_inherited_loggers();
     return;
   }
+#endif
+#ifdef ZTS
+  /*
+   * php_log_err() opens error_log through the virtual CWD, which request shutdown frees.
+   * zend_shutdown() frees it again after module shutdown.
+   */
+  zend_c::virtual_cwd_activate();
 #endif
   flush_logger();
   couchbase::core::logger::shutdown();

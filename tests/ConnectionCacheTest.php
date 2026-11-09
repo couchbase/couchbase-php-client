@@ -850,6 +850,39 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
     }
 
     /**
+     * The persistent connection is closed after the last request, and the messages logged while
+     * closing it are written at module shutdown. A thread-safe build opens error_log through the
+     * virtual CWD there, after request shutdown has freed it.
+     */
+    public function testConnectedProcessUsesPhpErrorLogSink()
+    {
+        $this->skipIfProtostellar();
+        $errorLog = tempnam(sys_get_temp_dir(), "couchbase-error-log");
+        $body = '$connstr = ' . var_export($this->uniqueConnectionString(), true) . ";\n" . <<<'PHP'
+            $cluster = new Couchbase\Cluster($connstr, $options);
+            $cluster->ping();
+            PHP;
+        $ini = [
+            "couchbase.log_level" => "trace",
+            "couchbase.log_php_log_err" => "1",
+            "couchbase.log_stderr" => "0",
+            "couchbase.persistent_timeout" => "-1",
+            "error_log" => $errorLog,
+        ];
+        try {
+            $this->runWorkerRequests($body, $ini, 1, [], true);
+            $lines = file($errorLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            /* only the flush at module shutdown writes this line */
+            $this->assertNotEmpty(
+                preg_grep('/persistent connection destroyed/', $lines),
+                "messages queued after the last request were not written"
+            );
+        } finally {
+            unlink($errorLog);
+        }
+    }
+
+    /**
      * A connected cluster and notifyFork(). The core caches the logger per thread, so a logger
      * replaced around the fork is destroyed in the child on its next log call, and its closing line
      * goes to the parent's file.
