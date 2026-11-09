@@ -1,10 +1,10 @@
 # Installs a prebuilt Couchbase PHP SDK extension into an official PHP image.
 #
-# The build context holds exactly one x86_64 release archive. It must match the PHP version and the
-# C library of the image:
+# The build context holds exactly one release archive. It must match the PHP version, the C library
+# and the architecture (ARCH is x86_64 or aarch64) of the image:
 #
-#   Debian images:  couchbase-X.Y.Z-phpA.B-nts-linux-x86_64.tgz
-#   -alpine images: couchbase-X.Y.Z-phpA.B-nts-linux-musl-x86_64.tgz
+#   Debian images:  couchbase-X.Y.Z-phpA.B-nts-linux-ARCH.tgz
+#   -alpine images: couchbase-X.Y.Z-phpA.B-nts-linux-musl-ARCH.tgz
 #
 #   docker build --build-arg PHP_IMAGE=php:8.4-fpm -t app-php .
 
