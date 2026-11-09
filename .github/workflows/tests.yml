@@ -22,11 +22,13 @@ concurrency:
 jobs:
   source:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     outputs:
       extension_version: ${{ steps.build_extension.outputs.extension_version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           submodules: recursive
           fetch-depth: 0
           fetch-tags: true
@@ -76,6 +78,7 @@ jobs:
     needs: source
     name: alpine_prev
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     container:
       image: alpine:3.21@sha256:bc21487101ae47172509130ee1092cc273a831968d64b617776d1f69c81e42ab
     strategy:
@@ -151,6 +154,7 @@ jobs:
       - source
       - build_alpine_prev
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     container:
       image: alpine:3.21@sha256:bc21487101ae47172509130ee1092cc273a831968d64b617776d1f69c81e42ab
     strategy:
@@ -212,6 +216,7 @@ jobs:
     needs: source
     name: alpine
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     container:
       image: alpine:3.23@sha256:469c9ea410b9215eaee7976ba6c0639039b444be8e5d638f7abbada189971eb2
     strategy:
@@ -285,6 +290,7 @@ jobs:
       - source
       - build_alpine
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     container:
       image: alpine:3.23@sha256:469c9ea410b9215eaee7976ba6c0639039b444be8e5d638f7abbada189971eb2
     strategy:
@@ -343,6 +349,7 @@ jobs:
   build_linux_x86_64:
     needs: source
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -399,6 +406,7 @@ jobs:
       - source
       - build_linux_x86_64
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -444,6 +452,7 @@ jobs:
       - build_alpine
       - build_linux_x86_64
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -495,6 +504,7 @@ jobs:
       - source
       - build_linux_x86_64
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -595,6 +605,7 @@ jobs:
   build_macos_x86_64:
     needs: source
     runs-on: macos-15-intel
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -707,6 +718,7 @@ jobs:
       - source
       - build_macos_x86_64
     runs-on: macos-15-intel
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -803,6 +815,7 @@ jobs:
   build_macos_arm64:
     needs: source
     runs-on: macos-15
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -860,6 +873,7 @@ jobs:
       - source
       - build_macos_arm64
     runs-on: macos-15
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -901,6 +915,7 @@ jobs:
   build_windows_vs16:
     needs: source
     runs-on: windows-2022
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -983,6 +998,7 @@ jobs:
   build_windows_vs17:
     needs: source
     runs-on: windows-2022
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -1062,6 +1078,7 @@ jobs:
       - build_windows_vs16
       - build_windows_vs17
     runs-on: windows-2022
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:

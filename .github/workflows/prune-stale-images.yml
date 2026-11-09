@@ -1,5 +1,7 @@
 name: Prune stale images
 
+permissions: {}
+
 on:
   schedule:
     - cron: '29 4 * * *'
@@ -8,6 +10,7 @@ on:
 jobs:
   prune:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       packages: write
 
