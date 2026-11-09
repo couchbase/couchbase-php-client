@@ -883,9 +883,8 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
     }
 
     /**
-     * A connected cluster and notifyFork(). The core caches the logger per thread, so a logger
-     * replaced around the fork is destroyed in the child on its next log call, and its closing line
-     * goes to the parent's file.
+     * A connected cluster and notifyFork(). The core caches the logger per thread. A child that
+     * destroys the cached logger it inherited writes the closing line to the parent's file.
      */
     public function testNotifiedChildOfConnectedProcessLogsToItsOwnFile()
     {
@@ -938,6 +937,116 @@ class ConnectionCacheTest extends Helpers\CouchbaseTestCase
         } finally {
             array_map("unlink", array_merge([$logPath], glob("$logPath.*") ?: []));
         }
+    }
+
+    /**
+     * A connected cluster and notifyFork() with the PHP error log sink on, while another thread
+     * holds the sink mutex. Without the sink lock taken across the fork, the child inherits that
+     * mutex locked and hangs at its first use of the sink. A child that flushes the messages the parent
+     * queued writes them to the error log a second time.
+     */
+    public function testNotifiedChildOfConnectedProcessUsesPhpErrorLogSink()
+    {
+        $this->skipIfProtostellar();
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+        $errorLog = tempnam(sys_get_temp_dir(), "couchbase-fork-error-log");
+        $body = '$connstr = ' . var_export($this->uniqueConnectionString(), true) . ";\n" . <<<'PHP'
+            if (!function_exists("pcntl_fork")) {
+                echo "no-pcntl\n";
+            } else {
+                $cluster = new Couchbase\Cluster($connstr, $options);
+                Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PREPARE);
+                /* after PREPARE, whose io threads would wait for the mutex, and before the fork */
+                Couchbase\Extension\holdLogSinkForTest(2000);
+                $pid = pcntl_fork();
+                if ($pid < 0) {
+                    exit("fork-failed\n");
+                }
+                if ($pid == 0) {
+                    Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::CHILD);
+                    exit(0);
+                }
+                Couchbase\Cluster::notifyFork(Couchbase\ForkEvent::PARENT);
+                $deadline = time() + 30;
+                while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+                    usleep(100_000);
+                }
+                if ($exited == 0) {
+                    posix_kill($pid, SIGKILL);
+                    pcntl_waitpid($pid, $status);
+                }
+                echo $exited != $pid ? 256 : (pcntl_wifexited($status) ? pcntl_wexitstatus($status) : 128 + pcntl_wtermsig($status)), "\n";
+            }
+            PHP;
+        $ini = [
+            "couchbase.log_level" => "trace",
+            "couchbase.log_php_log_err" => "1",
+            "couchbase.log_stderr" => "0",
+            "couchbase.test_hooks" => "1",
+            "error_log" => $errorLog,
+        ];
+        try {
+            $counts = $this->runWorkerRequests($body, $ini, 1, [], true);
+            if ($counts === []) {
+                $this->markTestSkipped("the CLI does not provide pcntl_fork()");
+            }
+            $this->assertSame(["0"], $counts, "256 is a child still running after 30 seconds, 128 + N one killed by signal N");
+            $lines = file($errorLog, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            $this->assertNotEmpty($lines, "the PHP error log sink wrote nothing");
+            /* PHP prefixes the time of the write; the message carries its own time and thread */
+            $lines = preg_replace('/^\[[^\]]*\] /', '', $lines);
+            /* only the child logs this, so the child's logger writes through the sink */
+            $this->assertNotEmpty(preg_grep('/Resume child after fork\(\)/', $lines), "the child wrote nothing to the error log");
+            $repeated = array_keys(array_filter(array_count_values($lines), fn($count) => $count > 1));
+            $this->assertSame([], $repeated, "error log lines written twice");
+        } finally {
+            unlink($errorLog);
+        }
+    }
+
+    /**
+     * Logging off, while another thread holds the PHP error log sink mutex. flush_logger() takes that
+     * mutex at every request shutdown, so a child that inherits it locked never finishes its request.
+     */
+    public function testForkedChildWithLoggingOffDoesNotInheritLockedSink()
+    {
+        if (!extension_loaded("pcntl")) {
+            $this->markTestSkipped("The 'pcntl' extension is required to fork");
+        }
+        $body = <<<'PHP'
+            if (!function_exists("pcntl_fork")) {
+                echo "no-pcntl\n";
+            } else {
+                Couchbase\Extension\holdLogSinkForTest(2000);
+                $pid = pcntl_fork();
+                if ($pid < 0) {
+                    exit("fork-failed\n");
+                }
+                if ($pid == 0) {
+                    exit(0);
+                }
+                $deadline = time() + 30;
+                while (($exited = pcntl_waitpid($pid, $status, WNOHANG)) == 0 && time() < $deadline) {
+                    usleep(100_000);
+                }
+                if ($exited == 0) {
+                    posix_kill($pid, SIGKILL);
+                    pcntl_waitpid($pid, $status);
+                }
+                echo $exited != $pid ? 256 : (pcntl_wifexited($status) ? pcntl_wexitstatus($status) : 128 + pcntl_wtermsig($status)), "\n";
+            }
+            PHP;
+        $ini = [
+            "couchbase.log_level" => "off",
+            "couchbase.test_hooks" => "1",
+        ];
+        $counts = $this->runWorkerRequests($body, $ini, 1, [], true);
+        if ($counts === []) {
+            $this->markTestSkipped("the CLI does not provide pcntl_fork()");
+        }
+        $this->assertSame(["0"], $counts, "256 is a child still running after 30 seconds, 128 + N one killed by signal N");
     }
 
     public function testForkAfterDisconnect()

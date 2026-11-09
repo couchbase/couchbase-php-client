@@ -179,6 +179,8 @@ STD_PHP_INI_ENTRY("couchbase.log_php_log_err", "1", PHP_INI_SYSTEM, OnUpdateBool
 STD_PHP_INI_ENTRY("couchbase.log_stderr", "0", PHP_INI_SYSTEM, OnUpdateBool, log_stderr, zend_couchbase_globals, couchbase_globals)
 /* write logs to given file (does not override couchbase.log_use_php_error) */
 STD_PHP_INI_ENTRY("couchbase.log_path", "", PHP_INI_SYSTEM, OnUpdateString, log_path, zend_couchbase_globals, couchbase_globals)
+/* enables the functions the test suite uses to force races; never set in production */
+STD_PHP_INI_ENTRY("couchbase.test_hooks", "0", PHP_INI_SYSTEM, OnUpdateBool, test_hooks, zend_couchbase_globals, couchbase_globals)
 PHP_INI_END()
 // clang-format on
 
@@ -265,6 +267,31 @@ PHP_FUNCTION(notifyFork)
   }
 
   RETURN_NULL();
+}
+
+PHP_FUNCTION(holdLogSinkForTest)
+{
+  zend_long milliseconds = 0;
+
+  ZEND_PARSE_PARAMETERS_START(1, 1)
+  Z_PARAM_LONG(milliseconds)
+  ZEND_PARSE_PARAMETERS_END();
+
+  if (!COUCHBASE_G(test_hooks)) {
+    zend_throw_error(nullptr, "holdLogSinkForTest() requires couchbase.test_hooks=1");
+    RETURN_THROWS();
+  }
+  if (milliseconds < 1 || milliseconds > 10'000) {
+    zend_argument_value_error(1, "must be between 1 and 10000");
+    RETURN_THROWS();
+  }
+#ifdef _WIN32
+  zend_throw_error(nullptr, "holdLogSinkForTest() is not available on Windows");
+  RETURN_THROWS();
+#else
+  couchbase::php::hold_log_sink_for_test(std::chrono::milliseconds(milliseconds));
+  RETURN_NULL();
+#endif
 }
 
 PHP_FUNCTION(allowEnterpriseAnalytics)
@@ -4286,6 +4313,10 @@ ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_notifyFork, 0, 0, 1)
 ZEND_ARG_TYPE_INFO(0, forkEvent, IS_STRING, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_holdLogSinkForTest, 0, 0, 1)
+ZEND_ARG_TYPE_INFO(0, milliseconds, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(ai_CouchbaseExtension_allowEnterpriseAnalytics, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
@@ -5329,6 +5360,7 @@ ZEND_END_ARG_INFO()
 // clang-format off
 static zend_function_entry couchbase_functions[] = {
         ZEND_NS_FE("Couchbase\\Extension", notifyFork, ai_CouchbaseExtension_notifyFork)
+        ZEND_NS_FE("Couchbase\\Extension", holdLogSinkForTest, ai_CouchbaseExtension_holdLogSinkForTest)
         ZEND_NS_FE("Couchbase\\Extension", allowEnterpriseAnalytics, ai_CouchbaseExtension_allowEnterpriseAnalytics)
         ZEND_NS_FE("Couchbase\\Extension", version, ai_CouchbaseExtension_version)
         ZEND_NS_FE("Couchbase\\Extension", clusterVersion, ai_CouchbaseExtension_clusterVersion)
