@@ -25,7 +25,7 @@ on:
     inputs:
       ref:
         type: string
-        description: "Performer version. Specify a branch, tag, full commit hash, GitHub PR like 'refs/pull/37/merge', or Gerrit PR like 'refs/changes/58/240858/6'"
+        description: "Performer version. Specify a branch, tag, full commit hash, or GitHub PR like 'refs/pull/37/merge'"
         required: true
 
 jobs:
@@ -35,9 +35,63 @@ jobs:
       contents: read
       packages: write
 
+    # The steps of couchbaselabs/sdk-docker-build-action, inlined so that every action this job runs
+    # with packages: write is pinned to a commit.
+    env:
+      INPUT_REF: ${{ inputs.ref }}
+      IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/php-fit-performer
     steps:
-      - uses: couchbaselabs/sdk-docker-build-action@v1
+      - name: Choose the image version
+        run: |
+          IMAGE_VERSION="${INPUT_REF:-${GITHUB_REF_NAME}}"
+          if [[ "$IMAGE_VERSION" =~ ^[0-9a-f]{40}$ ]]; then
+            # a full commit hash, shortened and prefixed so that pruning can match it
+            IMAGE_VERSION="sha-${IMAGE_VERSION:0:12}"
+          elif [[ "$IMAGE_VERSION" =~ ^v[0-9] ]]; then
+            IMAGE_VERSION="${IMAGE_VERSION#v}"
+          elif [[ "$IMAGE_VERSION" = "master" ]]; then
+            IMAGE_VERSION="main"
+          fi
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
+          if [[ "$INPUT_REF" == refs/pull/* ]]; then
+            echo "PR_LABEL=com.couchbase.pr=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/$(echo "$INPUT_REF" | cut -d/ -f3)" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sdk: php
-          ref: ${{ inputs.ref }}
-          dockerfile: performer/Dockerfile
+          ref: ${{ inputs.ref || github.ref }}
+          submodules: recursive
+          persist-credentials: false
+      - name: Record the commit
+        run: echo "COMMIT_HASH=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.IMAGE_VERSION }}
+          flavor: latest=false
+          labels: |
+            com.couchbase.github.actions.run=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            org.opencontainers.image.revision=${{ env.COMMIT_HASH }}
+            ${{ env.PR_LABEL }}
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: performer/Dockerfile
+          build-args: SDK=php
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      - name: Summarize
+        env:
+          IMAGE: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "🔖 \`${IMAGE}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "📌 \`${IMAGE_NAME}@${DIGEST}\`" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,29 @@
+name: linters
+permissions: {}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  action_pins:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read # checkout, and tags of public action repositories
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check action pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The runner image's Ruby; the script needs only the standard library and gh.
+        run: ruby bin/check-action-pins.rb
+
