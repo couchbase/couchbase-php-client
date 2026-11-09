@@ -50,9 +50,10 @@ image and its C library:
 | `php:8.4-cli-alpine`, `php:8.4-fpm-alpine` | `couchbase-4.6.0-php8.4-nts-linux-musl-x86_64.tgz` |
 
 The archives are attached to each
-[release](https://github.com/couchbase/couchbase-php-client/releases). They are built for x86_64, so
-on an arm64 host the image needs `--platform linux/amd64`. Put the Dockerfile and one archive in a
-directory and build from it:
+[release](https://github.com/couchbase/couchbase-php-client/releases). Each archive is built for
+one architecture, named by its suffix, `x86_64` or `aarch64`, which must match the platform of the
+image. For a release without `aarch64` archives, an image on an arm64 host needs
+`--platform linux/amd64`. Put the Dockerfile and one archive in a directory and build from it:
 
 ```console
 $ curl -LO https://github.com/couchbase/couchbase-php-client/releases/download/4.6.0/couchbase-4.6.0-php8.4-nts-linux-x86_64.tgz
