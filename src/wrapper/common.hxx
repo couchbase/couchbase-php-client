@@ -33,6 +33,7 @@ char* log_level{ nullptr };
 char* log_path{ nullptr };
 bool log_php_log_err{ 1 };
 bool log_stderr{ 0 };
+bool test_hooks{ 0 };
 zend_long max_persistent{ -1 }; /* maximum number of persistent connections per process */
 zend_long persistent_timeout{
   -1

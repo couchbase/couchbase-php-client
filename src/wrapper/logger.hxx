@@ -20,6 +20,8 @@
 
 #include <Zend/zend_API.h>
 
+#include <chrono>
+
 namespace couchbase::php
 {
 /**
@@ -45,10 +47,21 @@ COUCHBASE_API
 void
 shutdown_logger();
 
+#ifndef _WIN32
 /**
- * Keeps a fork() child, whether or not the application calls Cluster::notifyFork(), from inheriting
- * the logger's periodic flusher thread, and gives a child forked by PHP code a log file of its own.
- * Called once per process.
+ * Test hook behind couchbase.test_hooks. Joins the previous holder, then holds the PHP error log
+ * sink's mutex on another thread for the given duration, and returns once that thread holds it.
+ * Not synchronized: one caller at a time.
+ */
+COUCHBASE_API
+void
+hold_log_sink_for_test(std::chrono::milliseconds duration);
+#endif
+
+/**
+ * Installs pthread_atfork handlers that pass the fork to the core logger, whether or not the
+ * application calls Cluster::notifyFork(), and gives a child forked by PHP code a log file of its
+ * own. Called at module startup; the handlers are installed once per process.
  */
 COUCHBASE_API
 void

@@ -24,7 +24,6 @@
 
 #include <core/logger/configuration.hxx>
 
-#include <spdlog/details/console_globals.h>
 #include <spdlog/details/os.h>
 #include <spdlog/sinks/base_sink.h>
 #include <spdlog/spdlog.h>
@@ -33,14 +32,27 @@
 
 #include <php.h>
 
+#ifdef ZTS
+namespace couchbase::php::zend_c
+{
+/* zend_virtual_cwd.h declares this without C linkage, which names a symbol PHP does not export */
+#if PHP_VERSION_ID < 80400
+extern "C" CWD_API int virtual_cwd_activate();
+#else
+extern "C" CWD_API void virtual_cwd_activate();
+#endif
+} // namespace couchbase::php::zend_c
+#endif
+
 #include <tao/json/value.hpp>
 
 #include <algorithm>
 #include <chrono>
+#include <future>
 #include <mutex>
 #include <optional>
 #include <queue>
-#include <vector>
+#include <thread>
 
 #ifndef _WIN32
 #include <pthread.h>
@@ -148,13 +160,53 @@ flush_logger()
   }
 }
 
+#ifndef _WIN32
+namespace
+{
+/*
+ * A forked child inherits this pointer but not the thread, so the child handler drops the pointer.
+ * Destroying the joinable std::thread there would call std::terminate().
+ */
+std::thread* log_sink_holder{ nullptr };
+
+void
+release_log_sink_holder()
+{
+  if (log_sink_holder != nullptr) {
+    log_sink_holder->join();
+    delete log_sink_holder; // NOLINT(cppcoreguidelines-owning-memory)
+    log_sink_holder = nullptr;
+  }
+}
+} // namespace
+
+COUCHBASE_API
+void
+hold_log_sink_for_test(std::chrono::milliseconds duration)
+{
+  release_log_sink_holder();
+  std::promise<void> held;
+  auto holding = held.get_future();
+  // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+  log_sink_holder = new std::thread([duration, held = std::move(held)]() mutable {
+    global_php_log_err_sink->lock_for_fork();
+    held.set_value();
+    std::this_thread::sleep_for(duration);
+    global_php_log_err_sink->unlock_after_fork();
+  });
+  holding.wait();
+}
+#endif
+
 namespace
 {
 /*
  * Held from the prepare handler to the parent or child handler of one fork(), and while a thread
- * creates or shuts down the logger, which starts or joins the flusher. The C library may run the
- * handlers of concurrent forks in parallel, and a fork in the middle of either would copy a running
- * flusher. The child is a copy of the thread that locked it, and unlocks it.
+ * creates, configures or shuts down the logger. Creating the logger starts the flusher, and
+ * spdlog::set_level() takes the spdlog registry mutex. The core's fork locks cover neither, and
+ * RINIT of a thread-safe build does both on any thread. It also serializes the handlers of
+ * concurrent forks around logger_running_at_fork. The child is a copy of the thread that locked
+ * it, and unlocks it.
  */
 std::mutex logger_fork_mutex;
 } // namespace
@@ -184,63 +236,29 @@ create_logger_for_this_process(couchbase::core::logger::configuration configurat
 #ifndef _WIN32
 namespace
 {
-/* the interval couchbase::core::logger::create_file_logger() passes to spdlog::flush_every() */
-constexpr std::chrono::seconds logger_flush_interval{ 1 };
-bool restart_logger_flusher{ false };
-
-/*
- * fork() copies only the calling thread, so a child that inherits spdlog's periodic flusher joins a
- * thread it does not have when the logger shuts down, and never exits. A zero interval joins the
- * flusher before the fork and leaves the registry without one.
- *
- * A sink mutex that another thread holds at the fork stays locked in the child. The PHP error log
- * sink and the console mutex are held across the fork. The child does not use the sinks of the core
- * logger, which this file cannot lock: it creates the logger again before PHP code logs.
- */
-void
-stop_logger_flusher()
-{
-  logger_fork_mutex.lock();
-  restart_logger_flusher = couchbase::core::logger::is_initialized();
-  if (restart_logger_flusher) {
-    couchbase::core::logger::flush();
-    spdlog::flush_every(std::chrono::seconds::zero());
-    global_php_log_err_sink->lock_for_fork();
-    spdlog::details::console_mutex::mutex().lock();
-  }
-}
-
-void
-release_logger_sinks()
-{
-  spdlog::details::console_mutex::mutex().unlock();
-  global_php_log_err_sink->unlock_after_fork();
-}
-
-void
-restart_logger_flusher_in_parent()
-{
-  if (restart_logger_flusher) {
-    release_logger_sinks();
-    spdlog::flush_every(logger_flush_interval);
-  }
-  logger_fork_mutex.unlock();
-}
-
+bool logger_running_at_fork{ false };
 bool restart_logger_in_child{ false };
 
 /*
- * Destroying an inherited file sink writes a closing line to the parent's log file, so the child
- * keeps every logger it inherited referenced until it exits. Workaround until the core logger
- * handles fork() (CXXCBC-1121); PCBC-1090 drops it.
+ * The core logger holds its own locks across the fork and leaves the child without a logger. The
+ * PHP error log sink belongs to the extension, so it is held here, even with logging off:
+ * flush_logger() takes its mutex at every request shutdown.
  */
 void
-keep_inherited_loggers()
+prepare_logger_for_fork()
 {
-  static auto* inherited = new std::vector<std::shared_ptr<spdlog::logger>>();
-  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& logger) {
-    inherited->push_back(logger);
-  });
+  logger_fork_mutex.lock();
+  logger_running_at_fork = couchbase::core::logger::is_initialized();
+  couchbase::core::logger::notify_fork(couchbase::fork_event::prepare);
+  global_php_log_err_sink->lock_for_fork();
+}
+
+void
+resume_logger_in_parent()
+{
+  const std::unique_lock lock(logger_fork_mutex, std::adopt_lock);
+  global_php_log_err_sink->unlock_after_fork();
+  couchbase::core::logger::notify_fork(couchbase::fork_event::parent);
 }
 } // namespace
 #endif
@@ -249,17 +267,24 @@ COUCHBASE_API
 void
 shutdown_logger()
 {
+#ifndef _WIN32
+  release_log_sink_holder();
+#endif
   std::scoped_lock lock(logger_fork_mutex);
 #ifndef _WIN32
   if (restart_logger_in_child) {
-    /*
-     * The logger is the parent's. Flushing would repeat the PHP error log messages the parent
-     * queued, and shutting it down would write to the parent's file.
-     */
+    /* the PHP error log messages the parent queued belong to the parent */
     restart_logger_in_child = false;
-    keep_inherited_loggers();
+    global_php_log_err_sink->discard_deferred_messages();
     return;
   }
+#endif
+#ifdef ZTS
+  /*
+   * php_log_err() opens error_log through the virtual CWD, which request shutdown frees.
+   * zend_shutdown() frees it again after module shutdown.
+   */
+  zend_c::virtual_cwd_activate();
 #endif
   flush_logger();
   couchbase::core::logger::shutdown();
@@ -275,10 +300,7 @@ restart_logger_in_forked_child()
     std::scoped_lock lock(logger_fork_mutex);
     global_php_log_err_sink->discard_deferred_messages();
     if (logger_configuration) {
-      keep_inherited_loggers();
       create_logger_for_this_process(*logger_configuration);
-    } else {
-      spdlog::flush_every(logger_flush_interval);
     }
   }
 #endif
@@ -292,9 +314,8 @@ void (*previous_interrupt_function)(zend_execute_data* execute_data){ nullptr };
 /*
  * Runs when the VM next checks for interrupts. A child forked by PHP code reaches it as soon as the
  * fork returns. A child that PHP forks only to exec() another program never does, and starts no
- * thread and opens no log file before the exec(). The logger is created again with new sinks, so
- * that none locked by a thread of the parent is used, and so that a logger writing to
- * couchbase.log_path writes to a file named after the child's pid. Creating it starts the flusher.
+ * thread and opens no log file before the exec(). The child has no logger until then. The new one
+ * writes to a file named after the child's pid when couchbase.log_path is set.
  */
 void
 restart_logger_on_interrupt(zend_execute_data* execute_data)
@@ -307,10 +328,12 @@ restart_logger_on_interrupt(zend_execute_data* execute_data)
 
 /* the child of a multithreaded fork() starts threads only in restart_logger_in_forked_child() */
 void
-restart_logger_flusher_in_child()
+schedule_logger_restart_in_child()
 {
-  if (restart_logger_flusher) {
-    release_logger_sinks();
+  log_sink_holder = nullptr;
+  couchbase::core::logger::notify_fork(couchbase::fork_event::child);
+  global_php_log_err_sink->unlock_after_fork();
+  if (logger_running_at_fork) {
     restart_logger_in_child = true;
 #if PHP_VERSION_ID >= 80200
     zend_atomic_bool_store_ex(&EG(vm_interrupt), true);
@@ -336,7 +359,7 @@ register_logger_fork_handlers()
   if (!fork_handlers_registered) {
     fork_handlers_registered = true;
     pthread_atfork(
-      stop_logger_flusher, restart_logger_flusher_in_parent, restart_logger_flusher_in_child);
+      prepare_logger_for_fork, resume_logger_in_parent, schedule_logger_restart_in_child);
   }
   previous_interrupt_function = zend_interrupt_function;
   zend_interrupt_function = restart_logger_on_interrupt;
