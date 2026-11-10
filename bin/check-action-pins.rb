@@ -88,16 +88,21 @@ end
 
 def version(tag) = Gem::Version.new(tag.delete_prefix("v"))
 
-# Values of `uses:` keys anywhere in the document. An alias is a value too, and fails the check.
-def uses_nodes(node, found = [])
+# Values of `uses:` keys anywhere in the document. A key written as an alias is resolved to the
+# node it names, so its value is checked like any other. An alias as the value fails the check. A
+# reused anchor needs nothing more: its `uses:` node is checked where the anchor is defined.
+def uses_nodes(node, found = [], anchors = {})
+  anchors[node.anchor] = node if !node.is_a?(Psych::Nodes::Alias) && node.respond_to?(:anchor) && node.anchor
   case node
   when Psych::Nodes::Mapping
     node.children.each_slice(2) do |key, value|
+      uses_nodes(key, found, anchors)
+      key = anchors[key.anchor] if key.is_a?(Psych::Nodes::Alias)
       found << value if key.is_a?(Psych::Nodes::Scalar) && key.value == "uses"
-      uses_nodes(value, found)
+      uses_nodes(value, found, anchors)
     end
   when Psych::Nodes::Node
-    node.children&.each { |child| uses_nodes(child, found) }
+    node.children&.each { |child| uses_nodes(child, found, anchors) }
   end
   found
 end
