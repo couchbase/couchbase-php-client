@@ -25,9 +25,12 @@ use Couchbase\BooleanFieldSearchQuery;
 use Couchbase\BooleanSearchQuery;
 use Couchbase\ConjunctionSearchQuery;
 use Couchbase\Coordinate;
+use Couchbase\CustomFilterSearchQuery;
+use Couchbase\CustomScoreSearchQuery;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
 use Couchbase\DocIdSearchQuery;
+use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\GeoBoundingBoxSearchQuery;
 use Couchbase\GeoDistanceSearchQuery;
@@ -135,6 +138,7 @@ class SearchRequestConverter
 
     /**
      * @throws InvalidArgumentException
+     * @throws FeatureNotAvailableException
      */
     private static function handleQuery(SearchQuery $query): Query
     {
@@ -181,6 +185,9 @@ class SearchRequestConverter
                 return self::getTermRangeQuery($query);
             case $query instanceof WildcardSearchQuery:
                 return self::getWildcardQuery($query);
+            case $query instanceof CustomScoreSearchQuery:
+            case $query instanceof CustomFilterSearchQuery:
+                throw new FeatureNotAvailableException("Custom score or filter queries are not supported with couchbase2://");
             default:
                 throw new InvalidArgumentException("Unknown search query type");
         }

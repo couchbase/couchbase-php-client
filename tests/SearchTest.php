@@ -22,6 +22,8 @@ use Couchbase\BooleanSearchQuery;
 use Couchbase\ClusterInterface;
 use Couchbase\CollectionInterface;
 use Couchbase\ConjunctionSearchQuery;
+use Couchbase\CustomFilterSearchQuery;
+use Couchbase\CustomScoreSearchQuery;
 use Couchbase\DateRangeSearchFacet;
 use Couchbase\DateRangeSearchQuery;
 use Couchbase\DisjunctionSearchQuery;
@@ -252,7 +254,6 @@ class SearchTest extends Helpers\CouchbaseTestCase
         $this->assertEquals(0, $result->metaData()->totalHits());
     }
 
-
     public function testSearchWithConsistency()
     {
         $this->skipIfCaves();
@@ -440,7 +441,6 @@ class SearchTest extends Helpers\CouchbaseTestCase
             );
         }
     }
-
 
     public function testCompoundSearchQueries()
     {
@@ -790,6 +790,143 @@ class SearchTest extends Helpers\CouchbaseTestCase
 
         $this->expectException(FeatureNotAvailableException::class);
         $this->cluster->searchQuery($this->indexName, $query, $options);
+    }
+
+    public function testCustomScoreQueryExport()
+    {
+        $query = CustomScoreSearchQuery::build(
+            new MatchAllSearchQuery(),
+            "function score(doc, params) { return doc.score * params.factor; }"
+        )->fields("abv", "ibu")->parameters(["factor" => 2, "nested" => ["a" => [1, 2]]]);
+
+        $this->assertEquals(
+            '{"custom_score":{"query":{"match_all":"null"},"source":"function score(doc, params) { return doc.score * params.factor; }","fields":["abv","ibu"],"params":{"factor":2,"nested":{"a":[1,2]}}}}',
+            json_encode($query)
+        );
+    }
+
+    public function testCustomFilterQueryExport()
+    {
+        $query = CustomFilterSearchQuery::build(
+            new TermSearchQuery("hops"),
+            "function filter(doc, params) { return true; }"
+        );
+
+        $this->assertEquals(
+            '{"custom_filter":{"query":{"term":"hops"},"source":"function filter(doc, params) { return true; }"}}',
+            json_encode($query)
+        );
+    }
+
+    public function testCustomScriptQueryOmitsEmptyFieldsAndParameters()
+    {
+        $query = CustomScoreSearchQuery::build(new MatchNoneSearchQuery(), "function f(doc, params) { return 1; }")
+            ->fields()
+            ->parameters([]);
+
+        $this->assertEquals(
+            ['custom_score' => ['query' => ['match_none' => 'null'], 'source' => 'function f(doc, params) { return 1; }']],
+            $query->export()
+        );
+    }
+
+    public function testCustomScriptQueryNestedInCompoundQueryExport()
+    {
+        $filter = CustomFilterSearchQuery::build(new MatchNoneSearchQuery(), "function f(doc, params) { return true; }");
+        $query = BooleanSearchQuery::build()->mustNot(DisjunctionSearchQuery::build([$filter]));
+
+        $this->assertEquals(
+            '{"must_not":{"disjuncts":[{"custom_filter":{"query":{"match_none":"null"},"source":"function f(doc, params) { return true; }"}}]}}',
+            json_encode($query)
+        );
+    }
+
+
+    public function testCustomScriptQueriesThrowFeatureNotAvailable()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported(!$this->version()->supportsSearchCustomScriptQueries());
+
+        $score = CustomScoreSearchQuery::build(new MatchAllSearchQuery(), "function f(doc, params) { return doc.score; }");
+        $query = ConjunctionSearchQuery::build([new MatchAllSearchQuery(), $score]);
+
+        $this->expectException(FeatureNotAvailableException::class);
+        $this->cluster->searchQuery($this->indexName, $query);
+    }
+
+    public function testVectorPrefilterWithCustomScriptQueryThrowsFeatureNotAvailable()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsVectorSearch());
+        $this->skipIfUnsupported(!$this->version()->supportsSearchCustomScriptQueries());
+
+        $vectorQuery = VectorQuery::build("vector_field", [0.1, 0.2, 0.3])->prefilter(
+            CustomFilterSearchQuery::build(new MatchAllSearchQuery(), "function f(doc, params) { return true; }")
+        );
+        $request = SearchRequest::build(VectorSearch::build([$vectorQuery]));
+
+        $this->expectException(FeatureNotAvailableException::class);
+        $this->cluster->search($this->indexName, $request);
+    }
+
+    public function testCustomScriptQueries()
+    {
+        $this->skipIfCaves();
+        $this->skipIfProtostellar();
+        $this->skipIfUnsupported($this->version()->supportsSearchCustomScriptQueries());
+
+        try {
+            $this->setCustomScriptQueriesEnabled(true);
+            $dataset = json_decode(file_get_contents(__DIR__ . "/beer-data.json"), true);
+            $strongBeers = array_keys(array_filter($dataset, fn ($doc) => ($doc['abv'] ?? 0) >= 5.0));
+            sort($strongBeers);
+
+            $filter = CustomFilterSearchQuery::build(
+                new MatchAllSearchQuery(),
+                "function strong(doc, params) { const f = doc.fields || {}; return f.abv !== undefined && f.abv >= params.min_abv; }"
+            )->fields("abv")->parameters(["min_abv" => 5.0]);
+            $result = $this->cluster->searchQuery(
+                $this->indexName,
+                $filter,
+                SearchOptions::build()->limit(count($dataset))
+            );
+            $ids = array_map(fn ($row) => $row['id'], $result->rows());
+            sort($ids);
+            $this->assertEquals($strongBeers, $ids);
+
+            $score = CustomScoreSearchQuery::build(
+                new MatchAllSearchQuery(),
+                "function by_abv(doc, params) { const f = doc.fields || {}; return f.abv !== undefined ? f.abv * params.factor : 0; }"
+            )->fields("abv")->parameters(["factor" => 2]);
+            $result = $this->cluster->searchQuery(
+                $this->indexName,
+                $score,
+                SearchOptions::build()->limit(count($dataset))
+            );
+            $this->assertCount(count($dataset), $result->rows());
+            foreach ($result->rows() as $row) {
+                $this->assertEqualsWithDelta(($dataset[$row['id']]['abv'] ?? 0) * 2, $row['score'], 0.0001);
+            }
+        } finally {
+            $this->setCustomScriptQueriesEnabled(false);
+        }
+    }
+
+    private function setCustomScriptQueriesEnabled(bool $enabled): void
+    {
+        $this->consistencyUtil()->waitUntilAllNodesMatchPredicate(
+            "/api/managerOptions",
+            fn ($status) => $status == 200,
+            "Failed to set customScriptQueriesEnabled",
+            true,
+            "fts",
+            [
+                'method' => 'PUT',
+                'header' => ['Content-Type: application/json'],
+                'content' => json_encode(['customScriptQueriesEnabled' => $enabled ? 'true' : 'false']),
+            ]
+        );
     }
 
     public function testScopeSearch()
