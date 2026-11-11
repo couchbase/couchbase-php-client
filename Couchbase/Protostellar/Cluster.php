@@ -26,6 +26,7 @@ use Couchbase\AnalyticsResult;
 use Couchbase\Authenticator;
 use Couchbase\ClusterInterface;
 use Couchbase\ClusterOptions;
+use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Exception\InvalidArgumentException;
 use Couchbase\Exception\UnsupportedOperationException;
 use Couchbase\Management\AnalyticsIndexManagerInterface;
@@ -103,6 +104,7 @@ class Cluster implements ClusterInterface
 
     /**
      * @throws InvalidArgumentException
+     * @throws FeatureNotAvailableException
      */
     public function searchQuery(string $indexName, SearchQuery $query, ?SearchOptions $options = null): SearchResult
     {
