@@ -307,6 +307,11 @@ class ServerVersion
         return $this->major > 8 || ($this->major == 8 && $this->minor >= 1);
     }
 
+    public function supportsSearchCustomScriptQueries(): bool
+    {
+        return ($this->major > 8 || ($this->major == 8 && $this->minor >= 5));
+    }
+
     /**
      * @return int
      */
