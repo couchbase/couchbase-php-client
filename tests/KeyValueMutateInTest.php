@@ -21,12 +21,14 @@ declare(strict_types=1);
 use Couchbase\DurabilityLevel;
 use Couchbase\Exception\DocumentNotFoundException;
 use Couchbase\Exception\PathNotFoundException;
+use Couchbase\GetOptions;
 use Couchbase\MutateArrayAppendSpec;
 use Couchbase\MutateArrayInsertSpec;
 use Couchbase\MutateArrayPrependSpec;
 use Couchbase\MutateInOptions;
 use Couchbase\MutateUpsertSpec;
 use Couchbase\StoreSemantics;
+use Couchbase\UpsertOptions;
 
 include_once __DIR__ . "/Helpers/CouchbaseTestCase.php";
 
@@ -77,6 +79,25 @@ class KeyValueMutateInTest extends Helpers\CouchbaseTestCase
     {
         $this->expectException(TypeError::class);
         MutateArrayAppendSpec::build("foo", 4);
+    }
+
+    public function testSubdocumentMutatePreservesExpiry()
+    {
+        $this->skipIfUnsupported($this->version()->supportsPreserveExpiry());
+
+        $id = $this->uniqueId("foo");
+        $collection = $this->defaultCollection();
+
+        $collection->upsert($id, ["foo" => "bar"], UpsertOptions::build()->expiry(100));
+        $collection->mutateIn(
+            $id,
+            [MutateUpsertSpec::build("foo", "baz")],
+            MutateInOptions::build()->preserveExpiry(true)
+        );
+
+        $res = $collection->get($id, GetOptions::build()->withExpiry(true));
+        $this->assertEquals(["foo" => "baz"], $res->content());
+        $this->assertNotNull($res->expiryTime());
     }
 
     public function testSubdocumentMutateRaisesExceptions()

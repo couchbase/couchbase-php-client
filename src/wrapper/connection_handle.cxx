@@ -1862,6 +1862,9 @@ connection_handle::document_mutate_in(zval* return_value,
   if (auto e = cb_assign_expiry(req, options); e.ec) {
     return e;
   }
+  if (auto e = cb_assign_preserve_expiry(req, options); e.ec) {
+    return e;
+  }
   if (auto e = cb_assign_cas(req, options); e.ec) {
     return e;
   }
