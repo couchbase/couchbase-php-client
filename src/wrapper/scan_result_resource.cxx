@@ -161,20 +161,20 @@ create_scan_result_resource(connection_handle* connection,
 
     ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(value), item)
     {
-      std::uint64_t partition_uuid;
-      std::uint64_t sequence_number;
-      std::uint16_t partition_id;
-      std::string bucket_name;
-      if (auto e = cb_assign_integer(partition_id, options, "partitionId"); e.ec) {
+      std::uint64_t partition_uuid{ 0 };
+      std::uint64_t sequence_number{ 0 };
+      std::uint16_t partition_id{ 0 };
+      std::string bucket_name{};
+      if (auto e = cb_assign_integer(partition_id, item, "partitionId"); e.ec) {
         return { nullptr, e };
       }
-      if (auto e = cb_assign_integer(partition_uuid, options, "partitionUuid"); e.ec) {
+      if (auto e = cb_assign_integer(partition_uuid, item, "partitionUuid"); e.ec) {
         return { nullptr, e };
       }
-      if (auto e = cb_assign_integer(sequence_number, options, "sequenceNumber"); e.ec) {
+      if (auto e = cb_assign_integer(sequence_number, item, "sequenceNumber"); e.ec) {
         return { nullptr, e };
       }
-      if (auto e = cb_assign_string(bucket_name, options, "bucketName"); e.ec) {
+      if (auto e = cb_assign_string(bucket_name, item, "bucketName"); e.ec) {
         return { nullptr, e };
       }
       mutation_state.tokens.emplace_back(
