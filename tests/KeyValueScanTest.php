@@ -20,9 +20,12 @@ declare(strict_types=1);
 
 use Couchbase\CollectionInterface;
 use Couchbase\Exception\CollectionNotFoundException;
+use Couchbase\Exception\CouchbaseException;
 use Couchbase\Exception\FeatureNotAvailableException;
 use Couchbase\Management\CollectionSpec;
 use Couchbase\Management\CollectionManager;
+use Couchbase\MutationResult;
+use Couchbase\MutationState;
 use Couchbase\PrefixScan;
 use Couchbase\RangeScan;
 use Couchbase\SamplingScan;
@@ -617,6 +620,71 @@ class KeyValueScanTest extends Helpers\CouchbaseTestCase
             ScanOptions::build()->batchByteLimit(100)->batchItemLimit(20)->idsOnly(false)
         );
         $this->validateScan($results, $expectedIds);
+    }
+
+    public function testRangeScanConsistentWith()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsRangeScan());
+
+        $id = $this->sharedPrefix . "-189";
+        $result = $this->collection->upsert($id, ['num' => "189"]);
+        $this->testIds[] = $id;
+        $state = new MutationState();
+        $state->add($result);
+
+        $results = $this->collection->scan(
+            new RangeScan(
+                ScanTerm::build($this->sharedPrefix . "-10"),
+                ScanTerm::build($this->sharedPrefix . "-19")
+            ),
+            ScanOptions::build()->consistentWith($state)
+        );
+        $expectedIds = array_map(
+            function ($val) {
+                return $this->sharedPrefix . "-" . $val;
+            },
+            range("10", "19")
+        );
+        $expectedIds[] = $id;
+        $this->validateScan($results, $expectedIds);
+    }
+
+    public function testRangeScanConsistentWithOutdatedToken()
+    {
+        $this->skipIfCaves();
+        $this->skipIfUnsupported($this->version()->supportsRangeScan());
+
+        $id = $this->sharedPrefix . "-10";
+        $token = $this->collection->upsert($id, ['num' => "10"])->mutationToken();
+        // Same partition and sequence number, but a partition UUID the server never issued, so the
+        // scan of that partition must be rejected if the token is actually sent.
+        $state = new MutationState();
+        $state->add(
+            new MutationResult(
+                [
+                    'id' => $id,
+                    'cas' => "0",
+                    'mutationToken' => [
+                        'bucketName' => $token->bucketName(),
+                        'partitionId' => $token->partitionId(),
+                        'partitionUuid' => "deadbeef",
+                        'sequenceNumber' => $token->sequenceNumber(),
+                    ],
+                ]
+            )
+        );
+
+        $this->expectException(CouchbaseException::class);
+        $results = $this->collection->scan(
+            new RangeScan(
+                ScanTerm::build($this->sharedPrefix . "-10"),
+                ScanTerm::build($this->sharedPrefix . "-19")
+            ),
+            ScanOptions::build()->consistentWith($state)
+        );
+        foreach ($results as $result) {
+        }
     }
 
     public function testRangeScanCollectionDoesNotExist()
